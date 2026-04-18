@@ -1,29 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { initiatePayout } from '@/services/payment.service';
+import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { requireUser } from '@/lib/api/auth';
 
-export async function POST() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+export const POST = withErrorBoundary(async () => {
+  const { user, supabase } = await requireUser();
+  const result = await initiatePayout(supabase, user.id);
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (result.error) {
+    return NextResponse.json({ error: result.error }, { status: result.status });
   }
-
-  try {
-    const result = await initiatePayout(supabase, user.id);
-
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-
-    return NextResponse.json({ data: result.data }, { status: 200 });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown error';
-    console.error('[withdraw] unhandled', err);
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+  return NextResponse.json({ data: result.data }, { status: 200 });
+});

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { expireStaleRequests } from '@/services/booking.service';
 import { autoCompleteBookings, recognizePlatformFees } from '@/services/payment.service';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,10 +13,8 @@ function authorized(request: NextRequest): boolean {
   return header === `Bearer ${secret}`;
 }
 
-export async function POST(request: NextRequest) {
-  if (!authorized(request)) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
+export const POST = withErrorBoundary(async (request: NextRequest) => {
+  if (!authorized(request)) throw new HttpError(401, 'Unauthorized');
 
   const supabase = createServiceRoleClient();
 
@@ -35,8 +34,6 @@ export async function POST(request: NextRequest) {
     },
     { status: 200 }
   );
-}
+});
 
-export async function GET(request: NextRequest) {
-  return POST(request);
-}
+export const GET = POST;

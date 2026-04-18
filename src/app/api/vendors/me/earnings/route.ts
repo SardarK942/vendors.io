@@ -1,23 +1,14 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getVendorEarnings } from '@/services/payment.service';
+import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { requireUser } from '@/lib/api/auth';
 
-export async function GET() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
-
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
+export const GET = withErrorBoundary(async () => {
+  const { user, supabase } = await requireUser();
   const result = await getVendorEarnings(supabase, user.id);
 
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
-
   return NextResponse.json({ data: result.data }, { status: 200 });
-}
+});
