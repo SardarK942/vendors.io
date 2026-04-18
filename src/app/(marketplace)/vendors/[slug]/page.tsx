@@ -19,9 +19,18 @@ export default async function VendorPage({ params }: VendorPageProps) {
 
   if (!vendor) notFound();
 
+  const { data: reviews } = await supabase
+    .from('reviews')
+    .select(
+      'id, rating_overall, rating_quality, rating_communication, rating_professionalism, rating_value, comment, created_at, users!reviewer_user_id(full_name)'
+    )
+    .eq('vendor_profile_id', vendor.id)
+    .order('created_at', { ascending: false })
+    .limit(20);
+
   return (
     <div className="py-8">
-      <VendorProfile vendor={vendor} />
+      <VendorProfile vendor={vendor} reviews={reviews ?? []} />
     </div>
   );
 }
