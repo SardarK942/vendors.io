@@ -6,6 +6,7 @@ export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const redirect = searchParams.get('redirect') || '/dashboard';
+  const signupRole = searchParams.get('signup_role');
 
   if (code) {
     const cookieStore = await cookies();
@@ -26,8 +27,31 @@ export async function GET(request: Request) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
+    const { data, error } = await supabase.auth.exchangeCodeForSession(code);
+    console.log('[auth/callback]', {
+      url: request.url,
+      signupRole,
+      userId: data?.user?.id,
+      userCreatedAt: data?.user?.created_at,
+      ageMs: data?.user?.created_at ? Date.now() - new Date(data.user.created_at).getTime() : null,
+      exchangeError: error?.message ?? null,
+    });
     if (!error) {
+      if (
+        data?.user &&
+        (signupRole === 'couple' || signupRole === 'vendor') &&
+        Date.now() - new Date(data.user.created_at).getTime() < 60_000
+      ) {
+        const { error: updErr } = await supabase
+          .from('users')
+          .update({ role: signupRole })
+          .eq('id', data.user.id);
+        console.log('[auth/callback] role update result', {
+          signupRole,
+          userId: data.user.id,
+          error: updErr?.message ?? null,
+        });
+      }
       return NextResponse.redirect(`${origin}${redirect}`);
     }
   }

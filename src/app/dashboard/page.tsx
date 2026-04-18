@@ -1,6 +1,10 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { EarningsCard } from '@/components/dashboard/EarningsCard';
+import { getVendorEarnings, type VendorEarnings } from '@/services/payment.service';
+
+export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   const supabase = await createServerSupabaseClient();
@@ -14,8 +18,9 @@ export default async function DashboardPage() {
 
   const role = profile?.role || 'couple';
 
-  // Get booking counts
   let bookingCount = 0;
+  let earnings: VendorEarnings | null = null;
+
   if (role === 'couple') {
     const { count } = await supabase
       .from('booking_requests')
@@ -35,6 +40,9 @@ export default async function DashboardPage() {
         .select('*', { count: 'exact', head: true })
         .eq('vendor_profile_id', vendorProfile.id);
       bookingCount = count ?? 0;
+
+      const earningsResult = await getVendorEarnings(supabase, user.id);
+      earnings = earningsResult.data ?? null;
     }
   }
 
@@ -87,6 +95,16 @@ export default async function DashboardPage() {
               </a>
             </CardContent>
           </Card>
+        )}
+
+        {role === 'vendor' && earnings && (
+          <EarningsCard
+            pendingEscrowCents={earnings.pending_escrow_cents}
+            availableCents={earnings.available_cents}
+            transferredCents={earnings.transferred_cents}
+            requiresOnboarding={earnings.requires_onboarding}
+            frozenReason={earnings.frozen_reason}
+          />
         )}
       </div>
     </div>
