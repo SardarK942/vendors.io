@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { cancelBooking } from '@/services/payment.service';
-import { cancelBookingSchema } from '@/types';
-import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { disputeBooking } from '@/services/payment.service';
+import { disputeBookingSchema } from '@/types';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireBookingAccess, requireUser } from '@/lib/api/auth';
 
 export const POST = withErrorBoundary(
@@ -10,17 +10,12 @@ export const POST = withErrorBoundary(
     const { user, supabase } = await requireUser();
 
     const body = await request.json().catch(() => ({}));
-    const parsed = cancelBookingSchema.parse(body);
+    const parsed = disputeBookingSchema.parse(body);
 
     const { role } = await requireBookingAccess(supabase, id, user.id);
-    const result = await cancelBooking(
-      supabase,
-      id,
-      user.id,
-      role,
-      parsed.reason ?? null,
-      parsed.fault ?? 'none'
-    );
+    if (role !== 'couple') throw new HttpError(403, 'Only the couple can dispute this booking');
+
+    const result = await disputeBooking(supabase, id, user.id, parsed.reason);
 
     if (result.error) {
       return NextResponse.json({ error: result.error }, { status: result.status });

@@ -136,6 +136,9 @@ export interface Database {
           completed_at: string | null;
           cancelled_at: string | null;
           cancellation_reason: string | null;
+          cancellation_fault: 'none' | 'vendor_fault' | 'force_majeure' | null;
+          disputed_at: string | null;
+          dispute_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -163,6 +166,9 @@ export interface Database {
           completed_at?: string | null;
           cancelled_at?: string | null;
           cancellation_reason?: string | null;
+          cancellation_fault?: 'none' | 'vendor_fault' | 'force_majeure' | null;
+          disputed_at?: string | null;
+          dispute_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -189,6 +195,9 @@ export interface Database {
           completed_at?: string | null;
           cancelled_at?: string | null;
           cancellation_reason?: string | null;
+          cancellation_fault?: 'none' | 'vendor_fault' | 'force_majeure' | null;
+          disputed_at?: string | null;
+          dispute_reason?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -221,6 +230,7 @@ export interface Database {
           frozen_at: string | null;
           no_show_count_year: number;
           no_show_year: number | null;
+          details_submitted_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -236,6 +246,7 @@ export interface Database {
           frozen_at?: string | null;
           no_show_count_year?: number;
           no_show_year?: number | null;
+          details_submitted_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -250,6 +261,7 @@ export interface Database {
           frozen_at?: string | null;
           no_show_count_year?: number;
           no_show_year?: number | null;
+          details_submitted_at?: string | null;
           updated_at?: string;
         };
         Relationships: [

@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +12,7 @@ interface EarningsCardProps {
   availableCents: number;
   transferredCents: number;
   requiresOnboarding: boolean;
+  verificationPending: boolean;
   frozenReason: string | null;
 }
 
@@ -19,9 +21,18 @@ export function EarningsCard({
   availableCents,
   transferredCents,
   requiresOnboarding,
+  verificationPending,
   frozenReason,
 }: EarningsCardProps) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  // When Stripe is verifying, poll every 30s so UI flips automatically once verified.
+  useEffect(() => {
+    if (!verificationPending) return;
+    const interval = setInterval(() => router.refresh(), 30_000);
+    return () => clearInterval(interval);
+  }, [verificationPending, router]);
 
   const handleWithdraw = async () => {
     setLoading(true);
@@ -44,8 +55,12 @@ export function EarningsCard({
     window.location.reload();
   };
 
-  const canWithdraw = availableCents > 0 && !frozenReason;
-  const withdrawLabel = requiresOnboarding ? 'Set Up Payouts' : 'Withdraw';
+  const canWithdraw = availableCents > 0 && !frozenReason && !verificationPending;
+
+  let withdrawLabel: string;
+  if (verificationPending) withdrawLabel = 'Verifying with Stripe...';
+  else if (requiresOnboarding) withdrawLabel = 'Set Up Payouts';
+  else withdrawLabel = 'Withdraw';
 
   return (
     <Card className="sm:col-span-2 lg:col-span-3">
@@ -73,6 +88,13 @@ export function EarningsCard({
             <p className="mt-1 text-xs text-muted-foreground">Lifetime payouts</p>
           </div>
         </div>
+
+        {verificationPending && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+            Stripe is verifying your account. This usually takes 1-2 minutes. We&apos;ll refresh
+            automatically.
+          </div>
+        )}
 
         {frozenReason && (
           <div className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800">

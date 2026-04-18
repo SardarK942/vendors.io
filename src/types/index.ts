@@ -72,6 +72,7 @@ export const bookingStatusSchema = z.enum([
   'cancelled_mutual',
   'completed',
   'expired',
+  'disputed',
 ]);
 
 export type BookingStatus = z.infer<typeof bookingStatusSchema>;
@@ -79,10 +80,19 @@ export type BookingStatus = z.infer<typeof bookingStatusSchema>;
 export const cancellerRoleSchema = z.enum(['couple', 'vendor', 'mutual']);
 export type CancellerRole = z.infer<typeof cancellerRoleSchema>;
 
+export const cancellationFaultSchema = z.enum(['none', 'vendor_fault', 'force_majeure']);
+export type CancellationFault = z.infer<typeof cancellationFaultSchema>;
+
 export const cancelBookingSchema = z.object({
   reason: z.string().max(1000).optional(),
+  fault: cancellationFaultSchema.optional(),
 });
 export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
+
+export const disputeBookingSchema = z.object({
+  reason: z.string().min(10).max(2000),
+});
+export type DisputeBookingInput = z.infer<typeof disputeBookingSchema>;
 
 export const reviewSchema = z.object({
   bookingRequestId: z.string().uuid(),

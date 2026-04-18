@@ -50,11 +50,13 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
       ? 'bg-emerald-100 text-emerald-800'
       : booking.status === 'pending' || booking.status === 'quoted'
         ? 'bg-yellow-100 text-yellow-800'
-        : booking.status.endsWith('cancelled') ||
-            booking.status === 'rejected' ||
-            booking.status === 'expired'
-          ? 'bg-red-100 text-red-800'
-          : '';
+        : booking.status === 'disputed'
+          ? 'bg-amber-100 text-amber-900'
+          : booking.status.endsWith('cancelled') ||
+              booking.status === 'rejected' ||
+              booking.status === 'expired'
+            ? 'bg-red-100 text-red-800'
+            : '';
 
   return (
     <div className="space-y-6">
@@ -153,7 +155,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             )}
 
             {/* Actions */}
-            <BookingActions booking={booking} role={role} hasReview={!!existingReview} />
+            <BookingActions
+              booking={booking}
+              role={role}
+              hasReview={!!existingReview}
+              vendorName={vendorProfile?.business_name ?? ''}
+            />
           </CardContent>
         </Card>
       </div>

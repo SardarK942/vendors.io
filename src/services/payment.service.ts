@@ -204,13 +204,26 @@ export async function handleAccountUpdated(
   payoutsEnabled: boolean,
   detailsSubmitted: boolean
 ): Promise<void> {
+  // First-time details_submitted → record timestamp for onboarding-pending UI.
+  const { data: existing } = await supabase
+    .from('stripe_accounts')
+    .select('details_submitted_at')
+    .eq('stripe_account_id', stripeAccountId)
+    .maybeSingle();
+
+  const updatePayload: Record<string, unknown> = {
+    onboarding_complete: detailsSubmitted,
+    charges_enabled: chargesEnabled,
+    payouts_enabled: payoutsEnabled,
+  };
+
+  if (detailsSubmitted && !existing?.details_submitted_at) {
+    updatePayload.details_submitted_at = new Date().toISOString();
+  }
+
   await supabase
     .from('stripe_accounts')
-    .update({
-      onboarding_complete: detailsSubmitted,
-      charges_enabled: chargesEnabled,
-      payouts_enabled: payoutsEnabled,
-    })
+    .update(updatePayload)
     .eq('stripe_account_id', stripeAccountId);
 
   // If vendor just became fully onboarded, auto-transfer any earned funds.
@@ -283,6 +296,7 @@ function computeRefundPolicy(
   bookingStatus: string,
   eventDate: string,
   depositPaidAt: string | null,
+  fault: 'none' | 'vendor_fault' | 'force_majeure' = 'none',
   now: Date = new Date()
 ): RefundPolicy {
   if (bookingStatus !== 'deposit_paid') {
@@ -295,11 +309,14 @@ function computeRefundPolicy(
   }
 
   if (cancellerRole === 'vendor') {
+    // vendor_fault: 100% refund + claw + strike counted by caller.
+    // force_majeure: 100% refund but no claw, no strike.
+    // none: 100% refund, no claw, no strike (scheduling conflict >14d out, etc.).
     return {
       coupleRefundPct: 1.0,
       vendorKeepPct: 0,
       platformKeepPct: 0,
-      clawVendorOtherPending: true,
+      clawVendorOtherPending: fault === 'vendor_fault',
     };
   }
 
@@ -349,7 +366,8 @@ export async function cancelBooking(
   bookingId: string,
   cancellerUserId: string,
   cancellerRole: CancellerRole,
-  reason: string | null = null
+  reason: string | null = null,
+  fault: 'none' | 'vendor_fault' | 'force_majeure' = 'none'
 ): Promise<ServiceResult<{ refund_amount_cents: number; new_status: string }>> {
   const { data: booking } = await supabase
     .from('booking_requests')
@@ -368,6 +386,9 @@ export async function cancelBooking(
   if (cancellerRole === 'mutual' && !isCouple && !isVendor)
     return { error: 'Forbidden', status: 403 };
 
+  // Couple cancellations never carry vendor fault.
+  const effectiveFault = cancellerRole === 'couple' ? 'none' : fault;
+
   const newStatus =
     cancellerRole === 'couple'
       ? 'couple_cancelled'
@@ -383,6 +404,7 @@ export async function cancelBooking(
       status: newStatus,
       cancelled_at: new Date().toISOString(),
       cancellation_reason: reason,
+      cancellation_fault: effectiveFault,
     })
     .eq('id', bookingId)
     .in('status', ['pending', 'quoted', 'deposit_paid'])
@@ -404,7 +426,8 @@ export async function cancelBooking(
     cancellerRole,
     booking.status,
     booking.event_date,
-    booking.deposit_paid_at
+    booking.deposit_paid_at,
+    effectiveFault
   );
 
   const transactions = (booking.transactions as TransactionRow[]) ?? [];
@@ -439,7 +462,7 @@ export async function cancelBooking(
       await clawVendorPending(supabase, vp.id, activeTx.vendor_payout);
     }
 
-    if (cancellerRole === 'vendor') {
+    if (cancellerRole === 'vendor' && effectiveFault === 'vendor_fault') {
       await recordVendorNoShowOrCancel(supabase, vp.id);
     }
   }
@@ -606,6 +629,51 @@ export async function completeBooking(
   return { data: { status: 'completed' }, status: 200 };
 }
 
+// ─── Dispute ──────────────────────────────────────────────────────────────────
+// Couple flags an issue after event. Freezes auto-complete, notifies admin, holds
+// funds in escrow until admin resolves (via SQL for MVP).
+
+export async function disputeBooking(
+  supabase: SupabaseClient<Database>,
+  bookingId: string,
+  coupleUserId: string,
+  reason: string
+): Promise<ServiceResult<{ status: string }>> {
+  const { data: booking } = await supabase
+    .from('booking_requests')
+    .select('couple_user_id, status, event_date')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) return { error: 'Booking not found', status: 404 };
+  if (booking.couple_user_id !== coupleUserId) return { error: 'Forbidden', status: 403 };
+  if (booking.status !== 'deposit_paid') {
+    return { error: `Cannot dispute booking in "${booking.status}" state`, status: 400 };
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  if (booking.event_date > today) {
+    return { error: 'Cannot dispute a booking before the event date', status: 400 };
+  }
+
+  const { data: lockRows } = await supabase
+    .from('booking_requests')
+    .update({
+      status: 'disputed',
+      disputed_at: new Date().toISOString(),
+      dispute_reason: reason,
+    })
+    .eq('id', bookingId)
+    .eq('status', 'deposit_paid')
+    .select('id');
+
+  if (!lockRows || lockRows.length === 0) {
+    return { error: 'Booking state changed, retry', status: 409 };
+  }
+
+  return { data: { status: 'disputed' }, status: 200 };
+}
+
 async function sendCompletionEmails(
   supabase: SupabaseClient<Database>,
   bookingId: string
@@ -686,6 +754,7 @@ export interface VendorEarnings {
   available_cents: number; // earned but not transferred
   transferred_cents: number; // historical
   requires_onboarding: boolean;
+  verification_pending: boolean; // details submitted but Stripe hasn't confirmed yet
   stripe_account_id: string | null;
   frozen_reason: string | null;
 }
@@ -697,7 +766,7 @@ export async function getVendorEarnings(
   const { data: vp } = await supabase
     .from('vendor_profiles')
     .select(
-      'id, stripe_accounts(stripe_account_id, charges_enabled, payouts_enabled, frozen_reason)'
+      'id, stripe_accounts(stripe_account_id, charges_enabled, payouts_enabled, frozen_reason, details_submitted_at)'
     )
     .eq('user_id', vendorUserId)
     .single();
@@ -711,6 +780,7 @@ export async function getVendorEarnings(
           charges_enabled: boolean;
           payouts_enabled: boolean;
           frozen_reason: string | null;
+          details_submitted_at: string | null;
         }[]
       | null
   )?.[0];
@@ -737,7 +807,9 @@ export async function getVendorEarnings(
     }
   }
 
-  const requiresOnboarding = !(stripeAccount?.charges_enabled && stripeAccount?.payouts_enabled);
+  const fullyOnboarded = stripeAccount?.charges_enabled && stripeAccount?.payouts_enabled;
+  const verificationPending = !fullyOnboarded && !!stripeAccount?.details_submitted_at;
+  const requiresOnboarding = !fullyOnboarded && !verificationPending;
 
   return {
     data: {
@@ -745,6 +817,7 @@ export async function getVendorEarnings(
       available_cents: available,
       transferred_cents: transferred,
       requires_onboarding: requiresOnboarding,
+      verification_pending: verificationPending,
       stripe_account_id: stripeAccount?.stripe_account_id ?? null,
       frozen_reason: stripeAccount?.frozen_reason ?? null,
     },

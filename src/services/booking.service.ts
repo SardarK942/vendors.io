@@ -12,7 +12,14 @@ type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ['quoted', 'rejected', 'expired', 'couple_cancelled'],
   quoted: ['deposit_paid', 'couple_cancelled', 'vendor_cancelled', 'expired'],
-  deposit_paid: ['completed', 'couple_cancelled', 'vendor_cancelled', 'cancelled_mutual'],
+  deposit_paid: [
+    'completed',
+    'couple_cancelled',
+    'vendor_cancelled',
+    'cancelled_mutual',
+    'disputed',
+  ],
+  disputed: ['completed', 'couple_cancelled'], // admin-resolved
   rejected: [],
   completed: [],
   expired: [],

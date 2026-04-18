@@ -17,9 +17,14 @@ export default function SignupPage() {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [role, setRole] = useState<UserRole>('couple');
+  const [agreed, setAgreed] = useState(false);
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!agreed) {
+      toast.error('Please accept the Terms and Privacy Policy to continue.');
+      return;
+    }
     setLoading(true);
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
@@ -46,6 +51,10 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = async () => {
+    if (!agreed) {
+      toast.error('Please accept the Terms and Privacy Policy to continue.');
+      return;
+    }
     setLoading(true);
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -149,7 +158,27 @@ export default function SignupPage() {
               placeholder="Min 8 characters"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <div className="flex items-start gap-2">
+            <input
+              id="agree"
+              type="checkbox"
+              checked={agreed}
+              onChange={(e) => setAgreed(e.target.checked)}
+              className="mt-1 h-4 w-4 rounded border-input"
+            />
+            <label htmlFor="agree" className="text-xs text-muted-foreground">
+              I agree to the{' '}
+              <Link href="/terms" target="_blank" className="underline">
+                Terms of Service
+              </Link>{' '}
+              and{' '}
+              <Link href="/privacy" target="_blank" className="underline">
+                Privacy Policy
+              </Link>
+              .
+            </label>
+          </div>
+          <Button type="submit" className="w-full" disabled={loading || !agreed}>
             {loading
               ? 'Creating account...'
               : `Sign Up as ${role === 'couple' ? 'Couple' : 'Vendor'}`}

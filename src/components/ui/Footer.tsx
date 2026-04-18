@@ -46,8 +46,16 @@ export function Footer() {
             </ul>
           </div>
         </div>
-        <div className="mt-8 border-t pt-4 text-center text-xs text-muted-foreground">
-          &copy; {new Date().getFullYear()} Desi Wedding Marketplace. Chicago, IL.
+        <div className="mt-8 flex flex-col items-center gap-2 border-t pt-4 text-xs text-muted-foreground sm:flex-row sm:justify-between">
+          <span>&copy; {new Date().getFullYear()} Desi Wedding Marketplace. Chicago, IL.</span>
+          <div className="flex gap-4">
+            <Link href="/terms" className="hover:text-primary">
+              Terms
+            </Link>
+            <Link href="/privacy" className="hover:text-primary">
+              Privacy
+            </Link>
+          </div>
         </div>
       </div>
     </footer>
