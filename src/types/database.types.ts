@@ -56,6 +56,7 @@ export interface Database {
           response_sla_hours: number;
           total_bookings: number;
           average_rating: number | null;
+          review_count: number;
           searchable_text: string | null;
           created_at: string;
           updated_at: string;
@@ -77,6 +78,7 @@ export interface Database {
           response_sla_hours?: number;
           total_bookings?: number;
           average_rating?: number | null;
+          review_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -96,6 +98,7 @@ export interface Database {
           response_sla_hours?: number;
           total_bookings?: number;
           average_rating?: number | null;
+          review_count?: number;
           updated_at?: string;
         };
         Relationships: [
@@ -130,6 +133,9 @@ export interface Database {
           couple_phone: string | null;
           couple_email: string | null;
           expires_at: string | null;
+          completed_at: string | null;
+          cancelled_at: string | null;
+          cancellation_reason: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -154,6 +160,9 @@ export interface Database {
           couple_phone?: string | null;
           couple_email?: string | null;
           expires_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          cancellation_reason?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -177,6 +186,9 @@ export interface Database {
           couple_phone?: string | null;
           couple_email?: string | null;
           expires_at?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          cancellation_reason?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -204,6 +216,11 @@ export interface Database {
           onboarding_complete: boolean;
           payouts_enabled: boolean;
           charges_enabled: boolean;
+          minimal_created_at: string | null;
+          frozen_reason: 'no_show_strikes' | 'admin_freeze' | null;
+          frozen_at: string | null;
+          no_show_count_year: number;
+          no_show_year: number | null;
           created_at: string;
           updated_at: string;
         };
@@ -214,6 +231,11 @@ export interface Database {
           onboarding_complete?: boolean;
           payouts_enabled?: boolean;
           charges_enabled?: boolean;
+          minimal_created_at?: string | null;
+          frozen_reason?: 'no_show_strikes' | 'admin_freeze' | null;
+          frozen_at?: string | null;
+          no_show_count_year?: number;
+          no_show_year?: number | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -223,6 +245,11 @@ export interface Database {
           onboarding_complete?: boolean;
           payouts_enabled?: boolean;
           charges_enabled?: boolean;
+          minimal_created_at?: string | null;
+          frozen_reason?: 'no_show_strikes' | 'admin_freeze' | null;
+          frozen_at?: string | null;
+          no_show_count_year?: number;
+          no_show_year?: number | null;
           updated_at?: string;
         };
         Relationships: [
@@ -244,6 +271,12 @@ export interface Database {
           platform_fee: number;
           vendor_payout: number;
           status: string;
+          platform_fee_recognized_at: string | null;
+          vendor_earned_at: string | null;
+          refunded_at: string | null;
+          refund_amount_cents: number;
+          transferred_at: string | null;
+          stripe_refund_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -255,6 +288,12 @@ export interface Database {
           platform_fee: number;
           vendor_payout: number;
           status?: string;
+          platform_fee_recognized_at?: string | null;
+          vendor_earned_at?: string | null;
+          refunded_at?: string | null;
+          refund_amount_cents?: number;
+          transferred_at?: string | null;
+          stripe_refund_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -265,6 +304,12 @@ export interface Database {
           platform_fee?: number;
           vendor_payout?: number;
           status?: string;
+          platform_fee_recognized_at?: string | null;
+          vendor_earned_at?: string | null;
+          refunded_at?: string | null;
+          refund_amount_cents?: number;
+          transferred_at?: string | null;
+          stripe_refund_id?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -273,6 +318,65 @@ export interface Database {
             columns: ['booking_request_id'];
             isOneToOne: false;
             referencedRelation: 'booking_requests';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      reviews: {
+        Row: {
+          id: string;
+          booking_request_id: string;
+          reviewer_user_id: string;
+          vendor_profile_id: string;
+          rating_overall: number;
+          rating_quality: number | null;
+          rating_communication: number | null;
+          rating_professionalism: number | null;
+          rating_value: number | null;
+          comment: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_request_id: string;
+          reviewer_user_id: string;
+          vendor_profile_id: string;
+          rating_overall: number;
+          rating_quality?: number | null;
+          rating_communication?: number | null;
+          rating_professionalism?: number | null;
+          rating_value?: number | null;
+          comment?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          rating_overall?: number;
+          rating_quality?: number | null;
+          rating_communication?: number | null;
+          rating_professionalism?: number | null;
+          rating_value?: number | null;
+          comment?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'reviews_booking_request_id_fkey';
+            columns: ['booking_request_id'];
+            isOneToOne: true;
+            referencedRelation: 'booking_requests';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'reviews_reviewer_user_id_fkey';
+            columns: ['reviewer_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'reviews_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
             referencedColumns: ['id'];
           },
         ];

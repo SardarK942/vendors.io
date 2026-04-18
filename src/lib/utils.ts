@@ -13,16 +13,26 @@ export function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
-/** Calculate platform fee in cents (integer math, never floating point). */
-export function calculatePlatformFee(amountCents: number, feePercentage: number = 10): number {
-  return Math.round((amountCents * feePercentage) / 100);
+/** Hold deposit = 10% of the vendor quote. */
+export function calculateDepositAmount(quoteAmountCents: number): number {
+  return Math.round(quoteAmountCents / 10);
 }
 
-/** Calculate hold deposit: $50 or 10% of quote, whichever is less. */
-export function calculateDepositAmount(quoteAmountCents: number): number {
-  const tenPercent = Math.round(quoteAmountCents / 10);
-  const fiftyCents = 5000; // $50 in cents
-  return Math.min(tenPercent, fiftyCents);
+/** Platform's cut of a deposit (30%). Held in escrow until 24h grace elapses. */
+export function calculatePlatformCut(depositCents: number): number {
+  return Math.round(depositCents * 0.3);
+}
+
+/** Vendor's portion of a deposit (70%). Escrowed until event completes. */
+export function calculateVendorPending(depositCents: number): number {
+  return depositCents - calculatePlatformCut(depositCents);
+}
+
+/**
+ * @deprecated Use calculatePlatformCut. Kept for back-compat while code migrates.
+ */
+export function calculatePlatformFee(amountCents: number, feePercentage: number = 30): number {
+  return Math.round((amountCents * feePercentage) / 100);
 }
 
 /**
@@ -96,9 +106,11 @@ export const EVENT_TYPE_LABELS: Record<string, string> = {
 export const BOOKING_STATUSES = [
   'pending',
   'quoted',
+  'rejected',
   'deposit_paid',
-  'confirmed',
+  'couple_cancelled',
+  'vendor_cancelled',
+  'cancelled_mutual',
+  'completed',
   'expired',
-  'declined',
-  'cancelled',
 ] as const;
