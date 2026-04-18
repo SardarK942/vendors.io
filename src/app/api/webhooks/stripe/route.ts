@@ -6,6 +6,7 @@ import {
   handlePaymentSuccess,
   handlePaymentFailure,
   handleAccountUpdated,
+  handleChargeRefunded,
 } from '@/services/payment.service';
 
 export async function POST(request: NextRequest) {
@@ -25,26 +26,33 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  // Use service role client (bypasses RLS) for webhook processing
   const supabase = createServiceRoleClient();
 
   switch (event.type) {
     case 'payment_intent.succeeded': {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const bookingId = paymentIntent.metadata?.booking_id;
-
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const bookingId = pi.metadata?.booking_id;
       if (bookingId) {
-        await handlePaymentSuccess(supabase, paymentIntent.id, bookingId, paymentIntent.amount);
+        await handlePaymentSuccess(supabase, pi.id, bookingId, pi.amount);
       }
       break;
     }
 
     case 'payment_intent.payment_failed': {
-      const paymentIntent = event.data.object as Stripe.PaymentIntent;
-      const bookingId = paymentIntent.metadata?.booking_id;
-
+      const pi = event.data.object as Stripe.PaymentIntent;
+      const bookingId = pi.metadata?.booking_id;
       if (bookingId) {
-        await handlePaymentFailure(supabase, paymentIntent.id, bookingId);
+        await handlePaymentFailure(supabase, pi.id, bookingId);
+      }
+      break;
+    }
+
+    case 'charge.refunded': {
+      // Syncs refunds initiated outside our app (Stripe Dashboard, etc.). Idempotent.
+      const charge = event.data.object as Stripe.Charge;
+      const piId = typeof charge.payment_intent === 'string' ? charge.payment_intent : null;
+      if (piId) {
+        await handleChargeRefunded(supabase, piId, charge.amount_refunded, charge.amount);
       }
       break;
     }
@@ -58,6 +66,14 @@ export async function POST(request: NextRequest) {
         account.payouts_enabled ?? false,
         account.details_submitted ?? false
       );
+      break;
+    }
+
+    case 'payout.paid':
+    case 'payout.failed': {
+      // Noted but no DB action for MVP — transfers.create already updated transactions.transferred_at.
+      // Keeping the events subscribed for auditability.
+      console.log(`[Stripe Webhook] ${event.type}`, event.data.object);
       break;
     }
 
