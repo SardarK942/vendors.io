@@ -384,6 +384,62 @@ export interface Database {
           },
         ];
       };
+      cron_runs: {
+        Row: {
+          id: string;
+          job: string;
+          started_at: string;
+          completed_at: string | null;
+          duration_ms: number | null;
+          result: unknown | null;
+          error: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          job: string;
+          started_at?: string;
+          completed_at?: string | null;
+          duration_ms?: number | null;
+          result?: unknown | null;
+          error?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          job?: string;
+          started_at?: string;
+          completed_at?: string | null;
+          duration_ms?: number | null;
+          result?: unknown | null;
+          error?: string | null;
+        };
+        Relationships: [];
+      };
+      stripe_events: {
+        Row: {
+          event_id: string;
+          event_type: string;
+          received_at: string;
+          handled_at: string | null;
+          error: string | null;
+          payload: unknown | null;
+        };
+        Insert: {
+          event_id: string;
+          event_type: string;
+          received_at?: string;
+          handled_at?: string | null;
+          error?: string | null;
+          payload?: unknown | null;
+        };
+        Update: {
+          event_type?: string;
+          handled_at?: string | null;
+          error?: string | null;
+          payload?: unknown | null;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {

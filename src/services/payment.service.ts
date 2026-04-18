@@ -10,6 +10,7 @@ import {
   sendReviewRequestEmail,
   sendCancellationEmail,
 } from '@/lib/email/resend';
+import { logger } from '@/lib/logger';
 
 type TransactionRow = Database['public']['Tables']['transactions']['Row'];
 
@@ -247,9 +248,10 @@ export async function handleChargeRefunded(
       );
     } catch (err) {
       // Log and continue — we still want the ledger to reflect the refund even if reversal fails.
-      console.error('[handleChargeRefunded] transfer reversal failed', {
+      logger.error('transfer reversal failed', err, {
+        site: 'handleChargeRefunded',
         transferId: tx.stripe_transfer_id,
-        error: err instanceof Error ? err.message : err,
+        txId: tx.id,
       });
     }
   }
@@ -529,7 +531,8 @@ export async function clawVendorPending(
   }
 
   if (remaining > 0) {
-    console.warn('[clawVendorPending] insufficient pending', {
+    logger.warn('insufficient pending to fully claw', {
+      site: 'clawVendorPending',
       vendorProfileId,
       shortfall: remaining,
     });
@@ -809,7 +812,11 @@ export async function initiatePayout(
         typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id;
 
       if (!chargeId) {
-        console.warn('[initiatePayout] no charge on PI, skipping', tx.stripe_payment_intent_id);
+        logger.warn('no charge on PI, skipping transfer', {
+          site: 'initiatePayout',
+          paymentIntentId: tx.stripe_payment_intent_id,
+          txId: tx.id,
+        });
         continue;
       }
 
@@ -835,7 +842,7 @@ export async function initiatePayout(
       totalTransferred += tx.vendor_payout;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Transfer failed';
-      console.error('[initiatePayout] transfer failed', { txId: tx.id, error: message });
+      logger.error('transfer failed', err, { site: 'initiatePayout', txId: tx.id });
       if (totalTransferred > 0) {
         return { data: { transferred_cents: totalTransferred }, status: 200 };
       }
@@ -868,6 +875,10 @@ async function autoTransferEarnedFunds(
   const vp = account.vendor_profiles as unknown as { user_id: string };
   const result = await initiatePayout(supabase, vp.user_id);
   if (result.error) {
-    console.warn('[autoTransferEarnedFunds] skipped', { stripeAccountId, reason: result.error });
+    logger.warn('auto transfer skipped', {
+      site: 'autoTransferEarnedFunds',
+      stripeAccountId,
+      reason: result.error,
+    });
   }
 }

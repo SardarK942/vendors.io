@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ZodError } from 'zod';
+import { logger } from '@/lib/logger';
 
 export class HttpError extends Error {
   constructor(
@@ -47,7 +48,7 @@ export function withErrorBoundary<Args extends unknown[], R extends Response | N
       }
 
       const message = err instanceof Error ? err.message : 'Unknown error';
-      console.error(`[${requestId}] unhandled route error:`, err);
+      logger.error('unhandled route error', err, { requestId });
       return NextResponse.json({ error: message, requestId }, { status: 500 });
     }
   };
