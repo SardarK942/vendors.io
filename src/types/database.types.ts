@@ -277,6 +277,7 @@ export interface Database {
           refund_amount_cents: number;
           transferred_at: string | null;
           stripe_refund_id: string | null;
+          stripe_transfer_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -294,6 +295,7 @@ export interface Database {
           refund_amount_cents?: number;
           transferred_at?: string | null;
           stripe_refund_id?: string | null;
+          stripe_transfer_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -310,6 +312,7 @@ export interface Database {
           refund_amount_cents?: number;
           transferred_at?: string | null;
           stripe_refund_id?: string | null;
+          stripe_transfer_id?: string | null;
           updated_at?: string;
         };
         Relationships: [

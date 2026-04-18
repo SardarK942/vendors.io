@@ -10,20 +10,23 @@ export async function createMinimalAccount(
   email: string,
   country: string = 'US'
 ): Promise<{ accountId: string }> {
-  const account = await stripe.accounts.create({
-    country,
-    email,
-    controller: {
-      fees: { payer: 'application' },
-      losses: { payments: 'application' },
-      requirement_collection: 'application',
-      stripe_dashboard: { type: 'none' },
+  const account = await stripe.accounts.create(
+    {
+      country,
+      email,
+      controller: {
+        fees: { payer: 'application' },
+        losses: { payments: 'application' },
+        requirement_collection: 'application',
+        stripe_dashboard: { type: 'none' },
+      },
+      capabilities: {
+        transfers: { requested: true },
+      },
+      metadata: { vendor_profile_id: vendorProfileId },
     },
-    capabilities: {
-      transfers: { requested: true },
-    },
-    metadata: { vendor_profile_id: vendorProfileId },
-  });
+    { idempotencyKey: `vp:${vendorProfileId}:account-create` }
+  );
 
   return { accountId: account.id };
 }

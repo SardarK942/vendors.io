@@ -89,34 +89,37 @@ export async function createDepositCheckout(
   const platformCut = calculatePlatformCut(depositAmount);
   const vendorPending = calculateVendorPending(depositAmount);
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    line_items: [
-      {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: `Booking Deposit — ${vp.business_name}`,
-            description: `Deposit for ${booking.event_type} on ${booking.event_date}`,
+  const session = await stripe.checkout.sessions.create(
+    {
+      mode: 'payment',
+      line_items: [
+        {
+          price_data: {
+            currency: 'usd',
+            product_data: {
+              name: `Booking Deposit — ${vp.business_name}`,
+              description: `Deposit for ${booking.event_type} on ${booking.event_date}`,
+            },
+            unit_amount: depositAmount,
           },
-          unit_amount: depositAmount,
+          quantity: 1,
         },
-        quantity: 1,
+      ],
+      payment_intent_data: {
+        metadata: {
+          booking_id: bookingId,
+          vendor_profile_id: vp.id,
+          vendor_pending_cents: vendorPending.toString(),
+          platform_cut_cents: platformCut.toString(),
+          deferred_onboarding: 'true',
+        },
       },
-    ],
-    payment_intent_data: {
-      metadata: {
-        booking_id: bookingId,
-        vendor_profile_id: vp.id,
-        vendor_pending_cents: vendorPending.toString(),
-        platform_cut_cents: platformCut.toString(),
-        deferred_onboarding: 'true',
-      },
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings/${bookingId}?payment=success`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings/${bookingId}?payment=cancelled`,
+      metadata: { booking_id: bookingId },
     },
-    success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings/${bookingId}?payment=success`,
-    cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings/${bookingId}?payment=cancelled`,
-    metadata: { booking_id: bookingId },
-  });
+    { idempotencyKey: `booking:${bookingId}:checkout` }
+  );
 
   return { data: { checkoutUrl: session.url! }, status: 200 };
 }
@@ -224,6 +227,33 @@ export async function handleChargeRefunded(
   // Idempotent: only update if not already marked refunded. Refund initiated out-of-band
   // (e.g., via Stripe Dashboard) should still sync into our ledger.
   const isFullRefund = amountRefunded >= totalAmount;
+
+  // If the vendor share was already transferred out, reverse it before marking refunded.
+  // Without this, the platform is short by the vendor share.
+  const { data: tx } = await supabase
+    .from('transactions')
+    .select('id, stripe_transfer_id, transferred_at, refunded_at, vendor_payout')
+    .eq('stripe_payment_intent_id', paymentIntentId)
+    .is('refunded_at', null)
+    .maybeSingle();
+
+  if (tx?.stripe_transfer_id && tx.transferred_at) {
+    try {
+      const reversalAmount = Math.round((tx.vendor_payout * amountRefunded) / totalAmount);
+      await stripe.transfers.createReversal(
+        tx.stripe_transfer_id,
+        { amount: reversalAmount },
+        { idempotencyKey: `tx:${tx.id}:transfer-reversal` }
+      );
+    } catch (err) {
+      // Log and continue — we still want the ledger to reflect the refund even if reversal fails.
+      console.error('[handleChargeRefunded] transfer reversal failed', {
+        transferId: tx.stripe_transfer_id,
+        error: err instanceof Error ? err.message : err,
+      });
+    }
+  }
+
   await supabase
     .from('transactions')
     .update({
@@ -343,21 +373,29 @@ export async function cancelBooking(
         ? 'vendor_cancelled'
         : 'cancelled_mutual';
 
-  // Pre-deposit: no money to move, just flip state.
-  if (booking.status === 'pending' || booking.status === 'quoted') {
-    await supabase
-      .from('booking_requests')
-      .update({
-        status: newStatus,
-        cancelled_at: new Date().toISOString(),
-        cancellation_reason: reason,
-      })
-      .eq('id', bookingId);
-    return { data: { refund_amount_cents: 0, new_status: newStatus }, status: 200 };
+  // Atomic status flip — only succeeds if booking is still in a cancellable state.
+  // Prevents concurrent cancels from both issuing refunds.
+  const { data: lockRows } = await supabase
+    .from('booking_requests')
+    .update({
+      status: newStatus,
+      cancelled_at: new Date().toISOString(),
+      cancellation_reason: reason,
+    })
+    .eq('id', bookingId)
+    .in('status', ['pending', 'quoted', 'deposit_paid'])
+    .select('id');
+
+  if (!lockRows || lockRows.length === 0) {
+    return {
+      error: 'Booking is no longer cancellable (already cancelled or completed)',
+      status: 409,
+    };
   }
 
-  if (booking.status !== 'deposit_paid') {
-    return { error: `Cannot cancel booking in "${booking.status}" state`, status: 400 };
+  // Pre-deposit: no money to move.
+  if (booking.status === 'pending' || booking.status === 'quoted') {
+    return { data: { refund_amount_cents: 0, new_status: newStatus }, status: 200 };
   }
 
   const policy = computeRefundPolicy(
@@ -376,32 +414,24 @@ export async function cancelBooking(
     refundAmount = Math.round(activeTx.amount * policy.coupleRefundPct);
 
     if (refundAmount > 0) {
-      const refund = await stripe.refunds.create({
-        payment_intent: activeTx.stripe_payment_intent_id,
-        amount: refundAmount,
-      });
-
-      await supabase
-        .from('transactions')
-        .update({
-          status: refundAmount >= activeTx.amount ? 'refunded' : 'partial_refund',
-          refunded_at: new Date().toISOString(),
-          refund_amount_cents: refundAmount,
-          stripe_refund_id: refund.id,
-          vendor_payout: Math.round(activeTx.vendor_payout * policy.vendorKeepPct),
-          platform_fee: Math.round(activeTx.platform_fee * policy.platformKeepPct),
-        })
-        .eq('id', activeTx.id);
-    } else {
-      // No refund but split adjusted (e.g., couple cancels within 30d → 0% refund but keep full split)
-      await supabase
-        .from('transactions')
-        .update({
-          vendor_payout: Math.round(activeTx.vendor_payout * policy.vendorKeepPct),
-          platform_fee: Math.round(activeTx.platform_fee * policy.platformKeepPct),
-        })
-        .eq('id', activeTx.id);
+      await stripe.refunds.create(
+        {
+          payment_intent: activeTx.stripe_payment_intent_id,
+          amount: refundAmount,
+        },
+        { idempotencyKey: `tx:${activeTx.id}:refund` }
+      );
     }
+
+    // Policy-derived split adjustment — applied regardless of refund amount.
+    // Webhook (handleChargeRefunded) owns status/refunded_at/refund_amount_cents/stripe_refund_id.
+    await supabase
+      .from('transactions')
+      .update({
+        vendor_payout: Math.round(activeTx.vendor_payout * policy.vendorKeepPct),
+        platform_fee: Math.round(activeTx.platform_fee * policy.platformKeepPct),
+      })
+      .eq('id', activeTx.id);
 
     if (policy.clawVendorOtherPending) {
       await clawVendorPending(supabase, vp.id, activeTx.vendor_payout);
@@ -411,15 +441,6 @@ export async function cancelBooking(
       await recordVendorNoShowOrCancel(supabase, vp.id);
     }
   }
-
-  await supabase
-    .from('booking_requests')
-    .update({
-      status: newStatus,
-      cancelled_at: new Date().toISOString(),
-      cancellation_reason: reason,
-    })
-    .eq('id', bookingId);
 
   await notifyCancellation(supabase, bookingId, cancellerRole, refundAmount, reason);
 
@@ -792,17 +813,23 @@ export async function initiatePayout(
         continue;
       }
 
-      await stripe.transfers.create({
-        amount: tx.vendor_payout,
-        currency: 'usd',
-        destination: earnings.data.stripe_account_id,
-        source_transaction: chargeId,
-        metadata: { vendor_user_id: vendorUserId, transaction_id: tx.id },
-      });
+      const transfer = await stripe.transfers.create(
+        {
+          amount: tx.vendor_payout,
+          currency: 'usd',
+          destination: earnings.data.stripe_account_id,
+          source_transaction: chargeId,
+          metadata: { vendor_user_id: vendorUserId, transaction_id: tx.id },
+        },
+        { idempotencyKey: `tx:${tx.id}:transfer` }
+      );
 
       await supabase
         .from('transactions')
-        .update({ transferred_at: new Date().toISOString() })
+        .update({
+          transferred_at: new Date().toISOString(),
+          stripe_transfer_id: transfer.id,
+        })
         .eq('id', tx.id);
 
       totalTransferred += tx.vendor_payout;
