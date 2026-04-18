@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { submitQuote } from '@/services/booking.service';
+import { setupMinimalStripeAccount } from '@/services/payment.service';
 import { sendQuoteEmail } from '@/lib/email/resend';
 import { quoteSchema } from '@/types';
 
@@ -30,6 +31,15 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: result.status });
+  }
+
+  // Lazy-init: ensure vendor has a minimal Stripe account so couple can pay deposit.
+  // Uses service-role client because stripe_accounts insert requires RLS bypass.
+  if (result.data) {
+    const adminSb = createServiceRoleClient();
+    await setupMinimalStripeAccount(adminSb, result.data.vendor_profile_id, user.email!).catch(
+      (err) => console.error('[quote] setupMinimalStripeAccount failed', err)
+    );
   }
 
   // Fire-and-forget email notification to couple
