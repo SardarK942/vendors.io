@@ -1,6 +1,7 @@
 /**
- * Structured logger. Writes to console today. When Sentry lands in Phase H,
- * swap the transport without touching call sites.
+ * Structured logger. Writes JSON-per-line to stdout/stderr. When SENTRY_DSN is
+ * configured, logger.error also forwards to Sentry via captureException. No-op
+ * for Sentry when DSN is unset, so local dev + unwired previews stay quiet.
  *
  * Usage:
  *   import { logger } from '@/lib/logger';
@@ -29,6 +30,23 @@ function emit(level: Level, message: string, context?: LogContext, error?: unkno
   if (level === 'error') console.error(line);
   else if (level === 'warn') console.warn(line);
   else console.log(line);
+
+  if (level === 'error' && (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN)) {
+    // Dynamic import: don't load @sentry/nextjs if DSN isn't set. The dynamic
+    // import is intentionally fire-and-forget; a failed capture must never
+    // mask or delay the original error's handling.
+    import('@sentry/nextjs')
+      .then((Sentry) => {
+        if (error instanceof Error) {
+          Sentry.captureException(error, { extra: { message, ...context } });
+        } else {
+          Sentry.captureMessage(message, { level: 'error', extra: { error, ...context } });
+        }
+      })
+      .catch(() => {
+        /* swallow — primary logging already happened above */
+      });
+  }
 }
 
 export const logger = {

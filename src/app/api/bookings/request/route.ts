@@ -2,11 +2,20 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createBookingRequest } from '@/services/booking.service';
 import { sendBookingRequestEmail } from '@/lib/email/resend';
 import { bookingRequestSchema } from '@/types';
-import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const POST = withErrorBoundary(async (request: NextRequest) => {
   const { user, supabase } = await requireUser();
+
+  const gate = await checkRateLimit(
+    request,
+    'booking:create',
+    { limit: 10, window: '1 m' },
+    user.id
+  );
+  if (!gate.ok) throw new HttpError(429, gate.message!);
 
   const body = await request.json();
   const parsed = bookingRequestSchema.parse(body);
