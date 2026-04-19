@@ -56,7 +56,7 @@ Fail-open: if Upstash is down, requests pass through. A rate limiter that kills 
 
 ## H3 — Supabase prod/dev split
 
-**Current state:** `.env.local` points at the **prod** project (`obpdgihdskbxzgyctaib`). The dev project (`lquvhjedzubqusnfaak`) exists but is unused.
+**Current state:** `.env.local` points at the **prod** project (`obpdgihdskbxzgyctaib`). The dev project (`lquvhjedlzubqusnfaak`) exists but is unused.
 
 **Purpose:** Stop testing against the DB that will hold real users' deposit money. Migrations, seed data, debug queries should all land on dev first.
 

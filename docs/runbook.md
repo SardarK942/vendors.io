@@ -12,7 +12,7 @@ knows you've seen that failure shape before.
 | ---------------- | ----------------------------------------------------------- |
 | Vercel project   | https://vercel.com/sardark942s-projects/vendors-io          |
 | Supabase (prod)  | https://supabase.com/dashboard/project/obpdgihdskbxzgyctaib |
-| Supabase (dev)   | https://supabase.com/dashboard/project/lquvhjedzubqusnfaak  |
+| Supabase (dev)   | https://supabase.com/dashboard/project/lquvhjedlzubqusnfaak |
 | Stripe dashboard | https://dashboard.stripe.com                                |
 | Resend dashboard | https://resend.com/emails                                   |
 | Sentry           | https://sentry.io (once set up — Phase H1)                  |
