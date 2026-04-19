@@ -49,6 +49,18 @@ export function withErrorBoundary<Args extends unknown[], R extends Response | N
 
       const message = err instanceof Error ? err.message : 'Unknown error';
       logger.error('unhandled route error', err, { requestId });
+
+      // Flush Sentry before returning: on Vercel serverless the function
+      // can be frozen immediately after response, losing any in-flight send.
+      if (process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN) {
+        try {
+          const Sentry = await import('@sentry/nextjs');
+          await Sentry.flush(2000);
+        } catch {
+          /* ignore — logger already wrote the error to stdout */
+        }
+      }
+
       return NextResponse.json({ error: message, requestId }, { status: 500 });
     }
   };
