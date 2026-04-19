@@ -469,6 +469,10 @@ export interface Database {
         Args: Record<string, never>;
         Returns: number;
       };
+      redact_stale_booking_pii: {
+        Args: { retention_days?: number };
+        Returns: number;
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

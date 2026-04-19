@@ -747,6 +747,24 @@ export async function autoCompleteBookings(
   return { completed: data?.length ?? 0 };
 }
 
+// ─── Cron: redact couple PII on stale terminal bookings (>90 days) ───────────
+// Calls the SECURITY DEFINER SQL function from migration 00013. Contact info is
+// nulled in place; the booking row itself is preserved for audit/history.
+
+export async function redactStaleBookingPii(
+  supabase: SupabaseClient<Database>,
+  retentionDays = 90
+): Promise<{ redacted: number }> {
+  const { data, error } = await supabase.rpc('redact_stale_booking_pii', {
+    retention_days: retentionDays,
+  });
+  if (error) {
+    console.error('[redactStaleBookingPii] rpc failed', error);
+    return { redacted: 0 };
+  }
+  return { redacted: (data as number) ?? 0 };
+}
+
 // ─── Earnings + Withdrawals ───────────────────────────────────────────────────
 
 export interface VendorEarnings {

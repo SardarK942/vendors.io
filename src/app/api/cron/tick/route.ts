@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { expireStaleRequests } from '@/services/booking.service';
-import { autoCompleteBookings, recognizePlatformFees } from '@/services/payment.service';
+import {
+  autoCompleteBookings,
+  recognizePlatformFees,
+  redactStaleBookingPii,
+} from '@/services/payment.service';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 
 export const dynamic = 'force-dynamic';
@@ -32,20 +36,23 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     expired_bookings: number;
     recognized_transactions: number;
     auto_completed_bookings: number;
+    redacted_pii_rows: number;
   } | null = null;
   let errorMessage: string | null = null;
 
   try {
-    const [expired, recognized, completed] = await Promise.all([
+    const [expired, recognized, completed, redacted] = await Promise.all([
       expireStaleRequests(supabase),
       recognizePlatformFees(supabase),
       autoCompleteBookings(supabase),
+      redactStaleBookingPii(supabase),
     ]);
 
     result = {
       expired_bookings: expired,
       recognized_transactions: recognized.recognized,
       auto_completed_bookings: completed.completed,
+      redacted_pii_rows: redacted.redacted,
     };
   } catch (err) {
     errorMessage = err instanceof Error ? err.message : String(err);
