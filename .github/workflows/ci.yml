@@ -52,23 +52,40 @@ jobs:
     name: e2e (Playwright)
     runs-on: ubuntu-latest
     timeout-minutes: 20
-    # Only run E2E if Supabase secrets are configured. Forks won't have them
-    # and would otherwise fail; this skips cleanly until secrets are added.
-    if: ${{ github.event_name == 'push' || github.repository == github.event.pull_request.head.repo.full_name }}
+    needs: fast
     steps:
       - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      # Secrets can't be referenced in job-level `if:`. Probe them in a step
+      # and gate every following step on the result. Skip cleanly (with a
+      # warning) when secrets aren't configured yet.
+      - name: Check for E2E secrets
+        id: check
+        env:
+          PROBE: ${{ secrets.E2E_SUPABASE_URL }}
+        run: |
+          if [ -n "$PROBE" ]; then
+            echo "configured=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "configured=false" >> "$GITHUB_OUTPUT"
+            echo "::warning::E2E secrets not set — skipping E2E. Add them at https://github.com/${{ github.repository }}/settings/secrets/actions"
+          fi
+
+      - if: steps.check.outputs.configured == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: '20'
           cache: npm
 
-      - run: npm ci
+      - if: steps.check.outputs.configured == 'true'
+        run: npm ci
 
       - name: Install Playwright browser
+        if: steps.check.outputs.configured == 'true'
         run: npx playwright install --with-deps chromium
 
       - name: Run E2E
+        if: steps.check.outputs.configured == 'true'
         run: npm run test:e2e
         env:
           # Read from GitHub repo secrets — set these once at:
@@ -86,7 +103,7 @@ jobs:
           NEXT_PUBLIC_APP_URL: http://localhost:3000
 
       - name: Upload Playwright report on failure
-        if: failure()
+        if: failure() && steps.check.outputs.configured == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
