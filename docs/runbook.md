@@ -1,4 +1,4 @@
-# vendors.io production runbook
+# baazar.io production runbook
 
 The "something is on fire at 2am, what do I do" guide. Keep entries short.
 When you fix an incident, add a row to the log at the bottom so future-you

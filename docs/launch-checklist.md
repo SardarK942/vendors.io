@@ -93,11 +93,11 @@ Risk: if a migration works against dev but fails against prod (data-dependent co
 
 **Purpose:** Emails currently send from `onboarding@resend.dev` sandbox — Resend only delivers to your own account email. Real users never see your signup / quote / cancellation emails.
 
-1. Buy a domain (Namecheap, Cloudflare, Porkbun — whoever you prefer). Assume `vendors.io` going forward.
-2. Resend dashboard → **Domains → Add** → enter `vendors.io`.
+1. Buy a domain (Namecheap, Cloudflare, Porkbun — whoever you prefer). Assume `baazar.io` going forward.
+2. Resend dashboard → **Domains → Add** → enter `baazar.io`.
 3. Resend gives you DNS records: SPF (TXT), DKIM (CNAMEs × 3), DMARC (TXT). Add all of them at your DNS provider.
 4. Wait for DNS to propagate + Resend to verify (usually 5–30 min).
-5. Update `src/lib/email/resend.ts:4` — change `FROM_EMAIL` to `'Vendors.io <noreply@vendors.io>'` (or whichever sender you prefer). Commit + push.
+5. Update `src/lib/email/resend.ts:4` — change `FROM_EMAIL` to `'Baazar.io <noreply@baazar.io>'` (already updated on this branch).
 6. **Verify:** trigger a booking request email to a non-Resend-account address (e.g., your personal Gmail) — should deliver.
 
 Deliverability tip: warm up the domain by sending a few emails manually before going live. A cold domain going from 0 → 500 sends in a day gets flagged.
@@ -106,13 +106,13 @@ Deliverability tip: warm up the domain by sending a few emails manually before g
 
 ## H6 — Custom domain → Vercel prod
 
-1. Vercel → project → **Settings → Domains → Add**. Enter `vendors.io` (and optionally `www.vendors.io`).
+1. Vercel → project → **Settings → Domains → Add**. Enter `baazar.io` (and optionally `www.baazar.io`).
 2. Vercel shows DNS records — either an `A` to `76.76.21.21` (apex) or a `CNAME` to `cname.vercel-dns.com` (www). Add at your DNS provider.
 3. Wait for Vercel to provision the cert (a few minutes).
-4. Update **NEXT_PUBLIC_APP_URL** on Vercel prod to `https://vendors.io`. Redeploy.
-5. Update Supabase → Authentication → URL Configuration → add `https://vendors.io` as Site URL + `https://vendors.io/api/auth/callback` as redirect URL.
+4. Update **NEXT_PUBLIC_APP_URL** on Vercel prod to `https://baazar.io`. Redeploy.
+5. Update Supabase → Authentication → URL Configuration → add `https://baazar.io` as Site URL + `https://baazar.io/api/auth/callback` as redirect URL.
 6. Update the Stripe live-mode webhook URL to use the new domain.
-7. **Verify:** hit https://vendors.io, confirm it renders. Sign up a fresh user, confirm email-callback redirects land on the new domain.
+7. **Verify:** hit https://baazar.io, confirm it renders. Sign up a fresh user, confirm email-callback redirects land on the new domain.
 
 ---
 

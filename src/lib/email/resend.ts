@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const FROM_EMAIL = 'Vendors.io <onboarding@resend.dev>';
+const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
 let _resend: Resend | null = null;
 function client(): Resend {
@@ -43,7 +43,7 @@ function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 }
 
-const FOOTER = '<p style="color:#888;font-size:12px;">— Vendors.io</p>';
+const FOOTER = '<p style="color:#888;font-size:12px;">— Baazar.io</p>';
 
 export async function sendBookingRequestEmail(
   vendorEmail: string,
@@ -157,7 +157,7 @@ export async function sendReviewRequestEmail(
     subject: `How was ${vendorName}?`,
     html: `
       <h2>Leave a review</h2>
-      <p>Thanks for using Vendors.io! Your feedback helps other couples find great vendors.</p>
+      <p>Thanks for using Baazar.io! Your feedback helps other couples find great vendors.</p>
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Leave a review for ${vendorName}</a></p>
       ${FOOTER}
     `,

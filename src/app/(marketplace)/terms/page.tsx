@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — Vendors.io',
+  title: 'Terms of Service — Baazar.io',
 };
 
 export default function TermsPage() {
@@ -17,7 +17,7 @@ export default function TermsPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        Vendors.io (&quot;the Platform&quot;, &quot;we&quot;) is a marketplace that connects couples
+        Baazar.io (&quot;the Platform&quot;, &quot;we&quot;) is a marketplace that connects couples
         planning Desi weddings with independent service vendors in the Chicago area. We are not a
         vendor ourselves; we facilitate introductions, quotes, and hold deposits.
       </p>

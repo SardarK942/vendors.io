@@ -61,7 +61,7 @@ export interface TestVendor extends TestUser {
 }
 
 const PASSWORD = 'E2eTest!Password123';
-const TEST_EMAIL_DOMAIN = 'e2e-test.vendors.io.local';
+const TEST_EMAIL_DOMAIN = 'e2e-test.baazar.io.local';
 
 function testEmail(prefix: string): string {
   const stamp = Date.now().toString(36);

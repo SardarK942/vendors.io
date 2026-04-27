@@ -35,7 +35,7 @@
 
 ```bash
 # 1. Initialize Next.js 14 project
-npx create-next-app@14 vendors-io --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
+npx create-next-app@14 baazar-io --typescript --tailwind --eslint --app --src-dir --import-alias "@/*"
 
 # 2. Install core dependencies
 npm install @supabase/supabase-js @supabase/ssr stripe @stripe/stripe-js zod resend
@@ -94,7 +94,7 @@ PLATFORM_FEE_PERCENTAGE=10
 ## Project Structure (Target)
 
 ```
-vendors.io/
+baazar.io/
 ├── src/
 │   ├── app/
 │   │   ├── (auth)/
