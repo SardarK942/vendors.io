@@ -65,14 +65,45 @@ export type EventType = z.infer<typeof eventTypeSchema>;
 export const bookingStatusSchema = z.enum([
   'pending',
   'quoted',
+  'rejected',
   'deposit_paid',
-  'confirmed',
+  'couple_cancelled',
+  'vendor_cancelled',
+  'cancelled_mutual',
+  'completed',
   'expired',
-  'declined',
-  'cancelled',
+  'disputed',
 ]);
 
 export type BookingStatus = z.infer<typeof bookingStatusSchema>;
+
+export const cancellerRoleSchema = z.enum(['couple', 'vendor', 'mutual']);
+export type CancellerRole = z.infer<typeof cancellerRoleSchema>;
+
+export const cancellationFaultSchema = z.enum(['none', 'vendor_fault', 'force_majeure']);
+export type CancellationFault = z.infer<typeof cancellationFaultSchema>;
+
+export const cancelBookingSchema = z.object({
+  reason: z.string().max(1000).optional(),
+  fault: cancellationFaultSchema.optional(),
+});
+export type CancelBookingInput = z.infer<typeof cancelBookingSchema>;
+
+export const disputeBookingSchema = z.object({
+  reason: z.string().min(10).max(2000),
+});
+export type DisputeBookingInput = z.infer<typeof disputeBookingSchema>;
+
+export const reviewSchema = z.object({
+  bookingRequestId: z.string().uuid(),
+  ratingOverall: z.number().int().min(1).max(5),
+  ratingQuality: z.number().int().min(1).max(5).optional(),
+  ratingCommunication: z.number().int().min(1).max(5).optional(),
+  ratingProfessionalism: z.number().int().min(1).max(5).optional(),
+  ratingValue: z.number().int().min(1).max(5).optional(),
+  comment: z.string().max(4000).optional(),
+});
+export type ReviewInput = z.infer<typeof reviewSchema>;
 
 export const bookingRequestSchema = z.object({
   vendorProfileId: z.string().uuid(),

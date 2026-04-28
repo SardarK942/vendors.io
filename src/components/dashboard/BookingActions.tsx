@@ -5,106 +5,119 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import type { Database } from '@/types/database.types';
+import { ReviewForm } from '@/components/dashboard/ReviewForm';
+import { DisputeDialog } from '@/components/dashboard/DisputeDialog';
+import { CancelDialog } from '@/components/dashboard/CancelDialog';
+import { DepositDialog } from '@/components/dashboard/DepositDialog';
 
 type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
 
 interface BookingActionsProps {
   booking: BookingRow;
   role: 'couple' | 'vendor';
+  hasReview?: boolean;
+  vendorName?: string;
 }
 
-export function BookingActions({ booking, role }: BookingActionsProps) {
+export function BookingActions({
+  booking,
+  role,
+  hasReview = false,
+  vendorName = '',
+}: BookingActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [disputeOpen, setDisputeOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
+  const [depositOpen, setDepositOpen] = useState(false);
 
-  const handleCancel = async (status: 'cancelled' | 'declined') => {
+  const cancellable = ['pending', 'quoted', 'deposit_paid'].includes(booking.status);
+  const eventPast = new Date(booking.event_date) <= new Date();
+
+  const handleComplete = async () => {
+    if (
+      !window.confirm('Mark this booking as complete? This releases the deposit to the vendor.')
+    ) {
+      return;
+    }
     setLoading(true);
-    const res = await fetch(`/api/bookings/${booking.id}/cancel`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    });
-
-    const data = await res.json();
+    const res = await fetch(`/api/bookings/${booking.id}/complete`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      toast.error(data.error || 'Action failed');
+      toast.error(data.error || 'Failed to complete');
       setLoading(false);
       return;
     }
-
-    toast.success(status === 'cancelled' ? 'Booking cancelled' : 'Request declined');
-    router.refresh();
-  };
-
-  const handlePayDeposit = async () => {
-    setLoading(true);
-    const res = await fetch(`/api/bookings/${booking.id}/deposit`, {
-      method: 'POST',
-    });
-
-    const data = await res.json();
-    if (!res.ok) {
-      toast.error(data.error || 'Failed to create checkout');
-      setLoading(false);
-      return;
-    }
-
-    // Redirect to Stripe Checkout
-    if (data.data?.checkoutUrl) {
-      window.location.href = data.data.checkoutUrl;
-    }
-  };
-
-  const handleConfirm = async () => {
-    setLoading(true);
-    const res = await fetch(`/api/bookings/${booking.id}/cancel`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'confirmed' }),
-    });
-
-    // Note: confirm uses a different path in real implementation.
-    // For now, reuse the cancel endpoint with the confirmed status.
-    // This will be properly handled through the state machine.
-    const data = await res.json();
-    if (!res.ok) {
-      toast.error(data.error || 'Failed to confirm');
-      setLoading(false);
-      return;
-    }
-
-    toast.success('Booking confirmed!');
+    toast.success('Booking marked complete.');
     router.refresh();
   };
 
   return (
     <div className="flex flex-wrap gap-2 pt-2">
-      {/* Couple: Pay deposit when quoted */}
       {role === 'couple' && booking.status === 'quoted' && (
-        <Button onClick={handlePayDeposit} disabled={loading}>
-          {loading ? 'Processing...' : 'Pay Hold Deposit'}
+        <Button onClick={() => setDepositOpen(true)} disabled={loading}>
+          Pay Hold Deposit
         </Button>
       )}
 
-      {/* Couple: Cancel when pending or quoted */}
-      {role === 'couple' && ['pending', 'quoted'].includes(booking.status) && (
-        <Button variant="outline" onClick={() => handleCancel('cancelled')} disabled={loading}>
-          Cancel Request
+      {role === 'couple' && booking.status === 'deposit_paid' && eventPast && (
+        <>
+          <Button onClick={handleComplete} disabled={loading}>
+            {loading ? 'Processing...' : 'Mark Complete'}
+          </Button>
+          <Button variant="outline" onClick={() => setDisputeOpen(true)} disabled={loading}>
+            Report an issue
+          </Button>
+        </>
+      )}
+
+      {role === 'couple' && booking.status === 'completed' && !hasReview && (
+        <Button onClick={() => setReviewOpen(true)}>Leave Review</Button>
+      )}
+
+      {cancellable && (
+        <Button variant="outline" onClick={() => setCancelOpen(true)} disabled={loading}>
+          {role === 'vendor' && booking.status === 'pending' ? 'Decline' : 'Cancel'}
         </Button>
       )}
 
-      {/* Vendor: Decline when pending */}
-      {role === 'vendor' && booking.status === 'pending' && (
-        <Button variant="destructive" onClick={() => handleCancel('declined')} disabled={loading}>
-          Decline
-        </Button>
+      {booking.status === 'disputed' && (
+        <p className="text-sm text-amber-700">
+          This booking is under review. Our team will contact both parties within 3 business days.
+        </p>
       )}
 
-      {/* Vendor: Confirm when deposit_paid */}
-      {role === 'vendor' && booking.status === 'deposit_paid' && (
-        <Button onClick={handleConfirm} disabled={loading}>
-          {loading ? 'Confirming...' : 'Confirm Booking'}
-        </Button>
+      <ReviewForm
+        bookingId={booking.id}
+        open={reviewOpen}
+        onOpenChange={setReviewOpen}
+        onSuccess={() => router.refresh()}
+      />
+
+      <DisputeDialog
+        bookingId={booking.id}
+        open={disputeOpen}
+        onOpenChange={setDisputeOpen}
+        onSuccess={() => router.refresh()}
+      />
+
+      <CancelDialog
+        bookingId={booking.id}
+        role={role}
+        open={cancelOpen}
+        onOpenChange={setCancelOpen}
+        onSuccess={() => router.refresh()}
+      />
+
+      {booking.vendor_quote_amount != null && (
+        <DepositDialog
+          bookingId={booking.id}
+          quoteAmountCents={booking.vendor_quote_amount}
+          vendorName={vendorName}
+          open={depositOpen}
+          onOpenChange={setDepositOpen}
+        />
       )}
     </div>
   );

@@ -1,34 +1,24 @@
 import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { setupStripeConnect } from '@/services/payment.service';
+import { createFullOnboardingLink } from '@/lib/stripe/connect';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
+import { requireUser } from '@/lib/api/auth';
 
-export async function POST() {
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+export const POST = withErrorBoundary(async () => {
+  const { user, supabase } = await requireUser();
 
-  if (authError || !user) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Get vendor profile
-  const { data: vendorProfile } = await supabase
+  const { data: vp } = await supabase
     .from('vendor_profiles')
-    .select('id')
+    .select('id, stripe_accounts(stripe_account_id)')
     .eq('user_id', user.id)
     .single();
 
-  if (!vendorProfile) {
-    return NextResponse.json({ error: 'No vendor profile found' }, { status: 404 });
+  if (!vp) throw new HttpError(404, 'No vendor profile found');
+
+  const stripeAccount = (vp.stripe_accounts as { stripe_account_id: string }[] | null)?.[0];
+  if (!stripeAccount) {
+    throw new HttpError(400, 'Stripe account not initialized. Submit a booking quote first.');
   }
 
-  const result = await setupStripeConnect(supabase, vendorProfile.id, user.email!);
-
-  if (result.error) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-
-  return NextResponse.json({ data: result.data }, { status: 200 });
-}
+  const onboardingUrl = await createFullOnboardingLink(stripeAccount.stripe_account_id);
+  return NextResponse.json({ data: { onboardingUrl } }, { status: 200 });
+});

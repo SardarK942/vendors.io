@@ -36,6 +36,28 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     .eq('id', booking.vendor_profile_id)
     .single();
 
+  const { data: existingReview } =
+    role === 'couple'
+      ? await supabase
+          .from('reviews')
+          .select('id')
+          .eq('booking_request_id', booking.id)
+          .maybeSingle()
+      : { data: null };
+
+  const statusStyle =
+    booking.status === 'deposit_paid' || booking.status === 'completed'
+      ? 'bg-emerald-100 text-emerald-800'
+      : booking.status === 'pending' || booking.status === 'quoted'
+        ? 'bg-yellow-100 text-yellow-800'
+        : booking.status === 'disputed'
+          ? 'bg-amber-100 text-amber-900'
+          : booking.status.endsWith('cancelled') ||
+              booking.status === 'rejected' ||
+              booking.status === 'expired'
+            ? 'bg-red-100 text-red-800'
+            : '';
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -48,17 +70,7 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             {new Date(booking.event_date).toLocaleDateString()}
           </p>
         </div>
-        <Badge
-          className={`text-sm ${
-            booking.status === 'confirmed'
-              ? 'bg-emerald-100 text-emerald-800'
-              : booking.status === 'pending'
-                ? 'bg-yellow-100 text-yellow-800'
-                : ''
-          }`}
-        >
-          {booking.status.replace('_', ' ')}
-        </Badge>
+        <Badge className={`text-sm ${statusStyle}`}>{booking.status.replace(/_/g, ' ')}</Badge>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
@@ -143,7 +155,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             )}
 
             {/* Actions */}
-            <BookingActions booking={booking} role={role} />
+            <BookingActions
+              booking={booking}
+              role={role}
+              hasReview={!!existingReview}
+              vendorName={vendorProfile?.business_name ?? ''}
+            />
           </CardContent>
         </Card>
       </div>

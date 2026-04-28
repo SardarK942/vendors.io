@@ -1,8 +1,16 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { ProfileSetup } from '@/components/dashboard/ProfileSetup';
 import { VendorProfileForm } from '@/components/forms/VendorProfileForm';
 
-export default async function VendorProfilePage() {
+export const dynamic = 'force-dynamic';
+
+interface ProfilePageProps {
+  searchParams: Promise<{ mode?: string }>;
+}
+
+export default async function VendorProfilePage({ searchParams }: ProfilePageProps) {
+  const { mode } = await searchParams;
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -16,18 +24,27 @@ export default async function VendorProfilePage() {
     .eq('user_id', user.id)
     .single();
 
+  if (vendorProfile) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-2xl font-bold">Edit Profile</h1>
+          <p className="text-muted-foreground">Update your vendor profile information.</p>
+        </div>
+        <VendorProfileForm vendorProfile={vendorProfile} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">{vendorProfile ? 'Edit Profile' : 'Create Profile'}</h1>
+        <h1 className="text-2xl font-bold">Set Up Your Profile</h1>
         <p className="text-muted-foreground">
-          {vendorProfile
-            ? 'Update your vendor profile information.'
-            : 'Set up your vendor profile to start receiving bookings.'}
+          Claim an existing listing or create a new one to start receiving bookings.
         </p>
       </div>
-
-      <VendorProfileForm vendorProfile={vendorProfile} />
+      <ProfileSetup initialMode={mode === 'create' ? 'create' : 'claim'} />
     </div>
   );
 }

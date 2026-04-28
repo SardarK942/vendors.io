@@ -1,8 +1,12 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
-const FROM_EMAIL = 'Desi Wedding Marketplace <noreply@desiwedding.io>';
+let _resend: Resend | null = null;
+function client(): Resend {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
+  return _resend;
+}
 
 interface EmailOptions {
   to: string;
@@ -12,7 +16,7 @@ interface EmailOptions {
 
 async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await client().emails.send({
       from: FROM_EMAIL,
       to: options.to,
       subject: options.subject,
@@ -31,6 +35,16 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
   }
 }
 
+function fmtUsd(cents: number): string {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
+}
+
+function appUrl(): string {
+  return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+}
+
+const FOOTER = '<p style="color:#888;font-size:12px;">— Baazar.io</p>';
+
 export async function sendBookingRequestEmail(
   vendorEmail: string,
   vendorName: string,
@@ -46,8 +60,8 @@ export async function sendBookingRequestEmail(
       <p>Hi ${vendorName},</p>
       <p>You have a new booking request for a <strong>${eventType}</strong> on <strong>${eventDate}</strong>.</p>
       <p>Please log in to your dashboard to review and submit a quote within 72 hours.</p>
-      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings">View Request</a></p>
-      <p>— Desi Wedding Marketplace</p>
+      <p><a href="${appUrl()}/dashboard/bookings">View Request</a></p>
+      ${FOOTER}
     `,
   });
 }
@@ -58,20 +72,15 @@ export async function sendQuoteEmail(
   quoteAmount: number,
   _bookingId: string
 ): Promise<boolean> {
-  const formattedAmount = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(quoteAmount / 100);
-
   return sendEmail({
     to: coupleEmail,
     subject: `Quote Received from ${vendorName}`,
     html: `
       <h2>Quote Received</h2>
-      <p>${vendorName} has sent you a quote of <strong>${formattedAmount}</strong>.</p>
-      <p>Log in to review the quote and secure your booking with a small hold deposit.</p>
-      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings">View Quote</a></p>
-      <p>— Desi Wedding Marketplace</p>
+      <p>${vendorName} has sent you a quote of <strong>${fmtUsd(quoteAmount)}</strong>.</p>
+      <p>Log in to review the quote and secure your booking with a 10% hold deposit.</p>
+      <p><a href="${appUrl()}/dashboard/bookings">View Quote</a></p>
+      ${FOOTER}
     `,
   });
 }
@@ -82,15 +91,10 @@ export async function sendDepositConfirmationEmail(
   amount: number,
   isVendor: boolean
 ): Promise<boolean> {
-  const formattedAmount = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-  }).format(amount / 100);
-
   const body = isVendor
-    ? `<p>A hold deposit of <strong>${formattedAmount}</strong> has been placed. You can now see the couple's contact details in your dashboard.</p>
-       <p>Please confirm the booking to proceed.</p>`
-    : `<p>Your hold deposit of <strong>${formattedAmount}</strong> for ${vendorName} has been processed. The vendor will now confirm your booking.</p>`;
+    ? `<p>A hold deposit of <strong>${fmtUsd(amount)}</strong> has been placed. The couple's contact details are now visible in your dashboard.</p>
+       <p>Your 70% share is held in escrow and released when you mark the booking complete after the event.</p>`
+    : `<p>Your hold deposit of <strong>${fmtUsd(amount)}</strong> for ${vendorName} has been processed. Your booking is confirmed.</p>`;
 
   return sendEmail({
     to: email,
@@ -98,8 +102,8 @@ export async function sendDepositConfirmationEmail(
     html: `
       <h2>Deposit ${isVendor ? 'Received' : 'Confirmed'}</h2>
       ${body}
-      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings">View Booking</a></p>
-      <p>— Desi Wedding Marketplace</p>
+      <p><a href="${appUrl()}/dashboard/bookings">View Booking</a></p>
+      ${FOOTER}
     `,
   });
 }
@@ -114,10 +118,82 @@ export async function sendExpirationEmail(
     subject: `Booking Request Expired — ${vendorName}`,
     html: `
       <h2>Request Expired</h2>
-      <p>${isVendor ? 'A booking request has expired because no quote was submitted within 72 hours.' : `Your booking request to ${vendorName} has expired because the vendor did not respond within 72 hours.`}</p>
-      <p>${!isVendor ? 'You can browse other vendors and submit a new request.' : ''}</p>
-      <p><a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard/bookings">Go to Dashboard</a></p>
-      <p>— Desi Wedding Marketplace</p>
+      <p>${
+        isVendor
+          ? 'A booking request has expired because no quote was submitted within 72 hours.'
+          : `Your booking request to ${vendorName} has expired because the vendor did not respond within 72 hours.`
+      }</p>
+      <p><a href="${appUrl()}/dashboard/bookings">Go to Dashboard</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+export async function sendCompletionEmailToVendor(
+  vendorEmail: string,
+  vendorName: string,
+  vendorPayoutCents: number
+): Promise<boolean> {
+  return sendEmail({
+    to: vendorEmail,
+    subject: `Funds Unlocked — ${fmtUsd(vendorPayoutCents)} Available`,
+    html: `
+      <h2>Your deposit share is unlocked</h2>
+      <p>Hi ${vendorName},</p>
+      <p>A booking you delivered has been marked complete. <strong>${fmtUsd(vendorPayoutCents)}</strong> is now available to withdraw.</p>
+      <p><a href="${appUrl()}/dashboard">Go to Earnings</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+export async function sendReviewRequestEmail(
+  coupleEmail: string,
+  vendorName: string,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: coupleEmail,
+    subject: `How was ${vendorName}?`,
+    html: `
+      <h2>Leave a review</h2>
+      <p>Thanks for using Baazar.io! Your feedback helps other couples find great vendors.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Leave a review for ${vendorName}</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+export async function sendCancellationEmail(
+  email: string,
+  vendorName: string,
+  cancellerRole: 'couple' | 'vendor' | 'mutual',
+  recipientRole: 'couple' | 'vendor',
+  refundCents: number,
+  reason: string | null
+): Promise<boolean> {
+  const actor =
+    cancellerRole === 'mutual'
+      ? 'by mutual agreement'
+      : cancellerRole === recipientRole
+        ? 'by you'
+        : `by the ${cancellerRole}`;
+
+  const refundLine =
+    refundCents > 0
+      ? `<p>A refund of <strong>${fmtUsd(refundCents)}</strong> has been issued to the couple.</p>`
+      : '<p>No refund was issued under our cancellation policy.</p>';
+
+  return sendEmail({
+    to: email,
+    subject: `Booking Cancelled — ${vendorName}`,
+    html: `
+      <h2>Booking Cancelled</h2>
+      <p>This booking with ${vendorName} was cancelled ${actor}.</p>
+      ${reason ? `<p><em>Reason:</em> ${reason}</p>` : ''}
+      ${refundLine}
+      <p><a href="${appUrl()}/dashboard/bookings">View Bookings</a></p>
+      ${FOOTER}
     `,
   });
 }

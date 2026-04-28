@@ -1,19 +1,31 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
-import type { BookingRequestInput, BookingStatus, QuoteInput, ServiceResult } from '@/types';
+import type { BookingRequestInput, QuoteInput, ServiceResult } from '@/types';
+import { sendExpirationEmail } from '@/lib/email/resend';
 
 type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
 
 // ─── State Machine ──────────────────────────────────────────────
+// deposit_paid is the "confirmed" state; vendor acknowledgment is implicit at quote time.
+// Refund/claw logic for any *_cancelled transition lives in payment.service.ts.
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  pending: ['quoted', 'expired', 'declined'],
-  quoted: ['deposit_paid', 'cancelled', 'expired'],
-  deposit_paid: ['confirmed', 'declined'],
-  confirmed: [],
+  pending: ['quoted', 'rejected', 'expired', 'couple_cancelled'],
+  quoted: ['deposit_paid', 'couple_cancelled', 'vendor_cancelled', 'expired'],
+  deposit_paid: [
+    'completed',
+    'couple_cancelled',
+    'vendor_cancelled',
+    'cancelled_mutual',
+    'disputed',
+  ],
+  disputed: ['completed', 'couple_cancelled'], // admin-resolved
+  rejected: [],
+  completed: [],
   expired: [],
-  declined: [],
-  cancelled: [],
+  couple_cancelled: [],
+  vendor_cancelled: [],
+  cancelled_mutual: [],
 };
 
 export function validateStateTransition(from: string, to: string): boolean {
@@ -168,44 +180,67 @@ export async function getBookingById(
   return { data, status: 200 };
 }
 
-export async function cancelBooking(
+export async function rejectBooking(
   supabase: SupabaseClient<Database>,
   bookingId: string,
-  userId: string,
-  newStatus: BookingStatus
+  vendorUserId: string
 ): Promise<ServiceResult<BookingRow>> {
   const { data: booking } = await supabase
     .from('booking_requests')
-    .select('*')
+    .select('*, vendor_profiles!inner(user_id)')
     .eq('id', bookingId)
     .single();
 
-  if (!booking) {
-    return { error: 'Booking not found', status: 404 };
-  }
+  if (!booking) return { error: 'Booking not found', status: 404 };
 
-  if (!validateStateTransition(booking.status, newStatus)) {
+  const vp = booking.vendor_profiles as unknown as { user_id: string };
+  if (vp.user_id !== vendorUserId) return { error: 'Forbidden', status: 403 };
+
+  if (!validateStateTransition(booking.status, 'rejected')) {
     return {
-      error: `Cannot transition from "${booking.status}" to "${newStatus}"`,
+      error: `Cannot reject booking in "${booking.status}" state`,
       status: 400,
     };
   }
 
   const { data, error } = await supabase
     .from('booking_requests')
-    .update({ status: newStatus })
+    .update({ status: 'rejected', vendor_responded_at: new Date().toISOString() })
     .eq('id', bookingId)
     .select()
     .single();
 
-  if (error) {
-    return { error: 'Failed to update booking', status: 500 };
-  }
-
+  if (error) return { error: 'Failed to reject booking', status: 500 };
   return { data, status: 200 };
 }
 
 export async function expireStaleRequests(supabase: SupabaseClient<Database>): Promise<number> {
+  const { data: toExpire } = await supabase
+    .from('booking_requests')
+    .select(
+      'id, couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
+    )
+    .eq('status', 'pending')
+    .lt('expires_at', new Date().toISOString());
+
   const { data } = await supabase.rpc('expire_stale_booking_requests');
+
+  for (const row of toExpire ?? []) {
+    const vp = row.vendor_profiles as unknown as {
+      business_name: string;
+      users: { email: string } | { email: string }[] | null;
+    };
+    const vendorUser = Array.isArray(vp.users) ? vp.users[0] : vp.users;
+    const coupleUser = Array.isArray(row.users) ? row.users[0] : row.users;
+    const coupleEmail = row.couple_email ?? (coupleUser as { email: string } | null)?.email;
+
+    if (coupleEmail) {
+      await sendExpirationEmail(coupleEmail, vp.business_name, false);
+    }
+    if (vendorUser?.email) {
+      await sendExpirationEmail(vendorUser.email, vp.business_name, true);
+    }
+  }
+
   return (data as number) ?? 0;
 }

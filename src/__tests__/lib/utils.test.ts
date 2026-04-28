@@ -21,10 +21,10 @@ describe('formatPrice', () => {
   });
 });
 
-describe('calculatePlatformFee', () => {
-  it('calculates 10% fee by default', () => {
-    expect(calculatePlatformFee(10000)).toBe(1000);
-    expect(calculatePlatformFee(5000)).toBe(500);
+describe('calculatePlatformFee (deprecated helper — default is now 30%)', () => {
+  it('calculates 30% fee by default', () => {
+    expect(calculatePlatformFee(10000)).toBe(3000);
+    expect(calculatePlatformFee(5000)).toBe(1500);
   });
 
   it('calculates custom fee percentage', () => {
@@ -43,18 +43,15 @@ describe('calculatePlatformFee', () => {
 });
 
 describe('calculateDepositAmount', () => {
-  it('returns 10% for quotes under $500', () => {
+  it('returns 10% for any quote (no cap)', () => {
     expect(calculateDepositAmount(30000)).toBe(3000); // $300 quote -> $30 deposit
     expect(calculateDepositAmount(10000)).toBe(1000); // $100 quote -> $10 deposit
+    expect(calculateDepositAmount(100000)).toBe(10000); // $1000 -> $100 (no $50 cap anymore)
+    expect(calculateDepositAmount(300000)).toBe(30000); // $3000 wedding -> $300
   });
 
-  it('caps at $50 for quotes over $500', () => {
-    expect(calculateDepositAmount(100000)).toBe(5000); // $1000 quote -> $50 cap
-    expect(calculateDepositAmount(200000)).toBe(5000); // $2000 quote -> $50 cap
-  });
-
-  it('returns exactly $50 for $500 quote', () => {
-    expect(calculateDepositAmount(50000)).toBe(5000); // $500 quote -> $50 (10% = $50 = cap)
+  it('returns exactly 10% of $500 quote', () => {
+    expect(calculateDepositAmount(50000)).toBe(5000);
   });
 });
 

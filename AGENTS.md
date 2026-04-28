@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-**App:** Chicago Desi Wedding Vendor Marketplace (vendors.io)
+**App:** Chicago Desi Wedding Vendor Marketplace (baazar.io)
 **Goal:** A web-based marketplace enabling Chicago-area Desi wedding couples to discover, compare, and request bookings from verified vendors using AI-assisted search and a hold-deposit flow.
 **Stack:** Next.js 14 (App Router) · Supabase (Postgres + Auth + Edge Functions) · Stripe Connect · OpenAI (Embeddings + GPT-4o mini) · Resend · Cloudflare R2 · Vercel
 **Current Phase:** Phase 10 — Polish (All code complete)
