@@ -16,11 +16,15 @@ export default function SignupPage() {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState<UserRole>('couple');
+  const [role, setRole] = useState<UserRole | null>(null);
   const [agreed, setAgreed] = useState(false);
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (!role) {
+      toast.error('Please select whether you are planning a wedding or are a vendor.');
+      return;
+    }
     if (!agreed) {
       toast.error('Please accept the Terms and Privacy Policy to continue.');
       return;
@@ -51,11 +55,18 @@ export default function SignupPage() {
   };
 
   const handleGoogleSignup = async () => {
+    if (!role) {
+      toast.error('Please select whether you are planning a wedding or are a vendor.');
+      return;
+    }
     if (!agreed) {
       toast.error('Please accept the Terms and Privacy Policy to continue.');
       return;
     }
     setLoading(true);
+    // Persist role through the OAuth round-trip via cookie. URL query params
+    // can be stripped by the Supabase auth proxy; a cookie is reliable.
+    document.cookie = `signup_role=${role}; path=/; max-age=300; SameSite=Lax`;
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
@@ -75,39 +86,45 @@ export default function SignupPage() {
         <CardDescription>Join the Desi Wedding Marketplace</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* Role Selection */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setRole('couple')}
-            className={`rounded-lg border-2 p-4 text-center transition-colors ${
-              role === 'couple'
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-primary/50'
-            }`}
-          >
-            <span className="block text-2xl">💍</span>
-            <span className="mt-1 block text-sm font-medium">Planning a Wedding</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setRole('vendor')}
-            className={`rounded-lg border-2 p-4 text-center transition-colors ${
-              role === 'vendor'
-                ? 'border-primary bg-primary/5'
-                : 'border-border hover:border-primary/50'
-            }`}
-          >
-            <span className="block text-2xl">🏪</span>
-            <span className="mt-1 block text-sm font-medium">I&apos;m a Vendor</span>
-          </button>
+        {/* Role Selection — required before any signup option is enabled */}
+        <div className="space-y-2">
+          <p className="text-center text-sm font-medium">
+            First, tell us who you are
+            <span className="ml-1 text-destructive">*</span>
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              type="button"
+              onClick={() => setRole('couple')}
+              className={`rounded-lg border-2 p-4 text-center transition-colors ${
+                role === 'couple'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <span className="block text-2xl">💍</span>
+              <span className="mt-1 block text-sm font-medium">Planning a Wedding</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setRole('vendor')}
+              className={`rounded-lg border-2 p-4 text-center transition-colors ${
+                role === 'vendor'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary/50'
+              }`}
+            >
+              <span className="block text-2xl">🏪</span>
+              <span className="mt-1 block text-sm font-medium">I&apos;m a Vendor</span>
+            </button>
+          </div>
         </div>
 
         <Button
           type="button"
           variant="outline"
           className="w-full bg-white text-foreground hover:bg-gray-50"
-          disabled={loading}
+          disabled={loading || !role}
           onClick={handleGoogleSignup}
         >
           <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
@@ -178,10 +195,12 @@ export default function SignupPage() {
               .
             </label>
           </div>
-          <Button type="submit" className="w-full" disabled={loading || !agreed}>
+          <Button type="submit" className="w-full" disabled={loading || !agreed || !role}>
             {loading
               ? 'Creating account...'
-              : `Sign Up as ${role === 'couple' ? 'Couple' : 'Vendor'}`}
+              : !role
+                ? 'Select an account type above'
+                : `Sign Up as ${role === 'couple' ? 'Couple' : 'Vendor'}`}
           </Button>
         </form>
 
