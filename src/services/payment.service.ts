@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import type { CancellerRole, ServiceResult } from '@/types';
 import { stripe } from '@/lib/stripe/client';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { createMinimalAccount, createFullOnboardingLink } from '@/lib/stripe/connect';
 import { calculateDepositAmount, calculatePlatformCut, calculateVendorPending } from '@/lib/utils';
 import {
@@ -54,11 +55,13 @@ export async function createDepositCheckout(
   bookingId: string,
   coupleUserId: string
 ): Promise<ServiceResult<{ checkoutUrl: string }>> {
+  // RLS on stripe_accounts only allows the vendor to read their own row, so the
+  // couple can't fetch it through the user-scoped client. Read the booking +
+  // vendor_profile under RLS (enforces couple ownership), then read the
+  // vendor's stripe_account through a service-role client.
   const { data: booking } = await supabase
     .from('booking_requests')
-    .select(
-      '*, vendor_profiles!inner(id, business_name, stripe_accounts(stripe_account_id, frozen_reason))'
-    )
+    .select('*, vendor_profiles!inner(id, business_name)')
     .eq('id', bookingId)
     .eq('couple_user_id', coupleUserId)
     .single();
@@ -72,10 +75,15 @@ export async function createDepositCheckout(
   const vp = booking.vendor_profiles as unknown as {
     id: string;
     business_name: string;
-    stripe_accounts: { stripe_account_id: string; frozen_reason: string | null }[] | null;
   };
 
-  const stripeAccount = vp.stripe_accounts?.[0];
+  const admin = createServiceRoleClient();
+  const { data: stripeAccount } = await admin
+    .from('stripe_accounts')
+    .select('stripe_account_id, frozen_reason')
+    .eq('vendor_profile_id', vp.id)
+    .maybeSingle();
+
   if (!stripeAccount) {
     return {
       error: "Vendor hasn't set up payments yet. They'll be notified.",
