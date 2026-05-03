@@ -18,11 +18,27 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     return NextResponse.json({ error: 'Missing signature' }, { status: 400 });
   }
 
-  let event: Stripe.Event;
-  try {
-    event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (err) {
-    console.error('[Stripe Webhook] Signature verification failed:', err);
+  // Stripe Connect platforms need two webhook endpoints (each with its own
+  // signing secret): one for platform-level events (payment_intent.*, charge.*)
+  // and one for connected-account events (account.updated). Try each secret in
+  // turn — whichever validates wins.
+  const platformSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  const connectSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET;
+
+  let event: Stripe.Event | null = null;
+  let lastError: unknown = null;
+  for (const secret of [platformSecret, connectSecret]) {
+    if (!secret) continue;
+    try {
+      event = stripe.webhooks.constructEvent(body, signature, secret);
+      break;
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  if (!event) {
+    console.error('[Stripe Webhook] Signature verification failed:', lastError);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
