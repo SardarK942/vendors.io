@@ -49,15 +49,21 @@ export async function GET(request: Request) {
       exchangeError: error?.message ?? null,
     });
     if (!error) {
-      if (
-        data?.user &&
-        signupRole &&
-        Date.now() - new Date(data.user.created_at).getTime() < 60_000
-      ) {
+      if (data?.user && signupRole) {
+        // Apply the signup_role hint only if the user is still at the trigger
+        // default 'couple'. The .eq('role', 'couple') guard prevents:
+        //   - downgrading a returning vendor or admin who happened to have a
+        //     stale signup_role cookie set somehow
+        //   - overwriting roles intentionally set by an admin elsewhere
+        // The cookie is one-shot (deleted below) so subsequent logins of the
+        // same user can't re-trigger this. The previous 60s window was an
+        // approximation of "freshness" but failed when the OAuth round-trip
+        // exceeded 60s (e.g. delayed delivery, retry attempts).
         const { error: updErr } = await supabase
           .from('users')
           .update({ role: signupRole })
-          .eq('id', data.user.id);
+          .eq('id', data.user.id)
+          .eq('role', 'couple');
         console.log('[auth/callback] role update result', {
           signupRole,
           userId: data.user.id,
