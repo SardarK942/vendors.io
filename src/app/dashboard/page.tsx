@@ -2,8 +2,10 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { EarningsCard } from '@/components/dashboard/EarningsCard';
 import { RecentUnlocks } from '@/components/dashboard/RecentUnlocks';
+import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
 import { getVendorEarnings, type VendorEarnings } from '@/services/payment.service';
 import { EVENT_TYPE_LABELS } from '@/lib/utils';
 
@@ -32,6 +34,8 @@ export default async function DashboardPage() {
   let bookingCount = 0;
   let earnings: VendorEarnings | null = null;
   let recentUnlocks: UnlockedBooking[] = [];
+  let activePackageCount = 0;
+  let vendorIsActive = true;
 
   if (role === 'couple') {
     const { count } = await supabase
@@ -42,16 +46,26 @@ export default async function DashboardPage() {
   } else if (role === 'vendor') {
     const { data: vendorProfile } = await supabase
       .from('vendor_profiles')
-      .select('id')
+      .select('id, is_active')
       .eq('user_id', user.id)
       .single();
 
     if (vendorProfile) {
+      vendorIsActive = vendorProfile.is_active ?? true;
+
       const { count } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
         .eq('vendor_profile_id', vendorProfile.id);
       bookingCount = count ?? 0;
+
+      // Onboarding gate: count active packages
+      const { count: pkgCount } = await supabase
+        .from('packages')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_profile_id', vendorProfile.id)
+        .eq('is_active', true);
+      activePackageCount = pkgCount ?? 0;
 
       const earningsResult = await getVendorEarnings(supabase, user.id);
       earnings = earningsResult.data ?? null;
@@ -91,6 +105,30 @@ export default async function DashboardPage() {
         <h1 className="text-2xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">Welcome back, {profile?.full_name || user.email}</p>
       </div>
+
+      {/* A2: Vendor onboarding gate */}
+      {role === 'vendor' && activePackageCount === 0 && (
+        <Card className="bg-yellow-50 border-yellow-200 p-6">
+          <h2 className="font-semibold text-yellow-900">Add a package to go live</h2>
+          <p className="text-sm text-yellow-800 mt-1">
+            Couples can only book vendors with at least one active package.
+          </p>
+          <Button asChild className="mt-4" size="sm">
+            <Link href="/dashboard/profile/packages/new">Add Package</Link>
+          </Button>
+        </Card>
+      )}
+
+      {/* A2: Profile paused banner */}
+      {role === 'vendor' && !vendorIsActive && activePackageCount > 0 && (
+        <Card className="bg-yellow-50 border-yellow-200 p-6">
+          <h2 className="font-semibold text-yellow-900">Your profile is paused</h2>
+          <p className="text-sm text-yellow-800 mt-1">
+            You won&rsquo;t appear in search until you resume your profile.
+          </p>
+          <PauseProfileToggle isActive={false} />
+        </Card>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {role === 'vendor' && <RecentUnlocks unlocks={recentUnlocks} />}
