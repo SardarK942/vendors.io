@@ -140,8 +140,13 @@ CREATE INDEX booking_events_city_idx ON booking_events(city);  -- for future loc
 ALTER TABLE booking_requests RENAME TO bookings;
 -- Also rename indexes, RLS policies, triggers that reference the old name.
 
-ALTER TABLE bookings ADD COLUMN package_id uuid REFERENCES packages(id) ON DELETE RESTRICT;
+ALTER TABLE bookings ADD COLUMN package_id uuid REFERENCES packages(id) ON DELETE SET NULL;
+ALTER TABLE bookings ADD COLUMN package_name_snapshot text;
 ALTER TABLE bookings ADD COLUMN package_base_price_cents_snapshot integer;
+-- ON DELETE SET NULL lets a vendor hard-delete a package whose only bookings
+-- are historical (completed/cancelled). The snapshot fields keep displayable
+-- info on those bookings. Active bookings still block hard delete (enforced
+-- in application layer; see §3.1 + §8.1).
 ALTER TABLE bookings ADD COLUMN selected_addons jsonb NOT NULL DEFAULT '[]'::jsonb;
 -- jsonb entries: {addon_id: uuid, name: text, price_delta_cents: int}
 ALTER TABLE bookings ADD COLUMN adjustment_amount_cents integer NOT NULL DEFAULT 0;
@@ -311,6 +316,19 @@ Image picker for `featured_image_url`: lets vendor pick from existing portfolio 
 
 Submit → API call (see §8), redirect to list, revalidate.
 
+**Package deletion rules** (enforced in API and surfaced in UI):
+
+| Operation | Allowed when |
+|---|---|
+| **Deactivate** (`is_active=false`) | Vendor would still have **≥1 other active package** after the operation. Otherwise blocked. |
+| **Hard delete** (permanent removal) | (a) Package has **no active bookings** (statuses `pending`, `accepted`, `adjusted_quote_sent`, `adjusted_quote_declined`, `deposit_paid`), AND (b) vendor would still have **≥1 other active package** after the operation. Only historical bookings (`completed`, `cancelled`) are allowed to reference a hard-deleted package — the FK on `bookings.package_id` switches to NULL on delete; the snapshot fields (`package_name_snapshot`, `package_base_price_cents_snapshot`, `selected_addons`) keep those bookings displayable. |
+
+UI guidance in the editor when a delete/deactivate is blocked:
+- *"This is your last active package. Vendors must have at least one active package to stay live in search. Add another package first, or pause your profile in settings."*
+- *"This package has active bookings. Deactivate it instead — it'll be hidden from new couples but stay in place for current ones."*
+
+Vendors who want to **go dark temporarily** (e.g. on vacation) use the **profile-level pause toggle** (see §3.3), not package deactivation.
+
 ### 3.2 Adjustment quote response
 
 **Location**: vendor's bookings page action card for each `status='pending'` booking.
@@ -321,12 +339,28 @@ Two CTAs visible per pending booking:
 
 **Re-quote flow**: when status is `adjusted_quote_declined` (couple just declined the previous adjustment), vendor's bookings page shows a single CTA: "Send revised quote" (opens the same adjustment form). Same `POST /api/bookings/[id]/adjust` endpoint. Status flips back to `adjusted_quote_sent`. Couple notified.
 
-### 3.3 Onboarding gate
+### 3.3 Onboarding gate + profile pause toggle
 
-- `vendor_profiles.is_active` becomes a derived flag (or kept as column but enforced):
-  - Vendor must have ≥1 row in `packages` where `is_active = true` to appear in search results / vendor listings.
-- Vendor dashboard: when `count(active_packages) = 0`, prominent CTA: **"Add your first package to go live."** Disable other dashboard actions until satisfied.
-- The full onboarding wizard (welcome → packages → Stripe path) is **Sub-project B**. A1–A4 only adds the gate, not the wizard.
+**Two separate flags govern vendor search visibility:**
+
+1. **`vendor_profiles.is_active`** (existing column) — vendor-controlled pause toggle. Defaults `true`. Vendor flips to `false` to go dark temporarily (e.g. vacation, family event, capacity). Packages remain intact and editable; profile just doesn't appear in search.
+2. **Derived: `count(active_packages) >= 1`** — onboarding gate. Vendor cannot save `vendor_profiles.is_active=true` while they have zero active packages.
+
+**Search-visibility query** (used in `/vendors` listing + slug page):
+
+```sql
+WHERE vendor_profiles.is_active = true
+  AND EXISTS (SELECT 1 FROM packages
+              WHERE packages.vendor_profile_id = vendor_profiles.id
+                AND packages.is_active = true)
+```
+
+**Vendor dashboard surfaces:**
+- When `count(active_packages) = 0`: prominent CTA **"Add your first package to go live."** Other dashboard areas remain functional; only the search-visibility flag is gated.
+- When `count(active_packages) >= 1` AND `is_active=false`: yellow banner **"Your profile is paused. You won't appear in search until you toggle it back on."** with a one-click resume CTA.
+- Profile settings page: clear toggle for "Pause profile from search" with help copy: *"Your packages stay defined. Toggle off when you're ready to receive new bookings again."*
+
+The full onboarding wizard (welcome → packages → Stripe path) is **Sub-project B**. A1–A4 only adds the gate + pause toggle, not the wizard.
 
 ### 3.4 Profile setup: base address + visibility
 
@@ -570,6 +604,9 @@ After all three umbrella PRs merge: A5 cleanup runs supervised (it touches all s
 | `base_address_public` | Default false; city+state always public; full address at `deposit_paid` | Q-address-visibility |
 | `total_price_cents` | Denormalized, DB-trigger synced | §5 callout |
 | Min total | `> 0` (zero-priced blocked) | §5 callout |
+| Package deactivate / delete | Blocked when it would leave the vendor with 0 active packages (`LAST_ACTIVE_PACKAGE` error). Vendors go dark via the profile pause toggle, not by deleting their last package. | §3.1 / §3.3 |
+| Package hard delete | Additionally blocked when any active booking references the package (`ACTIVE_BOOKINGS_EXIST` error). Only historical bookings (completed/cancelled) tolerate hard delete; `ON DELETE SET NULL` + snapshot fields keep them displayable. | §3.1 / §8.1 |
+| Profile pause toggle | Vendor controls `vendor_profiles.is_active` directly. Going dark preserves packages. Setting `is_active=true` requires ≥1 active package. | §3.3 |
 
 ### Defaults that surface during implementation (no design impact)
 
@@ -618,7 +655,28 @@ Response (201):
 
 **`PATCH /api/packages/[id]`** — partial update. Same body shape as POST, all fields optional. Addons array, if provided, **replaces** the package's add-on list (delete missing IDs, upsert provided). Returns same shape.
 
-**`DELETE /api/packages/[id]`** — soft delete via `is_active=false`. If no FK refs exist (no bookings reference this package), the response includes `{ hard_delete_available: true }` and a follow-up `DELETE ?hard=true` performs CASCADE delete. Otherwise soft delete only.
+**`PATCH /api/packages/[id]/is-active`** — toggle deactivation. Request: `{ "is_active": true|false }`. Server check: setting `is_active=false` requires `other_active_count >= 1` (else `409 LAST_ACTIVE_PACKAGE`). Setting `is_active=true` always allowed.
+
+**`DELETE /api/packages/[id]`** — deactivates the package (`is_active=false`). Server-side checks:
+
+1. Count vendor's other active packages (excluding this one): `other_active_count`.
+2. If `other_active_count = 0` → respond `409 Conflict` with `{ error: { code: "LAST_ACTIVE_PACKAGE", message: "..." } }`. Vendor must add another package or pause their profile.
+3. Else: set `is_active=false`, return the updated package row.
+
+**`DELETE /api/packages/[id]?hard=true`** — permanent deletion. Server-side checks:
+
+1. Count vendor's other active packages (excluding this one): `other_active_count`. If `0` → `409 LAST_ACTIVE_PACKAGE`.
+2. Check for active bookings referencing this package (statuses `pending`, `accepted`, `adjusted_quote_sent`, `adjusted_quote_declined`, `deposit_paid`):
+   ```sql
+   SELECT 1 FROM bookings
+   WHERE package_id = $1
+     AND status IN ('pending','accepted','adjusted_quote_sent','adjusted_quote_declined','deposit_paid')
+   LIMIT 1;
+   ```
+   If any → `409 ACTIVE_BOOKINGS_EXIST` with `{ error: { code, message, active_count: int } }`. Vendor must use soft-delete (deactivate) instead.
+3. Else: `DELETE FROM packages WHERE id = $1`. FK `ON DELETE SET NULL` clears `bookings.package_id` on historical (completed/cancelled) bookings; their `package_name_snapshot` + price fields keep them displayable. CASCADE handles `package_addons`.
+
+UI implication: the "Delete" button on a package card primarily does the soft delete. A secondary "Delete permanently" action (e.g. in a kebab menu) attempts the hard delete with the safety checks. Both return clear error messages when blocked.
 
 ### 8.2 Bookings (used by Agent Y — A3, and Agent Z — A4)
 
@@ -658,7 +716,7 @@ Request:
 
 Server-side, in a single transaction:
 1. Validate `events.length <= package.events_count`.
-2. Snapshot `package.base_price_cents` → `package_base_price_cents_snapshot`.
+2. Snapshot `package.name` → `package_name_snapshot` AND `package.base_price_cents` → `package_base_price_cents_snapshot`. Both NOT NULL on new bookings (kept nullable in DB only for legacy rows; new code never inserts NULL).
 3. Validate `selected_addons[].addon_id` actually belongs to `package_id`.
 4. Insert booking + booking_events rows.
 5. Set `expires_at = NOW() + 72h`, `status = 'pending'`, `negotiation_round_count = 0`.
