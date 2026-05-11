@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { coupleAcceptAdjusted } from '@/services/booking.service';
 import { createDepositCheckout } from '@/services/payment.service';
 import { sendCoupleAcceptedAdjustedEmail } from '@/lib/email/resend';
-import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
+import { withErrorBoundary } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import { logger } from '@/lib/logger';
 

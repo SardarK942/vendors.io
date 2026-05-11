@@ -3,7 +3,7 @@
  * Tests: createBooking, coupleAcceptAdjusted, coupleDeclineAdjusted
  * Uses in-memory mock Supabase client — no network required.
  */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { createBooking, coupleAcceptAdjusted, coupleDeclineAdjusted } from '@/services/booking.service';
 
 // ─── Minimal Supabase mock factory ───────────────────────────────────────────
