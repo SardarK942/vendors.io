@@ -3,8 +3,24 @@ import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/marketplace/SearchBar';
 import { CategoryGrid } from '@/components/marketplace/CategoryGrid';
 import { CheckCircle, Shield, Clock } from 'lucide-react';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const supabase = await createServerSupabaseClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  let role: string | null = null;
+  if (user) {
+    const { data: profile } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', user.id)
+      .single();
+    role = profile?.role ?? null;
+  }
+  const showVendorCta = role !== 'couple';
+
   return (
     <div className="space-y-16 py-8">
       {/* Hero Section */}
@@ -28,9 +44,11 @@ export default function HomePage() {
           <Button size="lg" asChild>
             <Link href="/vendors">Browse All Vendors</Link>
           </Button>
-          <Button size="lg" variant="outline" asChild>
-            <Link href="/signup">List Your Business</Link>
-          </Button>
+          {showVendorCta && (
+            <Button size="lg" variant="outline" asChild>
+              <Link href="/signup">List Your Business</Link>
+            </Button>
+          )}
         </div>
       </section>
 

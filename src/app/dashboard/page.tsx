@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { EarningsCard } from '@/components/dashboard/EarningsCard';
 import { RecentUnlocks } from '@/components/dashboard/RecentUnlocks';
@@ -94,19 +95,14 @@ export default async function DashboardPage() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {role === 'vendor' && <RecentUnlocks unlocks={recentUnlocks} />}
 
-        <Card>
-          <CardHeader>
-            <CardDescription>Total Bookings</CardDescription>
-            <CardTitle className="text-3xl">{bookingCount}</CardTitle>
-          </CardHeader>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardDescription>Account Type</CardDescription>
-            <CardTitle className="capitalize">{role}</CardTitle>
-          </CardHeader>
-        </Card>
+        <Link href="/dashboard/bookings" className="block">
+          <Card className="transition-colors hover:bg-accent">
+            <CardHeader>
+              <CardDescription>Total Bookings</CardDescription>
+              <CardTitle className="text-3xl">{bookingCount}</CardTitle>
+            </CardHeader>
+          </Card>
+        </Link>
 
         {role === 'vendor' && (
           <Card>
