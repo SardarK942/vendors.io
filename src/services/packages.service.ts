@@ -197,7 +197,7 @@ export async function hardDeletePackage(
     .from('bookings')
     .select('id')
     .eq('package_id', packageId)
-    .in('status', ACTIVE_BOOKING_STATUSES as unknown as string[])
+    .in('status', [...ACTIVE_BOOKING_STATUSES])
     .limit(1);
 
   if (activeBookings && activeBookings.length > 0) {

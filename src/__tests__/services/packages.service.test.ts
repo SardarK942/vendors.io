@@ -1,158 +1,17 @@
 import { describe, it, expect } from 'vitest';
 import {
   createPackage,
-  updatePackage,
   deactivatePackage,
   setPackageActiveState,
   hardDeletePackage,
   listPackagesForVendor,
 } from '@/services/packages.service';
 
-// ─── Mock Supabase builder ─────────────────────────────────────────────────────
-// We test logic/business rules through a minimal mock that captures calls.
-
-function makeSupabaseMock(overrides: Record<string, unknown> = {}) {
-  const insertedAddons: Record<string, unknown>[] = [];
-  let packagesStore: Record<string, unknown>[] = [];
-
-  const defaultPkg = {
-    id: 'pkg-1',
-    vendor_profile_id: 'vp-1',
-    name: 'Test Package',
-    description: 'Desc',
-    base_price_cents: 100000,
-    is_active: true,
-    display_order: 0,
-    ...overrides,
-  };
-
-  // fluent builder factory
-  function makeBuilder(result: unknown) {
-    const builder: Record<string, (...args: unknown[]) => unknown> = {};
-    const methods = ['select', 'insert', 'update', 'delete', 'eq', 'neq', 'in', 'limit', 'order', 'single', 'maybeSingle'];
-    methods.forEach((m) => {
-      builder[m] = (..._args: unknown[]) => builder;
-    });
-    builder.then = (resolve: (v: unknown) => unknown) => Promise.resolve(result).then(resolve);
-    // Spread so calling `.then` on the builder works like a promise
-    return builder as unknown as Promise<unknown> & typeof builder;
-  }
-
-  const supabase = {
-    from: (table: string) => {
-      return {
-        select: (cols?: string, opts?: Record<string, unknown>) => {
-          if (table === 'packages' && opts?.count === 'exact' && opts?.head === true) {
-            return {
-              eq: () => ({ eq: () => ({ count: packagesStore.length, error: null }), count: packagesStore.length, error: null }),
-              count: packagesStore.length,
-              error: null,
-            };
-          }
-          if (table === 'packages') {
-            return {
-              eq: (col: string, val: unknown) => ({
-                single: () => Promise.resolve({ data: packagesStore.find((p) => (p as Record<string, unknown>)[col] === val) ?? null, error: null }),
-                order: () => Promise.resolve({ data: packagesStore.filter((p) => (p as Record<string, unknown>)[col] === val), error: null }),
-                eq: (col2: string, val2: unknown) => ({
-                  count: packagesStore.filter((p) => (p as Record<string, unknown>)[col] === val && (p as Record<string, unknown>)[col2] === val2).length,
-                  error: null,
-                  neq: (col3: string, val3: unknown) => ({
-                    count: packagesStore.filter(
-                      (p) =>
-                        (p as Record<string, unknown>)[col] === val &&
-                        (p as Record<string, unknown>)[col2] === val2 &&
-                        (p as Record<string, unknown>)[col3] !== val3
-                    ).length,
-                    error: null,
-                  }),
-                }),
-              }),
-            };
-          }
-          if (table === 'bookings') {
-            return {
-              eq: () => ({
-                in: (col: string, vals: unknown[]) => ({
-                  limit: () => Promise.resolve({ data: [], error: null }),
-                }),
-              }),
-            };
-          }
-          if (table === 'package_addons') {
-            return {
-              eq: () => ({
-                order: () => Promise.resolve({ data: insertedAddons, error: null }),
-              }),
-            };
-          }
-          return { eq: () => ({ single: () => Promise.resolve({ data: null, error: null }) }) };
-        },
-        insert: (rows: unknown) => {
-          const arr = Array.isArray(rows) ? rows : [rows];
-          if (table === 'packages') {
-            const newPkg = { ...defaultPkg, ...arr[0] };
-            packagesStore.push(newPkg);
-            return {
-              select: () => ({
-                single: () => Promise.resolve({ data: newPkg, error: null }),
-              }),
-            };
-          }
-          if (table === 'package_addons') {
-            insertedAddons.push(...arr);
-            return {
-              select: () => Promise.resolve({ data: arr, error: null }),
-            };
-          }
-          return { select: () => ({ single: () => Promise.resolve({ data: arr[0], error: null }) }) };
-        },
-        update: (changes: unknown) => {
-          const changesObj = changes as Record<string, unknown>;
-          packagesStore = packagesStore.map((p) => {
-            const pkg = p as Record<string, unknown>;
-            return pkg.id === 'pkg-1' ? { ...pkg, ...changesObj } : pkg;
-          });
-          return {
-            eq: (col: string, val: unknown) => ({
-              eq: () => ({
-                select: () => ({
-                  single: () =>
-                    Promise.resolve({
-                      data: packagesStore.find((p) => (p as Record<string, unknown>)[col] === val) ?? null,
-                      error: null,
-                    }),
-                }),
-              }),
-              select: () => ({
-                single: () =>
-                  Promise.resolve({
-                    data: packagesStore.find((p) => (p as Record<string, unknown>)[col] === val) ?? null,
-                    error: null,
-                  }),
-              }),
-            }),
-          };
-        },
-        delete: () => ({
-          eq: (col: string, val: unknown) => ({
-            eq: () => Promise.resolve({ error: null }),
-          }),
-        }),
-      };
-    },
-  };
-
-  return { supabase: supabase as unknown, packagesStore, insertedAddons, defaultPkg };
-}
-
 // ─── createPackage ─────────────────────────────────────────────────────────────
 
 describe('packages.service', () => {
   describe('createPackage', () => {
     it('returns created package with addons', async () => {
-      const { supabase } = makeSupabaseMock();
-      // Use a simpler test-double approach
       const sb = buildCreatePackageSupabase({ pkgError: null, addonsError: null });
       const result = await createPackage(sb as never, 'vp-1', minimalPackageInput());
       expect(result.error).toBeNull();
@@ -315,7 +174,7 @@ function buildDeactivateSupabase({ otherActiveCount }: { otherActiveCount: numbe
     from: (table: string) => {
       if (table === 'packages') {
         return {
-          select: (_cols: unknown, opts?: { count: string; head: boolean }) => ({
+          select: (_cols: unknown) => ({
             eq: () => ({
               eq: () => ({
                 neq: () => Promise.resolve({ count: otherActiveCount, error: null }),
@@ -371,7 +230,7 @@ function buildHardDeleteSupabase({
     from: (table: string) => {
       if (table === 'packages') {
         return {
-          select: (_cols: unknown, opts?: { count: string; head: boolean }) => ({
+          select: (_cols: unknown) => ({
             eq: () => ({
               eq: () => ({
                 neq: () => Promise.resolve({ count: otherActiveCount, error: null }),

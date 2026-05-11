@@ -24,11 +24,12 @@ export default async function PackagesPage() {
 
   if (!vendorProfile) redirect('/dashboard/profile');
 
-  const { data: packages = [] } = await listPackagesForVendor(
+  const { data: packagesData } = await listPackagesForVendor(
     supabase,
     vendorProfile.id,
     /* includeInactive */ true
   );
+  const packages = (packagesData ?? []) as unknown as PackageItem[];
 
   return (
     <div className="space-y-6">

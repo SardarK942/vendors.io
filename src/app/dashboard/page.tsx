@@ -44,14 +44,18 @@ export default async function DashboardPage() {
       .eq('couple_user_id', user.id);
     bookingCount = count ?? 0;
   } else if (role === 'vendor') {
-    const { data: vendorProfile } = await supabase
+    // Note: is_active column is from A1 migration; not yet in generated types.
+    // Using `*` so the runtime value is available even though TypeScript doesn't know it.
+    const { data: vendorProfileRaw } = await supabase
       .from('vendor_profiles')
-      .select('id, is_active')
+      .select('*')
       .eq('user_id', user.id)
       .single();
+    const vendorProfile = vendorProfileRaw as (typeof vendorProfileRaw & { is_active?: boolean }) | null;
 
     if (vendorProfile) {
-      vendorIsActive = vendorProfile.is_active ?? true;
+      // is_active is a DB column (added in A1 migration); cast is safe at runtime.
+      vendorIsActive = vendorProfile.is_active !== false;
 
       const { count } = await supabase
         .from('bookings')

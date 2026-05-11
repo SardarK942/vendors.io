@@ -164,7 +164,7 @@ function buildDeactivateSupabase(otherActiveCount: number) {
     from: (table: string) => {
       if (table === 'packages') {
         return {
-          select: (_: unknown, opts?: { count?: string; head?: boolean }) => ({
+          select: (_: unknown, _opts?: { count?: string; head?: boolean }) => ({
             eq: () => ({
               eq: () => ({
                 neq: () => Promise.resolve({ count: otherActiveCount, error: null }),
