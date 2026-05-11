@@ -310,3 +310,131 @@ export async function autoCancelExpiredBookings(
 
   return toCancel.length;
 }
+
+// ─── A2.5: Accept booking at base price ──────────────────────────────────────
+// Appended by A2 — do not modify above this line.
+
+export async function acceptBooking(
+  supabase: SupabaseClient<Database>,
+  bookingId: string,
+  vendorUserId: string
+): Promise<{ data?: BookingRow; error?: { code: string; message: string }; status: number }> {
+  // Fetch booking and verify the caller is the vendor
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, vendor_profile_id, status, package_id, vendor_profiles!inner(user_id)')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) return { error: { code: 'NOT_FOUND', message: 'Booking not found' }, status: 404 };
+
+  const vp = booking.vendor_profiles as unknown as { user_id: string };
+  if (vp.user_id !== vendorUserId) {
+    return { error: { code: 'FORBIDDEN', message: 'Not your booking' }, status: 403 };
+  }
+  if (booking.status !== 'pending') {
+    return {
+      error: { code: 'INVALID_STATE', message: `Cannot accept from status ${booking.status}` },
+      status: 409,
+    };
+  }
+
+  // Pull vendor_notes_template from the package (may be null)
+  let vendorNotesTemplate: string | null = null;
+  if (booking.package_id) {
+    const { data: pkg } = await supabase
+      .from('packages')
+      .select('vendor_notes_template')
+      .eq('id', booking.package_id)
+      .single();
+    vendorNotesTemplate = (pkg as { vendor_notes_template?: string | null } | null)
+      ?.vendor_notes_template ?? null;
+  }
+
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({
+      status: 'accepted',
+      adjustment_amount_cents: 0,
+      vendor_notes: vendorNotesTemplate,
+      expires_at: expiresAt,
+    })
+    .eq('id', bookingId)
+    .select('*')
+    .single();
+
+  if (error) return { error: { code: 'UPDATE_FAILED', message: error.message }, status: 500 };
+  return { data: data as BookingRow, status: 200 };
+}
+
+// ─── A2.6: Vendor sends adjusted quote ───────────────────────────────────────
+// Appended by A2 — do not modify above this line.
+
+import type { AdjustQuoteInput } from '@/types';
+
+export async function adjustBookingQuote(
+  supabase: SupabaseClient<Database>,
+  bookingId: string,
+  vendorUserId: string,
+  input: AdjustQuoteInput
+): Promise<{ data?: BookingRow; error?: { code: string; message: string }; status: number }> {
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select(
+      'id, vendor_profile_id, status, negotiation_round_count, package_id, vendor_profiles!inner(user_id)'
+    )
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) return { error: { code: 'NOT_FOUND', message: 'Booking not found' }, status: 404 };
+
+  const vp = booking.vendor_profiles as unknown as { user_id: string };
+  if (vp.user_id !== vendorUserId) {
+    return { error: { code: 'FORBIDDEN', message: 'Not your booking' }, status: 403 };
+  }
+
+  if (!['pending', 'adjusted_quote_declined'].includes(booking.status)) {
+    return {
+      error: {
+        code: 'INVALID_STATE',
+        message: `Cannot adjust from status ${booking.status}`,
+      },
+      status: 409,
+    };
+  }
+
+  // Pull vendor_notes_template if not yet set
+  let vendorNotesTemplate: string | null = null;
+  if (booking.package_id) {
+    const { data: pkg } = await supabase
+      .from('packages')
+      .select('vendor_notes_template')
+      .eq('id', booking.package_id)
+      .single();
+    vendorNotesTemplate = (pkg as { vendor_notes_template?: string | null } | null)
+      ?.vendor_notes_template ?? null;
+  }
+
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+  const currentRound = booking.negotiation_round_count as number ?? 0;
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({
+      status: 'adjusted_quote_sent',
+      adjustment_amount_cents: input.adjustment_amount_cents,
+      adjustment_reason: input.reason,
+      adjustment_explanation: input.explanation ?? null,
+      negotiation_round_count: currentRound + 1,
+      vendor_notes: vendorNotesTemplate,
+      expires_at: expiresAt,
+    })
+    .eq('id', bookingId)
+    .select('*')
+    .single();
+
+  if (error) return { error: { code: 'UPDATE_FAILED', message: error.message }, status: 500 };
+  return { data: data as BookingRow, status: 200 };
+}
