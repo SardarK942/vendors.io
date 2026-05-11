@@ -72,6 +72,8 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
         const bookingId = pi.metadata?.booking_id;
+        // Valid predecessor statuses: 'accepted' (new flow) or 'quoted' (legacy).
+        // handlePaymentSuccess transitions to deposit_paid unconditionally.
         if (bookingId) await handlePaymentSuccess(supabase, pi.id, bookingId, pi.amount);
         break;
       }
