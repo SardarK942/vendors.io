@@ -83,9 +83,6 @@ Surfaced six bugs, all fixed.
 Loose ends found during the smoke test. See `docs/product_notes.md` "Open"
 section for the live list. Currently includes:
 
-- Vercel Cron not configured (highest priority — without it, fee recognition
-  - auto-completion never run)
-- Connected-account "Paused soon" warning (investigate before vendors hit it)
 - Orphan Stripe Connect accounts (cleanup pattern)
 - Smoke-test data still in prod (delete before real users)
 - CI E2E tests gated on secrets — confirm running
