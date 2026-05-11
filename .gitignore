@@ -43,3 +43,10 @@ supabase/.temp/
 # ide
 .idea/
 .vscode/
+
+# superpowers brainstorm sessions (visual companion mockups)
+.superpowers/
+
+# claude code local-only settings (may contain secrets in Bash allow patterns)
+.claude/settings.local.json
+.claude/worktrees/
