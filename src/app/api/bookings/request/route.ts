@@ -38,8 +38,6 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
       sendBookingRequestEmail(
         vendorUser.email,
         vendorProfile.business_name,
-        parsed.eventType,
-        parsed.eventDate,
         result.data!.id
       ).catch(console.error);
     }
