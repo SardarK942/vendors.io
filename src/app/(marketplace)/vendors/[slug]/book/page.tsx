@@ -2,6 +2,10 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { BookingForm } from '@/components/forms/BookingForm';
+import {
+  BOOKING_SELECTION_COOKIE_NAME,
+  decodeBookingSelectionCookie,
+} from '@/lib/booking-selection';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,25 +26,15 @@ export default async function BookPage({ params }: BookPageProps) {
 
   // Load selection from cookie (set by /api/booking-selection POST)
   const cookieStore = await cookies();
-  const selectionCookie = cookieStore.get('booking_selection');
+  const selectionCookie = cookieStore.get(BOOKING_SELECTION_COOKIE_NAME);
 
   if (!selectionCookie) {
     // No selection — send couple back to vendor profile to pick a package
     redirect(`/vendors/${slug}`);
   }
 
-  // Decode the cookie value (simple base64url.sig format from our route)
-  let selection: { package_id: string; selected_addons: { addon_id: string; name: string; price_delta_cents: number }[] } | null = null;
-  try {
-    const parts = selectionCookie.value.split('.');
-    if (parts.length >= 2) {
-      const encoded = parts.slice(0, parts.length - 1).join('.');
-      const raw = JSON.parse(Buffer.from(encoded, 'base64url').toString('utf-8'));
-      selection = raw;
-    }
-  } catch {
-    redirect(`/vendors/${slug}`);
-  }
+  // Decode AND verify the HMAC-signed cookie value
+  const selection = await decodeBookingSelectionCookie(selectionCookie.value);
 
   if (!selection?.package_id) redirect(`/vendors/${slug}`);
 

@@ -40,13 +40,9 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
   if (vendorProfile) {
     const vendorUser = vendorProfile.users as unknown as { email: string } | null;
     if (vendorUser?.email) {
-      sendBookingRequestEmail(
-        vendorUser.email,
-        vendorProfile.business_name,
-        'package booking',
-        new Date().toISOString().slice(0, 10),
-        bookingId
-      ).catch((err) => logger.error('sendBookingRequestEmail failed', err, { bookingId }));
+      sendBookingRequestEmail(vendorUser.email, vendorProfile.business_name, bookingId).catch(
+        (err) => logger.error('sendBookingRequestEmail failed', err, { bookingId })
+      );
     }
   }
 
