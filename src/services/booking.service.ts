@@ -1,7 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import type { BookingRequestInput, QuoteInput, ServiceResult } from '@/types';
-import { sendExpirationEmail } from '@/lib/email/resend';
+import { sendExpirationEmail, sendBookingAutoCancelEmail } from '@/lib/email/resend';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -10,8 +10,23 @@ type BookingRow = Database['public']['Tables']['bookings']['Row'];
 // Refund/claw logic for any *_cancelled transition lives in payment.service.ts.
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  pending: ['quoted', 'rejected', 'expired', 'couple_cancelled'],
+  pending: ['quoted', 'rejected', 'expired', 'couple_cancelled', 'accepted', 'adjusted_quote_sent'],
   quoted: ['deposit_paid', 'couple_cancelled', 'vendor_cancelled', 'expired'],
+  // New package-based flow statuses
+  accepted: ['deposit_paid', 'couple_cancelled', 'vendor_cancelled', 'expired'],
+  adjusted_quote_sent: [
+    'accepted',
+    'adjusted_quote_declined',
+    'couple_cancelled',
+    'vendor_cancelled',
+    'expired',
+  ],
+  adjusted_quote_declined: [
+    'adjusted_quote_sent',
+    'couple_cancelled',
+    'vendor_cancelled',
+    'expired',
+  ],
   deposit_paid: [
     'completed',
     'couple_cancelled',
@@ -243,4 +258,55 @@ export async function expireStaleRequests(supabase: SupabaseClient<Database>): P
   }
 
   return (data as number) ?? 0;
+}
+
+/**
+ * Sweep for bookings in the new-flow statuses that have passed their 72h expiry.
+ * Cancels them and fires sendBookingAutoCancelEmail to both parties (fire-and-forget).
+ * Handles: adjusted_quote_sent, adjusted_quote_declined.
+ * (pending is handled by the legacy expireStaleRequests + expire_stale_booking_requests RPC.)
+ */
+export async function autoCancelExpiredBookings(
+  supabase: SupabaseClient<Database>
+): Promise<number> {
+  const now = new Date().toISOString();
+
+  const { data: toCancel } = await supabase
+    .from('bookings')
+    .select(
+      'id, couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
+    )
+    .in('status', ['adjusted_quote_sent', 'adjusted_quote_declined'])
+    .lt('expires_at', now);
+
+  if (!toCancel || toCancel.length === 0) return 0;
+
+  const ids = toCancel.map((b) => b.id);
+
+  await supabase
+    .from('bookings')
+    .update({ status: 'expired', updated_at: now })
+    .in('id', ids)
+    .in('status', ['adjusted_quote_sent', 'adjusted_quote_declined'])
+    .lt('expires_at', now);
+
+  for (const row of toCancel) {
+    const vp = row.vendor_profiles as unknown as {
+      business_name: string;
+      users: { email: string } | { email: string }[] | null;
+    };
+    const vendorUser = Array.isArray(vp.users) ? vp.users[0] : vp.users;
+    const coupleUser = Array.isArray(row.users) ? row.users[0] : row.users;
+    const coupleEmail = row.couple_email ?? (coupleUser as { email: string } | null)?.email;
+
+    // Fire-and-forget — email failure must not block the sweep.
+    if (coupleEmail) {
+      void sendBookingAutoCancelEmail(coupleEmail, 'couple', row.id);
+    }
+    if (vendorUser?.email) {
+      void sendBookingAutoCancelEmail(vendorUser.email, 'vendor', row.id);
+    }
+  }
+
+  return toCancel.length;
 }
