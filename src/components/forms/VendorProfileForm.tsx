@@ -20,6 +20,9 @@ import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/types/database.types';
 import { GooglePlacesAutocomplete, type PlaceData } from '@/components/forms/GooglePlacesAutocomplete';
 
+// Supabase client is still used for profile creation (INSERT) where user_id is needed
+// Profile updates (UPDATE) go through PATCH /api/vendor-profile
+
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
 interface VendorProfileFormProps {
@@ -73,13 +76,16 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
     };
 
     if (vendorProfile) {
-      const { error } = await supabase
-        .from('vendor_profiles')
-        .update(payload)
-        .eq('id', vendorProfile.id);
-
-      if (error) {
-        toast.error('Failed to update profile');
+      const res = await fetch('/api/vendor-profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        const msg =
+          json?.error?.message ?? json?.error ?? 'Failed to update profile';
+        toast.error(typeof msg === 'string' ? msg : 'Failed to update profile');
         setLoading(false);
         return;
       }
