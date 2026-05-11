@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createBookingRequest } from '@/services/booking.service';
-import { sendBookingRequestEmail } from '@/lib/email/resend';
+import { sendBookingRequestEmail, sendBookingReceiptEmail } from '@/lib/email/resend';
 import { bookingRequestSchema } from '@/types';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
@@ -41,6 +41,10 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
         result.data!.id
       ).catch(console.error);
     }
+  }
+
+  if (user.email) {
+    sendBookingReceiptEmail(user.email, result.data!.id).catch(console.error);
   }
 
   return NextResponse.json({ data: result.data }, { status: 201 });
