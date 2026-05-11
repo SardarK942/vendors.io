@@ -7,6 +7,8 @@ import { formatPrice, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { CheckCircle, Clock, ExternalLink, Instagram, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
 import type { Database } from '@/types/database.types';
+import { PackageGrid } from './PackageGrid';
+import type { PackageWithAddons } from './PackageGrid';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -26,6 +28,7 @@ interface VendorProfileProps {
   vendor: VendorRow;
   showBookingButton?: boolean;
   reviews?: ReviewItem[];
+  packages?: PackageWithAddons[];
 }
 
 function Stars({ value, size = 'sm' }: { value: number; size?: 'sm' | 'md' }) {
@@ -51,6 +54,7 @@ export function VendorProfile({
   vendor,
   showBookingButton = true,
   reviews = [],
+  packages = [],
 }: VendorProfileProps) {
   const hasReviews = vendor.review_count > 0 && vendor.average_rating != null;
 
@@ -157,29 +161,37 @@ export function VendorProfile({
         </div>
 
         <div className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Pricing</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {vendor.starting_price_min ? (
-                <p className="text-2xl font-bold">
-                  {formatPrice(vendor.starting_price_min)}
-                  {vendor.starting_price_max && (
-                    <span className="text-lg font-normal text-muted-foreground">
-                      {' '}
-                      – {formatPrice(vendor.starting_price_max)}
-                    </span>
-                  )}
-                </p>
-              ) : (
-                <p className="text-muted-foreground">Contact for pricing</p>
-              )}
-              <p className="mt-1 text-xs text-muted-foreground">Starting price range</p>
-            </CardContent>
-          </Card>
+          {/* Packages section replaces old pricing range when packages exist */}
+          {packages.length > 0 ? (
+            <div>
+              <h2 className="text-lg font-semibold mb-3">Packages</h2>
+              <PackageGrid packages={packages} vendorSlug={vendor.slug} />
+            </div>
+          ) : (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Pricing</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {vendor.starting_price_min ? (
+                  <p className="text-2xl font-bold">
+                    {formatPrice(vendor.starting_price_min)}
+                    {vendor.starting_price_max && (
+                      <span className="text-lg font-normal text-muted-foreground">
+                        {' '}
+                        – {formatPrice(vendor.starting_price_max)}
+                      </span>
+                    )}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground">Contact for pricing</p>
+                )}
+                <p className="mt-1 text-xs text-muted-foreground">Starting price range</p>
+              </CardContent>
+            </Card>
+          )}
 
-          {showBookingButton && (
+          {showBookingButton && packages.length === 0 && (
             <Button className="w-full" size="lg" asChild>
               <Link href={`/vendors/${vendor.slug}/book`}>Request Booking</Link>
             </Button>

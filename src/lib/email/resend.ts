@@ -164,6 +164,59 @@ export async function sendReviewRequestEmail(
   });
 }
 
+// ─── Phase A3/A4 Email Functions ────────────────────────────────
+
+export async function sendBookingReceiptEmail(
+  coupleEmail: string,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: coupleEmail,
+    subject: 'Booking Request Sent',
+    html: `
+      <h2>Your booking request is in</h2>
+      <p>Your booking request has been sent to the vendor. They have 72 hours to respond — accept at the listed price or send an adjusted quote.</p>
+      <p>You'll be emailed as soon as they respond.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View your booking</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+export async function sendCoupleAcceptedAdjustedEmail(
+  vendorEmail: string,
+  coupleName: string,
+  totalCents: number,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: vendorEmail,
+    subject: `${coupleName} accepted your adjusted quote`,
+    html: `
+      <h2>Quote accepted</h2>
+      <p>${coupleName} accepted your adjusted quote of ${fmtUsd(totalCents)} and will pay the hold deposit shortly.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+export async function sendCoupleDeclinedEmail(
+  vendorEmail: string,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Couple declined your adjusted quote',
+    html: `
+      <h2>Adjusted quote declined</h2>
+      <p>The couple declined your adjusted quote. You have 72 hours to send a revised quote if you'd like to continue negotiating.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
 export async function sendCancellationEmail(
   email: string,
   vendorName: string,

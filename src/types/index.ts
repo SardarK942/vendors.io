@@ -162,3 +162,89 @@ export type ServiceResult<T> = {
 };
 
 export type UserRole = 'couple' | 'vendor' | 'admin';
+
+// ─── Phase A3 Schemas ──────────────────────────────────────────
+
+export const packageAddonSchema = z.object({
+  name: z.string().min(1).max(80),
+  price_delta_cents: z.number().int(), // can be negative
+});
+
+export const createPackageSchema = z.object({
+  name: z.string().min(1).max(120),
+  description: z.string().min(1).max(2000),
+  base_price_cents: z.number().int().positive(),
+  included_items: z.array(z.string().max(200)).max(20).default([]),
+  max_guests: z.number().int().positive(),
+  duration_hours: z.number().positive(),
+  events_count: z.number().int().min(1).max(5).default(1),
+  featured_image_url: z.string().url(),
+  gallery_image_urls: z.array(z.string().url()).max(2).default([]),
+  vendor_notes_template: z.string().max(1000).optional(),
+  location_mode: z.enum(['couple_provides', 'at_vendor']).default('couple_provides'),
+  addons: z.array(packageAddonSchema).max(8).default([]),
+});
+
+export const updatePackageSchema = createPackageSchema.partial();
+
+export const bookingEventInputSchema = z.object({
+  sequence: z.number().int().min(1),
+  event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  event_start_time: z.string().datetime(),
+  event_end_time: z.string().datetime(),
+  event_type_label: z.string().min(1).max(80),
+  location_name: z.string().max(120).optional().nullable(),
+  address_line_1: z.string().min(1).max(200),
+  city: z.string().min(1).max(80),
+  state: z.string().min(1).max(80),
+  postal_code: z.string().min(1).max(20),
+  google_place_id: z.string().optional().nullable(),
+  guest_count_override: z.number().int().positive().optional().nullable(),
+  location_overridden: z.boolean().default(false),
+});
+
+export const selectedAddonInputSchema = z.object({
+  addon_id: z.string().uuid(),
+  name: z.string().min(1),
+  price_delta_cents: z.number().int(),
+});
+
+export const createBookingSchema = z.object({
+  vendor_profile_id: z.string().uuid(),
+  package_id: z.string().uuid(),
+  selected_addons: z.array(selectedAddonInputSchema).default([]),
+  guest_count: z.number().int().positive(),
+  special_requests: z.string().max(2000).optional(),
+  couple_full_name: z.string().min(1).max(120),
+  couple_contact_phone: z.string().min(1).max(40),
+  events: z.array(bookingEventInputSchema).min(1).max(5),
+});
+
+export const adjustQuoteSchema = z
+  .object({
+    adjustment_amount_cents: z.number().int(),
+    reason: z.enum([
+      'travel',
+      'guest_count',
+      'peak_date',
+      'custom',
+      'setup_complexity',
+      'discount',
+      'other',
+    ]),
+    explanation: z.string().max(1000).optional().nullable(),
+  })
+  .refine(
+    (data) =>
+      data.reason !== 'other' ||
+      (data.explanation !== null && data.explanation !== undefined && data.explanation.length > 0),
+    { message: "explanation is required when reason is 'other'", path: ['explanation'] }
+  );
+
+export type CreatePackageInput = z.infer<typeof createPackageSchema>;
+export type UpdatePackageInput = z.infer<typeof updatePackageSchema>;
+export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+export type AdjustQuoteInput = z.infer<typeof adjustQuoteSchema>;
+export type BookingEventInput = z.infer<typeof bookingEventInputSchema>;
+export type SelectedAddonInput = z.infer<typeof selectedAddonInputSchema>;
+export type PackageAddonInput = z.infer<typeof packageAddonSchema>;

@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
-import type { BookingRequestInput, QuoteInput, ServiceResult } from '@/types';
+import type { BookingRequestInput, CreateBookingInput, QuoteInput, ServiceResult } from '@/types';
 import { sendExpirationEmail } from '@/lib/email/resend';
 
 type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
@@ -243,4 +243,159 @@ export async function expireStaleRequests(supabase: SupabaseClient<Database>): P
   }
 
   return (data as number) ?? 0;
+}
+
+// ─── Phase A3: New Booking (Package-driven) ──────────────────────────────────
+
+export async function createBooking(
+  supabase: SupabaseClient<Database>,
+  coupleUserId: string,
+  input: CreateBookingInput
+): Promise<ServiceResult<{ booking: Record<string, unknown>; events: Record<string, unknown>[] }>> {
+  // Fetch package + verify it's active
+  const { data: pkg } = await supabase
+    .from('packages')
+    .select('id, name, base_price_cents, events_count, is_active')
+    .eq('id', input.package_id)
+    .single();
+
+  if (!pkg || !pkg.is_active) {
+    return { error: 'Package not available', status: 400 };
+  }
+
+  if (input.events.length > pkg.events_count) {
+    return { error: `Package supports up to ${pkg.events_count} events`, status: 400 };
+  }
+
+  // Validate addons belong to package
+  if (input.selected_addons.length > 0) {
+    const addonIds = input.selected_addons.map((a) => a.addon_id);
+    const { data: validAddons } = await supabase
+      .from('package_addons')
+      .select('id')
+      .eq('package_id', input.package_id)
+      .in('id', addonIds);
+    if ((validAddons?.length ?? 0) !== addonIds.length) {
+      return { error: 'One or more add-ons do not belong to this package', status: 400 };
+    }
+  }
+
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+  // Insert booking
+  const { data: booking, error: bookingError } = await supabase
+    .from('bookings')
+    .insert({
+      couple_user_id: coupleUserId,
+      vendor_profile_id: input.vendor_profile_id,
+      package_id: input.package_id,
+      package_name_snapshot: pkg.name,
+      package_base_price_cents_snapshot: pkg.base_price_cents,
+      selected_addons: input.selected_addons as unknown as Database['public']['Tables']['bookings']['Insert']['selected_addons'],
+      guest_count: input.guest_count,
+      special_requests: input.special_requests ?? null,
+      couple_full_name: input.couple_full_name,
+      couple_contact_phone: input.couple_contact_phone,
+      status: 'pending',
+      expires_at: expiresAt,
+      negotiation_round_count: 0,
+    })
+    .select('*')
+    .single();
+
+  if (bookingError || !booking) {
+    return { error: bookingError?.message ?? 'Failed to create booking', status: 500 };
+  }
+
+  // Insert booking_events
+  const eventRows = input.events.map((e) => ({ ...e, booking_id: booking.id }));
+  const { data: events, error: eventsError } = await supabase
+    .from('booking_events')
+    .insert(eventRows)
+    .select('*');
+
+  if (eventsError) {
+    // Rollback booking
+    await supabase.from('bookings').delete().eq('id', booking.id);
+    return { error: eventsError.message, status: 500 };
+  }
+
+  return { data: { booking: booking as Record<string, unknown>, events: events ?? [] }, status: 201 };
+}
+
+// ─── Phase A3: Couple Accept Adjusted Quote ──────────────────────────────────
+
+export async function coupleAcceptAdjusted(
+  supabase: SupabaseClient<Database>,
+  bookingId: string,
+  coupleUserId: string
+): Promise<ServiceResult<Record<string, unknown>>> {
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, couple_user_id, status')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) return { error: 'Booking not found', status: 404 };
+  if (booking.couple_user_id !== coupleUserId) return { error: 'Forbidden', status: 403 };
+  if (booking.status !== 'adjusted_quote_sent') {
+    return {
+      error: `Cannot accept-adjusted from status: ${booking.status}`,
+      status: 409,
+    };
+  }
+
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({ status: 'accepted', expires_at: expiresAt })
+    .eq('id', bookingId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    return { error: error?.message ?? 'Update failed', status: 500 };
+  }
+
+  return { data: data as unknown as Record<string, unknown>, status: 200 };
+}
+
+// ─── Phase A3: Couple Decline Adjusted Quote ─────────────────────────────────
+
+export async function coupleDeclineAdjusted(
+  supabase: SupabaseClient<Database>,
+  bookingId: string,
+  coupleUserId: string
+): Promise<ServiceResult<Record<string, unknown>>> {
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, couple_user_id, status')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) return { error: 'Booking not found', status: 404 };
+  if (booking.couple_user_id !== coupleUserId) return { error: 'Forbidden', status: 403 };
+  if (booking.status !== 'adjusted_quote_sent') {
+    return {
+      error: `Cannot decline-adjusted from status: ${booking.status}`,
+      status: 409,
+    };
+  }
+
+  // Vendor gets 72h to re-quote
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({ status: 'adjusted_quote_declined', expires_at: expiresAt })
+    .eq('id', bookingId)
+    .select('*')
+    .single();
+
+  if (error || !data) {
+    return { error: error?.message ?? 'Update failed', status: 500 };
+  }
+
+  return { data: data as unknown as Record<string, unknown>, status: 200 };
 }

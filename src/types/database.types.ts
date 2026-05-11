@@ -58,6 +58,13 @@ export interface Database {
           average_rating: number | null;
           review_count: number;
           searchable_text: string | null;
+          is_active: boolean;
+          base_address_line_1: string | null;
+          base_city: string | null;
+          base_state: string | null;
+          base_postal_code: string | null;
+          base_google_place_id: string | null;
+          base_address_public: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -79,6 +86,13 @@ export interface Database {
           total_bookings?: number;
           average_rating?: number | null;
           review_count?: number;
+          is_active?: boolean;
+          base_address_line_1?: string | null;
+          base_city?: string | null;
+          base_state?: string | null;
+          base_postal_code?: string | null;
+          base_google_place_id?: string | null;
+          base_address_public?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -99,6 +113,13 @@ export interface Database {
           total_bookings?: number;
           average_rating?: number | null;
           review_count?: number;
+          is_active?: boolean;
+          base_address_line_1?: string | null;
+          base_city?: string | null;
+          base_state?: string | null;
+          base_postal_code?: string | null;
+          base_google_place_id?: string | null;
+          base_address_public?: boolean;
           updated_at?: string;
         };
         Relationships: [
@@ -426,6 +447,275 @@ export interface Database {
           error?: string | null;
         };
         Relationships: [];
+      };
+      // ─── Phase A1 new tables ─────────────────────────────────────
+      packages: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          name: string;
+          description: string;
+          base_price_cents: number;
+          included_items: Json;
+          max_guests: number;
+          duration_hours: number;
+          events_count: number;
+          featured_image_url: string;
+          gallery_image_urls: Json;
+          vendor_notes_template: string | null;
+          location_mode: 'couple_provides' | 'at_vendor';
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          name: string;
+          description: string;
+          base_price_cents: number;
+          included_items?: Json;
+          max_guests: number;
+          duration_hours: number;
+          events_count?: number;
+          featured_image_url: string;
+          gallery_image_urls?: Json;
+          vendor_notes_template?: string | null;
+          location_mode?: 'couple_provides' | 'at_vendor';
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          description?: string;
+          base_price_cents?: number;
+          included_items?: Json;
+          max_guests?: number;
+          duration_hours?: number;
+          events_count?: number;
+          featured_image_url?: string;
+          gallery_image_urls?: Json;
+          vendor_notes_template?: string | null;
+          location_mode?: 'couple_provides' | 'at_vendor';
+          display_order?: number;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'packages_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      package_addons: {
+        Row: {
+          id: string;
+          package_id: string;
+          name: string;
+          price_delta_cents: number;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          package_id: string;
+          name: string;
+          price_delta_cents: number;
+          display_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+          price_delta_cents?: number;
+          display_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'package_addons_package_id_fkey';
+            columns: ['package_id'];
+            isOneToOne: false;
+            referencedRelation: 'packages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      bookings: {
+        Row: {
+          id: string;
+          couple_user_id: string;
+          vendor_profile_id: string;
+          package_id: string | null;
+          package_name_snapshot: string | null;
+          package_base_price_cents_snapshot: number | null;
+          selected_addons: Json;
+          adjustment_amount_cents: number;
+          adjustment_reason: string | null;
+          adjustment_explanation: string | null;
+          vendor_notes: string | null;
+          total_price_cents: number;
+          negotiation_round_count: number;
+          guest_count: number | null;
+          special_requests: string | null;
+          couple_full_name: string | null;
+          couple_contact_phone: string | null;
+          status: string;
+          expires_at: string | null;
+          couple_contact_revealed: boolean;
+          deposit_paid_at: string | null;
+          stripe_payment_intent_id: string | null;
+          completed_at: string | null;
+          cancelled_at: string | null;
+          cancellation_reason: string | null;
+          cancellation_fault: 'none' | 'vendor_fault' | 'force_majeure' | null;
+          disputed_at: string | null;
+          dispute_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          couple_user_id: string;
+          vendor_profile_id: string;
+          package_id?: string | null;
+          package_name_snapshot?: string | null;
+          package_base_price_cents_snapshot?: number | null;
+          selected_addons?: Json;
+          adjustment_amount_cents?: number;
+          adjustment_reason?: string | null;
+          adjustment_explanation?: string | null;
+          vendor_notes?: string | null;
+          total_price_cents?: number;
+          negotiation_round_count?: number;
+          guest_count?: number | null;
+          special_requests?: string | null;
+          couple_full_name?: string | null;
+          couple_contact_phone?: string | null;
+          status?: string;
+          expires_at?: string | null;
+          couple_contact_revealed?: boolean;
+          deposit_paid_at?: string | null;
+          stripe_payment_intent_id?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          cancellation_reason?: string | null;
+          cancellation_fault?: 'none' | 'vendor_fault' | 'force_majeure' | null;
+          disputed_at?: string | null;
+          dispute_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          package_id?: string | null;
+          package_name_snapshot?: string | null;
+          package_base_price_cents_snapshot?: number | null;
+          selected_addons?: Json;
+          adjustment_amount_cents?: number;
+          adjustment_reason?: string | null;
+          adjustment_explanation?: string | null;
+          vendor_notes?: string | null;
+          total_price_cents?: number;
+          negotiation_round_count?: number;
+          guest_count?: number | null;
+          special_requests?: string | null;
+          couple_full_name?: string | null;
+          couple_contact_phone?: string | null;
+          status?: string;
+          expires_at?: string | null;
+          couple_contact_revealed?: boolean;
+          deposit_paid_at?: string | null;
+          stripe_payment_intent_id?: string | null;
+          completed_at?: string | null;
+          cancelled_at?: string | null;
+          cancellation_reason?: string | null;
+          cancellation_fault?: 'none' | 'vendor_fault' | 'force_majeure' | null;
+          disputed_at?: string | null;
+          dispute_reason?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'bookings_couple_user_id_fkey';
+            columns: ['couple_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookings_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      booking_events: {
+        Row: {
+          id: string;
+          booking_id: string;
+          sequence: number;
+          event_date: string;
+          event_start_time: string;
+          event_end_time: string;
+          event_type_label: string;
+          location_name: string | null;
+          address_line_1: string;
+          city: string;
+          state: string;
+          postal_code: string;
+          google_place_id: string | null;
+          guest_count_override: number | null;
+          location_overridden: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          sequence: number;
+          event_date: string;
+          event_start_time: string;
+          event_end_time: string;
+          event_type_label: string;
+          location_name?: string | null;
+          address_line_1: string;
+          city: string;
+          state: string;
+          postal_code: string;
+          google_place_id?: string | null;
+          guest_count_override?: number | null;
+          location_overridden?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          event_date?: string;
+          event_start_time?: string;
+          event_end_time?: string;
+          event_type_label?: string;
+          location_name?: string | null;
+          address_line_1?: string;
+          city?: string;
+          state?: string;
+          postal_code?: string;
+          google_place_id?: string | null;
+          guest_count_override?: number | null;
+          location_overridden?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'booking_events_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: false;
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       stripe_events: {
         Row: {
