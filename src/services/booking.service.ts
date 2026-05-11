@@ -263,7 +263,7 @@ export async function expireStaleRequests(supabase: SupabaseClient<Database>): P
 /**
  * Sweep for bookings in the new-flow statuses that have passed their 72h expiry.
  * Cancels them and fires sendBookingAutoCancelEmail to both parties (fire-and-forget).
- * Handles: adjusted_quote_sent, adjusted_quote_declined.
+ * Handles: accepted (couple never paid deposit), adjusted_quote_sent, adjusted_quote_declined.
  * (pending is handled by the legacy expireStaleRequests + expire_stale_booking_requests RPC.)
  */
 export async function autoCancelExpiredBookings(
@@ -276,7 +276,7 @@ export async function autoCancelExpiredBookings(
     .select(
       'id, couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
     )
-    .in('status', ['adjusted_quote_sent', 'adjusted_quote_declined'])
+    .in('status', ['accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'])
     .lt('expires_at', now);
 
   if (!toCancel || toCancel.length === 0) return 0;
@@ -287,7 +287,7 @@ export async function autoCancelExpiredBookings(
     .from('bookings')
     .update({ status: 'expired', updated_at: now })
     .in('id', ids)
-    .in('status', ['adjusted_quote_sent', 'adjusted_quote_declined'])
+    .in('status', ['accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'])
     .lt('expires_at', now);
 
   for (const row of toCancel) {

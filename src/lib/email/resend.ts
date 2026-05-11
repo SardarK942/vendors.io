@@ -292,7 +292,7 @@ export async function sendBookingAutoCancelEmail(
     subject: 'Booking auto-cancelled',
     html: `
       <h2>Booking auto-cancelled</h2>
-      <p>This booking was automatically cancelled because there was no response within 72 hours.</p>
+      <p>This booking was automatically cancelled because no action was taken within 72 hours (e.g. deposit not paid or no response to a quote).</p>
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking</a></p>
       ${FOOTER}
     `,

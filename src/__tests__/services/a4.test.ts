@@ -131,7 +131,11 @@ describe('A4 — New state machine transitions', () => {
 // A4.12: confirm the sweep targets the correct statuses
 
 describe('A4.12 — Auto-cancel sweep status set', () => {
-  const SWEEP_STATUSES = ['adjusted_quote_sent', 'adjusted_quote_declined'];
+  const SWEEP_STATUSES = ['accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'];
+
+  it('sweep covers accepted (couple never paid deposit)', () => {
+    expect(SWEEP_STATUSES).toContain('accepted');
+  });
 
   it('sweep covers adjusted_quote_sent', () => {
     expect(SWEEP_STATUSES).toContain('adjusted_quote_sent');
