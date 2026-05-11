@@ -1,4 +1,5 @@
 import { Resend } from 'resend';
+import { logger } from '@/lib/logger';
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
@@ -24,13 +25,13 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
     });
 
     if (error) {
-      console.error('[sendEmail] Resend error:', error);
+      logger.error('[sendEmail] Resend error', error, { to: options.to, subject: options.subject });
       return false;
     }
 
     return true;
   } catch (err) {
-    console.error('[sendEmail] Exception:', err);
+    logger.error('[sendEmail] Exception', err, { to: options.to, subject: options.subject });
     return false;
   }
 }
@@ -45,27 +46,57 @@ function appUrl(): string {
 
 const FOOTER = '<p style="color:#888;font-size:12px;">— Baazar.io</p>';
 
+// ─── Booking Request ──────────────────────────────────────────────────────────
+
+/**
+ * Fired when a couple submits a new booking request.
+ * Recipient: vendor.
+ */
 export async function sendBookingRequestEmail(
   vendorEmail: string,
   vendorName: string,
-  eventType: string,
-  eventDate: string,
-  _bookingId: string
+  bookingId: string
 ): Promise<boolean> {
   return sendEmail({
     to: vendorEmail,
-    subject: `New Booking Request — ${eventType}`,
+    subject: 'New Booking Request',
     html: `
       <h2>New Booking Request</h2>
       <p>Hi ${vendorName},</p>
-      <p>You have a new booking request for a <strong>${eventType}</strong> on <strong>${eventDate}</strong>.</p>
-      <p>Please log in to your dashboard to review and submit a quote within 72 hours.</p>
-      <p><a href="${appUrl()}/dashboard/bookings">View Request</a></p>
+      <p>You have a new booking request for one of your packages. Review it within 72 hours — accept at the package price or send an adjusted quote.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View Request</a></p>
       ${FOOTER}
     `,
   });
 }
 
+/**
+ * Fired when a couple submits a new booking request.
+ * Recipient: couple (confirmation receipt).
+ */
+export async function sendBookingReceiptEmail(
+  coupleEmail: string,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: coupleEmail,
+    subject: 'Booking Request Sent',
+    html: `
+      <h2>Your booking request is in</h2>
+      <p>Your booking request has been sent to the vendor. They have 72 hours to respond — accept at the listed price or send an adjusted quote.</p>
+      <p>You'll be emailed as soon as they respond.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View your booking</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+// ─── Quote / Acceptance ───────────────────────────────────────────────────────
+
+/**
+ * Legacy quote email — kept for backward-compat with old flow.
+ * New flow uses sendVendorAcceptedEmail instead.
+ */
 export async function sendQuoteEmail(
   coupleEmail: string,
   vendorName: string,
@@ -85,6 +116,116 @@ export async function sendQuoteEmail(
   });
 }
 
+/**
+ * Fired when a vendor accepts a booking at the package price.
+ * Recipient: couple.
+ */
+export async function sendVendorAcceptedEmail(
+  coupleEmail: string,
+  vendorName: string,
+  totalCents: number,
+  depositCheckoutUrl: string
+): Promise<boolean> {
+  return sendEmail({
+    to: coupleEmail,
+    subject: `${vendorName} accepted your booking`,
+    html: `
+      <h2>${vendorName} accepted your booking</h2>
+      <p>Total: <strong>${fmtUsd(totalCents)}</strong></p>
+      <p>Pay your hold deposit (30%) to confirm. The vendor's full address and instructions will appear in your dashboard once the deposit is processed.</p>
+      <p><a href="${depositCheckoutUrl}">Pay deposit</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/**
+ * Fired when a vendor sends an adjusted quote.
+ * Recipient: couple.
+ */
+export async function sendAdjustedQuoteEmail(
+  coupleEmail: string,
+  vendorName: string,
+  newTotalCents: number,
+  reason: string,
+  explanation: string | null,
+  bookingId: string
+): Promise<boolean> {
+  const reasonLabel =
+    (
+      {
+        travel: 'travel distance',
+        guest_count: 'guest count over package',
+        peak_date: 'peak-season date',
+        custom: 'custom requirements',
+        setup_complexity: 'setup complexity',
+        discount: 'a discount applied',
+        other: 'other (see explanation)',
+      } as Record<string, string>
+    )[reason] ?? reason;
+
+  return sendEmail({
+    to: coupleEmail,
+    subject: `${vendorName} sent an adjusted quote`,
+    html: `
+      <h2>Adjusted quote from ${vendorName}</h2>
+      <p>New total: <strong>${fmtUsd(newTotalCents)}</strong></p>
+      <p>Reason: ${reasonLabel}${explanation ? ` — "${explanation}"` : ''}</p>
+      <p>Review and either accept the adjusted total or decline.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Review quote</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/**
+ * Fired when a couple accepts the vendor's adjusted quote.
+ * Recipient: vendor.
+ */
+export async function sendCoupleAcceptedAdjustedEmail(
+  vendorEmail: string,
+  coupleName: string,
+  totalCents: number,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: vendorEmail,
+    subject: `${coupleName} accepted your adjusted quote`,
+    html: `
+      <h2>Quote accepted</h2>
+      <p>${coupleName} accepted your adjusted quote of ${fmtUsd(totalCents)} and will pay the hold deposit shortly.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/**
+ * Fired when a couple declines the vendor's adjusted quote.
+ * Recipient: vendor.
+ */
+export async function sendCoupleDeclinedEmail(
+  vendorEmail: string,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Couple declined your adjusted quote',
+    html: `
+      <h2>Adjusted quote declined</h2>
+      <p>The couple declined your adjusted quote. You have <strong>72 hours</strong> to send a revised quote, or the booking will auto-cancel.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Send revised quote</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+// ─── Deposit Confirmation ─────────────────────────────────────────────────────
+
+/**
+ * Fired on deposit_paid for both vendor and couple.
+ * Recipient: either (isVendor flag controls body).
+ */
 export async function sendDepositConfirmationEmail(
   email: string,
   vendorName: string,
@@ -108,6 +249,62 @@ export async function sendDepositConfirmationEmail(
   });
 }
 
+/**
+ * Fired on deposit_paid — sent to the couple with vendor's full address revealed.
+ * Recipient: couple.
+ */
+export async function sendBookingConfirmedEmail(
+  coupleEmail: string,
+  vendorName: string,
+  vendorFullAddress: string,
+  vendorNotes: string | null,
+  bookingId: string
+): Promise<boolean> {
+  return sendEmail({
+    to: coupleEmail,
+    subject: `Booking Confirmed — ${vendorName}`,
+    html: `
+      <h2>Booking confirmed</h2>
+      <p>Your deposit has been processed. Here are the details:</p>
+      <p><strong>Vendor location:</strong> ${vendorFullAddress}</p>
+      ${vendorNotes ? `<p><strong>From your vendor:</strong> ${vendorNotes}</p>` : ''}
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking details</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+// ─── Auto-cancel ──────────────────────────────────────────────────────────────
+
+/**
+ * Fired when a booking is auto-cancelled by the 72h expiry sweep.
+ * Recipient: couple or vendor (recipientRole is informational only).
+ */
+export async function sendBookingAutoCancelEmail(
+  email: string,
+  recipientRole: 'couple' | 'vendor',
+  bookingId: string
+): Promise<boolean> {
+  // recipientRole is available for copy customisation in future; same body for now.
+  void recipientRole;
+  return sendEmail({
+    to: email,
+    subject: 'Booking auto-cancelled',
+    html: `
+      <h2>Booking auto-cancelled</h2>
+      <p>This booking was automatically cancelled because there was no response within 72 hours.</p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+// ─── Expiration (legacy) ──────────────────────────────────────────────────────
+
+/**
+ * Legacy expiration email for the old quoted flow.
+ * New auto-cancel uses sendBookingAutoCancelEmail instead.
+ */
 export async function sendExpirationEmail(
   email: string,
   vendorName: string,
@@ -128,6 +325,8 @@ export async function sendExpirationEmail(
     `,
   });
 }
+
+// ─── Completion ───────────────────────────────────────────────────────────────
 
 export async function sendCompletionEmailToVendor(
   vendorEmail: string,
@@ -163,6 +362,8 @@ export async function sendReviewRequestEmail(
     `,
   });
 }
+
+// ─── Cancellation ─────────────────────────────────────────────────────────────
 
 export async function sendCancellationEmail(
   email: string,
