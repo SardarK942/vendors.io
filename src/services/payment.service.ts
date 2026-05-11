@@ -4,7 +4,7 @@ import type { CancellerRole, ServiceResult } from '@/types';
 import { stripe } from '@/lib/stripe/client';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { createMinimalAccount, createFullOnboardingLink } from '@/lib/stripe/connect';
-import { calculatePlatformCut, calculateVendorPending } from '@/lib/utils';
+import { calculatePlatformCut, calculateVendorPending, DEPOSIT_RATE } from '@/lib/utils';
 import {
   sendDepositConfirmationEmail,
   sendCompletionEmailToVendor,
@@ -94,8 +94,8 @@ export async function createDepositCheckout(
     return { error: 'This vendor is temporarily unable to accept new bookings.', status: 400 };
   }
 
-  // Deposit = 30% of total price; platform retains 30% of deposit; vendor gets 70% of deposit.
-  const depositAmount = Math.floor(booking.total_price_cents * 0.30);
+  // Deposit = DEPOSIT_RATE of total price; platform retains 30% of deposit; vendor gets 70% of deposit.
+  const depositAmount = Math.floor(booking.total_price_cents * DEPOSIT_RATE);
   const platformCut = calculatePlatformCut(depositAmount);
   const vendorPending = calculateVendorPending(depositAmount);
 

@@ -13,6 +13,9 @@ export function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
+/** Fraction of total_price_cents charged as the hold deposit. Single source of truth. */
+export const DEPOSIT_RATE = 0.30;
+
 /** Hold deposit = 10% of the vendor quote. */
 export function calculateDepositAmount(quoteAmountCents: number): number {
   return Math.round(quoteAmountCents / 10);

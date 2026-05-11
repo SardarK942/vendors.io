@@ -7,13 +7,14 @@
 
 import { describe, it, expect } from 'vitest';
 import { validateStateTransition } from '@/services/booking.service';
+import { DEPOSIT_RATE } from '@/lib/utils';
 
 // ─── Deposit Calculation ──────────────────────────────────────────────────────
-// A4.1: deposit = Math.floor(total_price_cents * 0.30)
+// A4.1: deposit = Math.floor(total_price_cents * DEPOSIT_RATE)
 
 describe('A4.1 — Deposit calculation (30% of total_price_cents)', () => {
   function calcDeposit(totalCents: number): number {
-    return Math.floor(totalCents * 0.3);
+    return Math.floor(totalCents * DEPOSIT_RATE);
   }
 
   it('$1000 package -> $300 deposit', () => {
@@ -29,7 +30,7 @@ describe('A4.1 — Deposit calculation (30% of total_price_cents)', () => {
   });
 
   it('floors partial cent to avoid Stripe issues', () => {
-    // $333.33 total -> floor(99999 * 0.3) = floor(29999.7) = 29999
+    // $333.33 total -> floor(99999 * DEPOSIT_RATE) = floor(29999.7) = 29999
     expect(calcDeposit(99999)).toBe(29999);
   });
 
