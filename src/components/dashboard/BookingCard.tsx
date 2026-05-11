@@ -5,7 +5,7 @@ import { Calendar, Users } from 'lucide-react';
 import Link from 'next/link';
 import type { Database } from '@/types/database.types';
 
-type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
+type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
 interface BookingCardProps {
   booking: BookingRow & {

@@ -3,7 +3,7 @@ import type { Database } from '@/types/database.types';
 import type { BookingRequestInput, QuoteInput, ServiceResult } from '@/types';
 import { sendExpirationEmail } from '@/lib/email/resend';
 
-type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
+type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
 // ─── State Machine ──────────────────────────────────────────────
 // deposit_paid is the "confirmed" state; vendor acknowledgment is implicit at quote time.
@@ -41,7 +41,7 @@ export async function createBookingRequest(
 ): Promise<ServiceResult<{ id: string }>> {
   // Check for existing active request with same vendor
   const { data: existing } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('id')
     .eq('couple_user_id', coupleUserId)
     .eq('vendor_profile_id', input.vendorProfileId)
@@ -53,7 +53,7 @@ export async function createBookingRequest(
   }
 
   const { data, error } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .insert({
       couple_user_id: coupleUserId,
       vendor_profile_id: input.vendorProfileId,
@@ -84,7 +84,7 @@ export async function submitQuote(
 ): Promise<ServiceResult<BookingRow>> {
   // Verify vendor owns this booking's vendor profile
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles!inner(user_id)')
     .eq('id', bookingId)
     .single();
@@ -103,7 +103,7 @@ export async function submitQuote(
   }
 
   const { data, error } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({
       status: 'quoted',
       vendor_quote_amount: input.quoteAmount,
@@ -127,7 +127,7 @@ export async function getBookingRequests(
   role: 'couple' | 'vendor'
 ): Promise<ServiceResult<BookingRow[]>> {
   let query = supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles(business_name, slug, category)');
 
   if (role === 'couple') {
@@ -162,7 +162,7 @@ export async function getBookingById(
   _userId: string
 ): Promise<ServiceResult<BookingRow>> {
   const { data, error } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles(business_name, slug, category, user_id)')
     .eq('id', bookingId)
     .single();
@@ -186,7 +186,7 @@ export async function rejectBooking(
   vendorUserId: string
 ): Promise<ServiceResult<BookingRow>> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles!inner(user_id)')
     .eq('id', bookingId)
     .single();
@@ -204,7 +204,7 @@ export async function rejectBooking(
   }
 
   const { data, error } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({ status: 'rejected', vendor_responded_at: new Date().toISOString() })
     .eq('id', bookingId)
     .select()
@@ -216,7 +216,7 @@ export async function rejectBooking(
 
 export async function expireStaleRequests(supabase: SupabaseClient<Database>): Promise<number> {
   const { data: toExpire } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select(
       'id, couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
     )

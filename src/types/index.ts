@@ -162,3 +162,104 @@ export type ServiceResult<T> = {
 };
 
 export type UserRole = 'couple' | 'vendor' | 'admin';
+
+// ─── Sub-project A: Packages + Booking model ────────────────────
+
+export const packageAddonInputSchema = z.object({
+  name: z.string().min(1).max(80),
+  price_delta_cents: z.number().int(),
+});
+export type PackageAddonInput = z.infer<typeof packageAddonInputSchema>;
+
+export const packageLocationModeSchema = z.enum(['couple_provides', 'at_vendor']);
+export type PackageLocationModeInput = z.infer<typeof packageLocationModeSchema>;
+
+export const createPackageSchema = z.object({
+  name: z.string().min(1).max(120),
+  description: z.string().min(1).max(2000),
+  base_price_cents: z.number().int().positive(),
+  included_items: z.array(z.string().max(200)).max(20).default([]),
+  max_guests: z.number().int().positive(),
+  duration_hours: z.number().positive(),
+  events_count: z.number().int().min(1).max(5).default(1),
+  featured_image_url: z.string().url(),
+  gallery_image_urls: z.array(z.string().url()).max(2).default([]),
+  vendor_notes_template: z.string().max(1000).optional().nullable(),
+  location_mode: packageLocationModeSchema.default('couple_provides'),
+  addons: z.array(packageAddonInputSchema).max(8).default([]),
+});
+export type CreatePackageInput = z.infer<typeof createPackageSchema>;
+
+export const updatePackageSchema = createPackageSchema.partial();
+export type UpdatePackageInput = z.infer<typeof updatePackageSchema>;
+
+export const setPackageActiveSchema = z.object({
+  is_active: z.boolean(),
+});
+export type SetPackageActiveInput = z.infer<typeof setPackageActiveSchema>;
+
+export const selectedAddonInputSchema = z.object({
+  addon_id: z.string().uuid(),
+  name: z.string().min(1),
+  price_delta_cents: z.number().int(),
+});
+export type SelectedAddonInput = z.infer<typeof selectedAddonInputSchema>;
+
+export const bookingEventInputSchema = z
+  .object({
+    sequence: z.number().int().min(1),
+    event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
+    event_start_time: z.string().datetime(),
+    event_end_time: z.string().datetime(),
+    event_type_label: z.string().min(1).max(80),
+    location_name: z.string().max(120).optional().nullable(),
+    address_line_1: z.string().min(1).max(200),
+    city: z.string().min(1).max(80),
+    state: z.string().min(1).max(80),
+    postal_code: z.string().min(1).max(20),
+    google_place_id: z.string().optional().nullable(),
+    guest_count_override: z.number().int().positive().optional().nullable(),
+    location_overridden: z.boolean().default(false),
+  })
+  .refine((e) => new Date(e.event_end_time) > new Date(e.event_start_time), {
+    message: 'event_end_time must be after event_start_time',
+    path: ['event_end_time'],
+  });
+export type BookingEventInput = z.infer<typeof bookingEventInputSchema>;
+
+export const createBookingSchema = z.object({
+  vendor_profile_id: z.string().uuid(),
+  package_id: z.string().uuid(),
+  selected_addons: z.array(selectedAddonInputSchema).default([]),
+  guest_count: z.number().int().positive(),
+  special_requests: z.string().max(2000).optional().nullable(),
+  couple_full_name: z.string().min(1).max(120),
+  couple_contact_phone: z.string().min(1).max(40),
+  events: z.array(bookingEventInputSchema).min(1).max(5),
+});
+export type CreateBookingInput = z.infer<typeof createBookingSchema>;
+
+export const adjustmentReasonSchema = z.enum([
+  'travel',
+  'guest_count',
+  'peak_date',
+  'custom',
+  'setup_complexity',
+  'discount',
+  'other',
+]);
+export type AdjustmentReasonInput = z.infer<typeof adjustmentReasonSchema>;
+
+export const adjustQuoteSchema = z
+  .object({
+    adjustment_amount_cents: z.number().int(),
+    reason: adjustmentReasonSchema,
+    explanation: z.string().max(1000).optional().nullable(),
+  })
+  .refine(
+    (d) =>
+      d.reason !== 'other' ||
+      (d.explanation !== null && d.explanation !== undefined && d.explanation.length > 0),
+    { message: "explanation is required when reason is 'other'", path: ['explanation'] }
+  );
+export type AdjustQuoteInput = z.infer<typeof adjustQuoteSchema>;

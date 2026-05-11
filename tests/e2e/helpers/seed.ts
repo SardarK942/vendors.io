@@ -185,7 +185,7 @@ export async function seedBooking(
     row.completed_at = new Date().toISOString();
   }
 
-  const { data, error } = await supabase.from('booking_requests').insert(row).select('id').single();
+  const { data, error } = await supabase.from('bookings').insert(row).select('id').single();
   if (error || !data) throw new Error(`seedBooking: ${error?.message}`);
   return { id: data.id };
 }

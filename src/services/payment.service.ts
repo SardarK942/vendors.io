@@ -60,7 +60,7 @@ export async function createDepositCheckout(
   // vendor_profile under RLS (enforces couple ownership), then read the
   // vendor's stripe_account through a service-role client.
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles!inner(id, business_name)')
     .eq('id', bookingId)
     .eq('couple_user_id', coupleUserId)
@@ -145,7 +145,7 @@ export async function handlePaymentSuccess(
   const vendorPending = calculateVendorPending(amount);
 
   await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({
       status: 'deposit_paid',
       deposit_amount: amount,
@@ -165,7 +165,7 @@ export async function handlePaymentSuccess(
   });
 
   const { data: ctx } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select(
       'couple_email, couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
     )
@@ -378,7 +378,7 @@ export async function cancelBooking(
   fault: 'none' | 'vendor_fault' | 'force_majeure' = 'none'
 ): Promise<ServiceResult<{ refund_amount_cents: number; new_status: string }>> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles!inner(id, user_id), transactions(*)')
     .eq('id', bookingId)
     .single();
@@ -407,7 +407,7 @@ export async function cancelBooking(
   // Atomic status flip — only succeeds if booking is still in a cancellable state.
   // Prevents concurrent cancels from both issuing refunds.
   const { data: lockRows } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({
       status: newStatus,
       cancelled_at: new Date().toISOString(),
@@ -488,7 +488,7 @@ async function notifyCancellation(
   reason: string | null
 ): Promise<void> {
   const { data: ctx } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select(
       'couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
     )
@@ -535,7 +535,7 @@ export async function clawVendorPending(
   amountCents: number
 ): Promise<void> {
   const { data: bookings } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('id')
     .eq('vendor_profile_id', vendorProfileId);
 
@@ -610,7 +610,7 @@ export async function completeBooking(
   coupleUserId: string
 ): Promise<ServiceResult<{ status: string }>> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('couple_user_id, status, event_date')
     .eq('id', bookingId)
     .single();
@@ -628,7 +628,7 @@ export async function completeBooking(
 
   // Trigger on_booking_completed handles transaction updates (authorized/recognized → earned).
   await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({ status: 'completed', completed_at: new Date().toISOString() })
     .eq('id', bookingId);
 
@@ -648,7 +648,7 @@ export async function disputeBooking(
   reason: string
 ): Promise<ServiceResult<{ status: string }>> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('couple_user_id, status, event_date')
     .eq('id', bookingId)
     .single();
@@ -665,7 +665,7 @@ export async function disputeBooking(
   }
 
   const { data: lockRows } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({
       status: 'disputed',
       disputed_at: new Date().toISOString(),
@@ -687,7 +687,7 @@ async function sendCompletionEmails(
   bookingId: string
 ): Promise<void> {
   const { data: ctx } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select(
       'couple_email, users!couple_user_id(email), transactions(vendor_payout), vendor_profiles!inner(business_name, users!user_id(email))'
     )
@@ -746,7 +746,7 @@ export async function autoCompleteBookings(
   const cutoffDate = cutoff.toISOString().slice(0, 10);
 
   const { data } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({ status: 'completed', completed_at: new Date().toISOString() })
     .eq('status', 'deposit_paid')
     .lt('event_date', cutoffDate)
@@ -812,7 +812,7 @@ export async function getVendorEarnings(
   )?.[0];
 
   const { data: bookings } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('id, transactions(status, vendor_payout, transferred_at)')
     .eq('vendor_profile_id', vp.id);
 
@@ -886,7 +886,7 @@ export async function initiatePayout(
   if (!vp) return { error: 'Vendor profile not found', status: 404 };
 
   const { data: bookings } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('id')
     .eq('vendor_profile_id', vp.id);
   const bookingIds = (bookings ?? []).map((b) => b.id);

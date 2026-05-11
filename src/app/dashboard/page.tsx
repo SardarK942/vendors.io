@@ -35,7 +35,7 @@ export default async function DashboardPage() {
 
   if (role === 'couple') {
     const { count } = await supabase
-      .from('booking_requests')
+      .from('bookings')
       .select('*', { count: 'exact', head: true })
       .eq('couple_user_id', user.id);
     bookingCount = count ?? 0;
@@ -48,7 +48,7 @@ export default async function DashboardPage() {
 
     if (vendorProfile) {
       const { count } = await supabase
-        .from('booking_requests')
+        .from('bookings')
         .select('*', { count: 'exact', head: true })
         .eq('vendor_profile_id', vendorProfile.id);
       bookingCount = count ?? 0;
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
       // Completed bookings in last 7 days → "funds unlocked" banner.
       const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
       const { data: completed } = await supabase
-        .from('booking_requests')
+        .from('bookings')
         .select(
           'id, completed_at, event_type, transactions(vendor_payout), users!couple_user_id(full_name)'
         )

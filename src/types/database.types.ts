@@ -1,10 +1,51 @@
 /**
  * Manual database types matching the Supabase schema.
- * Replace with auto-generated types once Supabase project is live:
- *   npx supabase gen types typescript --local > src/types/database.types.ts
+ *
+ * Migrations up to and including 00021 are reflected here:
+ *   - 00015 packages, 00016 package_addons, 00016 booking_events
+ *   - 00017 booking_requests → bookings rename (FK names retained)
+ *   - 00018 new bookings columns (package_id, snapshots, adjustment fields,
+ *     total_price_cents, negotiation_round_count) + expanded status check
+ *   - 00019 vendor_profiles.base_address_* columns + visibility toggle
+ *   - 00020 vendor_packages_price_band view + total_price trigger
+ *
+ * Replace with auto-generated types once we decide to switch:
+ *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
  */
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
+
+export type BookingStatus =
+  | 'pending'
+  | 'quoted'
+  | 'rejected'
+  | 'deposit_paid'
+  | 'couple_cancelled'
+  | 'vendor_cancelled'
+  | 'cancelled_mutual'
+  | 'completed'
+  | 'expired'
+  | 'disputed'
+  | 'accepted'
+  | 'adjusted_quote_sent'
+  | 'adjusted_quote_declined';
+
+export type AdjustmentReason =
+  | 'travel'
+  | 'guest_count'
+  | 'peak_date'
+  | 'custom'
+  | 'setup_complexity'
+  | 'discount'
+  | 'other';
+
+export type PackageLocationMode = 'couple_provides' | 'at_vendor';
+
+export interface SelectedAddonSnapshot {
+  addon_id: string;
+  name: string;
+  price_delta_cents: number;
+}
 
 export interface Database {
   public: {
@@ -58,6 +99,12 @@ export interface Database {
           average_rating: number | null;
           review_count: number;
           searchable_text: string | null;
+          base_address_line_1: string | null;
+          base_city: string | null;
+          base_state: string | null;
+          base_postal_code: string | null;
+          base_google_place_id: string | null;
+          base_address_public: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -79,6 +126,12 @@ export interface Database {
           total_bookings?: number;
           average_rating?: number | null;
           review_count?: number;
+          base_address_line_1?: string | null;
+          base_city?: string | null;
+          base_state?: string | null;
+          base_postal_code?: string | null;
+          base_google_place_id?: string | null;
+          base_address_public?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -99,6 +152,12 @@ export interface Database {
           total_bookings?: number;
           average_rating?: number | null;
           review_count?: number;
+          base_address_line_1?: string | null;
+          base_city?: string | null;
+          base_state?: string | null;
+          base_postal_code?: string | null;
+          base_google_place_id?: string | null;
+          base_address_public?: boolean;
           updated_at?: string;
         };
         Relationships: [
@@ -111,7 +170,167 @@ export interface Database {
           },
         ];
       };
-      booking_requests: {
+      packages: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          name: string;
+          description: string;
+          base_price_cents: number;
+          included_items: string[];
+          max_guests: number;
+          duration_hours: number;
+          events_count: number;
+          featured_image_url: string;
+          gallery_image_urls: string[];
+          vendor_notes_template: string | null;
+          location_mode: PackageLocationMode;
+          display_order: number;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          name: string;
+          description: string;
+          base_price_cents: number;
+          included_items?: string[];
+          max_guests: number;
+          duration_hours: number;
+          events_count?: number;
+          featured_image_url: string;
+          gallery_image_urls?: string[];
+          vendor_notes_template?: string | null;
+          location_mode?: PackageLocationMode;
+          display_order?: number;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          vendor_profile_id?: string;
+          name?: string;
+          description?: string;
+          base_price_cents?: number;
+          included_items?: string[];
+          max_guests?: number;
+          duration_hours?: number;
+          events_count?: number;
+          featured_image_url?: string;
+          gallery_image_urls?: string[];
+          vendor_notes_template?: string | null;
+          location_mode?: PackageLocationMode;
+          display_order?: number;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'packages_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      package_addons: {
+        Row: {
+          id: string;
+          package_id: string;
+          name: string;
+          price_delta_cents: number;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          package_id: string;
+          name: string;
+          price_delta_cents: number;
+          display_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+          price_delta_cents?: number;
+          display_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'package_addons_package_id_fkey';
+            columns: ['package_id'];
+            isOneToOne: false;
+            referencedRelation: 'packages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      booking_events: {
+        Row: {
+          id: string;
+          booking_id: string;
+          sequence: number;
+          event_date: string;
+          event_start_time: string;
+          event_end_time: string;
+          event_type_label: string;
+          location_name: string | null;
+          address_line_1: string;
+          city: string;
+          state: string;
+          postal_code: string;
+          google_place_id: string | null;
+          guest_count_override: number | null;
+          location_overridden: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          sequence: number;
+          event_date: string;
+          event_start_time: string;
+          event_end_time: string;
+          event_type_label: string;
+          location_name?: string | null;
+          address_line_1: string;
+          city: string;
+          state: string;
+          postal_code: string;
+          google_place_id?: string | null;
+          guest_count_override?: number | null;
+          location_overridden?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          sequence?: number;
+          event_date?: string;
+          event_start_time?: string;
+          event_end_time?: string;
+          event_type_label?: string;
+          location_name?: string | null;
+          address_line_1?: string;
+          city?: string;
+          state?: string;
+          postal_code?: string;
+          google_place_id?: string | null;
+          guest_count_override?: number | null;
+          location_overridden?: boolean;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'booking_events_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: false;
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      bookings: {
         Row: {
           id: string;
           couple_user_id: string;
@@ -122,7 +341,7 @@ export interface Database {
           budget_min: number | null;
           budget_max: number | null;
           special_requests: string | null;
-          status: string;
+          status: BookingStatus;
           vendor_quote_amount: number | null;
           vendor_quote_notes: string | null;
           vendor_responded_at: string | null;
@@ -139,6 +358,16 @@ export interface Database {
           cancellation_fault: 'none' | 'vendor_fault' | 'force_majeure' | null;
           disputed_at: string | null;
           dispute_reason: string | null;
+          package_id: string | null;
+          package_name_snapshot: string | null;
+          package_base_price_cents_snapshot: number | null;
+          selected_addons: SelectedAddonSnapshot[];
+          adjustment_amount_cents: number;
+          adjustment_reason: AdjustmentReason | null;
+          adjustment_explanation: string | null;
+          vendor_notes: string | null;
+          total_price_cents: number;
+          negotiation_round_count: number;
           created_at: string;
           updated_at: string;
         };
@@ -146,13 +375,13 @@ export interface Database {
           id?: string;
           couple_user_id: string;
           vendor_profile_id: string;
-          event_date: string;
-          event_type: string;
+          event_date?: string;
+          event_type?: string;
           guest_count?: number | null;
           budget_min?: number | null;
           budget_max?: number | null;
           special_requests?: string | null;
-          status?: string;
+          status?: BookingStatus;
           vendor_quote_amount?: number | null;
           vendor_quote_notes?: string | null;
           vendor_responded_at?: string | null;
@@ -169,6 +398,16 @@ export interface Database {
           cancellation_fault?: 'none' | 'vendor_fault' | 'force_majeure' | null;
           disputed_at?: string | null;
           dispute_reason?: string | null;
+          package_id?: string | null;
+          package_name_snapshot?: string | null;
+          package_base_price_cents_snapshot?: number | null;
+          selected_addons?: SelectedAddonSnapshot[];
+          adjustment_amount_cents?: number;
+          adjustment_reason?: AdjustmentReason | null;
+          adjustment_explanation?: string | null;
+          vendor_notes?: string | null;
+          total_price_cents?: number;
+          negotiation_round_count?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -181,7 +420,7 @@ export interface Database {
           budget_min?: number | null;
           budget_max?: number | null;
           special_requests?: string | null;
-          status?: string;
+          status?: BookingStatus;
           vendor_quote_amount?: number | null;
           vendor_quote_notes?: string | null;
           vendor_responded_at?: string | null;
@@ -198,6 +437,16 @@ export interface Database {
           cancellation_fault?: 'none' | 'vendor_fault' | 'force_majeure' | null;
           disputed_at?: string | null;
           dispute_reason?: string | null;
+          package_id?: string | null;
+          package_name_snapshot?: string | null;
+          package_base_price_cents_snapshot?: number | null;
+          selected_addons?: SelectedAddonSnapshot[];
+          adjustment_amount_cents?: number;
+          adjustment_reason?: AdjustmentReason | null;
+          adjustment_explanation?: string | null;
+          vendor_notes?: string | null;
+          total_price_cents?: number;
+          negotiation_round_count?: number;
           updated_at?: string;
         };
         Relationships: [
@@ -213,6 +462,13 @@ export interface Database {
             columns: ['vendor_profile_id'];
             isOneToOne: false;
             referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookings_package_id_fkey';
+            columns: ['package_id'];
+            isOneToOne: false;
+            referencedRelation: 'packages';
             referencedColumns: ['id'];
           },
         ];
@@ -332,7 +588,7 @@ export interface Database {
             foreignKeyName: 'transactions_booking_request_id_fkey';
             columns: ['booking_request_id'];
             isOneToOne: false;
-            referencedRelation: 'booking_requests';
+            referencedRelation: 'bookings';
             referencedColumns: ['id'];
           },
         ];
@@ -377,7 +633,7 @@ export interface Database {
             foreignKeyName: 'reviews_booking_request_id_fkey';
             columns: ['booking_request_id'];
             isOneToOne: true;
-            referencedRelation: 'booking_requests';
+            referencedRelation: 'bookings';
             referencedColumns: ['id'];
           },
           {
@@ -453,7 +709,17 @@ export interface Database {
         Relationships: [];
       };
     };
-    Views: Record<string, never>;
+    Views: {
+      vendor_packages_price_band: {
+        Row: {
+          vendor_profile_id: string | null;
+          min_price_cents: number | null;
+          max_price_cents: number | null;
+          active_package_count: number | null;
+        };
+        Relationships: [];
+      };
+    };
     Functions: {
       search_vendors_semantic: {
         Args: { query_embedding: string; match_count: number; similarity_threshold: number };
