@@ -7,6 +7,7 @@ import { Separator } from '@/components/ui/separator';
 import { formatPrice, EVENT_TYPE_LABELS } from '@/lib/utils';
 import { QuoteForm } from '@/components/forms/QuoteForm';
 import { BookingActions } from '@/components/dashboard/BookingActions';
+import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
 
 interface BookingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -153,6 +154,17 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
                 {booking.couple_email && <p className="text-sm">Email: {booking.couple_email}</p>}
               </div>
             )}
+
+            {/* A2: Vendor accept/adjust CTAs */}
+            {role === 'vendor' &&
+              (booking.status === 'pending' ||
+                booking.status === 'adjusted_quote_declined') && (
+                <VendorBookingActions
+                  bookingId={booking.id}
+                  status={booking.status}
+                  totalPriceCents={(booking as Record<string, unknown>).total_price_cents as number ?? 0}
+                />
+              )}
 
             {/* Actions */}
             <BookingActions
