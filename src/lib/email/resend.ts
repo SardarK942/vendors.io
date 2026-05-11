@@ -3,6 +3,16 @@ import { logger } from '@/lib/logger';
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
+function escapeHtml(s: string | null | undefined): string {
+  if (s === null || s === undefined) return '';
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 let _resend: Resend | null = null;
 function client(): Resend {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY);
@@ -62,7 +72,7 @@ export async function sendBookingRequestEmail(
     subject: 'New Booking Request',
     html: `
       <h2>New Booking Request</h2>
-      <p>Hi ${vendorName},</p>
+      <p>Hi ${escapeHtml(vendorName)},</p>
       <p>You have a new booking request for one of your packages. Review it within 72 hours — accept at the package price or send an adjusted quote.</p>
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View Request</a></p>
       ${FOOTER}
@@ -103,12 +113,13 @@ export async function sendQuoteEmail(
   quoteAmount: number,
   _bookingId: string
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   return sendEmail({
     to: coupleEmail,
-    subject: `Quote Received from ${vendorName}`,
+    subject: `Quote Received from ${safeName}`,
     html: `
       <h2>Quote Received</h2>
-      <p>${vendorName} has sent you a quote of <strong>${fmtUsd(quoteAmount)}</strong>.</p>
+      <p>${safeName} has sent you a quote of <strong>${fmtUsd(quoteAmount)}</strong>.</p>
       <p>Log in to review the quote and secure your booking with a 10% hold deposit.</p>
       <p><a href="${appUrl()}/dashboard/bookings">View Quote</a></p>
       ${FOOTER}
@@ -126,11 +137,12 @@ export async function sendVendorAcceptedEmail(
   totalCents: number,
   depositCheckoutUrl: string
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   return sendEmail({
     to: coupleEmail,
-    subject: `${vendorName} accepted your booking`,
+    subject: `${safeName} accepted your booking`,
     html: `
-      <h2>${vendorName} accepted your booking</h2>
+      <h2>${safeName} accepted your booking</h2>
       <p>Total: <strong>${fmtUsd(totalCents)}</strong></p>
       <p>Pay your hold deposit (30%) to confirm. The vendor's full address and instructions will appear in your dashboard once the deposit is processed.</p>
       <p><a href="${depositCheckoutUrl}">Pay deposit</a></p>
@@ -151,6 +163,7 @@ export async function sendAdjustedQuoteEmail(
   explanation: string | null,
   bookingId: string
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   const reasonLabel =
     (
       {
@@ -162,15 +175,15 @@ export async function sendAdjustedQuoteEmail(
         discount: 'a discount applied',
         other: 'other (see explanation)',
       } as Record<string, string>
-    )[reason] ?? reason;
+    )[reason] ?? 'other reason';
 
   return sendEmail({
     to: coupleEmail,
-    subject: `${vendorName} sent an adjusted quote`,
+    subject: `${safeName} sent an adjusted quote`,
     html: `
-      <h2>Adjusted quote from ${vendorName}</h2>
+      <h2>Adjusted quote from ${safeName}</h2>
       <p>New total: <strong>${fmtUsd(newTotalCents)}</strong></p>
-      <p>Reason: ${reasonLabel}${explanation ? ` — "${explanation}"` : ''}</p>
+      <p>Reason: ${reasonLabel}${explanation ? ` — &ldquo;${escapeHtml(explanation)}&rdquo;` : ''}</p>
       <p>Review and either accept the adjusted total or decline.</p>
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Review quote</a></p>
       ${FOOTER}
@@ -188,12 +201,13 @@ export async function sendCoupleAcceptedAdjustedEmail(
   totalCents: number,
   bookingId: string
 ): Promise<boolean> {
+  const safeName = escapeHtml(coupleName);
   return sendEmail({
     to: vendorEmail,
-    subject: `${coupleName} accepted your adjusted quote`,
+    subject: `${safeName} accepted your adjusted quote`,
     html: `
       <h2>Quote accepted</h2>
-      <p>${coupleName} accepted your adjusted quote of ${fmtUsd(totalCents)} and will pay the hold deposit shortly.</p>
+      <p>${safeName} accepted your adjusted quote of ${fmtUsd(totalCents)} and will pay the hold deposit shortly.</p>
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking</a></p>
       ${FOOTER}
     `,
@@ -232,14 +246,15 @@ export async function sendDepositConfirmationEmail(
   amount: number,
   isVendor: boolean
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   const body = isVendor
     ? `<p>A hold deposit of <strong>${fmtUsd(amount)}</strong> has been placed. The couple's contact details are now visible in your dashboard.</p>
        <p>Your 70% share is held in escrow and released when you mark the booking complete after the event.</p>`
-    : `<p>Your hold deposit of <strong>${fmtUsd(amount)}</strong> for ${vendorName} has been processed. Your booking is confirmed.</p>`;
+    : `<p>Your hold deposit of <strong>${fmtUsd(amount)}</strong> for ${safeName} has been processed. Your booking is confirmed.</p>`;
 
   return sendEmail({
     to: email,
-    subject: `Deposit ${isVendor ? 'Received' : 'Confirmed'} — ${vendorName}`,
+    subject: `Deposit ${isVendor ? 'Received' : 'Confirmed'} — ${safeName}`,
     html: `
       <h2>Deposit ${isVendor ? 'Received' : 'Confirmed'}</h2>
       ${body}
@@ -260,14 +275,15 @@ export async function sendBookingConfirmedEmail(
   vendorNotes: string | null,
   bookingId: string
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   return sendEmail({
     to: coupleEmail,
-    subject: `Booking Confirmed — ${vendorName}`,
+    subject: `Booking Confirmed — ${safeName}`,
     html: `
       <h2>Booking confirmed</h2>
       <p>Your deposit has been processed. Here are the details:</p>
-      <p><strong>Vendor location:</strong> ${vendorFullAddress}</p>
-      ${vendorNotes ? `<p><strong>From your vendor:</strong> ${vendorNotes}</p>` : ''}
+      <p><strong>Vendor location:</strong> ${escapeHtml(vendorFullAddress)}</p>
+      ${vendorNotes ? `<p><strong>From your vendor:</strong> ${escapeHtml(vendorNotes)}</p>` : ''}
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">View booking details</a></p>
       ${FOOTER}
     `,
@@ -310,15 +326,16 @@ export async function sendExpirationEmail(
   vendorName: string,
   isVendor: boolean
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   return sendEmail({
     to: email,
-    subject: `Booking Request Expired — ${vendorName}`,
+    subject: `Booking Request Expired — ${safeName}`,
     html: `
       <h2>Request Expired</h2>
       <p>${
         isVendor
           ? 'A booking request has expired because no quote was submitted within 72 hours.'
-          : `Your booking request to ${vendorName} has expired because the vendor did not respond within 72 hours.`
+          : `Your booking request to ${safeName} has expired because the vendor did not respond within 72 hours.`
       }</p>
       <p><a href="${appUrl()}/dashboard/bookings">Go to Dashboard</a></p>
       ${FOOTER}
@@ -338,7 +355,7 @@ export async function sendCompletionEmailToVendor(
     subject: `Funds Unlocked — ${fmtUsd(vendorPayoutCents)} Available`,
     html: `
       <h2>Your deposit share is unlocked</h2>
-      <p>Hi ${vendorName},</p>
+      <p>Hi ${escapeHtml(vendorName)},</p>
       <p>A booking you delivered has been marked complete. <strong>${fmtUsd(vendorPayoutCents)}</strong> is now available to withdraw.</p>
       <p><a href="${appUrl()}/dashboard">Go to Earnings</a></p>
       ${FOOTER}
@@ -351,13 +368,14 @@ export async function sendReviewRequestEmail(
   vendorName: string,
   bookingId: string
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   return sendEmail({
     to: coupleEmail,
-    subject: `How was ${vendorName}?`,
+    subject: `How was ${safeName}?`,
     html: `
       <h2>Leave a review</h2>
       <p>Thanks for using Baazar.io! Your feedback helps other couples find great vendors.</p>
-      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Leave a review for ${vendorName}</a></p>
+      <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Leave a review for ${safeName}</a></p>
       ${FOOTER}
     `,
   });
@@ -373,6 +391,7 @@ export async function sendCancellationEmail(
   refundCents: number,
   reason: string | null
 ): Promise<boolean> {
+  const safeName = escapeHtml(vendorName);
   const actor =
     cancellerRole === 'mutual'
       ? 'by mutual agreement'
@@ -387,11 +406,11 @@ export async function sendCancellationEmail(
 
   return sendEmail({
     to: email,
-    subject: `Booking Cancelled — ${vendorName}`,
+    subject: `Booking Cancelled — ${safeName}`,
     html: `
       <h2>Booking Cancelled</h2>
-      <p>This booking with ${vendorName} was cancelled ${actor}.</p>
-      ${reason ? `<p><em>Reason:</em> ${reason}</p>` : ''}
+      <p>This booking with ${safeName} was cancelled ${actor}.</p>
+      ${reason ? `<p><em>Reason:</em> ${escapeHtml(reason)}</p>` : ''}
       ${refundLine}
       <p><a href="${appUrl()}/dashboard/bookings">View Bookings</a></p>
       ${FOOTER}
