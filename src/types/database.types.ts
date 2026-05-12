@@ -351,6 +351,8 @@ export interface Database {
           couple_contact_revealed: boolean;
           couple_phone: string | null;
           couple_email: string | null;
+          couple_full_name: string | null;
+          couple_contact_phone: string | null;
           expires_at: string | null;
           completed_at: string | null;
           cancelled_at: string | null;
@@ -391,6 +393,8 @@ export interface Database {
           couple_contact_revealed?: boolean;
           couple_phone?: string | null;
           couple_email?: string | null;
+          couple_full_name?: string | null;
+          couple_contact_phone?: string | null;
           expires_at?: string | null;
           completed_at?: string | null;
           cancelled_at?: string | null;
@@ -430,6 +434,8 @@ export interface Database {
           couple_contact_revealed?: boolean;
           couple_phone?: string | null;
           couple_email?: string | null;
+          couple_full_name?: string | null;
+          couple_contact_phone?: string | null;
           expires_at?: string | null;
           completed_at?: string | null;
           cancelled_at?: string | null;
