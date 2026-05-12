@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackageAddonsEditor, type AddonDraft } from '@/components/forms/PackageAddonsEditor';
+import { UploadButton } from '@/lib/uploadthing';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -57,6 +58,12 @@ export function PackageEditorForm({ mode, initial }: Props) {
       .split('\n')
       .map((s) => s.trim())
       .filter(Boolean);
+
+    if (!featuredImageUrl) {
+      toast.error('Featured image is required — upload or paste a URL.');
+      setLoading(false);
+      return;
+    }
 
     const payload = {
       name: form.get('name') as string,
@@ -193,25 +200,49 @@ export function PackageEditorForm({ mode, initial }: Props) {
             </div>
           </div>
 
-          {/* Featured Image URL */}
+          {/* Featured Image — UploadThing button + URL fallback */}
           <div className="space-y-2">
-            <Label htmlFor="featured_image_url">Featured Image URL *</Label>
-            <Input
-              id="featured_image_url"
-              type="url"
-              required
-              value={featuredImageUrl}
-              onChange={(e) => setFeaturedImageUrl(e.target.value)}
-              placeholder="https://..."
-            />
-            {featuredImageUrl && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={featuredImageUrl}
-                alt="Preview"
-                className="mt-2 h-32 w-full rounded object-cover"
-                onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
-              />
+            <Label>Featured Image *</Label>
+            {featuredImageUrl ? (
+              <div className="space-y-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={featuredImageUrl}
+                  alt="Featured"
+                  className="h-40 w-full rounded object-cover"
+                  onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setFeaturedImageUrl('')}
+                >
+                  Remove
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-2 rounded border-2 border-dashed border-muted-foreground/30 p-4">
+                <UploadButton
+                  endpoint="portfolioImage"
+                  onClientUploadComplete={(res) => {
+                    if (res?.[0]?.url) {
+                      setFeaturedImageUrl(res[0].url);
+                      toast.success('Image uploaded');
+                    }
+                  }}
+                  onUploadError={(err) => {
+                    toast.error(`Upload failed: ${err.message}`);
+                  }}
+                />
+                <p className="text-xs text-muted-foreground">Or paste a URL:</p>
+                <Input
+                  type="url"
+                  value={featuredImageUrl}
+                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
             )}
           </div>
 
@@ -219,7 +250,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
           <div className="space-y-2">
             <Label>Location</Label>
             <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="radio"
                   name="location_mode_radio"
@@ -229,7 +260,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 />
                 <span className="text-sm">Couple specifies location</span>
               </label>
-              <label className="flex items-center gap-2 cursor-pointer">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="radio"
                   name="location_mode_radio"
@@ -250,7 +281,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               rows={4}
               value={includedItemsText}
               onChange={(e) => setIncludedItemsText(e.target.value)}
-              placeholder={"8 hours coverage\n200+ edited photos\nOnline gallery"}
+              placeholder={'8 hours coverage\n200+ edited photos\nOnline gallery'}
             />
             <p className="text-xs text-muted-foreground">One item per line</p>
           </div>
@@ -272,11 +303,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
           </div>
 
           {/* Add-ons */}
-          <PackageAddonsEditor
-            initial={addons}
-            onChange={setAddons}
-            max={8}
-          />
+          <PackageAddonsEditor initial={addons} onChange={setAddons} max={8} />
 
           <div className="flex gap-3">
             <Button type="submit" disabled={loading}>
