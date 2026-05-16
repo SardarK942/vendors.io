@@ -106,8 +106,6 @@ export async function seedVendor(options: { chargesEnabled?: boolean } = {}): Pr
       slug,
       category: 'photography',
       bio: 'Seeded vendor for E2E tests.',
-      starting_price_min: 100_000,
-      starting_price_max: 500_000,
       service_area: ['Chicago'],
     })
     .select('id')
@@ -134,60 +132,6 @@ export async function seedVendor(options: { chargesEnabled?: boolean } = {}): Pr
     vendorProfileId: vp.id,
     vendorSlug: slug,
   };
-}
-
-export type SeedBookingStatus = 'pending' | 'quoted' | 'deposit_paid' | 'completed';
-
-export interface SeedBookingOptions {
-  status?: SeedBookingStatus;
-  eventDaysFromNow?: number;
-  quoteAmountCents?: number;
-}
-
-/**
- * Seed a booking directly via service role — skips the API state machine, so
- * tests can start from any state without driving the whole flow. Leaves enough
- * related rows for the service-layer queries to find their joins.
- */
-export async function seedBooking(
-  couple: TestUser,
-  vendor: TestVendor,
-  options: SeedBookingOptions = {}
-): Promise<{ id: string }> {
-  const supabase = getServiceClient();
-  const { status = 'pending', eventDaysFromNow = 180, quoteAmountCents = 150_000 } = options;
-
-  const eventDate = new Date(Date.now() + eventDaysFromNow * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
-
-  const row: Record<string, unknown> = {
-    couple_user_id: couple.id,
-    vendor_profile_id: vendor.vendorProfileId,
-    event_date: eventDate,
-    event_type: 'wedding',
-    guest_count: 100,
-    couple_phone: '(312) 555-0100',
-    couple_email: couple.email,
-    status,
-  };
-  if (status === 'quoted' || status === 'deposit_paid' || status === 'completed') {
-    row.vendor_quote_amount = quoteAmountCents;
-    row.vendor_responded_at = new Date().toISOString();
-  }
-  if (status === 'deposit_paid' || status === 'completed') {
-    row.deposit_amount = quoteAmountCents;
-    row.deposit_paid_at = new Date().toISOString();
-    row.couple_contact_revealed = true;
-    row.stripe_payment_intent_id = `pi_e2e_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
-  }
-  if (status === 'completed') {
-    row.completed_at = new Date().toISOString();
-  }
-
-  const { data, error } = await supabase.from('bookings').insert(row).select('id').single();
-  if (error || !data) throw new Error(`seedBooking: ${error?.message}`);
-  return { id: data.id };
 }
 
 export interface SeedPackageOptions {
