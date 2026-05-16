@@ -5,9 +5,25 @@
  * - adjustBookingQuote state checks
  * - Safety guard codes (LAST_ACTIVE_PACKAGE, ACTIVE_BOOKINGS_EXIST, INVALID_STATE)
  */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { deactivatePackage, hardDeletePackage } from '@/services/packages.service';
 import { acceptBooking, adjustBookingQuote, validateStateTransition } from '@/services/booking.service';
+
+// Mock notifications service so fire-and-forget calls don't fail with mock Supabase clients.
+vi.mock('@/services/notifications.service', () => ({
+  notifyBookingRequestReceived: vi.fn(),
+  notifyVendorAccepted: vi.fn(),
+  notifyVendorAdjustedQuote: vi.fn(),
+  notifyCoupleAcceptedAdjusted: vi.fn(),
+  notifyCoupleDeclinedAdjusted: vi.fn(),
+  notifyBookingAutoCancelled: vi.fn(),
+  notifyDepositPaid: vi.fn(),
+  notifyBookingConfirmed: vi.fn(),
+  notifyBookingCancelled: vi.fn(),
+  notifyEventCompleted: vi.fn(),
+  notifyBookingCompleted: vi.fn(),
+  notifyReviewReceived: vi.fn(),
+}));
 
 // ─── deactivatePackage guard ──────────────────────────────────────────────────
 
