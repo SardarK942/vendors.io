@@ -74,7 +74,8 @@ CREATE TABLE notifications (
     'booking_confirmed',            -- → couple
     'booking_auto_cancelled',       -- → both (different rows)
     'booking_cancelled',            -- → both (different rows)
-    'event_completed',              -- → both
+    'event_completed',              -- → both (per-event progress: "Mehndi complete")
+    'booking_completed',            -- → both (all events done; triggers review prompt)
     'review_received'               -- → vendor
   )),
   title text NOT NULL,              -- short, e.g. "New booking request"
@@ -190,7 +191,8 @@ export async function notifyVendorAccepted(
 | Deposit paid (Stripe webhook) | `src/services/payment.service.ts` `handlePaymentSuccess()` | `notifyDepositPaid(vendor.user_id)` + `notifyBookingConfirmed(couple.user_id)` |
 | 72h auto-cancel | `src/services/booking.service.ts` `autoCancelExpiredBookings()` | `notifyBookingAutoCancelled(couple.user_id)` + same for vendor |
 | Manual cancel | `src/services/payment.service.ts` `cancelBooking()` | `notifyBookingCancelled(otherParty)` |
-| Per-event completed | `src/services/payment.service.ts` `autoCompleteBookings()` | `notifyEventCompleted(coupleUserId)` + same for vendor; one row per event |
+| Per-event completed | `src/services/payment.service.ts` `autoCompleteBookings()` | `notifyEventCompleted(couple.user_id)` + same for vendor; one row per event |
+| Booking fully completed | `src/services/payment.service.ts` `autoCompleteBookings()` (when last event flips parent to status='completed') | `notifyBookingCompleted(couple.user_id)` + same for vendor; triggers review prompt link |
 | Review received | `src/services/booking.service.ts` `submitReview()` (or wherever reviews are written) | `notifyReviewReceived(vendor.user_id)` |
 
 All `notifyXxx()` calls are **fire-and-forget** — they don't block the parent transaction. If the notification insert fails, the booking transition still succeeds; the failure is captured by `logger.error` (Sentry).
@@ -467,7 +469,7 @@ CREATE TABLE notifications (
     'booking_request_received','vendor_accepted','vendor_adjusted_quote',
     'couple_accepted_adjusted','couple_declined_adjusted','deposit_paid',
     'booking_confirmed','booking_auto_cancelled','booking_cancelled',
-    'event_completed','review_received'
+    'event_completed','booking_completed','review_received'
   )),
   title text NOT NULL,
   body text NOT NULL,
