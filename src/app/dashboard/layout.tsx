@@ -34,6 +34,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
             >
               Bookings
             </Link>
+            <Link
+              href="/dashboard/notifications"
+              className="block rounded-md px-3 py-2 text-sm font-medium hover:bg-accent"
+            >
+              Notifications
+            </Link>
             {role === 'vendor' && (
               <>
                 <Link
