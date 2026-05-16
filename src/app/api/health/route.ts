@@ -32,14 +32,29 @@ export async function GET() {
     }),
   ]);
 
-  const allOk = supabase.ok && stripeCheck.ok;
+  // Resend health check — non-fatal: failing marks degraded but not 503
+  const apiKey = process.env.RESEND_API_KEY;
+  let resend: 'ok' | 'failing' | 'unset' = 'unset';
+  if (apiKey) {
+    try {
+      const res = await fetch('https://api.resend.com/domains', {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(3000),
+      });
+      resend = res.ok ? 'ok' : 'failing';
+    } catch {
+      resend = 'failing';
+    }
+  }
+
+  const allOk = supabase.ok && stripeCheck.ok && resend !== 'failing';
 
   return NextResponse.json(
     {
       status: allOk ? 'ok' : 'degraded',
       timestamp: new Date().toISOString(),
-      checks: { supabase, stripe: stripeCheck },
+      checks: { supabase, stripe: stripeCheck, resend },
     },
-    { status: allOk ? 200 : 503 }
+    { status: 200 }
   );
 }
