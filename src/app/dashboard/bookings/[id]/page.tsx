@@ -5,8 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { formatPrice, EVENT_TYPE_LABELS } from '@/lib/utils';
-import { QuoteForm } from '@/components/forms/QuoteForm';
+import { CheckCircle2 } from 'lucide-react';
 import { BookingActions } from '@/components/dashboard/BookingActions';
 import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
 import { AdjustmentReview } from '@/components/booking/AdjustmentReview';
@@ -18,13 +17,11 @@ interface BookingDetailPageProps {
 
 function statusBadgeStyle(status: string) {
   if (status === 'deposit_paid' || status === 'completed') return 'bg-emerald-100 text-emerald-800';
-  if (status === 'pending' || status === 'quoted' || status === 'accepted')
-    return 'bg-yellow-100 text-yellow-800';
+  if (status === 'pending' || status === 'accepted') return 'bg-yellow-100 text-yellow-800';
   if (status === 'adjusted_quote_sent') return 'bg-blue-100 text-blue-800';
   if (status === 'adjusted_quote_declined') return 'bg-orange-100 text-orange-800';
   if (status === 'disputed') return 'bg-amber-100 text-amber-900';
-  if (status.endsWith('cancelled') || status === 'rejected' || status === 'expired')
-    return 'bg-red-100 text-red-800';
+  if (status.endsWith('cancelled') || status === 'expired') return 'bg-red-100 text-red-800';
   return '';
 }
 
@@ -60,24 +57,38 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           .maybeSingle()
       : { data: null };
 
-  // Load booking events for new-style bookings (package-driven)
+  // Load booking events
   const { data: bookingEvents } = await supabase
     .from('booking_events')
     .select('*')
     .eq('booking_id', id)
     .order('sequence');
 
-  // For package-driven bookings, compute original subtotal (base + addons before adjustment)
+  // Compute subtotals for display
   const bookingAsAny = booking as unknown as Record<string, unknown>;
   const packageBase = (bookingAsAny.package_base_price_cents_snapshot as number) ?? 0;
-  const selectedAddons = (bookingAsAny.selected_addons as { price_delta_cents: number }[]) ?? [];
+  const selectedAddons = (bookingAsAny.selected_addons as { name: string; price_delta_cents: number }[]) ?? [];
   const addonsSum = selectedAddons.reduce((s: number, a) => s + (a.price_delta_cents ?? 0), 0);
   const originalSubtotal = packageBase + addonsSum;
   const adjustmentAmount = (bookingAsAny.adjustment_amount_cents as number) ?? 0;
   const adjustmentReason = (bookingAsAny.adjustment_reason as string) ?? '';
   const adjustmentExplanation = (bookingAsAny.adjustment_explanation as string | null) ?? null;
 
-  const isPackageBooking = !!(bookingAsAny.package_id || bookingAsAny.package_name_snapshot);
+  // Per-event completion stats (available after migration 00027)
+  const events = (bookingEvents ?? []) as Array<{
+    id: string;
+    sequence: number;
+    event_type_label: string;
+    event_date: string;
+    location_name: string | null;
+    address_line_1: string;
+    city: string;
+    state: string;
+    postal_code: string;
+    completed_at: string | null;
+  }>;
+  const totalEvents = events.length;
+  const completedEvents = events.filter((e) => e.completed_at).length;
 
   return (
     <div className="space-y-6">
@@ -86,22 +97,9 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           <h1 className="text-2xl font-bold">
             {role === 'couple' ? vendorProfile?.business_name : 'Booking Request'}
           </h1>
-          {isPackageBooking ? (
-            <p className="text-muted-foreground">
-              {(bookingAsAny.package_name_snapshot as string) ?? 'Package Booking'}
-            </p>
-          ) : (
-            <p className="text-muted-foreground">
-              {EVENT_TYPE_LABELS[(booking as unknown as Record<string, string>).event_type] ||
-                (booking as unknown as Record<string, string>).event_type}{' '}
-              on{' '}
-              {(booking as unknown as Record<string, string>).event_date
-                ? new Date(
-                    (booking as unknown as Record<string, string>).event_date
-                  ).toLocaleDateString()
-                : ''}
-            </p>
-          )}
+          <p className="text-muted-foreground">
+            {(bookingAsAny.package_name_snapshot as string) ?? 'Package Booking'}
+          </p>
         </div>
         <Badge className={`text-sm ${statusBadgeStyle(booking.status)}`}>
           {booking.status.replace(/_/g, ' ')}
@@ -134,107 +132,86 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
             Pay your deposit to confirm the booking. The vendor&apos;s full address and instructions
             will appear after payment.
           </p>
-          {/* Couple can click deposit button from BookingActions below */}
+        </div>
+      )}
+
+      {/* Vendor-side status banners */}
+      {role === 'vendor' && booking.status === 'pending' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <strong>Action needed:</strong> Accept this booking at the package price or send an
+          adjusted quote. You have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'accepted' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          Waiting for the couple to pay the deposit. They have 72 hours; you&apos;ll get an email
+          when they pay.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'adjusted_quote_sent' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          Waiting for the couple to accept or decline your adjusted quote. They have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'adjusted_quote_declined' && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+          <strong>Action needed:</strong> The couple declined your last quote. You have 72 hours to
+          send a revised quote — otherwise the booking will auto-cancel.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'deposit_paid' && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <strong>Booking confirmed.</strong> Deposit paid. Deliver the service on the event
+          date(s); funds release to your earnings 48h after the event completes.
         </div>
       )}
 
       <div className="grid gap-6 md:grid-cols-2">
-        {/* Details Card */}
+        {/* Package Details Card */}
         <Card>
           <CardHeader>
-            <CardTitle>{isPackageBooking ? 'Package Details' : 'Event Details'}</CardTitle>
+            <CardTitle>Package Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {isPackageBooking ? (
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Package</span>
+              <span className="font-medium">
+                {(bookingAsAny.package_name_snapshot as string) ?? 'N/A'}
+              </span>
+            </div>
+            {packageBase > 0 && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Base price</span>
+                <span>${(packageBase / 100).toLocaleString()}</span>
+              </div>
+            )}
+            {selectedAddons.length > 0 && (
+              <div>
+                <p className="mb-1 text-sm text-muted-foreground">Add-ons</p>
+                {selectedAddons.map((a, i) => (
+                  <div key={i} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">+ {a.name}</span>
+                    <span>${(a.price_delta_cents / 100).toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {(bookingAsAny.total_price_cents as number) > 0 && (
               <>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Package</span>
-                  <span className="font-medium">
-                    {(bookingAsAny.package_name_snapshot as string) ?? 'N/A'}
-                  </span>
-                </div>
-                {packageBase > 0 && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Base price</span>
-                    <span>${(packageBase / 100).toLocaleString()}</span>
-                  </div>
-                )}
-                {selectedAddons.length > 0 && (
-                  <div>
-                    <p className="mb-1 text-sm text-muted-foreground">Add-ons</p>
-                    {selectedAddons.map(
-                      (a: { name?: string; price_delta_cents: number }, i: number) => (
-                        <div key={i} className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">
-                            + {(a as { name: string }).name}
-                          </span>
-                          <span>${(a.price_delta_cents / 100).toLocaleString()}</span>
-                        </div>
-                      )
-                    )}
-                  </div>
-                )}
-                {(bookingAsAny.total_price_cents as number) > 0 && (
-                  <>
-                    <Separator />
-                    <div className="flex justify-between font-semibold">
-                      <span>Total</span>
-                      <span>
-                        ${((bookingAsAny.total_price_cents as number) / 100).toLocaleString()}
-                      </span>
-                    </div>
-                  </>
-                )}
-                {(bookingAsAny.guest_count as number) && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Guests</span>
-                    <span>{bookingAsAny.guest_count as number}</span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Date</span>
+                <Separator />
+                <div className="flex justify-between font-semibold">
+                  <span>Total</span>
                   <span>
-                    {new Date(
-                      (booking as unknown as Record<string, string>).event_date
-                    ).toLocaleDateString()}
+                    ${((bookingAsAny.total_price_cents as number) / 100).toLocaleString()}
                   </span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Event Type</span>
-                  <span>
-                    {EVENT_TYPE_LABELS[(booking as unknown as Record<string, string>).event_type] ||
-                      (booking as unknown as Record<string, string>).event_type}
-                  </span>
-                </div>
-                {(booking as unknown as Record<string, number | null>).guest_count && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Guests</span>
-                    <span>{(booking as unknown as Record<string, number | null>).guest_count}</span>
-                  </div>
-                )}
-                {((booking as unknown as Record<string, number | null>).budget_min ||
-                  (booking as unknown as Record<string, number | null>).budget_max) && (
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Budget</span>
-                    <span>
-                      {(booking as unknown as Record<string, number | null>).budget_min &&
-                        formatPrice(
-                          (booking as unknown as Record<string, number | null>).budget_min!
-                        )}
-                      {(booking as unknown as Record<string, number | null>).budget_min &&
-                        (booking as unknown as Record<string, number | null>).budget_max &&
-                        ' – '}
-                      {(booking as unknown as Record<string, number | null>).budget_max &&
-                        formatPrice(
-                          (booking as unknown as Record<string, number | null>).budget_max!
-                        )}
-                    </span>
-                  </div>
-                )}
               </>
+            )}
+            {(bookingAsAny.guest_count as number) && (
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Guests</span>
+                <span>{bookingAsAny.guest_count as number}</span>
+              </div>
             )}
             {(bookingAsAny.special_requests as string | null) && (
               <>
@@ -248,22 +225,36 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           </CardContent>
         </Card>
 
-        {/* Events card (for package bookings) */}
-        {isPackageBooking && bookingEvents && bookingEvents.length > 0 && (
+        {/* Events Card with per-event completion display */}
+        {events.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle>Events</CardTitle>
+              <div className="flex items-center justify-between">
+                <CardTitle>Events</CardTitle>
+                {booking.status === 'deposit_paid' && totalEvents > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    {completedEvents} of {totalEvents} complete
+                  </span>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="space-y-3">
-              {bookingEvents.map((ev) => (
+              {events.map((ev) => (
                 <div key={ev.id} className="space-y-1 rounded-lg border p-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">
                       Event {ev.sequence}: {ev.event_type_label}
                     </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(ev.event_date).toLocaleDateString()}
-                    </span>
+                    {ev.completed_at ? (
+                      <span className="flex items-center gap-1 text-xs text-emerald-600">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Completed {new Date(ev.completed_at).toLocaleDateString()}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(ev.event_date).toLocaleDateString()}
+                      </span>
+                    )}
                   </div>
                   {ev.location_name && (
                     <p className="text-xs text-muted-foreground">{ev.location_name}</p>
@@ -277,130 +268,62 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           </Card>
         )}
 
-        {/* Quote / Payment Card (for legacy flow) */}
-        {!isPackageBooking && (
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {(booking as unknown as Record<string, number | null>).vendor_quote_amount
-                  ? 'Quote'
-                  : 'Awaiting Quote'}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {(booking as unknown as Record<string, number | null>).vendor_quote_amount ? (
-                <>
-                  <p className="text-3xl font-bold">
-                    {formatPrice(
-                      (booking as unknown as Record<string, number | null>).vendor_quote_amount!
-                    )}
-                  </p>
-                  {(booking as unknown as Record<string, string | null>).vendor_quote_notes && (
-                    <p className="text-sm text-muted-foreground">
-                      {(booking as unknown as Record<string, string | null>).vendor_quote_notes}
+        {/* Actions Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Vendor contact info after deposit paid */}
+            {role === 'vendor' &&
+              (booking as unknown as Record<string, boolean>).couple_contact_revealed && (
+                <div className="rounded-lg bg-green-50 p-4">
+                  <p className="text-sm font-medium text-green-800">Contact Information</p>
+                  {(bookingAsAny.couple_contact_phone as string | null) && (
+                    <p className="text-sm">
+                      Phone: {bookingAsAny.couple_contact_phone as string}
                     </p>
                   )}
-                </>
-              ) : (
-                <p className="text-muted-foreground">
-                  {role === 'couple'
-                    ? 'Waiting for the vendor to submit a quote...'
-                    : 'Submit a quote for this booking request.'}
-                </p>
+                </div>
               )}
 
-              {role === 'vendor' && booking.status === 'pending' && (
-                <>
-                  <Separator />
-                  <QuoteForm bookingId={booking.id} />
-                </>
+            {/* Vendor notes (revealed after deposit paid) */}
+            {booking.status === 'deposit_paid' &&
+              (bookingAsAny.vendor_notes as string | null) && (
+                <div className="rounded-lg bg-muted p-4">
+                  <p className="mb-1 text-sm font-medium">Vendor Notes</p>
+                  <p className="text-sm text-muted-foreground">
+                    {bookingAsAny.vendor_notes as string}
+                  </p>
+                </div>
               )}
 
-              {role === 'vendor' &&
-                (booking as unknown as Record<string, boolean>).couple_contact_revealed && (
-                  <div className="rounded-lg bg-green-50 p-4">
-                    <p className="text-sm font-medium text-green-800">Contact Information</p>
-                    {(booking as unknown as Record<string, string | null>).couple_phone && (
-                      <p className="text-sm">
-                        Phone: {(booking as unknown as Record<string, string | null>).couple_phone}
-                      </p>
-                    )}
-                    {(booking as unknown as Record<string, string | null>).couple_email && (
-                      <p className="text-sm">
-                        Email: {(booking as unknown as Record<string, string | null>).couple_email}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-              <BookingActions
-                booking={booking}
-                role={role}
-                hasReview={!!existingReview}
-                vendorName={vendorProfile?.business_name ?? ''}
-              />
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Package booking actions card */}
-        {isPackageBooking && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Actions</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Vendor contact info after deposit paid */}
-              {role === 'vendor' &&
-                (booking as unknown as Record<string, boolean>).couple_contact_revealed && (
-                  <div className="rounded-lg bg-green-50 p-4">
-                    <p className="text-sm font-medium text-green-800">Contact Information</p>
-                    {(bookingAsAny.couple_contact_phone as string | null) && (
-                      <p className="text-sm">
-                        Phone: {bookingAsAny.couple_contact_phone as string}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-              {/* Vendor notes (revealed after deposit paid) */}
-              {booking.status === 'deposit_paid' &&
-                (bookingAsAny.vendor_notes as string | null) && (
-                  <div className="rounded-lg bg-muted p-4">
-                    <p className="mb-1 text-sm font-medium">Vendor Notes</p>
-                    <p className="text-sm text-muted-foreground">
-                      {bookingAsAny.vendor_notes as string}
-                    </p>
-                  </div>
-                )}
-
-              {/* Vendor accept/adjust CTAs (A2) */}
-              {role === 'vendor' &&
-                (booking.status === 'pending' || booking.status === 'adjusted_quote_declined') && (
-                  <VendorBookingActions
-                    bookingId={booking.id}
-                    status={booking.status}
-                    totalPriceCents={
-                      ((booking as Record<string, unknown>).total_price_cents as number) ?? 0
-                    }
-                  />
-                )}
-
-              <BookingActions
-                booking={booking}
-                role={role}
-                hasReview={!!existingReview}
-                vendorName={vendorProfile?.business_name ?? ''}
-              />
-
-              {role === 'couple' && vendorProfile && (
-                <Button variant="outline" asChild className="w-full">
-                  <Link href={`/vendors/${vendorProfile.slug}`}>View vendor profile</Link>
-                </Button>
+            {/* Vendor accept/adjust CTAs */}
+            {role === 'vendor' &&
+              (booking.status === 'pending' || booking.status === 'adjusted_quote_declined') && (
+                <VendorBookingActions
+                  bookingId={booking.id}
+                  status={booking.status}
+                  totalPriceCents={
+                    ((booking as Record<string, unknown>).total_price_cents as number) ?? 0
+                  }
+                />
               )}
-            </CardContent>
-          </Card>
-        )}
+
+            <BookingActions
+              booking={booking}
+              role={role}
+              hasReview={!!existingReview}
+              vendorName={vendorProfile?.business_name ?? ''}
+            />
+
+            {role === 'couple' && vendorProfile && (
+              <Button variant="outline" asChild className="w-full">
+                <Link href={`/vendors/${vendorProfile.slug}`}>View vendor profile</Link>
+              </Button>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

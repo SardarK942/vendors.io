@@ -32,8 +32,7 @@ export function BookingActions({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
 
-  const cancellable = ['pending', 'quoted', 'deposit_paid'].includes(booking.status);
-  const eventPast = new Date(booking.event_date) <= new Date();
+  const cancellable = ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid'].includes(booking.status);
 
   const handleComplete = async () => {
     if (
@@ -53,15 +52,18 @@ export function BookingActions({
     router.refresh();
   };
 
+  const totalPriceCents = (booking as unknown as Record<string, unknown>).total_price_cents as number | undefined;
+
   return (
     <div className="flex flex-wrap gap-2 pt-2">
-      {role === 'couple' && booking.status === 'quoted' && (
+      {/* Pay deposit when vendor has accepted */}
+      {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
         <Button onClick={() => setDepositOpen(true)} disabled={loading}>
-          Pay Hold Deposit
+          Pay Deposit
         </Button>
       )}
 
-      {role === 'couple' && booking.status === 'deposit_paid' && eventPast && (
+      {role === 'couple' && booking.status === 'deposit_paid' && (
         <>
           <Button onClick={handleComplete} disabled={loading}>
             {loading ? 'Processing...' : 'Mark Complete'}
@@ -110,10 +112,10 @@ export function BookingActions({
         onSuccess={() => router.refresh()}
       />
 
-      {booking.vendor_quote_amount != null && (
+      {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
         <DepositDialog
           bookingId={booking.id}
-          quoteAmountCents={booking.vendor_quote_amount}
+          quoteAmountCents={totalPriceCents}
           vendorName={vendorName}
           open={depositOpen}
           onOpenChange={setDepositOpen}

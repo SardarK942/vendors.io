@@ -1,8 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import type {
-  BookingRequestInput,
-  QuoteInput,
   ServiceResult,
   CreateBookingInput,
   AdjustQuoteInput,
@@ -16,9 +14,7 @@ type BookingRow = Database['public']['Tables']['bookings']['Row'];
 // Refund/claw logic for any *_cancelled transition lives in payment.service.ts.
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
-  pending: ['quoted', 'rejected', 'expired', 'couple_cancelled', 'accepted', 'adjusted_quote_sent'],
-  quoted: ['deposit_paid', 'couple_cancelled', 'vendor_cancelled', 'expired'],
-  // New package-based flow statuses
+  pending: ['expired', 'couple_cancelled', 'accepted', 'adjusted_quote_sent'],
   accepted: ['deposit_paid', 'couple_cancelled', 'vendor_cancelled', 'expired'],
   adjusted_quote_sent: [
     'accepted',
@@ -41,7 +37,6 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
     'disputed',
   ],
   disputed: ['completed', 'couple_cancelled'], // admin-resolved
-  rejected: [],
   completed: [],
   expired: [],
   couple_cancelled: [],
@@ -53,94 +48,39 @@ export function validateStateTransition(from: string, to: string): boolean {
   return VALID_TRANSITIONS[from]?.includes(to) ?? false;
 }
 
+// ─── Helper: booking date range from events ─────────────────────
+
+/**
+ * Query booking_events for a booking and return:
+ * - firstEventDate: MIN(event_date) — used for cancellation deadlines + "before event" checks
+ * - lastEventEnd: MAX(event_end_time) — used for "after event" checks + 48h auto-complete cron
+ */
+export async function getBookingDateRange(
+  supabase: SupabaseClient<Database>,
+  bookingId: string
+): Promise<{ firstEventDate: string | null; lastEventEnd: string | null }> {
+  const { data } = await supabase
+    .from('booking_events')
+    .select('event_date, event_end_time')
+    .eq('booking_id', bookingId);
+
+  if (!data || data.length === 0) {
+    return { firstEventDate: null, lastEventEnd: null };
+  }
+
+  const firstEventDate = data.reduce(
+    (min, e) => (e.event_date < min ? e.event_date : min),
+    data[0].event_date
+  );
+  const lastEventEnd = data.reduce(
+    (max, e) => (e.event_end_time > max ? e.event_end_time : max),
+    data[0].event_end_time
+  );
+
+  return { firstEventDate, lastEventEnd };
+}
+
 // ─── Service Functions ──────────────────────────────────────────
-
-export async function createBookingRequest(
-  supabase: SupabaseClient<Database>,
-  coupleUserId: string,
-  input: BookingRequestInput
-): Promise<ServiceResult<{ id: string }>> {
-  // Check for existing active request with same vendor
-  const { data: existing } = await supabase
-    .from('bookings')
-    .select('id')
-    .eq('couple_user_id', coupleUserId)
-    .eq('vendor_profile_id', input.vendorProfileId)
-    .in('status', ['pending', 'quoted'])
-    .single();
-
-  if (existing) {
-    return { error: 'You already have an active request with this vendor', status: 409 };
-  }
-
-  const { data, error } = await supabase
-    .from('bookings')
-    .insert({
-      couple_user_id: coupleUserId,
-      vendor_profile_id: input.vendorProfileId,
-      event_date: input.eventDate,
-      event_type: input.eventType,
-      guest_count: input.guestCount,
-      budget_min: input.budgetMin,
-      budget_max: input.budgetMax,
-      special_requests: input.specialRequests,
-      couple_phone: input.couplePhone,
-      couple_email: input.coupleEmail,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    return { error: 'Failed to create booking request', status: 500 };
-  }
-
-  return { data: { id: data.id }, status: 201 };
-}
-
-export async function submitQuote(
-  supabase: SupabaseClient<Database>,
-  bookingId: string,
-  vendorUserId: string,
-  input: QuoteInput
-): Promise<ServiceResult<BookingRow>> {
-  // Verify vendor owns this booking's vendor profile
-  const { data: booking } = await supabase
-    .from('bookings')
-    .select('*, vendor_profiles!inner(user_id)')
-    .eq('id', bookingId)
-    .single();
-
-  if (!booking) {
-    return { error: 'Booking request not found', status: 404 };
-  }
-
-  const vendorProfile = booking.vendor_profiles as unknown as { user_id: string };
-  if (vendorProfile.user_id !== vendorUserId) {
-    return { error: 'Unauthorized', status: 403 };
-  }
-
-  if (!validateStateTransition(booking.status, 'quoted')) {
-    return { error: `Cannot submit quote for booking in "${booking.status}" state`, status: 400 };
-  }
-
-  const { data, error } = await supabase
-    .from('bookings')
-    .update({
-      status: 'quoted',
-      vendor_quote_amount: input.quoteAmount,
-      vendor_quote_notes: input.quoteNotes,
-      vendor_responded_at: new Date().toISOString(),
-    })
-    .eq('id', bookingId)
-    .select()
-    .single();
-
-  if (error) {
-    return { error: 'Failed to submit quote', status: 500 };
-  }
-
-  return { data, status: 200 };
-}
 
 export async function getBookingRequests(
   supabase: SupabaseClient<Database>,
@@ -196,40 +136,6 @@ export async function getBookingById(
     data.couple_email = null;
   }
 
-  return { data, status: 200 };
-}
-
-export async function rejectBooking(
-  supabase: SupabaseClient<Database>,
-  bookingId: string,
-  vendorUserId: string
-): Promise<ServiceResult<BookingRow>> {
-  const { data: booking } = await supabase
-    .from('bookings')
-    .select('*, vendor_profiles!inner(user_id)')
-    .eq('id', bookingId)
-    .single();
-
-  if (!booking) return { error: 'Booking not found', status: 404 };
-
-  const vp = booking.vendor_profiles as unknown as { user_id: string };
-  if (vp.user_id !== vendorUserId) return { error: 'Forbidden', status: 403 };
-
-  if (!validateStateTransition(booking.status, 'rejected')) {
-    return {
-      error: `Cannot reject booking in "${booking.status}" state`,
-      status: 400,
-    };
-  }
-
-  const { data, error } = await supabase
-    .from('bookings')
-    .update({ status: 'rejected', vendor_responded_at: new Date().toISOString() })
-    .eq('id', bookingId)
-    .select()
-    .single();
-
-  if (error) return { error: 'Failed to reject booking', status: 500 };
   return { data, status: 200 };
 }
 

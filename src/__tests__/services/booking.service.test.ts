@@ -3,14 +3,6 @@ import { validateStateTransition } from '@/services/booking.service';
 
 describe('Booking State Machine', () => {
   // pending transitions
-  it('allows pending -> quoted', () => {
-    expect(validateStateTransition('pending', 'quoted')).toBe(true);
-  });
-
-  it('allows pending -> rejected', () => {
-    expect(validateStateTransition('pending', 'rejected')).toBe(true);
-  });
-
   it('allows pending -> expired', () => {
     expect(validateStateTransition('pending', 'expired')).toBe(true);
   });
@@ -19,17 +11,25 @@ describe('Booking State Machine', () => {
     expect(validateStateTransition('pending', 'couple_cancelled')).toBe(true);
   });
 
-  // quoted transitions
-  it('allows quoted -> deposit_paid', () => {
-    expect(validateStateTransition('quoted', 'deposit_paid')).toBe(true);
+  it('allows pending -> accepted', () => {
+    expect(validateStateTransition('pending', 'accepted')).toBe(true);
   });
 
-  it('allows quoted -> couple_cancelled', () => {
-    expect(validateStateTransition('quoted', 'couple_cancelled')).toBe(true);
+  it('allows pending -> adjusted_quote_sent', () => {
+    expect(validateStateTransition('pending', 'adjusted_quote_sent')).toBe(true);
   });
 
-  it('allows quoted -> vendor_cancelled', () => {
-    expect(validateStateTransition('quoted', 'vendor_cancelled')).toBe(true);
+  // accepted transitions (new package flow)
+  it('allows accepted -> deposit_paid', () => {
+    expect(validateStateTransition('accepted', 'deposit_paid')).toBe(true);
+  });
+
+  it('allows accepted -> couple_cancelled', () => {
+    expect(validateStateTransition('accepted', 'couple_cancelled')).toBe(true);
+  });
+
+  it('allows accepted -> vendor_cancelled', () => {
+    expect(validateStateTransition('accepted', 'vendor_cancelled')).toBe(true);
   });
 
   // deposit_paid transitions (deposit_paid is the confirmed state)
@@ -50,11 +50,11 @@ describe('Booking State Machine', () => {
   });
 
   // Invalid transitions
-  it('rejects pending -> completed (must go through quoted + deposit)', () => {
+  it('rejects pending -> completed (must go through accepted + deposit)', () => {
     expect(validateStateTransition('pending', 'completed')).toBe(false);
   });
 
-  it('rejects pending -> deposit_paid (must be quoted first)', () => {
+  it('rejects pending -> deposit_paid (must be accepted first)', () => {
     expect(validateStateTransition('pending', 'deposit_paid')).toBe(false);
   });
 
@@ -78,12 +78,12 @@ describe('Booking State Machine', () => {
     expect(validateStateTransition('vendor_cancelled', 'pending')).toBe(false);
   });
 
-  it('rejects rejected -> quoted (terminal state)', () => {
-    expect(validateStateTransition('rejected', 'quoted')).toBe(false);
+  it('rejects completed -> accepted (terminal state)', () => {
+    expect(validateStateTransition('completed', 'accepted')).toBe(false);
   });
 
-  it('rejects quoted -> completed (must pay deposit first)', () => {
-    expect(validateStateTransition('quoted', 'completed')).toBe(false);
+  it('rejects accepted -> completed (must pay deposit first)', () => {
+    expect(validateStateTransition('accepted', 'completed')).toBe(false);
   });
 
   // Edge cases

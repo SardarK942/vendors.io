@@ -57,12 +57,6 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
       category: formData.get('category') as string,
       bio: formData.get('bio') as string,
       service_area: ['Chicago'],
-      starting_price_min: formData.get('priceMin')
-        ? Math.round(Number(formData.get('priceMin')) * 100)
-        : null,
-      starting_price_max: formData.get('priceMax')
-        ? Math.round(Number(formData.get('priceMax')) * 100)
-        : null,
       instagram_handle: (formData.get('instagram') as string) || null,
       website_url: (formData.get('website') as string) || null,
       response_sla_hours: Number(formData.get('sla')) || 48,
@@ -162,37 +156,6 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               defaultValue={vendorProfile?.bio || ''}
               placeholder="Tell couples about your services, style, and experience..."
             />
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="priceMin">Starting Price ($)</Label>
-              <Input
-                id="priceMin"
-                name="priceMin"
-                type="number"
-                min={0}
-                step={1}
-                defaultValue={
-                  vendorProfile?.starting_price_min ? vendorProfile.starting_price_min / 100 : ''
-                }
-                placeholder="500"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="priceMax">Max Price ($)</Label>
-              <Input
-                id="priceMax"
-                name="priceMax"
-                type="number"
-                min={0}
-                step={1}
-                defaultValue={
-                  vendorProfile?.starting_price_max ? vendorProfile.starting_price_max / 100 : ''
-                }
-                placeholder="2000"
-              />
-            </div>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">

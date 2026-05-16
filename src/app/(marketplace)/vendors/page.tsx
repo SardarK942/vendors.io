@@ -18,17 +18,18 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const supabase = await createServerSupabaseClient();
 
   const category = typeof params.category === 'string' ? params.category : undefined;
-  const priceMin = typeof params.priceMin === 'string' ? Number(params.priceMin) : undefined;
-  const priceMax = typeof params.priceMax === 'string' ? Number(params.priceMax) : undefined;
   const page = typeof params.page === 'string' ? Number(params.page) : 1;
   const limit = 20;
   const offset = (page - 1) * limit;
 
-  let query = supabase.from('vendor_profiles').select('*', { count: 'exact' });
+  let query = supabase
+    .from('vendor_profiles')
+    .select(
+      '*, vendor_packages_price_band!vendor_packages_price_band_vendor_profile_id_fkey(min_price_cents, max_price_cents)',
+      { count: 'exact' }
+    );
 
   if (category) query = query.eq('category', category);
-  if (priceMin) query = query.gte('starting_price_min', priceMin);
-  if (priceMax) query = query.lte('starting_price_max', priceMax);
 
   query = query
     .order('verified', { ascending: false })
@@ -66,8 +67,6 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
                   key={p}
                   href={`/vendors?${new URLSearchParams({
                     ...(category ? { category } : {}),
-                    ...(priceMin ? { priceMin: String(priceMin) } : {}),
-                    ...(priceMax ? { priceMax: String(priceMax) } : {}),
                     page: String(p),
                   }).toString()}`}
                   className={`rounded border px-3 py-1 text-sm ${

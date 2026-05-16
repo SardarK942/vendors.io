@@ -23,8 +23,6 @@ export const vendorProfileSchema = z.object({
   category: vendorCategorySchema,
   bio: z.string().max(2000).optional(),
   serviceArea: z.array(z.string()).default(['Chicago']),
-  startingPriceMin: z.number().int().nonnegative().optional(),
-  startingPriceMax: z.number().int().nonnegative().optional(),
   portfolioImages: z.array(z.string().url()).default([]),
   instagramHandle: z.string().max(50).optional(),
   websiteUrl: z.string().url().optional().or(z.literal('')),
@@ -64,8 +62,6 @@ export type EventType = z.infer<typeof eventTypeSchema>;
 
 export const bookingStatusSchema = z.enum([
   'pending',
-  'quoted',
-  'rejected',
   'deposit_paid',
   'couple_cancelled',
   'vendor_cancelled',
@@ -73,6 +69,9 @@ export const bookingStatusSchema = z.enum([
   'completed',
   'expired',
   'disputed',
+  'accepted',
+  'adjusted_quote_sent',
+  'adjusted_quote_declined',
 ]);
 
 export type BookingStatus = z.infer<typeof bookingStatusSchema>;
@@ -104,27 +103,6 @@ export const reviewSchema = z.object({
   comment: z.string().max(4000).optional(),
 });
 export type ReviewInput = z.infer<typeof reviewSchema>;
-
-export const bookingRequestSchema = z.object({
-  vendorProfileId: z.string().uuid(),
-  eventDate: z.string().date(),
-  eventType: eventTypeSchema,
-  guestCount: z.number().int().positive().optional(),
-  budgetMin: z.number().int().nonnegative().optional(),
-  budgetMax: z.number().int().nonnegative().optional(),
-  specialRequests: z.string().max(1000).optional(),
-  couplePhone: z.string().max(20).optional(),
-  coupleEmail: z.string().email().optional(),
-});
-
-export type BookingRequestInput = z.infer<typeof bookingRequestSchema>;
-
-export const quoteSchema = z.object({
-  quoteAmount: z.number().int().positive(),
-  quoteNotes: z.string().max(1000).optional(),
-});
-
-export type QuoteInput = z.infer<typeof quoteSchema>;
 
 // ─── Auth Schemas ───────────────────────────────────────────────
 

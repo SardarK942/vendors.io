@@ -1,9 +1,9 @@
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
-import { formatPrice, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
+import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { CheckCircle, Clock, ExternalLink, Instagram, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
 import type { Database } from '@/types/database.types';
@@ -75,6 +75,14 @@ export function VendorProfile({
               />
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Packages — full-width row above the fold when present */}
+      {packages.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-xl font-semibold">Packages</h2>
+          <PackageGrid packages={packages} vendorSlug={vendor.slug} />
         </div>
       )}
 
@@ -161,40 +169,18 @@ export function VendorProfile({
         </div>
 
         <div className="space-y-4">
-          {/* Packages section replaces old pricing range when packages exist */}
-          {packages.length > 0 ? (
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">Packages</h2>
-              <PackageGrid packages={packages} vendorSlug={vendor.slug} />
-            </div>
-          ) : (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-lg">Pricing</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {vendor.starting_price_min ? (
-                  <p className="text-2xl font-bold">
-                    {formatPrice(vendor.starting_price_min)}
-                    {vendor.starting_price_max && (
-                      <span className="text-lg font-normal text-muted-foreground">
-                        {' '}
-                        – {formatPrice(vendor.starting_price_max)}
-                      </span>
-                    )}
-                  </p>
-                ) : (
-                  <p className="text-muted-foreground">Contact for pricing</p>
-                )}
-                <p className="mt-1 text-xs text-muted-foreground">Starting price range</p>
-              </CardContent>
-            </Card>
-          )}
-
-          {showBookingButton && packages.length === 0 && (
-            <Button className="w-full" size="lg" asChild>
-              <Link href={`/vendors/${vendor.slug}/book`}>Request Booking</Link>
-            </Button>
+          {/* Sidebar fallback when no packages: pricing card + Request Booking */}
+          {packages.length === 0 && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                No packages listed yet. Contact the vendor directly or request a booking.
+              </p>
+              {showBookingButton && (
+                <Button className="w-full" size="lg" asChild>
+                  <Link href={`/vendors/${vendor.slug}/book`}>Request Booking</Link>
+                </Button>
+              )}
+            </>
           )}
 
           <div className="space-y-2">
