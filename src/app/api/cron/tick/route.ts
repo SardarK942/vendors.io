@@ -54,7 +54,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
       expired_bookings: expired,
       auto_cancelled_bookings: autoCancelled,
       recognized_transactions: recognized.recognized,
-      auto_completed_bookings: completed.completed,
+      auto_completed_bookings: completed.bookings_completed,
       redacted_pii_rows: redacted.redacted,
     };
   } catch (err) {

@@ -5,7 +5,7 @@ import Link from 'next/link';
 interface UnlockedBooking {
   id: string;
   completed_at: string | null;
-  event_type: string;
+  package_label: string;
   vendor_payout_total: number;
   couple_name: string | null;
 }
@@ -29,7 +29,7 @@ export function RecentUnlocks({ unlocks }: RecentUnlocksProps) {
           {unlocks.map((u) => (
             <li key={u.id}>
               <Link href={`/dashboard/bookings/${u.id}`} className="hover:underline">
-                {formatPrice(u.vendor_payout_total)} — {u.event_type}
+                {formatPrice(u.vendor_payout_total)} — {u.package_label}
                 {u.couple_name ? ` with ${u.couple_name}` : ''}
               </Link>
             </li>

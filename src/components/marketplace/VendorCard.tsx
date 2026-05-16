@@ -9,11 +9,15 @@ import type { Database } from '@/types/database.types';
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
 interface VendorCardProps {
-  vendor: VendorRow;
+  vendor: VendorRow & {
+    vendor_packages_price_band?: { min_price_cents: number | null; max_price_cents: number | null } | null;
+  };
 }
 
 export function VendorCard({ vendor }: VendorCardProps) {
   const heroImage = vendor.portfolio_images?.[0];
+  const priceBand = vendor.vendor_packages_price_band;
+  const minPrice = priceBand?.min_price_cents;
 
   return (
     <Link href={`/vendors/${vendor.slug}`}>
@@ -48,10 +52,10 @@ export function VendorCard({ vendor }: VendorCardProps) {
             </Badge>
           </div>
 
-          {/* Price */}
-          {vendor.starting_price_min && (
+          {/* Price from active packages */}
+          {minPrice != null && (
             <p className="mt-2 text-sm font-medium">
-              Starting at {formatPrice(vendor.starting_price_min)}
+              Packages from {formatPrice(minPrice)}
             </p>
           )}
 

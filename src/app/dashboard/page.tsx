@@ -7,12 +7,11 @@ import { EarningsCard } from '@/components/dashboard/EarningsCard';
 import { RecentUnlocks } from '@/components/dashboard/RecentUnlocks';
 import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
 import { getVendorEarnings, type VendorEarnings } from '@/services/payment.service';
-import { EVENT_TYPE_LABELS } from '@/lib/utils';
 
 interface UnlockedBooking {
   id: string;
   completed_at: string | null;
-  event_type: string;
+  package_label: string;
   vendor_payout_total: number;
   couple_name: string | null;
 }
@@ -79,7 +78,7 @@ export default async function DashboardPage() {
       const { data: completed } = await supabase
         .from('bookings')
         .select(
-          'id, completed_at, event_type, transactions(vendor_payout), users!couple_user_id(full_name)'
+          'id, completed_at, package_name_snapshot, transactions(vendor_payout), users!couple_user_id(full_name)'
         )
         .eq('vendor_profile_id', vendorProfile.id)
         .eq('status', 'completed')
@@ -93,7 +92,7 @@ export default async function DashboardPage() {
         return {
           id: b.id,
           completed_at: b.completed_at,
-          event_type: EVENT_TYPE_LABELS[b.event_type] || b.event_type,
+          package_label: (b as unknown as Record<string, string | null>).package_name_snapshot ?? 'Booking',
           vendor_payout_total: txs.reduce((sum, t) => sum + t.vendor_payout, 0),
           couple_name:
             (coupleUserRel as { full_name: string | null } | null)?.full_name?.split(' ')[0] ??
