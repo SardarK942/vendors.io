@@ -260,17 +260,78 @@ Per-row:
 
 If 0 notifications ever: empty state "No notifications yet."
 
-### 4.3 `/dashboard/notifications` page
+### 4.3 `/dashboard/notifications` page (Airbnb-style)
 
 **File**: `src/app/dashboard/notifications/page.tsx` (new server component)
 
-Server-fetches the user's notifications (RLS scoped). Renders:
-- Filter chips: `All` (default) / `Unread` / type filters
-- "Mark all read" button (top-right) → `POST /api/notifications/mark-all-read`
-- Infinite scroll OR pagination (50 per page)
-- Per-row: same layout as dropdown but wider, with the full body visible
+Server-fetches the user's notifications (RLS scoped). Three-tab layout with per-booking grouping inside each tab — matches how vendors mentally organize their work (by booking, not by timestamp).
 
-Empty state: "When something happens with your bookings, it'll show up here."
+**Top tabs:**
+
+```
+[ Action needed (3) ]  [ Updates (8) ]  [ Archived ]                [Mark all read]
+```
+
+- **Action needed** — unread notifications of `high-priority` types (the same 5 that fire toasts; see §4.6). These require vendor or couple input.
+- **Updates** — informational notifications (`event_completed`, `booking_completed`, `review_received`, `vendor_accepted`, `couple_accepted_adjusted`, `booking_auto_cancelled`, `booking_cancelled`). Unread first within the tab, then read.
+- **Archived** — read notifications older than 30 days. (Auto-archived; no manual archive in v1.)
+
+**Per-booking grouping inside each tab:**
+
+Notifications are grouped by `metadata.booking_id`. Each group renders as a collapsible card with the booking's summary in the header:
+
+```
+┌────────────────────────────────────────────────────┐
+│ Smith Wedding · Aug 15                       ▾    │
+│ ──────────────────────────────────────────────────│
+│ 🎯 New booking request · 2h ago                    │
+│    From John & Jane — Full Wedding Coverage $2,400 │
+└────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────┐
+│ Anderson Engagement · Sep 12                 ▾    │
+│ ──────────────────────────────────────────────────│
+│ 💵 Couple declined your $1,700 quote · 5h ago      │
+│    Re-quote within 72h or it auto-cancels          │
+└────────────────────────────────────────────────────┘
+```
+
+Group header: booking package + first event date. Click row → navigate to `link` (booking detail) + mark this notification read. Click group header → collapse/expand. Group sorted by most-recent-notification-within first.
+
+Notifications without a `booking_id` (e.g., future system-broadcast types) render at the bottom of each tab in a separate "Other" group.
+
+**Mark-all-read** (top-right) → `POST /api/notifications/mark-all-read`. Optimistic update: clear unread counts client-side immediately, then await server.
+
+**Pagination**: 50 notifications per tab initially; "Load more" footer button fetches the next 50. (Infinite scroll deferred; simpler to reason about.)
+
+Empty state per tab:
+- Action needed: "Nothing needs your attention right now. 🎉"
+- Updates: "When bookings move through their lifecycle, you'll see updates here."
+- Archived: "Notifications older than 30 days appear here once you've read them."
+
+### 4.6 Toast strategy — smart hybrid
+
+Toasts (slide-in popups, ~5s auto-dismiss) fire for **high-priority** types only. Routine informational types update the bell badge silently — important so a vendor with many bookings doesn't get interrupted every time a non-actionable update lands.
+
+**Toast on arrival (5 types):**
+- `booking_request_received` — vendor must respond
+- `deposit_paid` — money has moved, booking is locked in
+- `vendor_adjusted_quote` — couple must accept/decline
+- `couple_declined_adjusted` — vendor must re-quote within 72h
+- `booking_confirmed` — couple's deposit succeeded, address now visible
+
+**Silent (bell badge only — 7 types):**
+- `vendor_accepted` — couple already gets the deposit-link prompt UI, toast is duplicative
+- `couple_accepted_adjusted` — informational, deposit prompt is the action
+- `event_completed` — per-event progress; nice-to-know
+- `booking_completed` — final completion; review prompt fires via a different mechanism
+- `booking_auto_cancelled` — already a quiet bookkeeping signal
+- `booking_cancelled` — manual cancel by other party, informational
+- `review_received` — vendor will see it next time they're on the bookings page
+
+**Implementation note:** the realtime handler in `NotificationBell` checks `type` against the high-priority set; if matched, calls `toast.success()` from `sonner` (already in the codebase) with `notification.title` + `notification.body`. Click on toast → navigate to `notification.link` + mark read.
+
+Toasts are NOT shown for notifications fetched on page load — only for those arriving live via the realtime subscription. (Prevents "10 old notifications all toasting at once" on tab open.)
 
 ### 4.4 API routes
 
@@ -369,8 +430,9 @@ Email channel runs orthogonally (same trigger sites, separate provider). The two
 | Read tracking | `read_at timestamptz` on the row (no separate join table) |
 | In-app + email overlap | Both fire for every event in v1; no preferences UI; deferred to v1.5 |
 | Trigger count | 11 booking-lifecycle notification types (no marketing, system, admin) |
-| Toast on new arrival | Optional; defer decision to implementation. Bell badge update is the load-bearing signal. |
+| Toast on new arrival | Smart hybrid — toast for 5 high-priority types (see §4.6); silent bell-badge-only for the other 7 informational types. Toasts only fire for realtime arrivals, not initial page-load fetch. |
 | Mark-read pattern | Single row: PATCH on click. Bulk: POST /mark-all-read. No "mark unread" affordance in v1. |
+| `/dashboard/notifications` layout | Airbnb-style: 3 top tabs (`Action needed` / `Updates` / `Archived` (read + >30d old)). Within each tab, notifications grouped by `metadata.booking_id` (collapsible cards). 50 per tab initially, "Load more" pagination. |
 
 ---
 
