@@ -55,7 +55,7 @@ export function BookingActions({
 
   return (
     <div className="flex flex-wrap gap-2 pt-2">
-      {role === 'couple' && booking.status === 'quoted' && (
+      {role === 'couple' && (booking.status === 'quoted' || booking.status === 'accepted') && (
         <Button onClick={() => setDepositOpen(true)} disabled={loading}>
           Pay Hold Deposit
         </Button>
@@ -110,15 +110,24 @@ export function BookingActions({
         onSuccess={() => router.refresh()}
       />
 
-      {booking.vendor_quote_amount != null && (
-        <DepositDialog
-          bookingId={booking.id}
-          quoteAmountCents={booking.vendor_quote_amount}
-          vendorName={vendorName}
-          open={depositOpen}
-          onOpenChange={setDepositOpen}
-        />
-      )}
+      {(() => {
+        // Prefer new package-flow total_price_cents; fall back to legacy vendor_quote_amount.
+        const bookingAny = booking as unknown as Record<string, number | null | undefined>;
+        const amount =
+          (bookingAny.total_price_cents as number | undefined) ??
+          booking.vendor_quote_amount ??
+          null;
+        if (!amount || amount <= 0) return null;
+        return (
+          <DepositDialog
+            bookingId={booking.id}
+            quoteAmountCents={amount}
+            vendorName={vendorName}
+            open={depositOpen}
+            onOpenChange={setDepositOpen}
+          />
+        );
+      })()}
     </div>
   );
 }

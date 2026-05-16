@@ -48,5 +48,4 @@ supabase/.temp/
 .superpowers/
 
 # claude code local-only settings (may contain secrets in Bash allow patterns)
-.claude/settings.local.json
-.claude/worktrees/
+.claude/

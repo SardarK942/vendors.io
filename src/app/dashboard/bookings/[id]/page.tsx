@@ -138,6 +138,37 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
         </div>
       )}
 
+      {/* Vendor-side status banners — tells the vendor what they're waiting on */}
+      {role === 'vendor' && booking.status === 'pending' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <strong>Action needed:</strong> Accept this booking at the package price or send an
+          adjusted quote. You have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'accepted' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          Waiting for the couple to pay the deposit. They have 72 hours; you&apos;ll get an email
+          when they pay.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'adjusted_quote_sent' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          Waiting for the couple to accept or decline your adjusted quote. They have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'adjusted_quote_declined' && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+          <strong>Action needed:</strong> The couple declined your last quote. You have 72 hours to
+          send a revised quote — otherwise the booking will auto-cancel.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'deposit_paid' && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <strong>Booking confirmed.</strong> Deposit paid. Deliver the service on the event
+          date(s); funds release to your earnings 48h after the event completes.
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         {/* Details Card */}
         <Card>
@@ -255,24 +286,35 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
               <CardTitle>Events</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {bookingEvents.map((ev) => (
-                <div key={ev.id} className="space-y-1 rounded-lg border p-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      Event {ev.sequence}: {ev.event_type_label}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(ev.event_date).toLocaleDateString()}
-                    </span>
+              {bookingEvents.map((ev) => {
+                const fmtTime = (iso: string) =>
+                  new Date(iso).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+                return (
+                  <div key={ev.id} className="space-y-1 rounded-lg border p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        Event {ev.sequence}: {ev.event_type_label}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(ev.event_date).toLocaleDateString()}
+                      </span>
+                    </div>
+                    {(ev.event_start_time || ev.event_end_time) && (
+                      <p className="text-xs text-muted-foreground">
+                        {ev.event_start_time && fmtTime(ev.event_start_time as string)}
+                        {ev.event_start_time && ev.event_end_time && ' – '}
+                        {ev.event_end_time && fmtTime(ev.event_end_time as string)}
+                      </p>
+                    )}
+                    {ev.location_name && (
+                      <p className="text-xs text-muted-foreground">{ev.location_name}</p>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      {ev.address_line_1}, {ev.city}, {ev.state} {ev.postal_code}
+                    </p>
                   </div>
-                  {ev.location_name && (
-                    <p className="text-xs text-muted-foreground">{ev.location_name}</p>
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    {ev.address_line_1}, {ev.city}, {ev.state} {ev.postal_code}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         )}

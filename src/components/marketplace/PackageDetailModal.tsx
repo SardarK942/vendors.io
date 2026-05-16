@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -56,7 +57,16 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose }: Props) {
 
       if (res.ok) {
         router.push(`/vendors/${vendorSlug}/book`);
+        return;
       }
+
+      const json = await res.json().catch(() => ({}));
+      const message = json?.error?.message ?? `Server returned ${res.status}`;
+      toast.error(`Couldn't open booking form: ${message}`);
+      console.error('[PackageDetailModal] booking-selection failed', { status: res.status, json });
+    } catch (err) {
+      toast.error('Network error, please try again.');
+      console.error('[PackageDetailModal] handleContinue threw', err);
     } finally {
       setLoading(false);
     }

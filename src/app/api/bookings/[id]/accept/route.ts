@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { acceptBooking } from '@/services/booking.service';
-import { createDepositCheckout } from '@/services/payment.service';
+import { createDepositCheckout, setupMinimalStripeAccount } from '@/services/payment.service';
 import { sendVendorAcceptedEmail } from '@/lib/email/resend';
 import { withErrorBoundary } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 
 export const POST = withErrorBoundary(
@@ -17,6 +18,13 @@ export const POST = withErrorBoundary(
     }
 
     const booking = result.data!;
+
+    // Lazy-init: ensure vendor has a minimal Stripe account so couple can pay deposit.
+    // Mirrors the legacy /quote route's behavior — the new accept flow needs it too.
+    const adminSb = createServiceRoleClient();
+    await setupMinimalStripeAccount(adminSb, booking.vendor_profile_id, user.email!).catch((err) =>
+      logger.error('setupMinimalStripeAccount failed during accept', err, { bookingId: params.id })
+    );
 
     // Create Stripe deposit checkout on behalf of the couple
     // createDepositCheckout reads total_price_cents from the booking row
@@ -41,21 +49,27 @@ export const POST = withErrorBoundary(
     void (async () => {
       const { data: ctx } = await supabase
         .from('bookings')
-        .select(
-          'couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name)'
-        )
+        .select('couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name)')
         .eq('id', params.id)
         .single();
 
       if (!ctx) return;
 
-      const coupleEmail = (ctx.users as { email: string } | { email: string }[] | null);
-      const email = Array.isArray(coupleEmail) ? coupleEmail[0]?.email : (coupleEmail as { email: string } | null)?.email;
-      const vendorName = (ctx.vendor_profiles as { business_name: string } | null)?.business_name ?? '';
+      const coupleEmail = ctx.users as { email: string } | { email: string }[] | null;
+      const email = Array.isArray(coupleEmail)
+        ? coupleEmail[0]?.email
+        : (coupleEmail as { email: string } | null)?.email;
+      const vendorName =
+        (ctx.vendor_profiles as { business_name: string } | null)?.business_name ?? '';
 
       if (email) {
-        sendVendorAcceptedEmail(email, vendorName, booking.total_price_cents ?? 0, depositCheckoutUrl).catch(
-          (err) => logger.error('sendVendorAcceptedEmail failed', err, { bookingId: params.id })
+        sendVendorAcceptedEmail(
+          email,
+          vendorName,
+          booking.total_price_cents ?? 0,
+          depositCheckoutUrl
+        ).catch((err) =>
+          logger.error('sendVendorAcceptedEmail failed', err, { bookingId: params.id })
         );
       }
     })();

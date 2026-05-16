@@ -60,7 +60,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
       .filter(Boolean);
 
     if (!featuredImageUrl) {
-      toast.error('Featured image is required — upload or paste a URL.');
+      toast.error('Featured image is required — please upload one.');
       setLoading(false);
       return;
     }
@@ -200,7 +200,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
             </div>
           </div>
 
-          {/* Featured Image — UploadThing button + URL fallback */}
+          {/* Featured Image — UploadThing button only */}
           <div className="space-y-2">
             <Label>Featured Image *</Label>
             {featuredImageUrl ? (
@@ -218,31 +218,35 @@ export function PackageEditorForm({ mode, initial }: Props) {
                   size="sm"
                   onClick={() => setFeaturedImageUrl('')}
                 >
-                  Remove
+                  Replace photo
                 </Button>
               </div>
             ) : (
-              <div className="space-y-2 rounded border-2 border-dashed border-muted-foreground/30 p-4">
-                <UploadButton
-                  endpoint="portfolioImage"
-                  onClientUploadComplete={(res) => {
-                    if (res?.[0]?.url) {
-                      setFeaturedImageUrl(res[0].url);
-                      toast.success('Image uploaded');
-                    }
-                  }}
-                  onUploadError={(err) => {
-                    toast.error(`Upload failed: ${err.message}`);
-                  }}
-                />
-                <p className="text-xs text-muted-foreground">Or paste a URL:</p>
-                <Input
-                  type="url"
-                  value={featuredImageUrl}
-                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
+              <UploadButton
+                endpoint="portfolioImage"
+                onClientUploadComplete={(res) => {
+                  if (res?.[0]?.url) {
+                    setFeaturedImageUrl(res[0].url);
+                    toast.success('Image uploaded');
+                  }
+                }}
+                onUploadError={(err) => {
+                  toast.error(`Upload failed: ${err.message}`);
+                }}
+                appearance={{
+                  button:
+                    'ut-ready:bg-primary ut-uploading:cursor-not-allowed inline-flex h-10 items-center justify-center rounded-md bg-primary px-4 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 disabled:opacity-50',
+                  container: 'flex flex-col items-start gap-2',
+                  allowedContent: 'text-xs text-muted-foreground',
+                }}
+                content={{
+                  button({ ready, isUploading }) {
+                    if (isUploading) return 'Uploading…';
+                    if (ready) return 'Upload photo';
+                    return 'Preparing…';
+                  },
+                }}
+              />
             )}
           </div>
 

@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { formatPrice } from '@/lib/utils';
+import { formatPrice, DEPOSIT_RATE } from '@/lib/utils';
 
 interface DepositDialogProps {
   bookingId: string;
@@ -32,8 +32,9 @@ export function DepositDialog({
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const depositCents = Math.round(quoteAmountCents / 10);
+  const depositCents = Math.floor(quoteAmountCents * DEPOSIT_RATE);
   const remainingCents = quoteAmountCents - depositCents;
+  const depositPercentLabel = `${Math.round(DEPOSIT_RATE * 100)}%`;
 
   const handleSubmit = async () => {
     if (!agreed) return;
@@ -65,7 +66,7 @@ export function DepositDialog({
         <div className="space-y-4 py-2">
           <div className="rounded-md bg-muted/40 p-3 text-sm">
             <div className="flex justify-between">
-              <span className="text-muted-foreground">Deposit (10%)</span>
+              <span className="text-muted-foreground">Deposit ({depositPercentLabel})</span>
               <span className="font-medium">{formatPrice(depositCents)}</span>
             </div>
             <div className="mt-1 flex justify-between">
