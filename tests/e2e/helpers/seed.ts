@@ -190,6 +190,84 @@ export async function seedBooking(
   return { id: data.id };
 }
 
+export interface SeedPackageOptions {
+  basePriceCents?: number;
+  eventsCount?: number;
+  addons?: Array<{ name: string; priceDeltaCents: number }>;
+  withStripeAccount?: boolean; // if true, also create a fake stripe_account row
+}
+
+export interface SeededPackage {
+  id: string;
+  vendorProfileId: string;
+  basePriceCents: number;
+  addons: Array<{ id: string; name: string; price_delta_cents: number }>;
+}
+
+/** Seed a package + add-ons directly under a vendor. Bypasses the UI/API. */
+export async function seedPackage(
+  vendor: TestVendor,
+  options: SeedPackageOptions = {}
+): Promise<SeededPackage> {
+  const supabase = getServiceClient();
+  const basePriceCents = options.basePriceCents ?? 150_000;
+  const eventsCount = options.eventsCount ?? 1;
+
+  const { data: pkg, error: pkgErr } = await supabase
+    .from('packages')
+    .insert({
+      vendor_profile_id: vendor.vendorProfileId,
+      name: 'E2E Package',
+      description: 'Seeded for E2E tests',
+      base_price_cents: basePriceCents,
+      included_items: ['Coverage', 'Photos'],
+      max_guests: 200,
+      duration_hours: 8,
+      events_count: eventsCount,
+      featured_image_url: 'https://utfs.io/f/e2e-fake-img',
+      gallery_image_urls: [],
+      location_mode: 'couple_provides',
+      is_active: true,
+    })
+    .select('id')
+    .single();
+  if (pkgErr || !pkg) throw new Error(`seedPackage: ${pkgErr?.message}`);
+
+  let addons: SeededPackage['addons'] = [];
+  if (options.addons?.length) {
+    const rows = options.addons.map((a, i) => ({
+      package_id: pkg.id,
+      name: a.name,
+      price_delta_cents: a.priceDeltaCents,
+      display_order: i,
+    }));
+    const { data, error } = await supabase
+      .from('package_addons')
+      .insert(rows)
+      .select('id, name, price_delta_cents');
+    if (error) throw new Error(`seedPackage addons: ${error.message}`);
+    addons = data ?? [];
+  }
+
+  if (options.withStripeAccount) {
+    // Idempotent — seedVendor({chargesEnabled:true}) already inserts one.
+    await supabase.from('stripe_accounts').upsert(
+      {
+        vendor_profile_id: vendor.vendorProfileId,
+        stripe_account_id: `acct_e2e_${Date.now()}`,
+        onboarding_complete: true,
+        charges_enabled: true,
+        payouts_enabled: true,
+        details_submitted_at: new Date().toISOString(),
+        minimal_created_at: new Date().toISOString(),
+      },
+      { onConflict: 'vendor_profile_id' }
+    );
+  }
+
+  return { id: pkg.id, vendorProfileId: vendor.vendorProfileId, basePriceCents, addons };
+}
+
 /** Delete a seeded user. ON DELETE CASCADE cleans up vendor_profiles, bookings, etc. */
 export async function cleanup(...users: (TestUser | null | undefined)[]): Promise<void> {
   const supabase = getServiceClient();
