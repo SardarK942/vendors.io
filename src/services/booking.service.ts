@@ -6,6 +6,14 @@ import type {
   AdjustQuoteInput,
 } from '@/types';
 import { sendExpirationEmail, sendBookingAutoCancelEmail } from '@/lib/email/resend';
+import {
+  notifyBookingRequestReceived,
+  notifyVendorAccepted,
+  notifyVendorAdjustedQuote,
+  notifyCoupleAcceptedAdjusted,
+  notifyCoupleDeclinedAdjusted,
+  notifyBookingAutoCancelled,
+} from '@/services/notifications.service';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -184,7 +192,7 @@ export async function autoCancelExpiredBookings(
   const { data: toCancel } = await supabase
     .from('bookings')
     .select(
-      'id, couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
+      'id, couple_user_id, couple_email, users!couple_user_id(email), vendor_profiles!inner(user_id, business_name, users!user_id(email))'
     )
     .in('status', ['accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'])
     .lt('expires_at', now);
@@ -202,6 +210,7 @@ export async function autoCancelExpiredBookings(
 
   for (const row of toCancel) {
     const vp = row.vendor_profiles as unknown as {
+      user_id: string;
       business_name: string;
       users: { email: string } | { email: string }[] | null;
     };
@@ -215,6 +224,20 @@ export async function autoCancelExpiredBookings(
     }
     if (vendorUser?.email) {
       void sendBookingAutoCancelEmail(vendorUser.email, 'vendor', row.id);
+    }
+
+    // In-app notifications — fire-and-forget alongside emails.
+    if (row.couple_user_id) {
+      void notifyBookingAutoCancelled(supabase, row.couple_user_id, {
+        bookingId: row.id,
+        recipientRole: 'couple',
+      });
+    }
+    if (vp.user_id) {
+      void notifyBookingAutoCancelled(supabase, vp.user_id, {
+        bookingId: row.id,
+        recipientRole: 'vendor',
+      });
     }
   }
 
@@ -276,6 +299,26 @@ export async function acceptBooking(
     .single();
 
   if (error) return { error: { code: 'UPDATE_FAILED', message: error.message }, status: 500 };
+
+  // Notify couple that vendor accepted — fire-and-forget.
+  void (async () => {
+    const { data: ctx } = await supabase
+      .from('bookings')
+      .select(
+        'couple_user_id, total_price_cents, vendor_profiles!inner(business_name)'
+      )
+      .eq('id', bookingId)
+      .single();
+    if (!ctx) return;
+    const vCtx = ctx.vendor_profiles as unknown as { business_name: string } | null;
+    if (!ctx.couple_user_id) return;
+    notifyVendorAccepted(supabase, ctx.couple_user_id, {
+      bookingId,
+      vendorName: vCtx?.business_name ?? 'Your vendor',
+      totalCents: (ctx as Record<string, unknown>).total_price_cents as number ?? 0,
+    });
+  })();
+
   return { data: data as BookingRow, status: 200 };
 }
 
@@ -344,6 +387,27 @@ export async function adjustBookingQuote(
     .single();
 
   if (error) return { error: { code: 'UPDATE_FAILED', message: error.message }, status: 500 };
+
+  // Notify couple that vendor adjusted the quote — fire-and-forget.
+  void (async () => {
+    const { data: ctx } = await supabase
+      .from('bookings')
+      .select(
+        'couple_user_id, total_price_cents, vendor_profiles!inner(business_name)'
+      )
+      .eq('id', bookingId)
+      .single();
+    if (!ctx) return;
+    const vCtx = ctx.vendor_profiles as unknown as { business_name: string } | null;
+    if (!ctx.couple_user_id) return;
+    notifyVendorAdjustedQuote(supabase, ctx.couple_user_id, {
+      bookingId,
+      vendorName: vCtx?.business_name ?? 'Your vendor',
+      newTotalCents: (ctx as Record<string, unknown>).total_price_cents as number ?? 0,
+      reason: input.reason,
+    });
+  })();
+
   return { data: data as BookingRow, status: 200 };
 }
 
@@ -423,6 +487,26 @@ export async function createBooking(
     return { error: eventsError.message, status: 500 };
   }
 
+  // Notify vendor of the new booking request — fire-and-forget.
+  void (async () => {
+    const { data: ctx } = await supabase
+      .from('bookings')
+      .select(
+        'vendor_profiles!inner(user_id), users!couple_user_id(full_name)'
+      )
+      .eq('id', booking.id)
+      .single();
+    if (!ctx) return;
+    const vp = ctx.vendor_profiles as unknown as { user_id: string };
+    const cu = ctx.users as unknown as { full_name: string | null } | null;
+    notifyBookingRequestReceived(supabase, vp.user_id, {
+      bookingId: booking.id,
+      coupleName: cu?.full_name ?? 'A couple',
+      packageName: pkg.name,
+      totalCents: (booking as Record<string, unknown>).total_price_cents as number ?? 0,
+    });
+  })();
+
   return {
     data: { booking: booking as Record<string, unknown>, events: events ?? [] },
     status: 201,
@@ -464,6 +548,26 @@ export async function coupleAcceptAdjusted(
     return { error: error?.message ?? 'Update failed', status: 500 };
   }
 
+  // Notify vendor that couple accepted the adjusted quote — fire-and-forget.
+  void (async () => {
+    const { data: ctx } = await supabase
+      .from('bookings')
+      .select(
+        'total_price_cents, vendor_profiles!inner(user_id), users!couple_user_id(full_name)'
+      )
+      .eq('id', bookingId)
+      .single();
+    if (!ctx) return;
+    const vp = ctx.vendor_profiles as unknown as { user_id: string } | null;
+    if (!vp?.user_id) return;
+    const cu = ctx.users as unknown as { full_name: string | null } | null;
+    notifyCoupleAcceptedAdjusted(supabase, vp.user_id, {
+      bookingId,
+      coupleName: cu?.full_name ?? 'The couple',
+      totalCents: (ctx as Record<string, unknown>).total_price_cents as number ?? 0,
+    });
+  })();
+
   return { data: data as unknown as Record<string, unknown>, status: 200 };
 }
 
@@ -502,6 +606,25 @@ export async function coupleDeclineAdjusted(
   if (error || !data) {
     return { error: error?.message ?? 'Update failed', status: 500 };
   }
+
+  // Notify vendor that couple declined the adjusted quote — fire-and-forget.
+  void (async () => {
+    const { data: ctx } = await supabase
+      .from('bookings')
+      .select(
+        'vendor_profiles!inner(user_id), users!couple_user_id(full_name)'
+      )
+      .eq('id', bookingId)
+      .single();
+    if (!ctx) return;
+    const vp = ctx.vendor_profiles as unknown as { user_id: string } | null;
+    if (!vp?.user_id) return;
+    const cu = ctx.users as unknown as { full_name: string | null } | null;
+    notifyCoupleDeclinedAdjusted(supabase, vp.user_id, {
+      bookingId,
+      coupleName: cu?.full_name ?? 'The couple',
+    });
+  })();
 
   return { data: data as unknown as Record<string, unknown>, status: 200 };
 }
