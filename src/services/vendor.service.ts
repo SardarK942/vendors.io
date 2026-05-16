@@ -4,6 +4,12 @@ import type { ServiceResult, VendorProfileInput, VendorSearchInput } from '@/typ
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
+// Price-band filtering uses the vendor_packages_price_band view which is a
+// LEFT JOIN in the query to avoid excluding vendors with no packages yet.
+type VendorWithPriceBand = VendorRow & {
+  vendor_packages_price_band?: { min_price_cents: number | null; max_price_cents: number | null } | null;
+};
+
 export async function getVendorBySlug(
   supabase: SupabaseClient<Database>,
   slug: string
@@ -29,20 +35,17 @@ export async function getVendorBySlug(
 export async function getVendors(
   supabase: SupabaseClient<Database>,
   filters: VendorSearchInput
-): Promise<ServiceResult<{ vendors: VendorRow[]; count: number }>> {
+): Promise<ServiceResult<{ vendors: VendorWithPriceBand[]; count: number }>> {
   const { category, priceMin, priceMax, serviceArea, page, limit } = filters;
   const offset = (page - 1) * limit;
 
-  let query = supabase.from('vendor_profiles').select('*', { count: 'exact' });
+  // Left-join the price band view so vendors with no active packages still appear.
+  let query = supabase
+    .from('vendor_profiles')
+    .select('*, vendor_packages_price_band!vendor_packages_price_band_vendor_profile_id_fkey(min_price_cents, max_price_cents)', { count: 'exact' });
 
   if (category) {
     query = query.eq('category', category);
-  }
-  if (priceMin !== undefined) {
-    query = query.gte('starting_price_min', priceMin);
-  }
-  if (priceMax !== undefined) {
-    query = query.lte('starting_price_max', priceMax);
   }
   if (serviceArea) {
     query = query.contains('service_area', [serviceArea]);
@@ -59,7 +62,22 @@ export async function getVendors(
     return { error: 'Failed to fetch vendors', status: 500 };
   }
 
-  return { data: { vendors: data ?? [], count: count ?? 0 }, status: 200 };
+  // Apply price-band filter in application layer (view is not filterable in query without subselect).
+  let vendors = (data ?? []) as unknown as VendorWithPriceBand[];
+  if (priceMin !== undefined) {
+    vendors = vendors.filter((v) => {
+      const min = (v.vendor_packages_price_band as { min_price_cents: number | null } | null)?.min_price_cents;
+      return min != null && min >= priceMin;
+    });
+  }
+  if (priceMax !== undefined) {
+    vendors = vendors.filter((v) => {
+      const max = (v.vendor_packages_price_band as { max_price_cents: number | null } | null)?.max_price_cents;
+      return max != null && max <= priceMax;
+    });
+  }
+
+  return { data: { vendors, count: count ?? 0 }, status: 200 };
 }
 
 export async function claimVendorProfile(
@@ -119,8 +137,6 @@ export async function updateVendorProfile(
       business_name: input.businessName,
       bio: input.bio,
       service_area: input.serviceArea,
-      starting_price_min: input.startingPriceMin,
-      starting_price_max: input.startingPriceMax,
       portfolio_images: input.portfolioImages,
       instagram_handle: input.instagramHandle,
       website_url: input.websiteUrl || null,

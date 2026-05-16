@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import type { CancellerRole, ServiceResult } from '@/types';
+import { getBookingDateRange } from '@/services/booking.service';
 import { stripe } from '@/lib/stripe/client';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { createMinimalAccount, createFullOnboardingLink } from '@/lib/stripe/connect';
@@ -303,7 +304,7 @@ interface RefundPolicy {
 function computeRefundPolicy(
   cancellerRole: CancellerRole,
   bookingStatus: string,
-  eventDate: string,
+  firstEventDate: string | null,
   depositPaidAt: string | null,
   fault: 'none' | 'vendor_fault' | 'force_majeure' = 'none',
   now: Date = new Date()
@@ -333,7 +334,10 @@ function computeRefundPolicy(
     const hoursSinceDeposit = depositPaidAt
       ? (now.getTime() - new Date(depositPaidAt).getTime()) / 36e5
       : Infinity;
-    const daysToEvent = (new Date(eventDate).getTime() - now.getTime()) / (36e5 * 24);
+    // If no events exist yet (edge case), default to most-conservative tier (no refund)
+    const daysToEvent = firstEventDate
+      ? (new Date(firstEventDate).getTime() - now.getTime()) / (36e5 * 24)
+      : -1;
 
     if (hoursSinceDeposit < 24) {
       return {
@@ -416,7 +420,7 @@ export async function cancelBooking(
       cancellation_fault: effectiveFault,
     })
     .eq('id', bookingId)
-    .in('status', ['pending', 'quoted', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid'])
+    .in('status', ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid'])
     .select('id');
 
   if (!lockRows || lockRows.length === 0) {
@@ -427,15 +431,18 @@ export async function cancelBooking(
   }
 
   // Pre-deposit: no money to move.
-  const preDepositStatuses = ['pending', 'quoted', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'];
+  const preDepositStatuses = ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'];
   if (preDepositStatuses.includes(booking.status)) {
     return { data: { refund_amount_cents: 0, new_status: newStatus }, status: 200 };
   }
 
+  // Derive first event date from booking_events for refund tier calculation.
+  const { firstEventDate } = await getBookingDateRange(supabase, bookingId);
+
   const policy = computeRefundPolicy(
     cancellerRole,
     booking.status,
-    booking.event_date,
+    firstEventDate,
     booking.deposit_paid_at,
     effectiveFault
   );
@@ -613,7 +620,7 @@ export async function completeBooking(
 ): Promise<ServiceResult<{ status: string }>> {
   const { data: booking } = await supabase
     .from('bookings')
-    .select('couple_user_id, status, event_date')
+    .select('couple_user_id, status')
     .eq('id', bookingId)
     .single();
 
@@ -623,15 +630,17 @@ export async function completeBooking(
     return { error: `Cannot complete booking in "${booking.status}" state`, status: 400 };
   }
 
-  const today = new Date().toISOString().slice(0, 10);
-  if (booking.event_date > today) {
-    return { error: 'Cannot complete a booking before the event date', status: 400 };
+  // Use last event end time so multi-day bookings can only be completed after all events.
+  const { lastEventEnd } = await getBookingDateRange(supabase, bookingId);
+  const now = new Date();
+  if (lastEventEnd && new Date(lastEventEnd) > now) {
+    return { error: 'Cannot complete a booking before all events have ended', status: 400 };
   }
 
   // Trigger on_booking_completed handles transaction updates (authorized/recognized → earned).
   await supabase
     .from('bookings')
-    .update({ status: 'completed', completed_at: new Date().toISOString() })
+    .update({ status: 'completed', completed_at: now.toISOString() })
     .eq('id', bookingId);
 
   await sendCompletionEmails(supabase, bookingId);
@@ -651,7 +660,7 @@ export async function disputeBooking(
 ): Promise<ServiceResult<{ status: string }>> {
   const { data: booking } = await supabase
     .from('bookings')
-    .select('couple_user_id, status, event_date')
+    .select('couple_user_id, status')
     .eq('id', bookingId)
     .single();
 
@@ -661,8 +670,10 @@ export async function disputeBooking(
     return { error: `Cannot dispute booking in "${booking.status}" state`, status: 400 };
   }
 
+  // Can only dispute after the first event has started.
+  const { firstEventDate } = await getBookingDateRange(supabase, bookingId);
   const today = new Date().toISOString().slice(0, 10);
-  if (booking.event_date > today) {
+  if (firstEventDate && firstEventDate > today) {
     return { error: 'Cannot dispute a booking before the event date', status: 400 };
   }
 
@@ -739,22 +750,46 @@ export async function recognizePlatformFees(
   return { recognized: data?.length ?? 0 };
 }
 
-// ─── Cron: auto-complete past-event bookings (48h after event_date) ──────────
+// ─── Cron: auto-complete past-event bookings (48h after last event_end_time) ─
 
 export async function autoCompleteBookings(
   supabase: SupabaseClient<Database>
-): Promise<{ completed: number }> {
-  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
-  const cutoffDate = cutoff.toISOString().slice(0, 10);
+): Promise<{ events_completed: number; bookings_completed: number }> {
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
+  const now = new Date().toISOString();
 
-  const { data } = await supabase
+  // Fetch all deposit_paid bookings with their events
+  const { data: bookings } = await supabase
     .from('bookings')
-    .update({ status: 'completed', completed_at: new Date().toISOString() })
-    .eq('status', 'deposit_paid')
-    .lt('event_date', cutoffDate)
-    .select('id');
+    .select('id, booking_events(id, event_end_time, completed_at)')
+    .eq('status', 'deposit_paid');
 
-  return { completed: data?.length ?? 0 };
+  let eventsCompleted = 0;
+  let bookingsCompleted = 0;
+
+  for (const b of bookings ?? []) {
+    const events = (b.booking_events as { id: string; event_end_time: string; completed_at: string | null }[]) ?? [];
+    const incomplete = events.filter((e) => !e.completed_at);
+    const dueNow = incomplete.filter((e) => e.event_end_time < cutoff);
+    if (dueNow.length === 0) continue;
+
+    await supabase
+      .from('booking_events')
+      .update({ completed_at: now })
+      .in('id', dueNow.map((e) => e.id));
+    eventsCompleted += dueNow.length;
+
+    const stillIncomplete = incomplete.length - dueNow.length;
+    if (stillIncomplete === 0) {
+      await supabase
+        .from('bookings')
+        .update({ status: 'completed', completed_at: now })
+        .eq('id', b.id);
+      bookingsCompleted++;
+    }
+  }
+
+  return { events_completed: eventsCompleted, bookings_completed: bookingsCompleted };
 }
 
 // ─── Cron: redact couple PII on stale terminal bookings (>90 days) ───────────
