@@ -47,7 +47,8 @@ export async function GET() {
     }
   }
 
-  const allOk = supabase.ok && stripeCheck.ok && resend !== 'failing';
+  const criticalOk = supabase.ok && stripeCheck.ok;
+  const allOk = criticalOk && resend !== 'failing';
 
   return NextResponse.json(
     {
@@ -55,6 +56,6 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       checks: { supabase, stripe: stripeCheck, resend },
     },
-    { status: 200 }
+    { status: criticalOk ? 200 : 503 }
   );
 }
