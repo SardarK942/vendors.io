@@ -28,9 +28,31 @@ export default async function VendorPage({ params }: VendorPageProps) {
     .order('created_at', { ascending: false })
     .limit(20);
 
+  // Active packages with their add-ons — feeds the photo-forward PackageGrid.
+  // RLS allows public SELECT of active packages.
+  const { data: packagesData } = await supabase
+    .from('packages')
+    .select(
+      'id, name, description, base_price_cents, included_items, max_guests, duration_hours, events_count, featured_image_url, gallery_image_urls, vendor_notes_template, location_mode, addons:package_addons(id, name, price_delta_cents, display_order)'
+    )
+    .eq('vendor_profile_id', vendor.id)
+    .eq('is_active', true)
+    .order('display_order');
+
+  const packages = (packagesData ?? []).map((p) => ({
+    ...p,
+    addons: ((p as { addons?: { display_order: number }[] }).addons ?? []).sort(
+      (a, b) => a.display_order - b.display_order
+    ),
+  }));
+
   return (
     <div className="py-8">
-      <VendorProfile vendor={vendor} reviews={reviews ?? []} />
+      <VendorProfile
+        vendor={vendor}
+        reviews={reviews ?? []}
+        packages={packages as unknown as Parameters<typeof VendorProfile>[0]['packages']}
+      />
     </div>
   );
 }

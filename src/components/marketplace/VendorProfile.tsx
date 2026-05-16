@@ -78,6 +78,14 @@ export function VendorProfile({
         </div>
       )}
 
+      {/* Packages — full-width row above the fold when present */}
+      {packages.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-xl font-semibold">Packages</h2>
+          <PackageGrid packages={packages} vendorSlug={vendor.slug} />
+        </div>
+      )}
+
       <div className="grid gap-8 md:grid-cols-3">
         <div className="space-y-6 md:col-span-2">
           <div>
@@ -161,22 +169,18 @@ export function VendorProfile({
         </div>
 
         <div className="space-y-4">
-          {/* Packages section — primary pricing surface */}
-          {packages.length > 0 ? (
-            <div>
-              <h2 className="mb-3 text-lg font-semibold">Packages</h2>
-              <PackageGrid packages={packages} vendorSlug={vendor.slug} />
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No packages listed yet. Contact the vendor directly or request a booking.
-            </p>
-          )}
-
-          {showBookingButton && packages.length === 0 && (
-            <Button className="w-full" size="lg" asChild>
-              <Link href={`/vendors/${vendor.slug}/book`}>Request Booking</Link>
-            </Button>
+          {/* Sidebar fallback when no packages: pricing card + Request Booking */}
+          {packages.length === 0 && (
+            <>
+              <p className="text-sm text-muted-foreground">
+                No packages listed yet. Contact the vendor directly or request a booking.
+              </p>
+              {showBookingButton && (
+                <Button className="w-full" size="lg" asChild>
+                  <Link href={`/vendors/${vendor.slug}/book`}>Request Booking</Link>
+                </Button>
+              )}
+            </>
           )}
 
           <div className="space-y-2">

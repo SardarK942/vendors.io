@@ -135,6 +135,37 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
         </div>
       )}
 
+      {/* Vendor-side status banners */}
+      {role === 'vendor' && booking.status === 'pending' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <strong>Action needed:</strong> Accept this booking at the package price or send an
+          adjusted quote. You have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'accepted' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          Waiting for the couple to pay the deposit. They have 72 hours; you&apos;ll get an email
+          when they pay.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'adjusted_quote_sent' && (
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+          Waiting for the couple to accept or decline your adjusted quote. They have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'adjusted_quote_declined' && (
+        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
+          <strong>Action needed:</strong> The couple declined your last quote. You have 72 hours to
+          send a revised quote — otherwise the booking will auto-cancel.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'deposit_paid' && (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
+          <strong>Booking confirmed.</strong> Deposit paid. Deliver the service on the event
+          date(s); funds release to your earnings 48h after the event completes.
+        </div>
+      )}
+
       <div className="grid gap-6 md:grid-cols-2">
         {/* Package Details Card */}
         <Card>
