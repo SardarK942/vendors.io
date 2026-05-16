@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { expireStaleRequests } from '@/services/booking.service';
+import { expireStaleRequests, autoCancelExpiredBookings } from '@/services/booking.service';
 import {
   autoCompleteBookings,
   recognizePlatformFees,
@@ -34,6 +34,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
   const runId = runRow?.id ?? null;
   let result: {
     expired_bookings: number;
+    auto_cancelled_bookings: number;
     recognized_transactions: number;
     auto_completed_bookings: number;
     redacted_pii_rows: number;
@@ -41,8 +42,9 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
   let errorMessage: string | null = null;
 
   try {
-    const [expired, recognized, completed, redacted] = await Promise.all([
+    const [expired, autoCancelled, recognized, completed, redacted] = await Promise.all([
       expireStaleRequests(supabase),
+      autoCancelExpiredBookings(supabase),
       recognizePlatformFees(supabase),
       autoCompleteBookings(supabase),
       redactStaleBookingPii(supabase),
@@ -50,6 +52,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
 
     result = {
       expired_bookings: expired,
+      auto_cancelled_bookings: autoCancelled,
       recognized_transactions: recognized.recognized,
       auto_completed_bookings: completed.completed,
       redacted_pii_rows: redacted.redacted,

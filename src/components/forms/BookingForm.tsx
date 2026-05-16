@@ -1,0 +1,314 @@
+'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { EventRow, type EventRowData } from './EventRow';
+import Image from 'next/image';
+
+interface Addon {
+  id: string;
+  name: string;
+  price_delta_cents: number;
+}
+
+interface PackageProps {
+  id: string;
+  name: string;
+  description: string;
+  base_price_cents: number;
+  events_count: number;
+  max_guests: number;
+  duration_hours: number;
+  featured_image_url: string;
+  vendor_notes_template?: string | null;
+  location_mode: 'couple_provides' | 'at_vendor';
+  addons?: Addon[];
+}
+
+interface VendorProps {
+  id: string;
+  slug: string;
+  business_name: string;
+  base_city?: string | null;
+  base_state?: string | null;
+  base_address_line_1?: string | null;
+  base_postal_code?: string | null;
+  base_google_place_id?: string | null;
+  base_address_public?: boolean | null;
+}
+
+interface SelectedAddon {
+  addon_id: string;
+  name: string;
+  price_delta_cents: number;
+}
+
+interface Props {
+  vendor: VendorProps;
+  pkg: PackageProps;
+  selectedAddons: SelectedAddon[];
+}
+
+function makeBlankEvent(seq: number): EventRowData {
+  const today = new Date().toISOString().slice(0, 10);
+  return {
+    sequence: seq,
+    event_date: today,
+    event_start_time: `${today}T16:00:00Z`,
+    event_end_time: `${today}T22:00:00Z`,
+    event_type_label: '',
+    location_name: null,
+    address_line_1: '',
+    city: '',
+    state: '',
+    postal_code: '',
+    google_place_id: null,
+    guest_count_override: null,
+    location_overridden: false,
+  };
+}
+
+export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
+  const router = useRouter();
+  const [events, setEvents] = useState<EventRowData[]>([makeBlankEvent(1)]);
+  const [coupleFullName, setCoupleFullName] = useState('');
+  const [couplePhone, setCouplePhone] = useState('');
+  const [guestCount, setGuestCount] = useState(50);
+  const [specialRequests, setSpecialRequests] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Live price computation
+  const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.price_delta_cents, 0);
+  const estimatedTotal = pkg.base_price_cents + addonsTotal;
+
+  function updateEvent(index: number, updates: Partial<EventRowData>) {
+    setEvents((prev) => prev.map((e, i) => (i === index ? { ...e, ...updates } : e)));
+  }
+
+  function removeEvent(index: number) {
+    setEvents((prev) => prev.filter((_, i) => i !== index));
+  }
+
+  function addEvent() {
+    if (events.length >= pkg.events_count) return;
+    setEvents((prev) => [...prev, makeBlankEvent(prev.length + 1)]);
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    try {
+      const payload = {
+        vendor_profile_id: vendor.id,
+        package_id: pkg.id,
+        selected_addons: selectedAddons,
+        guest_count: guestCount,
+        special_requests: specialRequests || undefined,
+        couple_full_name: coupleFullName,
+        couple_contact_phone: couplePhone,
+        events: events.map((ev, i) => ({ ...ev, sequence: i + 1 })),
+      };
+
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const json = await res.json();
+
+      if (!res.ok) {
+        setError(json.error ?? 'Failed to submit booking. Please try again.');
+        return;
+      }
+
+      const bookingId = json.data?.booking?.id as string | undefined;
+      router.push(bookingId ? `/dashboard/bookings/${bookingId}` : '/dashboard/bookings');
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="grid gap-8 md:grid-cols-3">
+      <div className="space-y-8 md:col-span-2">
+        {/* Section 1 — Package summary */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Selected Package</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start gap-4">
+              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded">
+                <Image src={pkg.featured_image_url} alt={pkg.name} fill className="object-cover" />
+              </div>
+              <div>
+                <p className="font-semibold">{pkg.name}</p>
+                <p className="text-sm text-muted-foreground">
+                  {pkg.duration_hours}h · up to {pkg.max_guests} guests
+                  {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
+                </p>
+              </div>
+            </div>
+            <div className="space-y-1 text-sm">
+              <div className="flex justify-between">
+                <span className="text-muted-foreground">Package base</span>
+                <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+              </div>
+              {selectedAddons.map((addon) => (
+                <div key={addon.addon_id} className="flex justify-between">
+                  <span className="text-muted-foreground">+ {addon.name}</span>
+                  <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
+                    {addon.price_delta_cents >= 0 ? '+' : ''}$
+                    {(addon.price_delta_cents / 100).toLocaleString()}
+                  </span>
+                </div>
+              ))}
+              <Separator />
+              <div className="flex justify-between font-semibold">
+                <span>Subtotal</span>
+                <span>${(estimatedTotal / 100).toLocaleString()}</span>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              <a href={`/vendors/${vendor.slug}`} className="text-primary hover:underline">
+                Edit selection
+              </a>
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Section 2 — Events */}
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              Events ({events.length}/{pkg.events_count})
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {events.map((ev, i) => (
+              <EventRow
+                key={i}
+                index={i}
+                data={ev}
+                onChange={updateEvent}
+                onRemove={events.length > 1 ? removeEvent : undefined}
+                locationMode={pkg.location_mode}
+                vendor={vendor}
+                event1Data={i > 0 ? events[0] : null}
+              />
+            ))}
+            {events.length < pkg.events_count && (
+              <Button type="button" variant="outline" onClick={addEvent}>
+                + Add another event
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Section 3 — Couple details */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Your Details</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="mb-1 block text-sm font-medium">Full Name</label>
+              <input
+                type="text"
+                required
+                className="w-full rounded border p-2 text-sm"
+                placeholder="e.g. Aisha & Ahmed Khan"
+                value={coupleFullName}
+                onChange={(e) => setCoupleFullName(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Contact Phone</label>
+              <input
+                type="tel"
+                required
+                className="w-full rounded border p-2 text-sm"
+                placeholder="+1 (555) 000-0000"
+                value={couplePhone}
+                onChange={(e) => setCouplePhone(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Total Guest Count</label>
+              <input
+                type="number"
+                required
+                min={1}
+                className="w-full rounded border p-2 text-sm"
+                value={guestCount}
+                onChange={(e) => setGuestCount(parseInt(e.target.value, 10))}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium">Special Requests (optional)</label>
+              <textarea
+                className="min-h-[80px] w-full rounded border p-2 text-sm"
+                placeholder="Any special needs, dietary restrictions, setup requests..."
+                value={specialRequests}
+                onChange={(e) => setSpecialRequests(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
+        <Button type="submit" size="lg" className="w-full" disabled={submitting}>
+          {submitting ? 'Submitting...' : 'Submit Booking Request'}
+        </Button>
+      </div>
+
+      {/* Section 4 — Sticky price panel */}
+      <div className="h-fit md:sticky md:top-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Price Summary</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2 text-sm">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">{pkg.name}</span>
+              <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+            </div>
+            {selectedAddons.map((addon) => (
+              <div key={addon.addon_id} className="flex justify-between">
+                <span className="text-muted-foreground">{addon.name}</span>
+                <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
+                  {addon.price_delta_cents >= 0 ? '+' : ''}$
+                  {(addon.price_delta_cents / 100).toLocaleString()}
+                </span>
+              </div>
+            ))}
+            <Separator />
+            <div className="flex justify-between text-base font-bold">
+              <span>Estimated Total</span>
+              <span>${(estimatedTotal / 100).toLocaleString()}</span>
+            </div>
+            <p className="pt-1 text-xs text-muted-foreground">
+              Vendor may adjust the final price before deposit.
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    </form>
+  );
+}
+
+export default BookingForm;

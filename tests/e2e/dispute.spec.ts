@@ -38,7 +38,7 @@ test.describe('dispute flow', () => {
 
     const supabase = getServiceClient();
     const { data: booking } = await supabase
-      .from('booking_requests')
+      .from('bookings')
       .select('status, disputed_at, dispute_reason')
       .eq('id', bookingId)
       .single();

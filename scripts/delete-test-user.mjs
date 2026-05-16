@@ -53,11 +53,11 @@ const countWhere = async (table, col, val) => {
 console.log();
 console.log('Rows that will be cascaded by deleting auth.users row:');
 console.log(`  public.users (PK = uid)                             ${await countWhere('users', 'id', uid)}`);
-console.log(`  booking_requests (as couple)                        ${await countWhere('booking_requests', 'couple_user_id', uid)}`);
+console.log(`  booking_requests (as couple)                        ${await countWhere('bookings', 'couple_user_id', uid)}`);
 console.log(`  reviews (as reviewer)                               ${await countWhere('reviews', 'reviewer_user_id', uid)}`);
 if (vendorProfileId) {
   console.log(`  vendor_profiles (this user's vendor row)            1`);
-  console.log(`  booking_requests (as vendor)                        ${await countWhere('booking_requests', 'vendor_profile_id', vendorProfileId)}`);
+  console.log(`  booking_requests (as vendor)                        ${await countWhere('bookings', 'vendor_profile_id', vendorProfileId)}`);
   console.log(`  stripe_accounts (vendor connect row)                ${await countWhere('stripe_accounts', 'vendor_profile_id', vendorProfileId)}`);
   console.log(`  reviews (about this vendor)                         ${await countWhere('reviews', 'vendor_profile_id', vendorProfileId)}`);
 } else {

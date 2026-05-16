@@ -4,7 +4,7 @@ import type { CancellerRole, ServiceResult } from '@/types';
 import { stripe } from '@/lib/stripe/client';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { createMinimalAccount, createFullOnboardingLink } from '@/lib/stripe/connect';
-import { calculateDepositAmount, calculatePlatformCut, calculateVendorPending } from '@/lib/utils';
+import { calculatePlatformCut, calculateVendorPending, DEPOSIT_RATE } from '@/lib/utils';
 import {
   sendDepositConfirmationEmail,
   sendCompletionEmailToVendor,
@@ -60,17 +60,17 @@ export async function createDepositCheckout(
   // vendor_profile under RLS (enforces couple ownership), then read the
   // vendor's stripe_account through a service-role client.
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles!inner(id, business_name)')
     .eq('id', bookingId)
     .eq('couple_user_id', coupleUserId)
     .single();
 
   if (!booking) return { error: 'Booking not found', status: 404 };
-  if (booking.status !== 'quoted') {
-    return { error: 'Booking must be in "quoted" state to pay deposit', status: 400 };
+  if (booking.status !== 'accepted') {
+    return { error: 'Booking must be in "accepted" state to pay deposit', status: 400 };
   }
-  if (!booking.vendor_quote_amount) return { error: 'No quote amount set', status: 400 };
+  if (!booking.total_price_cents) return { error: 'No price set on booking', status: 400 };
 
   const vp = booking.vendor_profiles as unknown as {
     id: string;
@@ -94,7 +94,8 @@ export async function createDepositCheckout(
     return { error: 'This vendor is temporarily unable to accept new bookings.', status: 400 };
   }
 
-  const depositAmount = calculateDepositAmount(booking.vendor_quote_amount);
+  // Deposit = DEPOSIT_RATE of total price; platform retains 30% of deposit; vendor gets 70% of deposit.
+  const depositAmount = Math.floor(booking.total_price_cents * DEPOSIT_RATE);
   const platformCut = calculatePlatformCut(depositAmount);
   const vendorPending = calculateVendorPending(depositAmount);
 
@@ -107,7 +108,7 @@ export async function createDepositCheckout(
             currency: 'usd',
             product_data: {
               name: `Booking Deposit — ${vp.business_name}`,
-              description: `Deposit for ${booking.event_type} on ${booking.event_date}`,
+              description: `30% deposit for booking with ${vp.business_name}`,
             },
             unit_amount: depositAmount,
           },
@@ -145,7 +146,7 @@ export async function handlePaymentSuccess(
   const vendorPending = calculateVendorPending(amount);
 
   await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({
       status: 'deposit_paid',
       deposit_amount: amount,
@@ -165,7 +166,7 @@ export async function handlePaymentSuccess(
   });
 
   const { data: ctx } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select(
       'couple_email, couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
     )
@@ -378,7 +379,7 @@ export async function cancelBooking(
   fault: 'none' | 'vendor_fault' | 'force_majeure' = 'none'
 ): Promise<ServiceResult<{ refund_amount_cents: number; new_status: string }>> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles!inner(id, user_id), transactions(*)')
     .eq('id', bookingId)
     .single();
@@ -407,7 +408,7 @@ export async function cancelBooking(
   // Atomic status flip — only succeeds if booking is still in a cancellable state.
   // Prevents concurrent cancels from both issuing refunds.
   const { data: lockRows } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({
       status: newStatus,
       cancelled_at: new Date().toISOString(),
@@ -415,7 +416,7 @@ export async function cancelBooking(
       cancellation_fault: effectiveFault,
     })
     .eq('id', bookingId)
-    .in('status', ['pending', 'quoted', 'deposit_paid'])
+    .in('status', ['pending', 'quoted', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid'])
     .select('id');
 
   if (!lockRows || lockRows.length === 0) {
@@ -426,7 +427,8 @@ export async function cancelBooking(
   }
 
   // Pre-deposit: no money to move.
-  if (booking.status === 'pending' || booking.status === 'quoted') {
+  const preDepositStatuses = ['pending', 'quoted', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'];
+  if (preDepositStatuses.includes(booking.status)) {
     return { data: { refund_amount_cents: 0, new_status: newStatus }, status: 200 };
   }
 
@@ -488,7 +490,7 @@ async function notifyCancellation(
   reason: string | null
 ): Promise<void> {
   const { data: ctx } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select(
       'couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
     )
@@ -535,7 +537,7 @@ export async function clawVendorPending(
   amountCents: number
 ): Promise<void> {
   const { data: bookings } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('id')
     .eq('vendor_profile_id', vendorProfileId);
 
@@ -610,7 +612,7 @@ export async function completeBooking(
   coupleUserId: string
 ): Promise<ServiceResult<{ status: string }>> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('couple_user_id, status, event_date')
     .eq('id', bookingId)
     .single();
@@ -628,7 +630,7 @@ export async function completeBooking(
 
   // Trigger on_booking_completed handles transaction updates (authorized/recognized → earned).
   await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({ status: 'completed', completed_at: new Date().toISOString() })
     .eq('id', bookingId);
 
@@ -648,7 +650,7 @@ export async function disputeBooking(
   reason: string
 ): Promise<ServiceResult<{ status: string }>> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('couple_user_id, status, event_date')
     .eq('id', bookingId)
     .single();
@@ -665,7 +667,7 @@ export async function disputeBooking(
   }
 
   const { data: lockRows } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({
       status: 'disputed',
       disputed_at: new Date().toISOString(),
@@ -687,7 +689,7 @@ async function sendCompletionEmails(
   bookingId: string
 ): Promise<void> {
   const { data: ctx } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select(
       'couple_email, users!couple_user_id(email), transactions(vendor_payout), vendor_profiles!inner(business_name, users!user_id(email))'
     )
@@ -746,7 +748,7 @@ export async function autoCompleteBookings(
   const cutoffDate = cutoff.toISOString().slice(0, 10);
 
   const { data } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .update({ status: 'completed', completed_at: new Date().toISOString() })
     .eq('status', 'deposit_paid')
     .lt('event_date', cutoffDate)
@@ -812,7 +814,7 @@ export async function getVendorEarnings(
   )?.[0];
 
   const { data: bookings } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('id, transactions(status, vendor_payout, transferred_at)')
     .eq('vendor_profile_id', vp.id);
 
@@ -886,7 +888,7 @@ export async function initiatePayout(
   if (!vp) return { error: 'Vendor profile not found', status: 404 };
 
   const { data: bookings } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('id')
     .eq('vendor_profile_id', vp.id);
   const bookingIds = (bookings ?? []).map((b) => b.id);

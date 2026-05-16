@@ -10,7 +10,7 @@ import { DisputeDialog } from '@/components/dashboard/DisputeDialog';
 import { CancelDialog } from '@/components/dashboard/CancelDialog';
 import { DepositDialog } from '@/components/dashboard/DepositDialog';
 
-type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
+type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
 interface BookingActionsProps {
   booking: BookingRow;

@@ -3,7 +3,7 @@ import type { Database } from '@/types/database.types';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { HttpError } from '@/lib/api/error-boundary';
 
-export type BookingRow = Database['public']['Tables']['booking_requests']['Row'];
+export type BookingRow = Database['public']['Tables']['bookings']['Row'];
 export type VendorProfileRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
 export async function requireUser(): Promise<{
@@ -34,7 +34,7 @@ export async function requireBookingAccess(
   userId: string
 ): Promise<{ booking: BookingRow; role: 'couple' | 'vendor' }> {
   const { data: booking } = await supabase
-    .from('booking_requests')
+    .from('bookings')
     .select('*, vendor_profiles!inner(user_id)')
     .eq('id', bookingId)
     .single();

@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { getBookingRequests } from '@/services/booking.service';
 import { BookingCard } from '@/components/dashboard/BookingCard';
+import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
 
 export default async function BookingsPage() {
   const supabase = await createServerSupabaseClient();
@@ -40,7 +41,18 @@ export default async function BookingsPage() {
       ) : (
         <div className="space-y-4">
           {bookings.map((booking) => (
-            <BookingCard key={booking.id} booking={booking} role={role} />
+            <div key={booking.id} className="space-y-2">
+              <BookingCard booking={booking} role={role} />
+              {/* A2: Vendor accept/adjust CTAs on actionable statuses */}
+              {role === 'vendor' &&
+                (booking.status === 'pending' || booking.status === 'adjusted_quote_declined') && (
+                  <VendorBookingActions
+                    bookingId={booking.id}
+                    status={booking.status}
+                    totalPriceCents={(booking as Record<string, unknown>).total_price_cents as number ?? 0}
+                  />
+                )}
+            </div>
           ))}
         </div>
       )}

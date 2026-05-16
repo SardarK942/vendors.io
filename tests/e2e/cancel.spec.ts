@@ -37,7 +37,7 @@ test.describe('cancel flow', () => {
 
     const supabase = getServiceClient();
     const { data: booking } = await supabase
-      .from('booking_requests')
+      .from('bookings')
       .select('status, cancellation_reason, cancellation_fault, cancelled_at')
       .eq('id', bookingId)
       .single();

@@ -52,7 +52,7 @@ test.describe('booking golden path (up to quote)', () => {
     // Verify DB state via service role.
     const supabase = getServiceClient();
     const { data: bookings } = await supabase
-      .from('booking_requests')
+      .from('bookings')
       .select('id, status, couple_contact_revealed, couple_phone')
       .eq('couple_user_id', couple.id)
       .eq('vendor_profile_id', vendor.vendorProfileId);
@@ -90,7 +90,7 @@ test.describe('booking golden path (up to quote)', () => {
     expect(quoteResponse.status()).toBe(200);
 
     const { data: quoted } = await supabase
-      .from('booking_requests')
+      .from('bookings')
       .select('status, vendor_quote_amount')
       .eq('id', bookingId)
       .single();

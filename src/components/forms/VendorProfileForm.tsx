@@ -18,6 +18,10 @@ import {
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS, generateSlug } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/types/database.types';
+import { GooglePlacesAutocomplete, type PlaceData } from '@/components/forms/GooglePlacesAutocomplete';
+
+// Supabase client is still used for profile creation (INSERT) where user_id is needed
+// Profile updates (UPDATE) go through PATCH /api/vendor-profile
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -29,6 +33,16 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
+  const [baseAddress, setBaseAddress] = useState<Partial<PlaceData>>({
+    address_line_1: (vendorProfile as Record<string, unknown> | null)?.base_address_line_1 as string | undefined,
+    city: (vendorProfile as Record<string, unknown> | null)?.base_city as string | undefined,
+    state: (vendorProfile as Record<string, unknown> | null)?.base_state as string | undefined,
+    postal_code: (vendorProfile as Record<string, unknown> | null)?.base_postal_code as string | undefined,
+    google_place_id: (vendorProfile as Record<string, unknown> | null)?.base_google_place_id as string | undefined,
+  });
+  const [baseAddressPublic, setBaseAddressPublic] = useState<boolean>(
+    Boolean((vendorProfile as Record<string, unknown> | null)?.base_address_public)
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -52,16 +66,26 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
       instagram_handle: (formData.get('instagram') as string) || null,
       website_url: (formData.get('website') as string) || null,
       response_sla_hours: Number(formData.get('sla')) || 48,
+      // A2: base address fields
+      base_address_line_1: baseAddress.address_line_1 || null,
+      base_city: baseAddress.city || null,
+      base_state: baseAddress.state || null,
+      base_postal_code: baseAddress.postal_code || null,
+      base_google_place_id: baseAddress.google_place_id || null,
+      base_address_public: baseAddressPublic,
     };
 
     if (vendorProfile) {
-      const { error } = await supabase
-        .from('vendor_profiles')
-        .update(payload)
-        .eq('id', vendorProfile.id);
-
-      if (error) {
-        toast.error('Failed to update profile');
+      const res = await fetch('/api/vendor-profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!res.ok) {
+        const json = await res.json();
+        const msg =
+          json?.error?.message ?? json?.error ?? 'Failed to update profile';
+        toast.error(typeof msg === 'string' ? msg : 'Failed to update profile');
         setLoading(false);
         return;
       }
@@ -203,6 +227,46 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               max={168}
               defaultValue={vendorProfile?.response_sla_hours || 48}
             />
+          </div>
+
+          {/* A2: Base Address + visibility */}
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <h3 className="font-medium">Base Address</h3>
+              <p className="text-xs text-muted-foreground">
+                Required if any of your packages have &ldquo;At my location&rdquo; set.
+                Your city and state are always public.
+              </p>
+            </div>
+            <div className="space-y-2">
+              <Label>Street Address</Label>
+              <GooglePlacesAutocomplete
+                value={baseAddress}
+                onChange={(place) => setBaseAddress(place)}
+                placeholder="Start typing your address..."
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+              {baseAddress.city && (
+                <p className="text-xs text-muted-foreground">
+                  {baseAddress.city}, {baseAddress.state} {baseAddress.postal_code}
+                </p>
+              )}
+            </div>
+            <label className="flex items-start gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                className="mt-0.5"
+                checked={baseAddressPublic}
+                onChange={(e) => setBaseAddressPublic(e.target.checked)}
+              />
+              <span className="text-sm">
+                Make my full address publicly visible
+                <span className="block text-xs text-muted-foreground">
+                  Most home-studio vendors keep this off — your full address is then only shared
+                  with couples who pay the deposit. Your city and state are always public.
+                </span>
+              </span>
+            </label>
           </div>
 
           <Button type="submit" disabled={loading}>
