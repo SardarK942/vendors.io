@@ -1,7 +1,7 @@
 /**
  * Manual database types matching the Supabase schema.
  *
- * Migrations up to and including 00027 are reflected here:
+ * Migrations up to and including 00030 are reflected here:
  *   - 00015 packages, 00016 package_addons, 00016 booking_events
  *   - 00017 booking_requests → bookings rename (FK names retained)
  *   - 00018 new bookings columns (package_id, snapshots, adjustment fields,
@@ -12,10 +12,25 @@
  *   - A-cleanup: dropped legacy columns (event_date, event_type, budget_min/max,
  *     vendor_quote_amount/notes/responded_at from bookings;
  *     starting_price_min/max from vendor_profiles); 'quoted'/'rejected' statuses removed
+ *   - 00030 notifications table + RLS + realtime publication (Sub-project F)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
  */
+
+export type NotificationType =
+  | 'booking_request_received'
+  | 'vendor_accepted'
+  | 'vendor_adjusted_quote'
+  | 'couple_accepted_adjusted'
+  | 'couple_declined_adjusted'
+  | 'deposit_paid'
+  | 'booking_confirmed'
+  | 'booking_auto_cancelled'
+  | 'booking_cancelled'
+  | 'event_completed'
+  | 'booking_completed'
+  | 'review_received';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -691,6 +706,42 @@ export interface Database {
           payload?: unknown | null;
         };
         Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          body: string;
+          link: string | null;
+          metadata: Record<string, unknown>;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          body: string;
+          link?: string | null;
+          metadata?: Record<string, unknown>;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {

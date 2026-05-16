@@ -1,0 +1,79 @@
+'use client';
+
+import Link from 'next/link';
+import type { Database, NotificationType } from '@/types/database.types';
+
+type NotificationRow = Database['public']['Tables']['notifications']['Row'];
+
+const TYPE_ICON: Record<NotificationType, string> = {
+  booking_request_received: '🎯',
+  vendor_accepted: '✅',
+  vendor_adjusted_quote: '💵',
+  couple_accepted_adjusted: '✅',
+  couple_declined_adjusted: '⚠️',
+  deposit_paid: '💰',
+  booking_confirmed: '🔒',
+  booking_auto_cancelled: '⏱️',
+  booking_cancelled: '❌',
+  event_completed: '✓',
+  booking_completed: '🎉',
+  review_received: '⭐',
+};
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const m = Math.floor(diff / 60000);
+  if (m < 1) return 'just now';
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}h`;
+  const d = Math.floor(h / 24);
+  if (d < 7) return `${d}d`;
+  return new Date(iso).toLocaleDateString();
+}
+
+interface Props {
+  notification: NotificationRow;
+  onClick: () => void;
+}
+
+export function NotificationCard({ notification, onClick }: Props) {
+  const isUnread = !notification.read_at;
+  const inner = (
+    <>
+      <span className="text-lg shrink-0" aria-hidden>
+        {TYPE_ICON[notification.type as NotificationType] ?? '🔔'}
+      </span>
+      <div className="flex-1 min-w-0">
+        <p className={`text-sm ${isUnread ? 'font-semibold' : 'font-normal'} truncate`}>
+          {notification.title}
+        </p>
+        <p className="text-xs text-muted-foreground truncate">{notification.body}</p>
+        <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+          {timeAgo(notification.created_at)}
+        </p>
+      </div>
+      {isUnread && <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" aria-label="unread" />}
+    </>
+  );
+
+  return notification.link ? (
+    <Link
+      href={notification.link}
+      onClick={onClick}
+      className={`flex items-start gap-3 px-3 py-2 hover:bg-accent ${isUnread ? 'bg-blue-50/50' : ''}`}
+    >
+      {inner}
+    </Link>
+  ) : (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex w-full items-start gap-3 px-3 py-2 text-left hover:bg-accent ${
+        isUnread ? 'bg-blue-50/50' : ''
+      }`}
+    >
+      {inner}
+    </button>
+  );
+}

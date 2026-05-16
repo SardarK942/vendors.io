@@ -241,3 +241,21 @@ export const adjustQuoteSchema = z
     { message: "explanation is required when reason is 'other'", path: ['explanation'] }
   );
 export type AdjustQuoteInput = z.infer<typeof adjustQuoteSchema>;
+
+// ─── Sub-project F: Notifications ───────────────────────────────────
+
+export const notificationTypeSchema = z.enum([
+  'booking_request_received',
+  'vendor_accepted',
+  'vendor_adjusted_quote',
+  'couple_accepted_adjusted',
+  'couple_declined_adjusted',
+  'deposit_paid',
+  'booking_confirmed',
+  'booking_auto_cancelled',
+  'booking_cancelled',
+  'event_completed',
+  'booking_completed',
+  'review_received',
+]);
+export type NotificationTypeInput = z.infer<typeof notificationTypeSchema>;
