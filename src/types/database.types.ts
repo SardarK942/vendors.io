@@ -1,13 +1,17 @@
 /**
  * Manual database types matching the Supabase schema.
  *
- * Migrations up to and including 00021 are reflected here:
+ * Migrations up to and including 00027 are reflected here:
  *   - 00015 packages, 00016 package_addons, 00016 booking_events
  *   - 00017 booking_requests → bookings rename (FK names retained)
  *   - 00018 new bookings columns (package_id, snapshots, adjustment fields,
  *     total_price_cents, negotiation_round_count) + expanded status check
  *   - 00019 vendor_profiles.base_address_* columns + visibility toggle
  *   - 00020 vendor_packages_price_band view + total_price trigger
+ *   - 00027 booking_events.completed_at (per-event completion tracking)
+ *   - A-cleanup: dropped legacy columns (event_date, event_type, budget_min/max,
+ *     vendor_quote_amount/notes/responded_at from bookings;
+ *     starting_price_min/max from vendor_profiles); 'quoted'/'rejected' statuses removed
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -17,8 +21,6 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type BookingStatus =
   | 'pending'
-  | 'quoted'
-  | 'rejected'
   | 'deposit_paid'
   | 'couple_cancelled'
   | 'vendor_cancelled'
@@ -88,8 +90,6 @@ export interface Database {
           category: string;
           bio: string | null;
           service_area: string[];
-          starting_price_min: number | null;
-          starting_price_max: number | null;
           portfolio_images: string[];
           instagram_handle: string | null;
           website_url: string | null;
@@ -116,8 +116,6 @@ export interface Database {
           category: string;
           bio?: string | null;
           service_area?: string[];
-          starting_price_min?: number | null;
-          starting_price_max?: number | null;
           portfolio_images?: string[];
           instagram_handle?: string | null;
           website_url?: string | null;
@@ -142,8 +140,6 @@ export interface Database {
           category?: string;
           bio?: string | null;
           service_area?: string[];
-          starting_price_min?: number | null;
-          starting_price_max?: number | null;
           portfolio_images?: string[];
           instagram_handle?: string | null;
           website_url?: string | null;
@@ -285,6 +281,7 @@ export interface Database {
           google_place_id: string | null;
           guest_count_override: number | null;
           location_overridden: boolean;
+          completed_at: string | null;
           created_at: string;
         };
         Insert: {
@@ -303,6 +300,7 @@ export interface Database {
           google_place_id?: string | null;
           guest_count_override?: number | null;
           location_overridden?: boolean;
+          completed_at?: string | null;
           created_at?: string;
         };
         Update: {
@@ -319,6 +317,7 @@ export interface Database {
           google_place_id?: string | null;
           guest_count_override?: number | null;
           location_overridden?: boolean;
+          completed_at?: string | null;
         };
         Relationships: [
           {
@@ -335,16 +334,9 @@ export interface Database {
           id: string;
           couple_user_id: string;
           vendor_profile_id: string;
-          event_date: string;
-          event_type: string;
           guest_count: number | null;
-          budget_min: number | null;
-          budget_max: number | null;
           special_requests: string | null;
           status: BookingStatus;
-          vendor_quote_amount: number | null;
-          vendor_quote_notes: string | null;
-          vendor_responded_at: string | null;
           deposit_amount: number | null;
           deposit_paid_at: string | null;
           stripe_payment_intent_id: string | null;
@@ -377,16 +369,9 @@ export interface Database {
           id?: string;
           couple_user_id: string;
           vendor_profile_id: string;
-          event_date?: string;
-          event_type?: string;
           guest_count?: number | null;
-          budget_min?: number | null;
-          budget_max?: number | null;
           special_requests?: string | null;
           status?: BookingStatus;
-          vendor_quote_amount?: number | null;
-          vendor_quote_notes?: string | null;
-          vendor_responded_at?: string | null;
           deposit_amount?: number | null;
           deposit_paid_at?: string | null;
           stripe_payment_intent_id?: string | null;
@@ -418,16 +403,9 @@ export interface Database {
         Update: {
           couple_user_id?: string;
           vendor_profile_id?: string;
-          event_date?: string;
-          event_type?: string;
           guest_count?: number | null;
-          budget_min?: number | null;
-          budget_max?: number | null;
           special_requests?: string | null;
           status?: BookingStatus;
-          vendor_quote_amount?: number | null;
-          vendor_quote_notes?: string | null;
-          vendor_responded_at?: string | null;
           deposit_amount?: number | null;
           deposit_paid_at?: string | null;
           stripe_payment_intent_id?: string | null;
