@@ -19,6 +19,20 @@
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
+export type NotificationType =
+  | 'booking_request_received'
+  | 'vendor_accepted'
+  | 'vendor_adjusted_quote'
+  | 'couple_accepted_adjusted'
+  | 'couple_declined_adjusted'
+  | 'deposit_paid'
+  | 'booking_confirmed'
+  | 'booking_auto_cancelled'
+  | 'booking_cancelled'
+  | 'event_completed'
+  | 'booking_completed'
+  | 'review_received';
+
 export type BookingStatus =
   | 'pending'
   | 'deposit_paid'
@@ -691,6 +705,42 @@ export interface Database {
           payload?: unknown | null;
         };
         Relationships: [];
+      };
+      notifications: {
+        Row: {
+          id: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          body: string;
+          link: string | null;
+          metadata: Record<string, unknown>;
+          read_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          type: NotificationType;
+          title: string;
+          body: string;
+          link?: string | null;
+          metadata?: Record<string, unknown>;
+          read_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'notifications_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
       };
     };
     Views: {

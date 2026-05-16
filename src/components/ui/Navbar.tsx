@@ -14,6 +14,7 @@ import {
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { createClient } from '@/lib/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
 
 const navLinks = [{ href: '/vendors', label: 'Browse Vendors' }];
 
@@ -71,7 +72,9 @@ export function Navbar() {
           ))}
 
           {user ? (
-            <DropdownMenu>
+            <>
+              <NotificationBell userId={user.id} />
+              <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="gap-2">
                   <User className="h-4 w-4" />
@@ -87,7 +90,8 @@ export function Navbar() {
                   Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
-            </DropdownMenu>
+              </DropdownMenu>
+            </>
           ) : (
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="sm" asChild>
