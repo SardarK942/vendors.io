@@ -175,4 +175,152 @@ test.describe('package-driven booking flow — happy path', () => {
 
     await vendorCtx.close();
   });
+
+  test('adjust-quote ping-pong: vendor adjusts → couple declines → vendor re-quotes → couple accepts', async ({
+    browser,
+  }) => {
+    couple = await seedCouple();
+    vendor = await seedVendor({ chargesEnabled: true });
+    const pkg = await seedPackage(vendor, { basePriceCents: 150_000 });
+    const supabase = getServiceClient();
+
+    // ── Couple submits a booking ────────────────────────────────────────────
+    const coupleCtx = await browser.newContext();
+    const couplePage = await coupleCtx.newPage();
+    await loginAs(couplePage, couple);
+
+    const eventDate = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const createRes = await couplePage.request.post('/api/bookings', {
+      data: {
+        vendor_profile_id: vendor.vendorProfileId,
+        package_id: pkg.id,
+        selected_addons: [],
+        guest_count: 100,
+        couple_full_name: 'E2E Couple',
+        couple_contact_phone: '(312) 555-0100',
+        events: [
+          {
+            sequence: 1,
+            event_date: eventDate,
+            event_start_time: `${eventDate}T16:00:00Z`,
+            event_end_time: `${eventDate}T22:00:00Z`,
+            event_type_label: 'Wedding Ceremony',
+            address_line_1: '140 E Walton Pl',
+            city: 'Chicago',
+            state: 'IL',
+            postal_code: '60611',
+            location_overridden: false,
+          },
+        ],
+      },
+    });
+    expect(createRes.status()).toBe(201);
+    const bookingId = (await createRes.json()).data.booking.id;
+
+    // Status starts at pending
+    const { data: initial } = await supabase
+      .from('bookings')
+      .select('status, total_price_cents, negotiation_round_count')
+      .eq('id', bookingId)
+      .single();
+    expect(initial?.status).toBe('pending');
+    expect(initial?.total_price_cents).toBe(150_000);
+    expect(initial?.negotiation_round_count).toBe(0);
+
+    // ── Round 1: Vendor adjusts +$200 (travel reason) ───────────────────────
+    const vendorCtx = await browser.newContext();
+    const vendorPage = await vendorCtx.newPage();
+    await loginAs(vendorPage, vendor);
+
+    const adjust1 = await vendorPage.request.post(`/api/bookings/${bookingId}/adjust`, {
+      data: {
+        adjustment_amount_cents: 20_000,
+        reason: 'travel',
+        explanation: null,
+      },
+    });
+    expect(adjust1.status()).toBe(200);
+
+    // Verify state: adjusted_quote_sent, total = base + adjustment = 170000, round = 1
+    const { data: afterAdjust1 } = await supabase
+      .from('bookings')
+      .select(
+        'status, total_price_cents, adjustment_amount_cents, adjustment_reason, negotiation_round_count'
+      )
+      .eq('id', bookingId)
+      .single();
+    expect(afterAdjust1?.status).toBe('adjusted_quote_sent');
+    expect(afterAdjust1?.adjustment_amount_cents).toBe(20_000);
+    expect(afterAdjust1?.adjustment_reason).toBe('travel');
+    expect(afterAdjust1?.total_price_cents).toBe(170_000);
+    expect(afterAdjust1?.negotiation_round_count).toBe(1);
+
+    // ── UI assertion: couple's detail page shows the AdjustmentReview ──────
+    await couplePage.goto(`/dashboard/bookings/${bookingId}`);
+    await expect(couplePage.getByText(/adjusted quote/i).first()).toBeVisible();
+    // The reason chip should render (label "Travel distance" per our reason map)
+    await expect(couplePage.getByText(/travel/i).first()).toBeVisible();
+
+    // ── Couple declines the adjustment ──────────────────────────────────────
+    const decline = await couplePage.request.post(`/api/bookings/${bookingId}/decline-adjusted`);
+    expect(decline.status()).toBe(200);
+
+    const { data: afterDecline } = await supabase
+      .from('bookings')
+      .select('status, expires_at')
+      .eq('id', bookingId)
+      .single();
+    expect(afterDecline?.status).toBe('adjusted_quote_declined');
+    expect(afterDecline?.expires_at).toBeTruthy(); // reset to NOW+72h
+
+    // ── Round 2: Vendor sends a revised quote (-$100 discount) ─────────────
+    const adjust2 = await vendorPage.request.post(`/api/bookings/${bookingId}/adjust`, {
+      data: {
+        adjustment_amount_cents: -10_000,
+        reason: 'discount',
+        explanation: null,
+      },
+    });
+    expect(adjust2.status()).toBe(200);
+
+    const { data: afterAdjust2 } = await supabase
+      .from('bookings')
+      .select(
+        'status, total_price_cents, adjustment_amount_cents, adjustment_reason, negotiation_round_count'
+      )
+      .eq('id', bookingId)
+      .single();
+    expect(afterAdjust2?.status).toBe('adjusted_quote_sent');
+    expect(afterAdjust2?.adjustment_amount_cents).toBe(-10_000);
+    expect(afterAdjust2?.adjustment_reason).toBe('discount');
+    // Trigger recomputes: base 150000 + (-10000) = 140000
+    expect(afterAdjust2?.total_price_cents).toBe(140_000);
+    // Round counter incremented again
+    expect(afterAdjust2?.negotiation_round_count).toBe(2);
+
+    // ── Couple accepts the revised quote ────────────────────────────────────
+    const accept = await couplePage.request.post(`/api/bookings/${bookingId}/accept-adjusted`);
+    expect(accept.status()).toBe(200);
+
+    const { data: final } = await supabase
+      .from('bookings')
+      .select('status, total_price_cents')
+      .eq('id', bookingId)
+      .single();
+    expect(final?.status).toBe('accepted');
+    expect(final?.total_price_cents).toBe(140_000);
+
+    // ── Negative-path: explanation required when reason='other' ────────────
+    // (We're past 'accepted' for the main booking, so test the constraint
+    // by trying to re-adjust — server should reject the transition AND the
+    // missing-explanation case.)
+    const badAdjust = await vendorPage.request.post(`/api/bookings/${bookingId}/adjust`, {
+      data: { adjustment_amount_cents: 5_000, reason: 'other', explanation: null },
+    });
+    // Either: 400 (Zod refinement rejects) or 409 (invalid state from 'accepted')
+    expect([400, 409]).toContain(badAdjust.status());
+
+    await coupleCtx.close();
+    await vendorCtx.close();
+  });
 });
