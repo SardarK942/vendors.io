@@ -15,5 +15,5 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: result.status });
   }
-  return NextResponse.json({ data: result.data }, { status: 200 });
+  return NextResponse.json({ data: result.data, redirect: '/dashboard/profile/setup' }, { status: 200 });
 });
