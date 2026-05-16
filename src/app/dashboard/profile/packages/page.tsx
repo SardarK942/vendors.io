@@ -9,7 +9,14 @@ import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle'
 
 export const dynamic = 'force-dynamic';
 
-export default async function PackagesPage() {
+interface PackagesPageProps {
+  searchParams: Promise<{ just_onboarded?: string }>;
+}
+
+export default async function PackagesPage({ searchParams }: PackagesPageProps) {
+  const { just_onboarded } = await searchParams;
+  const justOnboarded = just_onboarded === '1';
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -33,6 +40,13 @@ export default async function PackagesPage() {
 
   return (
     <div className="space-y-6">
+      {justOnboarded && (
+        <div className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4">
+          <h3 className="font-semibold">🎉 Profile is live!</h3>
+          <p className="text-sm">Create your first package to start receiving bookings.</p>
+        </div>
+      )}
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">Your Packages</h1>
