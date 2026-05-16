@@ -38,6 +38,15 @@ vi.mock('@/lib/email/resend', () => ({
   sendCancellationEmail: vi.fn(),
 }));
 
+// Mock notifications service to avoid Supabase insert calls in tests
+vi.mock('@/services/notifications.service', () => ({
+  notifyDepositPaid: vi.fn(),
+  notifyBookingConfirmed: vi.fn(),
+  notifyBookingCancelled: vi.fn(),
+  notifyEventCompleted: vi.fn(),
+  notifyBookingCompleted: vi.fn(),
+}));
+
 import { autoCompleteBookings } from '@/services/payment.service';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -45,19 +54,40 @@ const PAST = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();   // 72h 
 const FUTURE = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h from now
 
 // Build a minimal Supabase mock for autoCompleteBookings' query patterns.
+// bookings now include couple_user_id + vendor_profiles for notification calls.
 function makeMockSupabase(bookings: Array<{
   id: string;
-  booking_events: Array<{ id: string; event_end_time: string; completed_at: string | null }>;
+  couple_user_id?: string;
+  vendor_profiles?: { user_id: string };
+  booking_events: Array<{
+    id: string;
+    event_end_time: string;
+    event_type_label?: string;
+    sequence?: number;
+    completed_at: string | null;
+  }>;
 }>) {
   const updatedEventIds: string[] = [];
   const updatedBookingIds: string[] = [];
+
+  // Enrich bookings with defaults for the new fields.
+  const enriched = bookings.map((b) => ({
+    couple_user_id: 'couple-user-id',
+    vendor_profiles: { user_id: 'vendor-user-id' },
+    ...b,
+    booking_events: b.booking_events.map((e) => ({
+      event_type_label: 'Wedding',
+      sequence: 1,
+      ...e,
+    })),
+  }));
 
   return {
     from: (table: string) => {
       if (table === 'bookings') {
         return {
           select: () => ({
-            eq: () => Promise.resolve({ data: bookings }),
+            eq: () => Promise.resolve({ data: enriched }),
           }),
           update: (payload: Record<string, unknown>) => ({
             eq: (_col: string, val: string) => {
