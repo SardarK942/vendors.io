@@ -67,6 +67,31 @@ export interface SelectedAddonSnapshot {
 export interface Database {
   public: {
     Tables: {
+      ai_bio_assist_calls: {
+        Row: {
+          user_id: string;
+          calls_in_window: number;
+          window_started_at: string;
+        };
+        Insert: {
+          user_id: string;
+          calls_in_window?: number;
+          window_started_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          calls_in_window?: number;
+          window_started_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ai_bio_assist_calls_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       users: {
         Row: {
           id: string;
