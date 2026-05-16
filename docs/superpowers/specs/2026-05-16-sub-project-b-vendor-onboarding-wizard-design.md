@@ -50,6 +50,7 @@ Replace the current single-page `/dashboard/profile` setup with a guided **5-ste
 - **Business name** (text, required)
 - **Category** (select, required — same enum as today)
 - **Bio / description** (textarea, required, 50–500 chars, char counter)
+  - **AI bio assistant** (see §5a) — `✨ Help me write this` button beside the textarea. Generates a starter draft from `business_name + category` when the field is empty; polishes the wording when text is already present. Vendor can accept (replaces textarea content) or dismiss.
 - On Next: UPSERT vendor_profiles row (creates if missing, updates otherwise). Slug derived from business_name on first INSERT only — preserved on subsequent edits.
 
 ### Step 2 — Location — `/dashboard/profile/setup/location`
@@ -59,26 +60,66 @@ Replace the current single-page `/dashboard/profile` setup with a guided **5-ste
 - On Next: UPDATE vendor_profiles.
 
 ### Step 3 — Online presence — `/dashboard/profile/setup/online`
-- **Instagram handle** (text, optional individually)
-- **Website URL** (url, optional individually)
-- App-level rule: at least one of the two must be present to advance.
+- **Instagram handle** (text, **required**) — primary distribution channel for the marketplace; couples expect to see one. Validation: strips leading `@`, allows letters/digits/dots/underscores per Instagram username rules.
+- **Website URL** (url, optional)
 - On Next: UPDATE vendor_profiles.
 
 ### Step 4 — Portfolio — `/dashboard/profile/setup/portfolio`
 - UploadThing `portfolioImage` route (already wired in repo).
 - Grid of uploaded images with delete (X) button per tile.
-- Required: ≥3 images to advance.
+- Required: ≥1 image to advance. Soft suggestion in the UI: "Vendors with 3+ photos get 2× more clicks — add more if you have them."
 - On Next: UPDATE vendor_profiles.portfolio_images (full array replace).
 
 ### Step 5 — Review & publish — `/dashboard/profile/setup/review`
 - Read-only card showing all fields collected in steps 1–4.
 - Live vendor-card preview (uses the same `VendorCard` component the marketplace uses).
 - "Publish profile" button — gated client-side and server-side by:
-  - business_name, category, bio non-empty
+  - business_name, category, bio non-empty (bio length 50–500)
   - base address line_1 + city + state + postal_code present
-  - At least one of instagram_handle / website_url
-  - portfolio_images.length >= 3
+  - instagram_handle non-empty
+  - portfolio_images.length >= 1
 - On Publish: UPDATE vendor_profiles SET onboarding_complete = true, is_active = true, updated_at = now(). Redirect to `/dashboard/profile/packages?just_onboarded=1` which shows a "🎉 Profile live — now create your first package to start receiving bookings" banner.
+
+## 5a. AI bio assistant
+
+A small AI helper attached to the bio textarea in Step 1. Two modes, one endpoint, one button.
+
+**Trigger:** `✨ Help me write this` button beside the textarea. While the request is in-flight, button shows a spinner and is disabled.
+
+**Modes (server picks based on input):**
+- **Draft mode** — textarea is empty or <20 chars. The assistant generates a 2–3 sentence starter draft from `business_name`, `category`, and (if present) `instagram_handle`.
+- **Polish mode** — textarea has substantive content (≥20 chars). The assistant rewrites for clarity, warmth, and SEO without changing meaning. Returns a single polished version.
+
+**UI flow:**
+1. Vendor clicks the button.
+2. Modal opens showing two columns: "Your text" (left, dimmed if empty) and "Suggested" (right, streaming token-by-token via `text/event-stream`).
+3. When stream completes, two buttons: **Use this** (replaces textarea content, closes modal) and **Cancel** (closes modal, no change).
+4. Vendor can edit the suggested text in-place inside the modal before clicking **Use this**.
+
+**Endpoint:** `POST /api/ai/bio-assist`
+- Auth: `requireUser` — vendor only (`role = vendor`). Couples can't call this.
+- Body: `{ businessName: string, category: string, instagramHandle?: string, draft?: string }`
+- Response: `text/event-stream` with Claude's streamed completion. Final event includes `{ done: true, usage: {input_tokens, output_tokens} }`.
+
+**Model:** `claude-haiku-4-5-20251001` — fast, cheap (~$1/M input, $5/M output), totally sufficient for 100-token vendor bios. ~$0.001 per call.
+
+**Rate limiting:** Cap at 10 calls per user per 24h. Tracked via a lightweight `ai_bio_assist_calls` table or via a `last_ai_calls` jsonb column on `users`. Simple per-user counter; reset on first call after 24h since last call. Returns 429 with retry-after when exceeded.
+
+**Prompts** (locked in `src/lib/ai/prompts.ts`):
+
+```typescript
+export const BIO_DRAFT_SYSTEM = `You write short, warm vendor bios for a Desi/South Asian wedding marketplace called Baazar.io. Bios are 50–500 characters, 2–3 sentences, written in first person plural (we/our). Focus on what the vendor does, who they serve, and one specific quality. Avoid clichés ("passionate", "experienced") and superlatives ("the best"). Don't mention pricing.`;
+
+export const BIO_POLISH_SYSTEM = `You polish vendor bios for a Desi/South Asian wedding marketplace. Preserve the vendor's meaning and voice. Improve clarity, warmth, and flow. Keep the polished version under 500 characters. Don't add facts the vendor didn't state. Output only the polished bio, no preamble.`;
+```
+
+User prompts:
+- Draft: `Vendor: {businessName}\nCategory: {category}\n${instagramHandle ? \`Instagram: @${instagramHandle}\n\` : ''}\nWrite a starter bio for this vendor.`
+- Polish: `Vendor: {businessName}\nCategory: {category}\n\nOriginal bio:\n{draft}\n\nPolish it.`
+
+**Dependencies:**
+- New: `@anthropic-ai/sdk` (npm install)
+- New env var: `ANTHROPIC_API_KEY` (added to `.env.local` + Vercel production by user before merge)
 
 ## 6. Wizard shell
 
@@ -92,8 +133,8 @@ Replace the current single-page `/dashboard/profile` setup with a guided **5-ste
   ```
   basics    → if business_name OR category OR bio empty
   location  → if base_address_line_1 OR base_city OR base_state OR base_postal_code empty
-  online    → if both instagram_handle AND website_url empty
-  portfolio → if portfolio_images.length < 3
+  online    → if instagram_handle empty
+  portfolio → if portfolio_images.length < 1
   review    → otherwise
   ```
 - **Save & exit:** A "Save & exit" link in the stepper sidebar links to `/dashboard`. Since each step's Next button already persists, there is nothing extra to save. The user sees the same wizard, picked up at the same incomplete step, next time.
@@ -146,8 +187,13 @@ After `/signup` with role=vendor, the user lands on `/dashboard`. We update the 
 - `src/components/onboarding/StepOnline.tsx`
 - `src/components/onboarding/StepPortfolio.tsx`
 - `src/components/onboarding/StepReview.tsx`
+- `src/components/onboarding/BioAssistButton.tsx` — `✨ Help me write this` button + modal that streams the AI suggestion
 - `src/app/api/vendor-profile/setup/[step]/route.ts` — per-step PATCH endpoints (or a single PATCH route taking a step param)
 - `src/app/api/vendor-profile/publish/route.ts` — Publish handler (server-side validation + flip flags)
+- `src/app/api/ai/bio-assist/route.ts` — Claude Haiku streaming endpoint for bio draft/polish (vendor-only, rate-limited)
+- `src/lib/ai/anthropic.ts` — Anthropic client singleton
+- `src/lib/ai/prompts.ts` — locked system + user prompts for bio assistant
+- `src/lib/ai/rate-limit.ts` — per-user 10/24h counter
 - `src/lib/onboarding/resume.ts` — pure function `nextIncompleteStep(profile) → 'basics' | 'location' | 'online' | 'portfolio' | 'review'`
 - `src/lib/onboarding/validation.ts` — Zod schemas per step
 
@@ -165,6 +211,7 @@ After `/signup` with role=vendor, the user lands on `/dashboard`. We update the 
 
 **Possible migration:**
 - `00031_filter_price_band_view_unpublished.sql` — rebuild `vendor_packages_price_band` view to JOIN-filter `onboarding_complete = true`. Pending verification of view definition.
+- `00032_ai_bio_assist_calls.sql` — small table for AI rate limiting: `(user_id uuid PRIMARY KEY, calls_24h int NOT NULL DEFAULT 0, window_started_at timestamptz NOT NULL DEFAULT now())`. Or store as a jsonb column on `users` to avoid a new table — implementer's choice.
 
 ## 12. Testing
 
@@ -172,6 +219,8 @@ After `/signup` with role=vendor, the user lands on `/dashboard`. We update the 
 - `src/__tests__/lib/onboarding/resume.test.ts` — exhaustive table-driven tests of `nextIncompleteStep` (~10 cases covering each gap + the all-done case)
 - `src/__tests__/lib/onboarding/validation.test.ts` — Zod schema tests per step (~15 cases)
 - `src/__tests__/api/vendor-profile-publish.test.ts` — Publish endpoint: rejects incomplete profiles (each missing-field permutation), accepts complete one, sets both flags
+- `src/__tests__/api/ai-bio-assist.test.ts` — auth gate (couples get 403), rate-limit (11th call in 24h → 429), draft vs polish branch selection (mock Anthropic client)
+- `src/__tests__/lib/ai/rate-limit.test.ts` — counter increments, window reset after 24h, returns retry-after correctly
 
 **E2E:**
 - `tests/e2e/vendor-onboarding.spec.ts`:
@@ -188,13 +237,14 @@ Single PR, sequential phases inside it:
 - **B2** — Resume function + Zod validation schemas + unit tests.
 - **B3** — Wizard shell (layout, stepper, redirector page) + per-step routes (basics/location/online/portfolio/review with minimum-viable UIs).
 - **B4** — Per-step PATCH endpoints + publish endpoint with server-side validation.
+- **B4.5** — AI bio assistant: Anthropic SDK install, rate-limit table, `/api/ai/bio-assist` streaming endpoint, `BioAssistButton` UI integrated into StepBasics.
 - **B5** — Polish: live preview card on review step, "🎉 just_onboarded" banner on packages page, dashboard CTA redirect, post-claim redirect.
 - **B6** — E2E spec.
 
-## 14. Open questions for user review
+## 14. Decisions log (resolved 2026-05-16)
 
-1. **Portfolio minimum (3 images)** — too strict? Should we accept 1 for a low-friction MVP and tighten later?
-2. **Bio length (50–500 chars)** — reasonable? Some categories (DJ, photographer) might want longer.
-3. **At-least-one-of (instagram OR website)** — strict requirement, or both optional in the spirit of "ship the wizard fast and let the marketplace figure it out"?
-4. **Sub-project K (scraper)** dependency — the wizard is designed to handle prefilled rows, but no real scraper exists yet. Is that acceptable, or should we mock the prefill end-to-end to flush out integration bugs?
-5. **Test data wipe** — should B include a `00031_purge_fake_vendors.sql` migration to clear the fake test vendors, or handle that ad-hoc at launch?
+1. **Portfolio minimum** — ≥1 image (low-friction MVP). UI shows a soft "3+ photos get 2× clicks" nudge.
+2. **Bio length** — 50–500 chars. AI bio assistant (§5a) integrated to help vendors draft from scratch or polish what they wrote — addresses the "blank textarea" problem and the "I'm not a writer" problem.
+3. **Online presence** — Instagram **required**, Website optional. Insta is the primary distribution channel for Desi wedding vendors.
+4. **Scraper integration** — Designed to handle prefilled rows but no real scraper required for B (sub-project K's problem). E2E test 2 seeds a prefilled row directly to verify the prefill-aware paths.
+5. **Test data wipe** — Handled ad-hoc at launch via a one-off SQL deletion; no migration in this sub-project.
