@@ -73,7 +73,7 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
     }
 
     toast.success('Profile claimed!');
-    router.refresh();
+    router.push(data.redirect ?? '/dashboard/profile/setup');
   };
 
   return (

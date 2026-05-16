@@ -11,13 +11,29 @@ export default async function VendorPage({ params }: VendorPageProps) {
   const { slug } = await params;
   const supabase = await createServerSupabaseClient();
 
-  const { data: vendor } = await supabase
+  const { data: vendorRaw } = await supabase
     .from('vendor_profiles')
     .select('*')
     .eq('slug', slug)
     .single();
 
-  if (!vendor) notFound();
+  if (!vendorRaw) notFound();
+
+  // is_active + onboarding_complete exist in the DB (added via A1/B migrations)
+  // but are not yet reflected in the generated types — safe at runtime.
+  const vendor = vendorRaw as typeof vendorRaw & {
+    is_active?: boolean;
+    onboarding_complete?: boolean;
+  };
+
+  if (!vendor.onboarding_complete || !vendor.is_active) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user || user.id !== vendor.user_id) {
+      notFound();
+    }
+  }
 
   const { data: reviews } = await supabase
     .from('reviews')

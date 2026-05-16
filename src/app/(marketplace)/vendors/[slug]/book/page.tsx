@@ -39,7 +39,7 @@ export default async function BookPage({ params }: BookPageProps) {
   if (!selection?.package_id) redirect(`/vendors/${slug}`);
 
   // Load vendor
-  const { data: vendor } = await supabase
+  const { data: vendorRaw } = await supabase
     .from('vendor_profiles')
     .select(
       'id, slug, business_name, base_city, base_state, base_address_line_1, base_postal_code, base_google_place_id, base_address_public'
@@ -47,7 +47,20 @@ export default async function BookPage({ params }: BookPageProps) {
     .eq('slug', slug)
     .single();
 
-  if (!vendor) notFound();
+  if (!vendorRaw) notFound();
+
+  // is_active + onboarding_complete exist in the DB but are not yet in the generated types.
+  // We fetch them via a second query to keep the main select typed; gate: no booking unpublished/paused.
+  const { data: gateRaw } = await supabase
+    .from('vendor_profiles')
+    .select('is_active, onboarding_complete')
+    .eq('slug', slug)
+    .single();
+
+  const gate = gateRaw as { is_active?: boolean; onboarding_complete?: boolean } | null;
+  if (!gate?.onboarding_complete || !gate?.is_active) notFound();
+
+  const vendor = vendorRaw;
 
   // Load package + addons
   const { data: pkg } = await supabase

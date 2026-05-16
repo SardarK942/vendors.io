@@ -152,10 +152,10 @@ export default async function DashboardPage() {
             </CardHeader>
             <CardContent>
               <a
-                href="/dashboard/profile"
+                href="/dashboard/profile/setup"
                 className="text-sm font-medium text-primary hover:underline"
               >
-                Edit your profile &rarr;
+                Set up your profile &rarr;
               </a>
             </CardContent>
           </Card>

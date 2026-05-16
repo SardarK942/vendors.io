@@ -134,6 +134,134 @@ export async function seedVendor(options: { chargesEnabled?: boolean } = {}): Pr
   };
 }
 
+/**
+ * Creates a vendor auth user + public.users row but NO vendor_profiles row.
+ * Use this for tests that exercise the onboarding wizard from a blank-slate state.
+ */
+export async function seedVendorOnly(): Promise<TestUser> {
+  const supabase = getServiceClient();
+  const email = testEmail('vendor-no-profile');
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { full_name: 'E2E Vendor No Profile', role: 'vendor' },
+  });
+  if (error || !data.user) throw new Error(`seedVendorOnly: ${error?.message}`);
+  await supabase.from('users').upsert({ id: data.user.id, email, role: 'vendor' });
+  return { id: data.user.id, email, password: PASSWORD, role: 'vendor' };
+}
+
+/**
+ * Seeds a vendor user + a partially-filled vendor_profiles row that mimics
+ * scraper-prefilled data: basics + online + portfolio already set, location missing.
+ * The wizard should skip to /setup/location on first visit.
+ */
+export interface SeedVendorWithPartialProfileOptions {
+  businessName?: string;
+  category?: string;
+}
+
+export interface TestVendorPartial extends TestUser {
+  role: 'vendor';
+  vendorSlug: string;
+}
+
+export async function seedVendorWithPartialProfile(
+  options: SeedVendorWithPartialProfileOptions = {}
+): Promise<TestVendorPartial> {
+  const supabase = getServiceClient();
+  const email = testEmail('vendor-partial');
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { full_name: 'E2E Vendor Partial', role: 'vendor' },
+  });
+  if (error || !data.user) throw new Error(`seedVendorWithPartialProfile: ${error?.message}`);
+  await supabase.from('users').upsert({ id: data.user.id, email, role: 'vendor' });
+
+  const slug = `e2e-partial-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const businessName = options.businessName ?? 'E2E Partial Vendor';
+  const category = options.category ?? 'mehndi';
+
+  const { error: vpError } = await supabase
+    .from('vendor_profiles')
+    .insert({
+      user_id: data.user.id,
+      business_name: businessName,
+      slug,
+      category,
+      bio: 'We bring intricate, story-rich henna to weddings across the Midwest. Two artists, ten years of bridal experience.',
+      instagram_handle: 'e2e_partial_henna',
+      portfolio_images: ['https://utfs.io/f/e2e-fake-img.jpg'],
+      onboarding_complete: false,
+      is_active: false,
+    });
+  if (vpError) throw new Error(`seedVendorWithPartialProfile profile: ${vpError.message}`);
+
+  return {
+    id: data.user.id,
+    email,
+    password: PASSWORD,
+    role: 'vendor',
+    vendorSlug: slug,
+  };
+}
+
+/**
+ * Seeds a vendor user + a vendor_profiles row with all required fields set
+ * but onboarding_complete = false. Used to test marketplace invisibility.
+ */
+export interface TestVendorUnpublished extends TestUser {
+  role: 'vendor';
+  vendorSlug: string;
+}
+
+export async function seedVendorUnpublished(): Promise<TestVendorUnpublished> {
+  const supabase = getServiceClient();
+  const email = testEmail('vendor-unpublished');
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { full_name: 'E2E Unpublished Vendor', role: 'vendor' },
+  });
+  if (error || !data.user) throw new Error(`seedVendorUnpublished: ${error?.message}`);
+  await supabase.from('users').upsert({ id: data.user.id, email, role: 'vendor' });
+
+  const slug = `e2e-unpublished-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+  const { error: vpError } = await supabase
+    .from('vendor_profiles')
+    .insert({
+      user_id: data.user.id,
+      business_name: 'E2E Unpublished Vendor Biz',
+      slug,
+      category: 'mehndi',
+      bio: 'We bring intricate, story-rich henna to weddings across the Midwest. Two artists, ten years of bridal experience.',
+      base_address_line_1: '123 Test St',
+      base_city: 'Chicago',
+      base_state: 'IL',
+      base_postal_code: '60601',
+      base_google_place_id: 'ChIJe2eTestPlaceId',
+      base_address_public: false,
+      instagram_handle: 'e2e_unpublished_henna',
+      portfolio_images: ['https://utfs.io/f/e2e-fake-img.jpg'],
+      onboarding_complete: false,
+      is_active: false,
+    });
+  if (vpError) throw new Error(`seedVendorUnpublished profile: ${vpError.message}`);
+
+  return {
+    id: data.user.id,
+    email,
+    password: PASSWORD,
+    role: 'vendor',
+    vendorSlug: slug,
+  };
+}
+
 export interface SeedPackageOptions {
   basePriceCents?: number;
   eventsCount?: number;

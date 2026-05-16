@@ -27,7 +27,9 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     .select(
       '*, vendor_packages_price_band!vendor_packages_price_band_vendor_profile_id_fkey(min_price_cents, max_price_cents)',
       { count: 'exact' }
-    );
+    )
+    .eq('is_active', true)
+    .eq('onboarding_complete', true);
 
   if (category) query = query.eq('category', category);
 

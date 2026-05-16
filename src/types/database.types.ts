@@ -67,6 +67,31 @@ export interface SelectedAddonSnapshot {
 export interface Database {
   public: {
     Tables: {
+      ai_bio_assist_calls: {
+        Row: {
+          user_id: string;
+          calls_in_window: number;
+          window_started_at: string;
+        };
+        Insert: {
+          user_id: string;
+          calls_in_window?: number;
+          window_started_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          calls_in_window?: number;
+          window_started_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'ai_bio_assist_calls_user_id_fkey';
+            columns: ['user_id'];
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          }
+        ];
+      };
       users: {
         Row: {
           id: string;
@@ -120,6 +145,8 @@ export interface Database {
           base_postal_code: string | null;
           base_google_place_id: string | null;
           base_address_public: boolean;
+          is_active: boolean;
+          onboarding_complete: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -145,6 +172,8 @@ export interface Database {
           base_postal_code?: string | null;
           base_google_place_id?: string | null;
           base_address_public?: boolean;
+          is_active?: boolean;
+          onboarding_complete?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -169,6 +198,8 @@ export interface Database {
           base_postal_code?: string | null;
           base_google_place_id?: string | null;
           base_address_public?: boolean;
+          is_active?: boolean;
+          onboarding_complete?: boolean;
           updated_at?: string;
         };
         Relationships: [
