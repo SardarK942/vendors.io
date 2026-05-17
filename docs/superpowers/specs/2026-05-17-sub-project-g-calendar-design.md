@@ -26,14 +26,26 @@ Prevent double-bookings at the database level (atomic, race-proof). Give vendors
 |---|---|
 | Lock point | From `status = 'accepted'` onwards. Auto-unlock on cancellation / expiry. |
 | Granularity | Time overlap. Two events conflict only if their (start, end) ranges intersect on the same date. |
-| Concurrency | DB-level `EXCLUDE USING gist` constraint. App-level pre-check for friendly UX. |
-| Vendor blocked dates | Yes, full-day, single-date entries via small dashboard form. |
-| Vendor calendar UI | Minimal — list of upcoming events + a form to add/remove blocked dates. No month-view widget. |
-| Couple calendar UI | Yes — month-view widget on the booking flow shows unavailable dates greyed out. Drill-in on partial-availability days shows time blocks. |
+| Multi-team capacity | New `vendor_profiles.concurrent_capacity` integer (default 1). Conflict only triggers when overlap count would exceed capacity. Studios with multiple teams set it higher. |
+| Concurrency | App-level pre-check + `BEFORE INSERT` trigger with `SELECT … FOR UPDATE` on the vendor row to serialize concurrent inserts. Capacity-aware. |
+| Vendor blocked dates | Yes — supports **both** full-day blocks AND time-range blocks (e.g., "Aug 15, 6pm–10pm"). |
+| Vendor calendar UI | Minimal — list of upcoming events + a form to add/remove blocked dates (with full-day or time-range toggle) + capacity setting. No month-view widget. |
+| Couple calendar UI | Yes — month-view widget on the booking flow shows unavailable dates greyed out. Drill-in on partial-availability days shows time blocks. Capacity-aware: a date is "fully unavailable" only when overlap count equals capacity. |
 | Privacy | Couples see "unavailable" only. No distinction between "booked" vs "vendor blocked", no count. |
+| Pending-conflict warning | When vendor opens a pending request that would overlap with another accepted booking OR another open pending request, show an inline warning ("This date conflicts with…"). They can still accept; trigger enforces capacity. |
 | Calendar library | `react-day-picker` |
 
 ## 4. Schema
+
+### New column on `vendor_profiles`
+
+```sql
+ALTER TABLE vendor_profiles
+  ADD COLUMN concurrent_capacity integer NOT NULL DEFAULT 1
+    CHECK (concurrent_capacity BETWEEN 1 AND 50);
+```
+
+Default 1 — single-team vendors. Studios with multiple crews set it higher via the vendor calendar settings UI. Hard cap at 50 to prevent input mistakes.
 
 ### New table — `vendor_calendar_holds`
 
@@ -44,11 +56,7 @@ CREATE TABLE vendor_calendar_holds (
   booking_event_id uuid REFERENCES booking_events(id) ON DELETE CASCADE,
   hold_type text NOT NULL CHECK (hold_type IN ('booking', 'vendor_blocked')),
   hold_range tstzrange NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  EXCLUDE USING gist (
-    vendor_profile_id WITH =,
-    hold_range WITH &&
-  )
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX vendor_calendar_holds_vendor_range_idx
@@ -60,7 +68,9 @@ CREATE INDEX vendor_calendar_holds_booking_event_idx
 ALTER TABLE vendor_calendar_holds ENABLE ROW LEVEL SECURITY;
 ```
 
-`hold_range` is a `tstzrange` constructed from `event_date + event_start_time` to `event_date + event_end_time` (cast as `timestamp`, then `AT TIME ZONE 'UTC'` for canonical storage). For vendor blocks, it's `[date, date + interval '1 day')` — full-day half-open range.
+`hold_range` is a `tstzrange` constructed from `event_date + event_start_time` to `event_date + event_end_time` (cast as `timestamp`, then `AT TIME ZONE 'UTC'` for canonical storage). For full-day vendor blocks, the range is `[date 00:00, date + 1 00:00)`. For time-range vendor blocks, the range is the exact `[block_start, block_end)`.
+
+**Note on the dropped `EXCLUDE` constraint:** the original draft used `EXCLUDE USING gist` to enforce zero overlaps at DB level. Postgres can't conditionally allow N overlaps based on a value in another table, so we replace it with a capacity-aware `BEFORE INSERT` trigger (see below). Trigger uses `SELECT … FOR UPDATE` on the vendor's row to serialize concurrent inserts — atomically equivalent to the old constraint for capacity-1 vendors.
 
 ### RLS policies
 
@@ -91,7 +101,45 @@ CREATE POLICY "Vendors manage own vendor_blocked holds"
 -- via a server-side endpoint that returns deduplicated date ranges only.
 ```
 
-### Trigger: sync holds with bookings
+### Trigger 1: capacity check on insert into vendor_calendar_holds
+
+```sql
+CREATE OR REPLACE FUNCTION check_calendar_hold_capacity() RETURNS TRIGGER AS $$
+DECLARE
+  cap integer;
+  cnt integer;
+BEGIN
+  -- Lock the vendor's row for the duration of this transaction.
+  -- Forces concurrent inserts targeting the same vendor to serialize.
+  SELECT concurrent_capacity INTO cap
+    FROM vendor_profiles
+    WHERE id = NEW.vendor_profile_id
+    FOR UPDATE;
+
+  -- Count existing overlapping holds for this vendor.
+  SELECT COUNT(*) INTO cnt
+    FROM vendor_calendar_holds
+    WHERE vendor_profile_id = NEW.vendor_profile_id
+      AND hold_range && NEW.hold_range;
+
+  -- New row is not yet in the table — if cnt already meets capacity, reject.
+  IF cnt >= cap THEN
+    RAISE EXCEPTION 'calendar_capacity_exceeded'
+      USING DETAIL = format('vendor_profile_id=%s, capacity=%s, overlap_count=%s', NEW.vendor_profile_id, cap, cnt);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER ensure_calendar_hold_capacity
+  BEFORE INSERT ON vendor_calendar_holds
+  FOR EACH ROW
+  EXECUTE FUNCTION check_calendar_hold_capacity();
+```
+
+The `SELECT … FOR UPDATE` on `vendor_profiles` is the lock anchor. Two concurrent transactions both trying to insert overlapping holds for the same vendor will serialize at that lock; the second one sees the first one's pending insert and re-evaluates `cnt`. (Postgres's MVCC means the second transaction sees row-level lock contention and blocks until the first commits.)
+
+### Trigger 2: sync holds with bookings.status
 
 ```sql
 CREATE OR REPLACE FUNCTION sync_booking_calendar_holds() RETURNS TRIGGER AS $$
@@ -99,18 +147,17 @@ DECLARE
   locking_statuses text[] := ARRAY['accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid', 'completed'];
   evt RECORD;
 BEGIN
-  -- On status change, decide whether to create or delete holds for this booking's events.
   IF NEW.status = ANY(locking_statuses) AND (OLD.status IS NULL OR NOT OLD.status = ANY(locking_statuses)) THEN
-    -- Transitioned INTO a locking status: insert holds for all events
+    -- Transitioned INTO a locking status: insert holds for all events.
+    -- The capacity trigger will fire per row and raise if capacity is exceeded,
+    -- causing the whole UPDATE to roll back.
     FOR evt IN
       SELECT id, event_date, event_start_time, event_end_time
       FROM booking_events WHERE booking_id = NEW.id
     LOOP
       INSERT INTO vendor_calendar_holds (vendor_profile_id, booking_event_id, hold_type, hold_range)
       VALUES (
-        NEW.vendor_profile_id,
-        evt.id,
-        'booking',
+        NEW.vendor_profile_id, evt.id, 'booking',
         tstzrange(
           (evt.event_date + evt.event_start_time)::timestamp AT TIME ZONE 'UTC',
           (evt.event_date + evt.event_end_time)::timestamp AT TIME ZONE 'UTC',
@@ -119,7 +166,6 @@ BEGIN
       );
     END LOOP;
   ELSIF NOT NEW.status = ANY(locking_statuses) AND OLD.status = ANY(locking_statuses) THEN
-    -- Transitioned OUT of a locking status: delete this booking's holds
     DELETE FROM vendor_calendar_holds WHERE booking_event_id IN (
       SELECT id FROM booking_events WHERE booking_id = NEW.id
     );
@@ -174,9 +220,15 @@ Privacy filter: only return "unavailable" — no booking-vs-vendor-block distinc
 ### Vendor blocks a date → `/api/vendor-calendar/block` POST
 
 1. `requireUser` + must own the vendor_profile.
-2. Body: `{ date: 'YYYY-MM-DD' }`.
-3. INSERT into `vendor_calendar_holds` with `hold_type = 'vendor_blocked'` and `hold_range = tstzrange(date, date + interval '1 day', '[)')`.
-4. If EXCLUDE conflict (vendor already has a booking on that date), return 409 with "You already have a booking on this date — cancel it first, or pick another date."
+2. Body:
+   ```typescript
+   { date: 'YYYY-MM-DD'; mode: 'full_day' } |
+   { date: 'YYYY-MM-DD'; mode: 'time_range'; start_time: 'HH:mm'; end_time: 'HH:mm' }
+   ```
+3. INSERT into `vendor_calendar_holds` with `hold_type = 'vendor_blocked'`:
+   - `mode = 'full_day'`: `hold_range = tstzrange(date 00:00, date+1 00:00, '[)')`
+   - `mode = 'time_range'`: `hold_range = tstzrange(date + start_time, date + end_time, '[)')`
+4. If capacity trigger raises `calendar_capacity_exceeded`, return 409 with "You're at full capacity on this date — cancel a booking first, or increase your concurrent capacity if you have a team."
 
 ### Vendor unblocks a date → `/api/vendor-calendar/block/[id]` DELETE
 
@@ -209,43 +261,63 @@ New section on `/dashboard/profile/calendar` (new route). Two parts:
    2026-08-15  Mehndi for Jane S.        10:00 – 12:00   [Booking]
    2026-09-01  Personal day                 (full day)   [Blocked]  [Unblock]
    ```
-2. **Block a date** form — a date picker + "Block this date" button. Shows inline error if there's a conflicting booking on the chosen date.
+2. **Block a date** form — a date picker + a toggle for "Full day" vs "Time range" + start/end time inputs when "Time range" is selected + "Block this date" button. Shows inline error if there's a conflicting booking that would exceed capacity.
+
+3. **Concurrent capacity** setting — a small inline field: "I can handle **[1]** events at the same time" with a save button. Help text: "Increase this if you run multiple teams. Default 1." Persists to `vendor_profiles.concurrent_capacity`. Lowering capacity below current overlap count is rejected with a clear error.
+
+### Vendor — pending request page: conflict warning
+
+On the existing `/dashboard/bookings/[id]` page (vendor side), if the booking is in `pending` state, calculate whether accepting it would conflict:
+
+- Query `vendor_calendar_holds` for any overlapping holds.
+- If overlap count + 1 > `concurrent_capacity`, render an inline warning above the Accept button:
+  > ⚠️ **Heads up — this conflicts with an existing booking.**
+  > Accepting will put you over your concurrent capacity ({count} overlapping). [View calendar →]
+
+The Accept button stays enabled — the trigger ultimately enforces capacity, but the warning prevents accidental conflicts.
 
 Sidebar nav: add "Calendar" link under "Notifications" in the dashboard layout.
 
 ## 7. Files affected
 
 **New files:**
-- `supabase/migrations/00032_create_vendor_calendar_holds.sql` — table + indexes + RLS + trigger function + trigger
-- `src/services/availability.service.ts` — `checkOverlap`, `getUnavailableRanges` (the server-side query helpers)
+- `supabase/migrations/00032_create_vendor_calendar_holds.sql` — `concurrent_capacity` column + table + indexes + RLS + capacity trigger + status-sync trigger
+- `src/services/availability.service.ts` — `checkOverlap(vendor, range)`, `getUnavailableRanges(vendor, from, to)`, `wouldExceedCapacity(vendor, range)`
 - `src/app/api/vendors/[slug]/availability/route.ts` — GET endpoint with 60s server-side cache
-- `src/app/api/vendor-calendar/block/route.ts` — POST
+- `src/app/api/vendor-calendar/block/route.ts` — POST (full_day | time_range)
 - `src/app/api/vendor-calendar/block/[id]/route.ts` — DELETE
+- `src/app/api/vendor-calendar/capacity/route.ts` — PATCH for `concurrent_capacity`
 - `src/app/dashboard/profile/calendar/page.tsx` — vendor calendar page (server component)
 - `src/components/dashboard/CalendarHoldsList.tsx` — upcoming list (client)
-- `src/components/dashboard/BlockDateForm.tsx` — block-a-date form (client)
+- `src/components/dashboard/BlockDateForm.tsx` — block-a-date form with full-day/time-range toggle (client)
+- `src/components/dashboard/CapacityField.tsx` — inline capacity setting (client)
+- `src/components/dashboard/ConflictWarning.tsx` — warning banner shown on vendor's pending request page
 - `src/components/marketplace/AvailabilityCalendar.tsx` — couple-side react-day-picker wrapper
 - `src/__tests__/services/availability.service.test.ts`
 - `src/__tests__/api/vendor-calendar.test.ts`
-- `src/__tests__/integration/calendar-holds-trigger.test.ts` — integration test against a real (dev) DB verifying trigger fires + EXCLUDE constraint blocks races
-- `tests/e2e/calendar.spec.ts` — 3 e2e tests (see §10)
+- `src/__tests__/integration/calendar-holds-trigger.test.ts` — integration test against a real (dev) DB verifying both triggers + capacity-aware concurrency
+- `tests/e2e/calendar.spec.ts` — 4 e2e tests (see §10)
 
 **Modified files:**
 - `src/app/(marketplace)/vendors/[slug]/book/page.tsx` — integrate AvailabilityCalendar in place of plain date inputs
-- `src/app/api/bookings/route.ts` (POST) — call `checkOverlap` before INSERT
-- `src/app/api/bookings/[id]/accept/route.ts` — call `checkOverlap` before UPDATE; catch EXCLUDE constraint violation as 409
+- `src/app/api/bookings/route.ts` (POST) — call `wouldExceedCapacity` before INSERT (preview check, doesn't lock — definitive check happens at vendor accept)
+- `src/app/api/bookings/[id]/accept/route.ts` — call `wouldExceedCapacity` before UPDATE; catch trigger exception as 409
+- `src/app/dashboard/bookings/[id]/page.tsx` — render ConflictWarning when this is a pending request that would exceed capacity
 - `src/app/dashboard/layout.tsx` — add "Calendar" sidebar link for vendors
 
 ## 8. Migration
 
 ```sql
 -- 00032_create_vendor_calendar_holds.sql
--- Goal: prevent double-bookings at the DB level via an EXCLUDE constraint
--- over (vendor_profile_id, hold_range tstzrange). Trigger syncs holds with
--- bookings.status transitions.
+-- Goal: prevent double-bookings at the DB level via a capacity-aware
+-- BEFORE INSERT trigger on vendor_calendar_holds. Second trigger syncs
+-- holds with bookings.status transitions.
 
--- Enable btree_gist for the GIST exclusion constraint with the equality op
 CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+ALTER TABLE vendor_profiles
+  ADD COLUMN concurrent_capacity integer NOT NULL DEFAULT 1
+    CHECK (concurrent_capacity BETWEEN 1 AND 50);
 
 CREATE TABLE vendor_calendar_holds (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -253,8 +325,7 @@ CREATE TABLE vendor_calendar_holds (
   booking_event_id uuid REFERENCES booking_events(id) ON DELETE CASCADE,
   hold_type text NOT NULL CHECK (hold_type IN ('booking', 'vendor_blocked')),
   hold_range tstzrange NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now(),
-  EXCLUDE USING gist (vendor_profile_id WITH =, hold_range WITH &&)
+  created_at timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX vendor_calendar_holds_vendor_range_idx
@@ -276,7 +347,29 @@ CREATE POLICY "Vendors manage own vendor_blocked holds" ON vendor_calendar_holds
     AND vendor_profile_id IN (SELECT id FROM vendor_profiles WHERE user_id = auth.uid())
   );
 
--- Trigger function (full body — see §4)
+-- Capacity check trigger (full body — see §4 trigger 1)
+CREATE OR REPLACE FUNCTION check_calendar_hold_capacity() RETURNS TRIGGER AS $$
+DECLARE
+  cap integer;
+  cnt integer;
+BEGIN
+  SELECT concurrent_capacity INTO cap FROM vendor_profiles WHERE id = NEW.vendor_profile_id FOR UPDATE;
+  SELECT COUNT(*) INTO cnt FROM vendor_calendar_holds
+    WHERE vendor_profile_id = NEW.vendor_profile_id AND hold_range && NEW.hold_range;
+  IF cnt >= cap THEN
+    RAISE EXCEPTION 'calendar_capacity_exceeded'
+      USING DETAIL = format('vendor_profile_id=%s, capacity=%s, overlap_count=%s', NEW.vendor_profile_id, cap, cnt);
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER ensure_calendar_hold_capacity
+  BEFORE INSERT ON vendor_calendar_holds
+  FOR EACH ROW
+  EXECUTE FUNCTION check_calendar_hold_capacity();
+
+-- Status-sync trigger (full body — see §4 trigger 2)
 CREATE OR REPLACE FUNCTION sync_booking_calendar_holds() RETURNS TRIGGER AS $$
 DECLARE
   locking_statuses text[] := ARRAY['accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid', 'completed'];
@@ -344,12 +437,18 @@ ON CONFLICT DO NOTHING;
 
 **E2E (`tests/e2e/calendar.spec.ts`):**
 1. Couple submits booking for available date → succeeds. Submits for same date/time again → 409 inline error. Submits for different time same date → succeeds.
-2. Vendor accepts a booking; race-tests concurrency: simulate two API calls accepting two different pending bookings for the same time slot — assert exactly one succeeds with 200, other gets 409.
-3. Vendor blocks a date via dashboard form → date now appears as unavailable on the couple's booking calendar for that vendor.
+2. Vendor accepts a booking; race-tests concurrency: simulate two API calls accepting two different pending bookings for the same time slot for a capacity-1 vendor — assert exactly one succeeds with 200, other gets 409.
+3. **Multi-team test**: seed a vendor with `concurrent_capacity = 2`. Submit 3 bookings for the same time slot. Assert 2 accept successfully, 3rd fails with 409.
+4. Vendor blocks a date (full-day) via dashboard form → date appears as unavailable on the couple's booking calendar. Vendor blocks a time-range → only that range appears unavailable; rest of the day available.
 
-## 10. Open questions for user review
+## 10. Decisions log (resolved 2026-05-17)
 
-1. **Vendor blocks for time ranges vs full days only** — spec locks full-day blocks. Some vendors might want to block "Sundays 9am – 12pm" (regular service commitment). Defer this complexity?
-2. **Availability lookback window** — spec returns "next 12 months." Should past dates also be flagged unavailable? Decision: yes, automatically — `react-day-picker` `disabled={{ before: new Date() }}` covers this. No need for special handling.
-3. **Multi-event bookings** — when a couple submits a booking with 3 events (mehndi, sangeet, reception) and event 2 conflicts but events 1 and 3 are free, what happens? Spec: all-or-nothing — reject the entire submission with a friendly error pointing at the conflicting event. Couple resubmits with different times. Reasonable?
-4. **Vendor's own pre-existing bookings (today's `pending` state)** — if a vendor had two `pending` requests for the same date and time, today the system allows both. After G ships, the moment they accept one, the other will fail on accept. UX: should the vendor see a warning ("This request conflicts with another pending request you've accepted") when viewing the second one? Defer or include?
+1. **Vendor blocks** — support both full-day and time-range blocks via a mode toggle in the block form.
+2. **Multi-team capacity** — new `vendor_profiles.concurrent_capacity` integer (default 1). Conflict only when overlap count meets capacity. Capacity-aware DB trigger replaces the original EXCLUDE constraint.
+3. **Pending-conflict warning** — yes, render on the vendor's booking detail page when a pending request would exceed capacity. Vendor can still accept (trigger ultimately enforces capacity).
+4. **Multi-event bookings** — all-or-nothing at submission. If one event in a 3-event booking conflicts, reject the whole submission with the conflicting event called out.
+5. **Availability window** — 12 months forward. Past dates disabled via `react-day-picker`'s `disabled={{ before: today }}`.
+
+## 11. Recurring blocks — explicitly deferred
+
+Some vendors want "every Sunday morning blocked" or "I don't work Mondays." This sub-project ships single-instance blocks only. Vendors add multiple manually as needed. Recurring rules (RRULE-style) are a future polish, not a P0.
