@@ -14,6 +14,7 @@ import {
   notifyCoupleDeclinedAdjusted,
   notifyBookingAutoCancelled,
 } from '@/services/notifications.service';
+import { wouldExceedCapacity } from '@/services/availability.service';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -298,7 +299,22 @@ export async function acceptBooking(
     .select('*')
     .single();
 
-  if (error) return { error: { code: 'UPDATE_FAILED', message: error.message }, status: 500 };
+  // G5.2 — The sync_booking_calendar_holds trigger fires after this UPDATE.
+  // If it inserts a hold that exceeds capacity it raises 'calendar_capacity_exceeded'.
+  // Supabase surfaces the RAISE text in error.message.
+  if (error) {
+    if (error.message?.includes('calendar_capacity_exceeded')) {
+      return {
+        error: {
+          code: 'CALENDAR_CONFLICT',
+          message:
+            'This booking conflicts with another at the same time. Increase your concurrent capacity in /dashboard/profile/calendar or decline this request.',
+        },
+        status: 409,
+      };
+    }
+    return { error: { code: 'UPDATE_FAILED', message: error.message }, status: 500 };
+  }
 
   // Notify couple that vendor accepted — fire-and-forget.
   void (async () => {
@@ -443,6 +459,27 @@ export async function createBooking(
       .in('id', addonIds);
     if ((validAddons?.length ?? 0) !== addonIds.length) {
       return { error: 'One or more add-ons do not belong to this package', status: 400 };
+    }
+  }
+
+  // G5.1 — Pre-check capacity for every proposed event before INSERT.
+  // event_start_time / event_end_time are full ISO datetime strings (Zod .datetime()).
+  // Extract 'HH:mm' for wouldExceedCapacity which expects date + time strings.
+  for (const evt of input.events) {
+    const startHHmm = new Date(evt.event_start_time).toISOString().slice(11, 16);
+    const endHHmm = new Date(evt.event_end_time).toISOString().slice(11, 16);
+    const check = await wouldExceedCapacity(
+      supabase,
+      input.vendor_profile_id,
+      evt.event_date,
+      startHHmm,
+      endHHmm
+    );
+    if (check.wouldExceed) {
+      return {
+        error: `Conflict on ${evt.event_date} ${startHHmm}–${endHHmm}. This vendor is already booked at that time. Try another date or time.`,
+        status: 409,
+      };
     }
   }
 
