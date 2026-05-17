@@ -1,0 +1,138 @@
+/* src/components/dashboard/EventCard.module.css */
+/* Adapted from Uiverse.io by ElSombrero2 (flip card with orange gradient back).
+   Spec: docs/superpowers/specs/2026-05-17-sub-project-d-couple-dashboard-design.md §6 */
+
+.card {
+  overflow: visible;
+  width: 190px;
+  height: 254px;
+  perspective: 1000px;
+}
+
+.content {
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transition: transform 300ms;
+  box-shadow: 0px 0px 10px 1px #000000ee;
+  border-radius: 5px;
+  position: relative;
+}
+
+.card:hover .content,
+.flipped .content {
+  transform: rotateY(180deg);
+}
+
+.front,
+.back {
+  background-color: #151515;
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.back {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.back::before {
+  position: absolute;
+  content: ' ';
+  display: block;
+  width: 160px;
+  height: 160%;
+  background: linear-gradient(90deg, transparent, #ff9966, #ff9966, #ff9966, #ff9966, transparent);
+  animation: rotation_481 5000ms infinite linear;
+}
+
+.backContent {
+  position: absolute;
+  width: 99%;
+  height: 99%;
+  background-color: #151515;
+  border-radius: 5px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  text-align: center;
+}
+
+.front {
+  transform: rotateY(180deg);
+  color: white;
+}
+
+.frontContent {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 2;
+}
+
+.frontImg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  z-index: 1;
+}
+
+.badge {
+  background-color: #00000088;
+  padding: 2px 10px;
+  border-radius: 10px;
+  backdrop-filter: blur(2px);
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.titleRow {
+  display: flex;
+  justify-content: space-between;
+  z-index: 3;
+}
+
+.description {
+  box-shadow: 0px 0px 10px 5px #00000088;
+  width: 100%;
+  padding: 10px;
+  background-color: #000000aa;
+  backdrop-filter: blur(5px);
+  border-radius: 5px;
+  z-index: 3;
+}
+
+.vendorName {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.cardFooter {
+  color: #ffffffaa;
+  margin-top: 4px;
+  font-size: 10px;
+}
+
+/* Fixed: original CSS had two 0% keyframes — corrected to 0% / 100%. */
+@keyframes rotation_481 {
+  0% { transform: rotateZ(0deg); }
+  100% { transform: rotateZ(360deg); }
+}
