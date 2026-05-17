@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { EarningsCard } from '@/components/dashboard/EarningsCard';
 import { RecentUnlocks } from '@/components/dashboard/RecentUnlocks';
 import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
+import { EventCardGrid } from '@/components/dashboard/EventCardGrid';
+import { type EventCardData } from '@/components/dashboard/EventCard';
 import { getVendorEarnings, type VendorEarnings } from '@/services/payment.service';
 
 interface UnlockedBooking {
@@ -30,19 +32,79 @@ export default async function DashboardPage() {
 
   const role = profile?.role || 'couple';
 
+  // Couple branch — early return with event card grid
+  if (role === 'couple') {
+    const { data: rawEvents } = await supabase
+      .from('booking_events')
+      .select(`
+        id,
+        event_date,
+        event_start_time,
+        event_end_time,
+        event_type_label,
+        address_line_1,
+        city,
+        state,
+        postal_code,
+        bookings!inner(
+          id,
+          status,
+          couple_user_id,
+          vendor_profiles!inner(business_name, category, portfolio_images)
+        )
+      `)
+      .eq('bookings.couple_user_id', user.id)
+      .not('bookings.status', 'in', '("couple_cancelled","vendor_cancelled","cancelled_mutual","expired")')
+      .order('event_date');
+
+    const events: EventCardData[] = (rawEvents ?? []).map((e: Record<string, unknown>) => {
+      const b = (e.bookings as Record<string, unknown>);
+      const v = (b.vendor_profiles as Record<string, unknown>);
+      return {
+        eventId: e.id as string,
+        bookingId: b.id as string,
+        eventTypeLabel: e.event_type_label as string,
+        eventDate: e.event_date as string,
+        eventStartTime: e.event_start_time as string,
+        eventEndTime: e.event_end_time as string,
+        addressLine1: e.address_line_1 as string,
+        city: e.city as string,
+        state: e.state as string,
+        postalCode: e.postal_code as string,
+        status: b.status as string,
+        vendor: {
+          businessName: v.business_name as string,
+          category: v.category as string,
+          portfolioImage: ((v.portfolio_images as string[] | null) ?? [])[0] ?? null,
+        },
+      };
+    });
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">Welcome back, {profile?.full_name || user.email}</p>
+          </div>
+          <Button asChild variant="outline">
+            <Link href="/vendors">Browse vendors →</Link>
+          </Button>
+        </div>
+
+        <EventCardGrid events={events} />
+      </div>
+    );
+  }
+
+  // Vendor branch
   let bookingCount = 0;
   let earnings: VendorEarnings | null = null;
   let recentUnlocks: UnlockedBooking[] = [];
   let activePackageCount = 0;
   let vendorIsActive = true;
 
-  if (role === 'couple') {
-    const { count } = await supabase
-      .from('bookings')
-      .select('*', { count: 'exact', head: true })
-      .eq('couple_user_id', user.id);
-    bookingCount = count ?? 0;
-  } else if (role === 'vendor') {
+  if (role === 'vendor') {
     // Note: is_active column is from A1 migration; not yet in generated types.
     // Using `*` so the runtime value is available even though TypeScript doesn't know it.
     const { data: vendorProfileRaw } = await supabase
@@ -156,19 +218,6 @@ export default async function DashboardPage() {
                 className="text-sm font-medium text-primary hover:underline"
               >
                 Set up your profile &rarr;
-              </a>
-            </CardContent>
-          </Card>
-        )}
-
-        {role === 'couple' && (
-          <Card>
-            <CardHeader>
-              <CardDescription>Quick Action</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <a href="/vendors" className="text-sm font-medium text-primary hover:underline">
-                Browse vendors &rarr;
               </a>
             </CardContent>
           </Card>
