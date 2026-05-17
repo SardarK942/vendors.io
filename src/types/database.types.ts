@@ -147,6 +147,7 @@ export interface Database {
           base_address_public: boolean;
           is_active: boolean;
           onboarding_complete: boolean;
+          concurrent_capacity: number;
           created_at: string;
           updated_at: string;
         };
@@ -174,6 +175,7 @@ export interface Database {
           base_address_public?: boolean;
           is_active?: boolean;
           onboarding_complete?: boolean;
+          concurrent_capacity?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -200,6 +202,7 @@ export interface Database {
           base_address_public?: boolean;
           is_active?: boolean;
           onboarding_complete?: boolean;
+          concurrent_capacity?: number;
           updated_at?: string;
         };
         Relationships: [
@@ -770,6 +773,48 @@ export interface Database {
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      vendor_calendar_holds: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          booking_event_id: string | null;
+          hold_type: 'booking' | 'vendor_blocked';
+          hold_range: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          booking_event_id?: string | null;
+          hold_type: 'booking' | 'vendor_blocked';
+          hold_range: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          vendor_profile_id?: string;
+          booking_event_id?: string | null;
+          hold_type?: 'booking' | 'vendor_blocked';
+          hold_range?: string;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vendor_calendar_holds_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'vendor_calendar_holds_booking_event_id_fkey';
+            columns: ['booking_event_id'];
+            isOneToOne: false;
+            referencedRelation: 'booking_events';
             referencedColumns: ['id'];
           },
         ];
