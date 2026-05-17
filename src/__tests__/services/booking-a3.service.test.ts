@@ -9,6 +9,12 @@ import {
   coupleAcceptAdjusted,
   coupleDeclineAdjusted,
 } from '@/services/booking.service';
+import * as availabilityService from '@/services/availability.service';
+
+// Mock availability service — capacity pre-check. Default: no conflict.
+vi.mock('@/services/availability.service', () => ({
+  wouldExceedCapacity: vi.fn().mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
+}));
 
 // Mock notifications service so fire-and-forget calls don't fail with mock Supabase clients.
 vi.mock('@/services/notifications.service', () => ({
@@ -518,5 +524,61 @@ describe('coupleDeclineAdjusted', () => {
     const result = await coupleDeclineAdjusted(supabase as never, 'b1', 'user-1');
     expect(result.status).toBe(200);
     expect(result.data).toBeDefined();
+  });
+});
+
+// ─── G5.1 — createBooking capacity pre-check ─────────────────────────────────
+
+describe('G5.1 — createBooking capacity pre-check', () => {
+  const baseInput = {
+    vendor_profile_id: 'vendor-1',
+    package_id: 'pkg-1',
+    selected_addons: [],
+    guest_count: 100,
+    couple_full_name: 'John & Jane',
+    couple_contact_phone: '+1234567890',
+    events: [
+      {
+        sequence: 1,
+        event_date: '2026-08-15',
+        event_start_time: '2026-08-15T10:00:00Z',
+        event_end_time: '2026-08-15T12:00:00Z',
+        event_type_label: 'Wedding',
+        address_line_1: '123 Main St',
+        city: 'Chicago',
+        state: 'IL',
+        postal_code: '60601',
+        location_overridden: false,
+      },
+    ],
+  };
+
+  it('returns 409 when wouldExceedCapacity returns wouldExceed=true', async () => {
+    vi.mocked(availabilityService.wouldExceedCapacity).mockResolvedValueOnce({
+      wouldExceed: true,
+      capacity: 1,
+      overlapping: 1,
+    });
+
+    // supabase mock only needs the package query to pass
+    const supabase = makeSupabase();
+    const result = await createBooking(supabase as never, 'user-couple', baseInput);
+
+    expect(result.status).toBe(409);
+    expect(result.error).toContain('Conflict on 2026-08-15');
+  });
+
+  it('proceeds normally when wouldExceedCapacity returns wouldExceed=false', async () => {
+    vi.mocked(availabilityService.wouldExceedCapacity).mockResolvedValueOnce({
+      wouldExceed: false,
+      capacity: 1,
+      overlapping: 0,
+    });
+
+    const supabase = makeSupabase();
+    const result = await createBooking(supabase as never, 'user-couple', baseInput);
+
+    // Should succeed (not blocked by capacity)
+    expect(result.status).toBe(201);
   });
 });

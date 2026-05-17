@@ -9,6 +9,11 @@ import { describe, it, expect, vi } from 'vitest';
 import { deactivatePackage, hardDeletePackage } from '@/services/packages.service';
 import { acceptBooking, adjustBookingQuote, validateStateTransition } from '@/services/booking.service';
 
+// Mock availability service — capacity pre-check. Default: no conflict.
+vi.mock('@/services/availability.service', () => ({
+  wouldExceedCapacity: vi.fn().mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
+}));
+
 // Mock notifications service so fire-and-forget calls don't fail with mock Supabase clients.
 vi.mock('@/services/notifications.service', () => ({
   notifyBookingRequestReceived: vi.fn(),
@@ -169,6 +174,66 @@ describe('A2 — State machine: new statuses', () => {
 
   it('allows adjusted_quote_declined -> adjusted_quote_sent (vendor re-quote)', () => {
     expect(validateStateTransition('adjusted_quote_declined', 'adjusted_quote_sent')).toBe(true);
+  });
+});
+
+// ─── G5.2 — acceptBooking catches calendar_capacity_exceeded trigger error ────
+
+describe('G5.2 — acceptBooking calendar capacity conflict', () => {
+  it('returns 409 with CALENDAR_CONFLICT code when trigger raises calendar_capacity_exceeded', async () => {
+    const booking = {
+      id: 'b-1',
+      vendor_profile_id: 'vp-1',
+      status: 'pending',
+      package_id: 'pkg-1',
+      vendor_profiles: { user_id: 'u-vendor' },
+      couple_user_id: 'u-couple',
+    };
+
+    const sb = {
+      from: (table: string) => {
+        if (table === 'bookings') {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: () => Promise.resolve({ data: booking, error: null }),
+              }),
+            }),
+            // UPDATE fails — trigger raised calendar_capacity_exceeded
+            update: () => ({
+              eq: () => ({
+                select: () => ({
+                  single: () =>
+                    Promise.resolve({
+                      data: null,
+                      error: {
+                        message:
+                          'calendar_capacity_exceeded: vendor_profile_id=vp-1, capacity=1, overlap_count=1',
+                      },
+                    }),
+                }),
+              }),
+            }),
+          };
+        }
+        if (table === 'packages') {
+          return {
+            select: () => ({
+              eq: () => ({
+                single: () =>
+                  Promise.resolve({ data: { vendor_notes_template: null }, error: null }),
+              }),
+            }),
+          };
+        }
+        return { select: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }) };
+      },
+    };
+
+    const result = await acceptBooking(sb as never, 'b-1', 'u-vendor');
+    expect(result.status).toBe(409);
+    expect(result.error?.code).toBe('CALENDAR_CONFLICT');
+    expect(result.error?.message).toContain('conflicts with another');
   });
 });
 
