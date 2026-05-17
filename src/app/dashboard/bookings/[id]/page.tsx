@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect, notFound } from 'next/navigation';
 import { getBookingById } from '@/services/booking.service';
+import { wouldExceedCapacity } from '@/services/availability.service';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -9,6 +10,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { BookingActions } from '@/components/dashboard/BookingActions';
 import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
 import { AdjustmentReview } from '@/components/booking/AdjustmentReview';
+import { ConflictWarning } from '@/components/dashboard/ConflictWarning';
 import Link from 'next/link';
 
 interface BookingDetailPageProps {
@@ -80,6 +82,8 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
     sequence: number;
     event_type_label: string;
     event_date: string;
+    event_start_time: string;
+    event_end_time: string;
     location_name: string | null;
     address_line_1: string;
     city: string;
@@ -89,6 +93,36 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
   }>;
   const totalEvents = events.length;
   const completedEvents = events.filter((e) => e.completed_at).length;
+
+  // Conflict check — only needed for vendor viewing a pending booking
+  let conflictOverlapCount = 0;
+  let conflictCapacity = 0;
+  if (role === 'vendor' && booking.status === 'pending' && events.length > 0) {
+    try {
+      const checks = await Promise.all(
+        events.map((ev) =>
+          wouldExceedCapacity(
+            supabase,
+            booking.vendor_profile_id,
+            ev.event_date,
+            ev.event_start_time,
+            ev.event_end_time
+          )
+        )
+      );
+      const worst = checks.reduce(
+        (acc, c) => (c.overlapping > acc.overlapping ? c : acc),
+        checks[0]
+      );
+      if (worst.wouldExceed) {
+        conflictOverlapCount = worst.overlapping;
+        conflictCapacity = worst.capacity;
+      }
+    } catch {
+      // Non-fatal — if the check fails, don't block the page from rendering
+    }
+  }
+  const showConflictWarning = conflictOverlapCount > 0;
 
   return (
     <div className="space-y-6">
@@ -297,6 +331,14 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
                   </p>
                 </div>
               )}
+
+            {/* Conflict warning — shown above Accept when vendor views a pending that would exceed capacity */}
+            {role === 'vendor' && booking.status === 'pending' && showConflictWarning && (
+              <ConflictWarning
+                overlapCount={conflictOverlapCount}
+                capacity={conflictCapacity}
+              />
+            )}
 
             {/* Vendor accept/adjust CTAs */}
             {role === 'vendor' &&
