@@ -340,6 +340,117 @@ export async function seedPackage(
   return { id: pkg.id, vendorProfileId: vendor.vendorProfileId, basePriceCents, addons };
 }
 
+/**
+ * Seeds a vendor with a fully-published profile (is_active=true, onboarding_complete=true)
+ * and a specified concurrent_capacity. Used by G6 calendar e2e tests where the
+ * availability endpoint requires is_active+onboarding_complete, and capacity must be
+ * set at seed time to control the DB trigger behaviour.
+ */
+export async function seedVendorWithCapacity(capacity: number): Promise<TestVendor> {
+  const supabase = getServiceClient();
+  const email = testEmail('vendor-cap');
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { full_name: 'E2E Cap Vendor', role: 'vendor' },
+  });
+  if (error || !data.user) throw new Error(`seedVendorWithCapacity: ${error?.message}`);
+  await supabase.from('users').upsert({ id: data.user.id, email, role: 'vendor' });
+
+  const slug = `e2e-cap-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const { data: vp, error: vpError } = await supabase
+    .from('vendor_profiles')
+    .insert({
+      user_id: data.user.id,
+      business_name: 'E2E Capacity Vendor',
+      slug,
+      category: 'photography',
+      bio: 'Seeded for G6 calendar capacity e2e tests.',
+      service_area: ['Chicago'],
+      is_active: true,
+      onboarding_complete: true,
+      concurrent_capacity: capacity,
+    })
+    .select('id')
+    .single();
+  if (vpError || !vp) throw new Error(`seedVendorWithCapacity profile: ${vpError?.message}`);
+
+  return {
+    id: data.user.id,
+    email,
+    password: PASSWORD,
+    role: 'vendor',
+    vendorProfileId: vp.id,
+    vendorSlug: slug,
+  };
+}
+
+/**
+ * Seeds a pending booking row + booking_events row directly via service-role,
+ * bypassing the /api/bookings POST endpoint (which runs the capacity pre-check).
+ *
+ * Use this when you need to create multiple pending bookings for the same time
+ * slot to test the accept-time trigger atomicity (Tests 2 + 3).
+ */
+export async function seedPendingBooking(
+  vendor: TestVendor,
+  couple: TestUser,
+  pkg: SeededPackage,
+  opts: {
+    eventDate: string;    // 'YYYY-MM-DD'
+    startTime: string;    // full ISO datetime, e.g. '2026-08-15T10:00:00Z'
+    endTime: string;      // full ISO datetime
+    eventTypeLabel?: string;
+  }
+): Promise<{ bookingId: string; bookingEventId: string }> {
+  const supabase = getServiceClient();
+
+  const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+  const { data: booking, error: bErr } = await supabase
+    .from('bookings')
+    .insert({
+      couple_user_id: couple.id,
+      vendor_profile_id: vendor.vendorProfileId,
+      package_id: pkg.id,
+      package_name_snapshot: 'E2E Package',
+      package_base_price_cents_snapshot: pkg.basePriceCents,
+      selected_addons: [],
+      guest_count: 100,
+      couple_full_name: 'E2E Couple',
+      couple_contact_phone: '(312) 555-0100',
+      status: 'pending',
+      expires_at: expiresAt,
+      negotiation_round_count: 0,
+    })
+    .select('id')
+    .single();
+  if (bErr || !booking) throw new Error(`seedPendingBooking booking: ${bErr?.message}`);
+
+  const { data: evt, error: evtErr } = await supabase
+    .from('booking_events')
+    .insert({
+      booking_id: booking.id,
+      vendor_profile_id: vendor.vendorProfileId,
+      sequence: 1,
+      event_date: opts.eventDate,
+      event_start_time: opts.startTime,
+      event_end_time: opts.endTime,
+      event_type_label: opts.eventTypeLabel ?? 'Wedding Ceremony',
+      address_line_1: '140 E Walton Pl',
+      city: 'Chicago',
+      state: 'IL',
+      postal_code: '60611',
+      location_overridden: false,
+    })
+    .select('id')
+    .single();
+  if (evtErr || !evt) throw new Error(`seedPendingBooking event: ${evtErr?.message}`);
+
+  return { bookingId: booking.id, bookingEventId: evt.id };
+}
+
 /** Delete a seeded user. ON DELETE CASCADE cleans up vendor_profiles, bookings, etc. */
 export async function cleanup(...users: (TestUser | null | undefined)[]): Promise<void> {
   const supabase = getServiceClient();
