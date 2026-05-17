@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { EventTypeAutocomplete } from './EventTypeAutocomplete';
 import { GooglePlacesAutocomplete } from './GooglePlacesAutocomplete';
 import type { PlaceData } from './GooglePlacesAutocomplete';
+import { AvailabilityCalendar } from '@/components/marketplace/AvailabilityCalendar';
 
 export interface EventRowData {
   sequence: number;
@@ -37,6 +38,7 @@ interface Props {
   onRemove?: (index: number) => void;
   locationMode: 'couple_provides' | 'at_vendor';
   vendor?: VendorBaseAddress;
+  vendorSlug?: string;
   event1Data?: EventRowData | null; // For "Same as Event 1" button
 }
 
@@ -47,6 +49,7 @@ export function EventRow({
   onRemove,
   locationMode,
   vendor,
+  vendorSlug,
   event1Data,
 }: Props) {
   const isAtVendor = locationMode === 'at_vendor' && !data.location_overridden;
@@ -103,13 +106,28 @@ export function EventRow({
       {/* Date */}
       <div>
         <label className="mb-1 block text-xs text-muted-foreground">Date</label>
-        <input
-          type="date"
-          className="w-full rounded border p-2 text-sm"
-          value={data.event_date}
-          onChange={(e) => onChange(index, { event_date: e.target.value })}
-          required
-        />
+        {vendorSlug ? (
+          <AvailabilityCalendar
+            vendorSlug={vendorSlug}
+            selectedDate={data.event_date ? new Date(data.event_date + 'T12:00:00Z') : undefined}
+            onSelect={(date) => {
+              if (date) {
+                const dateStr = date.toISOString().slice(0, 10);
+                onChange(index, { event_date: dateStr });
+              } else {
+                onChange(index, { event_date: '' });
+              }
+            }}
+          />
+        ) : (
+          <input
+            type="date"
+            className="w-full rounded border p-2 text-sm"
+            value={data.event_date}
+            onChange={(e) => onChange(index, { event_date: e.target.value })}
+            required
+          />
+        )}
       </div>
 
       {/* Time range */}

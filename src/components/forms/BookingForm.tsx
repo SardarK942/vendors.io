@@ -203,6 +203,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 onRemove={events.length > 1 ? removeEvent : undefined}
                 locationMode={pkg.location_mode}
                 vendor={vendor}
+                vendorSlug={vendor.slug}
                 event1Data={i > 0 ? events[0] : null}
               />
             ))}
