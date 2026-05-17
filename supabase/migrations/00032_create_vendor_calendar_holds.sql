@@ -80,14 +80,12 @@ BEGIN
       SELECT id, event_date, event_start_time, event_end_time
       FROM booking_events WHERE booking_id = NEW.id
     LOOP
+      -- event_start_time / event_end_time are already timestamptz (full timestamp);
+      -- event_date is denormalized for indexing. Use the timestamps directly.
       INSERT INTO vendor_calendar_holds (vendor_profile_id, booking_event_id, hold_type, hold_range)
       VALUES (
         NEW.vendor_profile_id, evt.id, 'booking',
-        tstzrange(
-          (evt.event_date + evt.event_start_time)::timestamp AT TIME ZONE 'UTC',
-          (evt.event_date + evt.event_end_time)::timestamp AT TIME ZONE 'UTC',
-          '[)'
-        )
+        tstzrange(evt.event_start_time, evt.event_end_time, '[)')
       );
     END LOOP;
   ELSIF NOT NEW.status = ANY(locking_statuses) AND OLD.status = ANY(locking_statuses) THEN
@@ -109,12 +107,7 @@ CREATE TRIGGER on_booking_status_change_sync_holds
 INSERT INTO vendor_calendar_holds (vendor_profile_id, booking_event_id, hold_type, hold_range)
 SELECT
   b.vendor_profile_id, e.id, 'booking',
-  tstzrange(
-    (e.event_date + e.event_start_time)::timestamp AT TIME ZONE 'UTC',
-    (e.event_date + e.event_end_time)::timestamp AT TIME ZONE 'UTC',
-    '[)'
-  )
+  tstzrange(e.event_start_time, e.event_end_time, '[)')
 FROM bookings b
 JOIN booking_events e ON e.booking_id = b.id
-WHERE b.status IN ('accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid', 'completed')
-ON CONFLICT DO NOTHING;
+WHERE b.status IN ('accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid', 'completed');
