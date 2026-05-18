@@ -30,6 +30,12 @@ export const portfolioSchema = z.object({
   portfolioImages: z.array(z.string().url()).min(1, 'At least 1 portfolio image is required'),
 });
 
+export const paymentModeSchema = z.object({
+  paymentMode: z.enum(['stripe', 'cash']),
+});
+
+export type PaymentModeInput = z.infer<typeof paymentModeSchema>;
+
 // Server-side gate on the full DB row before flipping onboarding_complete = true.
 // Mirrors the four step schemas but reads the DB column names directly.
 export const publishGateSchema = z.object({
@@ -45,6 +51,7 @@ export const publishGateSchema = z.object({
   instagram_handle: z.string().regex(/^[A-Za-z0-9._]{1,30}$/),
   website_url: z.string().nullable(),
   portfolio_images: z.array(z.string()).min(1),
+  payment_mode: z.enum(['stripe', 'cash']),
 });
 
 export type BasicsInput = z.infer<typeof basicsSchema>;

@@ -44,6 +44,8 @@ export function StepReview({ profile }: Props) {
       setPublishErrorStep('online');
     } else if (field === 'portfolio_images') {
       setPublishErrorStep('portfolio');
+    } else if (field === 'payment_mode') {
+      setPublishErrorStep('payment-mode');
     } else {
       setPublishErrorStep(null);
     }
@@ -59,7 +61,7 @@ export function StepReview({ profile }: Props) {
     <div className="max-w-2xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Review your profile</h1>
-        <p className="text-sm text-muted-foreground">Step 5 of 5 — check everything looks right before publishing.</p>
+        <p className="text-sm text-muted-foreground">Step 6 of 6 — check everything looks right before publishing.</p>
       </div>
 
       {/* Summary cards */}
@@ -178,6 +180,17 @@ export function StepReview({ profile }: Props) {
           ) : (
             <p className="text-sm text-destructive">No images uploaded</p>
           )}
+        </div>
+
+        {/* Payment mode */}
+        <div className="rounded-md border p-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Payment mode</h3>
+            <Link href="/dashboard/profile/setup/payment-mode" className="text-sm text-primary underline">Edit</Link>
+          </div>
+          <p className="mt-2 text-sm text-muted-foreground">
+            {profile.payment_mode === 'cash' ? 'Direct payments — coordinate with each couple yourself.' : 'Through Baazar — couples pay deposit via the platform.'}
+          </p>
         </div>
       </div>
 
