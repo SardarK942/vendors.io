@@ -9,6 +9,7 @@ const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'location', label: 'Location' },
   { key: 'online', label: 'Online presence' },
   { key: 'portfolio', label: 'Portfolio' },
+  { key: 'payment-mode', label: 'Payment mode' },
   { key: 'review', label: 'Review & publish' },
 ];
 

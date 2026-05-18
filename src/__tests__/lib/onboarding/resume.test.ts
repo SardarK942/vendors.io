@@ -14,6 +14,7 @@ const baseProfile = {
   instagram_handle: 'x',
   website_url: null,
   portfolio_images: ['x.jpg'],
+  payment_mode: 'stripe' as const,
 };
 
 describe('nextIncompleteStep', () => {
@@ -40,5 +41,11 @@ describe('nextIncompleteStep', () => {
   });
   it('returns basics when profile is null', () => {
     expect(nextIncompleteStep(null)).toBe('basics');
+  });
+  it('returns payment-mode when payment_mode is null and all prior steps complete', () => {
+    expect(nextIncompleteStep({ ...baseProfile, payment_mode: null })).toBe('payment-mode');
+  });
+  it('returns review when payment_mode is cash and all steps complete', () => {
+    expect(nextIncompleteStep({ ...baseProfile, payment_mode: 'cash' })).toBe('review');
   });
 });
