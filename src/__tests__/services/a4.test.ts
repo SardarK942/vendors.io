@@ -11,31 +11,33 @@ import { DEPOSIT_RATE } from '@/lib/utils';
 
 // ─── Deposit Calculation ──────────────────────────────────────────────────────
 // A4.1: deposit = Math.floor(total_price_cents * DEPOSIT_RATE)
+// NOTE: DEPOSIT_RATE was corrected to 0.10 (10%) in Sub-project C (C1.2).
+// The terms page always promised 10%; 30% was a pre-existing bug.
 
-describe('A4.1 — Deposit calculation (30% of total_price_cents)', () => {
+describe('A4.1 — Deposit calculation (10% of total_price_cents)', () => {
   function calcDeposit(totalCents: number): number {
     return Math.floor(totalCents * DEPOSIT_RATE);
   }
 
-  it('$1000 package -> $300 deposit', () => {
-    expect(calcDeposit(100000)).toBe(30000);
+  it('$1000 package -> $100 deposit', () => {
+    expect(calcDeposit(100000)).toBe(10000);
   });
 
-  it('$2000 package -> $600 deposit', () => {
-    expect(calcDeposit(200000)).toBe(60000);
+  it('$2000 package -> $200 deposit', () => {
+    expect(calcDeposit(200000)).toBe(20000);
   });
 
-  it('$500 package -> $150 deposit', () => {
-    expect(calcDeposit(50000)).toBe(15000);
+  it('$500 package -> $50 deposit', () => {
+    expect(calcDeposit(50000)).toBe(5000);
   });
 
   it('floors partial cent to avoid Stripe issues', () => {
-    // $333.33 total -> floor(99999 * DEPOSIT_RATE) = floor(29999.7) = 29999
-    expect(calcDeposit(99999)).toBe(29999);
+    // $333.33 total -> floor(99999 * 0.10) = floor(9999.9) = 9999
+    expect(calcDeposit(99999)).toBe(9999);
   });
 
-  it('$3000 Desi wedding package -> $900 deposit', () => {
-    expect(calcDeposit(300000)).toBe(90000);
+  it('$3000 Desi wedding package -> $300 deposit', () => {
+    expect(calcDeposit(300000)).toBe(30000);
   });
 });
 

@@ -13,22 +13,43 @@ export function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
-/** Fraction of total_price_cents charged as the hold deposit. Single source of truth. */
-export const DEPOSIT_RATE = 0.30;
+/** Deposit rate for Stripe vendors (10% of total). */
+export const STRIPE_DEPOSIT_RATE = 0.10;
+
+/** Deposit rate for cash vendors (5% of total). */
+export const CASH_DEPOSIT_RATE = 0.05;
+
+/** Legacy alias — kept for backward compat until C2 migrates all callers. */
+export const DEPOSIT_RATE = STRIPE_DEPOSIT_RATE;
+
+export type PaymentMode = 'stripe' | 'cash';
+
+/** Returns the deposit rate fraction for the given payment mode. */
+export function getDepositRate(mode: PaymentMode): number {
+  return mode === 'cash' ? CASH_DEPOSIT_RATE : STRIPE_DEPOSIT_RATE;
+}
+
+/**
+ * Returns the fraction of the deposit the platform retains.
+ * Stripe: 30% (vendor gets 70%). Cash: 100% (vendor gets nothing from deposit).
+ */
+export function getPlatformCutRate(mode: PaymentMode): number {
+  return mode === 'cash' ? 1.0 : 0.3;
+}
 
 /** Hold deposit = 10% of the vendor quote. */
 export function calculateDepositAmount(quoteAmountCents: number): number {
   return Math.round(quoteAmountCents / 10);
 }
 
-/** Platform's cut of a deposit (30%). Held in escrow until 24h grace elapses. */
-export function calculatePlatformCut(depositCents: number): number {
-  return Math.round(depositCents * 0.3);
+/** Platform's cut of a deposit. Defaults to stripe mode for backward compat. */
+export function calculatePlatformCut(depositCents: number, mode: PaymentMode = 'stripe'): number {
+  return Math.round(depositCents * getPlatformCutRate(mode));
 }
 
-/** Vendor's portion of a deposit (70%). Escrowed until event completes. */
-export function calculateVendorPending(depositCents: number): number {
-  return depositCents - calculatePlatformCut(depositCents);
+/** Vendor's portion of a deposit. Defaults to stripe mode for backward compat. */
+export function calculateVendorPending(depositCents: number, mode: PaymentMode = 'stripe'): number {
+  return depositCents - calculatePlatformCut(depositCents, mode);
 }
 
 /**
