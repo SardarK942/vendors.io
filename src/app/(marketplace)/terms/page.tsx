@@ -24,9 +24,22 @@ export default function TermsPage() {
 
       <h2>2. Hold deposits and cancellation</h2>
       <p>
-        When a couple accepts a vendor&apos;s quote, they pay a 10% hold deposit through the
-        Platform. This deposit holds the vendor&apos;s availability for the event date.
+        When a couple accepts a vendor&apos;s quote, they pay a small hold deposit through the
+        Platform. The exact amount depends on the vendor&apos;s payment model:
       </p>
+      <ul>
+        <li>
+          <strong>Standard vendors:</strong> couples pay a 10% deposit. The Platform retains 30% of
+          the deposit as its service fee. The remaining 70% is released to the vendor after the
+          event completes (manually or automatically 48 hours after the event date).
+        </li>
+        <li>
+          <strong>Direct-payment vendors:</strong> couples pay a 5% deposit, which the Platform
+          retains in full as its service fee. The vendor coordinates the remaining balance directly
+          with the couple (cash, Zelle, bank transfer, etc.).
+        </li>
+      </ul>
+      <p>The following cancellation tiers apply to both vendor types:</p>
       <ul>
         <li>
           <strong>Full refund</strong> if the couple cancels within 24 hours of payment.
@@ -41,11 +54,6 @@ export default function TermsPage() {
           <strong>Full refund</strong> if the vendor cancels, regardless of timing.
         </li>
       </ul>
-      <p>
-        The Platform retains 30% of the deposit as its service fee. The remaining 70% is released to
-        the vendor after the event is marked complete (manually or automatically 48 hours after the
-        event date, assuming no dispute).
-      </p>
 
       <h2>3. Disputes</h2>
       <p>

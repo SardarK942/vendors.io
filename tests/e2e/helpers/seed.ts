@@ -451,6 +451,53 @@ export async function seedPendingBooking(
   return { bookingId: booking.id, bookingEventId: evt.id };
 }
 
+/**
+ * Seeds a vendor with a fully-published profile (is_active=true, onboarding_complete=true)
+ * and payment_mode='cash'. Used by C5 cash-vendor e2e tests.
+ * Signature mirrors seedVendorWithCapacity so callers can reuse seedPackage etc.
+ */
+export async function seedCashVendor(opts?: { businessName?: string }): Promise<TestVendor> {
+  const supabase = getServiceClient();
+  const email = testEmail('vendor-cash');
+  const { data, error } = await supabase.auth.admin.createUser({
+    email,
+    password: PASSWORD,
+    email_confirm: true,
+    user_metadata: { full_name: 'E2E Cash Vendor', role: 'vendor' },
+  });
+  if (error || !data.user) throw new Error(`seedCashVendor: ${error?.message}`);
+  await supabase.from('users').upsert({ id: data.user.id, email, role: 'vendor' });
+
+  const slug = `e2e-cash-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+  const businessName = opts?.businessName ?? 'E2E Cash Vendor Biz';
+  const { data: vp, error: vpError } = await supabase
+    .from('vendor_profiles')
+    .insert({
+      user_id: data.user.id,
+      business_name: businessName,
+      slug,
+      category: 'photography',
+      bio: 'Seeded cash vendor for C5 e2e tests.',
+      service_area: ['Chicago'],
+      is_active: true,
+      onboarding_complete: true,
+      concurrent_capacity: 1,
+      payment_mode: 'cash',
+    })
+    .select('id')
+    .single();
+  if (vpError || !vp) throw new Error(`seedCashVendor profile: ${vpError?.message}`);
+
+  return {
+    id: data.user.id,
+    email,
+    password: PASSWORD,
+    role: 'vendor',
+    vendorProfileId: vp.id,
+    vendorSlug: slug,
+  };
+}
+
 /** Delete a seeded user. ON DELETE CASCADE cleans up vendor_profiles, bookings, etc. */
 export async function cleanup(...users: (TestUser | null | undefined)[]): Promise<void> {
   const supabase = getServiceClient();
