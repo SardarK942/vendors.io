@@ -13,6 +13,7 @@
  *     vendor_quote_amount/notes/responded_at from bookings;
  *     starting_price_min/max from vendor_profiles); 'quoted'/'rejected' statuses removed
  *   - 00030 notifications table + RLS + realtime publication (Sub-project F)
+ *   - 00033 vendor_profiles.payment_mode nullable text ('stripe' | 'cash') (Sub-project C)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -148,6 +149,7 @@ export interface Database {
           is_active: boolean;
           onboarding_complete: boolean;
           concurrent_capacity: number;
+          payment_mode: 'stripe' | 'cash' | null;
           created_at: string;
           updated_at: string;
         };
@@ -176,6 +178,7 @@ export interface Database {
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
+          payment_mode?: 'stripe' | 'cash' | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -203,6 +206,7 @@ export interface Database {
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
+          payment_mode?: 'stripe' | 'cash' | null;
           updated_at?: string;
         };
         Relationships: [
