@@ -47,6 +47,7 @@ const COMPLETE_PROFILE = {
   instagram_handle: 'hennaartchicago',
   website_url: null,
   portfolio_images: ['https://utfs.io/f/abc.jpg'],
+  payment_mode: 'stripe',
   onboarding_complete: false,
   is_active: false,
 };

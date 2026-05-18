@@ -4,6 +4,7 @@ import {
   locationSchema,
   onlineSchema,
   portfolioSchema,
+  paymentModeSchema,
   publishGateSchema,
 } from '@/lib/onboarding/validation';
 
@@ -69,25 +70,44 @@ describe('portfolioSchema', () => {
   });
 });
 
+describe('paymentModeSchema', () => {
+  it('accepts stripe', () => {
+    expect(paymentModeSchema.safeParse({ paymentMode: 'stripe' }).success).toBe(true);
+  });
+  it('accepts cash', () => {
+    expect(paymentModeSchema.safeParse({ paymentMode: 'cash' }).success).toBe(true);
+  });
+  it('rejects unknown mode', () => {
+    expect(paymentModeSchema.safeParse({ paymentMode: 'bank' }).success).toBe(false);
+  });
+});
+
 describe('publishGateSchema (server-side guard)', () => {
+  const completeProfile = {
+    business_name: 'X', category: 'mehndi', bio: 'a'.repeat(60),
+    base_address_line_1: '1', base_city: 'C', base_state: 'IL', base_postal_code: '1',
+    base_google_place_id: 'P', base_address_public: false,
+    instagram_handle: 'x', website_url: null,
+    portfolio_images: ['x.jpg'],
+    payment_mode: 'stripe' as const,
+  };
+
   it('rejects profile missing instagram', () => {
     const r = publishGateSchema.safeParse({
-      business_name: 'X', category: 'mehndi', bio: 'a'.repeat(60),
-      base_address_line_1: '1', base_city: 'C', base_state: 'IL', base_postal_code: '1',
-      base_google_place_id: 'P', base_address_public: false,
-      instagram_handle: null, website_url: null,
-      portfolio_images: ['x.jpg'],
+      ...completeProfile,
+      instagram_handle: null,
     });
     expect(r.success).toBe(false);
   });
   it('accepts a complete profile', () => {
-    const r = publishGateSchema.safeParse({
-      business_name: 'X', category: 'mehndi', bio: 'a'.repeat(60),
-      base_address_line_1: '1', base_city: 'C', base_state: 'IL', base_postal_code: '1',
-      base_google_place_id: 'P', base_address_public: false,
-      instagram_handle: 'x', website_url: null,
-      portfolio_images: ['x.jpg'],
-    });
+    const r = publishGateSchema.safeParse(completeProfile);
     expect(r.success).toBe(true);
+  });
+  it('rejects a complete profile with payment_mode null', () => {
+    const r = publishGateSchema.safeParse({
+      ...completeProfile,
+      payment_mode: null,
+    });
+    expect(r.success).toBe(false);
   });
 });

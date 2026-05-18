@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { EarningsCard } from '@/components/dashboard/EarningsCard';
 import { RecentUnlocks } from '@/components/dashboard/RecentUnlocks';
+import { DirectPaymentsCard } from '@/components/dashboard/DirectPaymentsCard';
 import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
 import { EventCardGrid } from '@/components/dashboard/EventCardGrid';
 import { type EventCardData } from '@/components/dashboard/EventCard';
@@ -103,6 +104,9 @@ export default async function DashboardPage() {
   let recentUnlocks: UnlockedBooking[] = [];
   let activePackageCount = 0;
   let vendorIsActive = true;
+  let paymentMode: 'stripe' | 'cash' = 'stripe';
+  let confirmedCount = 0;
+  let upcomingCount = 0;
 
   if (role === 'vendor') {
     // Note: is_active column is from A1 migration; not yet in generated types.
@@ -118,6 +122,9 @@ export default async function DashboardPage() {
       // is_active is a DB column (added in A1 migration); cast is safe at runtime.
       vendorIsActive = vendorProfile.is_active !== false;
 
+      // C4: branch on payment_mode (nullable — default to 'stripe')
+      paymentMode = ((vendorProfile as unknown as Record<string, unknown>).payment_mode ?? 'stripe') as 'stripe' | 'cash';
+
       const { count } = await supabase
         .from('bookings')
         .select('*', { count: 'exact', head: true })
@@ -132,35 +139,55 @@ export default async function DashboardPage() {
         .eq('is_active', true);
       activePackageCount = pkgCount ?? 0;
 
-      const earningsResult = await getVendorEarnings(supabase, user.id);
-      earnings = earningsResult.data ?? null;
+      if (paymentMode === 'cash') {
+        // Cash vendors: fetch booking counts for DirectPaymentsCard
+        const { count: confCount } = await supabase
+          .from('bookings')
+          .select('id', { count: 'exact', head: true })
+          .eq('vendor_profile_id', vendorProfile.id)
+          .in('status', ['deposit_paid', 'completed']);
+        confirmedCount = confCount ?? 0;
 
-      // Completed bookings in last 7 days → "funds unlocked" banner.
-      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
-      const { data: completed } = await supabase
-        .from('bookings')
-        .select(
-          'id, completed_at, package_name_snapshot, transactions(vendor_payout), users!couple_user_id(full_name)'
-        )
-        .eq('vendor_profile_id', vendorProfile.id)
-        .eq('status', 'completed')
-        .gte('completed_at', sevenDaysAgo)
-        .order('completed_at', { ascending: false })
-        .limit(5);
+        const today = new Date().toISOString();
+        const { count: upCount } = await supabase
+          .from('booking_events')
+          .select('id, bookings!inner(vendor_profile_id, status)', { count: 'exact', head: true })
+          .eq('bookings.vendor_profile_id', vendorProfile.id)
+          .in('bookings.status', ['accepted', 'deposit_paid'])
+          .gte('event_start_time', today);
+        upcomingCount = upCount ?? 0;
+      } else {
+        // Stripe vendors: fetch earnings + recent unlocks
+        const earningsResult = await getVendorEarnings(supabase, user.id);
+        earnings = earningsResult.data ?? null;
 
-      recentUnlocks = (completed ?? []).map((b) => {
-        const txs = (b.transactions as { vendor_payout: number }[] | null) ?? [];
-        const coupleUserRel = Array.isArray(b.users) ? b.users[0] : b.users;
-        return {
-          id: b.id,
-          completed_at: b.completed_at,
-          package_label: (b as unknown as Record<string, string | null>).package_name_snapshot ?? 'Booking',
-          vendor_payout_total: txs.reduce((sum, t) => sum + t.vendor_payout, 0),
-          couple_name:
-            (coupleUserRel as { full_name: string | null } | null)?.full_name?.split(' ')[0] ??
-            null,
-        };
-      });
+        // Completed bookings in last 7 days → "funds unlocked" banner.
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+        const { data: completed } = await supabase
+          .from('bookings')
+          .select(
+            'id, completed_at, package_name_snapshot, transactions(vendor_payout), users!couple_user_id(full_name)'
+          )
+          .eq('vendor_profile_id', vendorProfile.id)
+          .eq('status', 'completed')
+          .gte('completed_at', sevenDaysAgo)
+          .order('completed_at', { ascending: false })
+          .limit(5);
+
+        recentUnlocks = (completed ?? []).map((b) => {
+          const txs = (b.transactions as { vendor_payout: number }[] | null) ?? [];
+          const coupleUserRel = Array.isArray(b.users) ? b.users[0] : b.users;
+          return {
+            id: b.id,
+            completed_at: b.completed_at,
+            package_label: (b as unknown as Record<string, string | null>).package_name_snapshot ?? 'Booking',
+            vendor_payout_total: txs.reduce((sum, t) => sum + t.vendor_payout, 0),
+            couple_name:
+              (coupleUserRel as { full_name: string | null } | null)?.full_name?.split(' ')[0] ??
+              null,
+          };
+        });
+      }
     }
   }
 
@@ -196,7 +223,16 @@ export default async function DashboardPage() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {role === 'vendor' && <RecentUnlocks unlocks={recentUnlocks} />}
+        {role === 'vendor' && paymentMode === 'cash' ? (
+          <DirectPaymentsCard
+            confirmedBookings={confirmedCount}
+            upcomingEvents={upcomingCount}
+          />
+        ) : (
+          <>
+            {role === 'vendor' && <RecentUnlocks unlocks={recentUnlocks} />}
+          </>
+        )}
 
         <Link href="/dashboard/bookings" className="block">
           <Card className="transition-colors hover:bg-accent">
@@ -223,7 +259,7 @@ export default async function DashboardPage() {
           </Card>
         )}
 
-        {role === 'vendor' && earnings && (
+        {role === 'vendor' && paymentMode !== 'cash' && earnings && (
           <EarningsCard
             pendingEscrowCents={earnings.pending_escrow_cents}
             availableCents={earnings.available_cents}

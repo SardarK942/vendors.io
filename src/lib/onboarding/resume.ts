@@ -1,4 +1,4 @@
-export type WizardStep = 'basics' | 'location' | 'online' | 'portfolio' | 'review';
+export type WizardStep = 'basics' | 'location' | 'online' | 'portfolio' | 'payment-mode' | 'review';
 
 export interface ProfileRowShape {
   business_name: string | null;
@@ -11,6 +11,7 @@ export interface ProfileRowShape {
   base_google_place_id: string | null;
   instagram_handle: string | null;
   portfolio_images: string[] | null;
+  payment_mode: 'stripe' | 'cash' | null;
 }
 
 export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep {
@@ -29,5 +30,6 @@ export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep 
   }
   if (!profile.instagram_handle) return 'online';
   if (!profile.portfolio_images || profile.portfolio_images.length < 1) return 'portfolio';
+  if (!profile.payment_mode) return 'payment-mode';
   return 'review';
 }
