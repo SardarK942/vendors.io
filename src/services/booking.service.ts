@@ -96,7 +96,7 @@ export async function getBookingRequests(
   userId: string,
   role: 'couple' | 'vendor'
 ): Promise<ServiceResult<BookingRow[]>> {
-  let query = supabase.from('bookings').select('*, vendor_profiles(business_name, slug, category)');
+  let query = supabase.from('bookings').select('*, vendor_profiles(business_name, slug, category, payment_mode)');
 
   if (role === 'couple') {
     query = query.eq('couple_user_id', userId);
@@ -131,7 +131,7 @@ export async function getBookingById(
 ): Promise<ServiceResult<BookingRow>> {
   const { data, error } = await supabase
     .from('bookings')
-    .select('*, vendor_profiles(business_name, slug, category, user_id)')
+    .select('*, vendor_profiles(business_name, slug, category, user_id, payment_mode)')
     .eq('id', bookingId)
     .single();
 
