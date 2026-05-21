@@ -9,7 +9,7 @@ export default async function DashboardLayout({
   panel,
 }: {
   children: React.ReactNode;
-  panel?: React.ReactNode;
+  panel: React.ReactNode;
 }) {
   const supabase = await createServerSupabaseClient();
   const {
