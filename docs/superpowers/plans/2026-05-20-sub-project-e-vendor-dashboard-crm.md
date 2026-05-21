@@ -157,9 +157,12 @@ CREATE TABLE vendor_profile_views (
   viewer_user_id    uuid REFERENCES users(id) ON DELETE SET NULL,
   ip_hash           text NOT NULL,
   user_agent        text,
-  viewed_at         timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at)))
+  viewed_at         timestamptz NOT NULL DEFAULT now()
 );
+
+-- Dedupe via expression-based unique index (Postgres rejects expressions in inline UNIQUE).
+CREATE UNIQUE INDEX vendor_profile_views_dedupe_idx
+  ON vendor_profile_views (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at)));
 
 CREATE INDEX vendor_profile_views_vendor_idx
   ON vendor_profile_views (vendor_profile_id, viewed_at DESC);
