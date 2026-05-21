@@ -35,7 +35,8 @@ if (!STRIPE_SECRET || !SUPABASE_URL || !SUPABASE_KEY) {
   process.exit(1);
 }
 
-const stripe = new Stripe(STRIPE_SECRET, { apiVersion: '2024-06-20' });
+// Use the SDK's pinned default api version (set by the installed @types/stripe).
+const stripe = new Stripe(STRIPE_SECRET);
 const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false },
 });
