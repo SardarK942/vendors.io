@@ -7,6 +7,7 @@ import {
   handlePaymentFailure,
   handleAccountUpdated,
   handleChargeRefunded,
+  handlePayoutEvent,
 } from '@/services/payment.service';
 import { withErrorBoundary } from '@/lib/api/error-boundary';
 
@@ -104,9 +105,11 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
         break;
       }
 
+      case 'payout.created':
       case 'payout.paid':
-      case 'payout.failed': {
-        console.log(`[Stripe Webhook] ${event.type}`, event.data.object);
+      case 'payout.failed':
+      case 'payout.canceled': {
+        await handlePayoutEvent(supabase, event);
         break;
       }
 
