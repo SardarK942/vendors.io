@@ -441,9 +441,14 @@ CREATE TABLE vendor_profile_views (
   viewed_at         timestamptz NOT NULL DEFAULT now()
 );
 
--- Dedupe via expression-based unique index (Postgres rejects expressions in inline UNIQUE).
+-- Dedupe via expression-based unique index. Two PG quirks together:
+-- (1) inline UNIQUE doesn't allow expressions, so use CREATE UNIQUE INDEX.
+-- (2) date_trunc on timestamptz is STABLE (session-tz dependent); indexes require IMMUTABLE.
+--     AT TIME ZONE 'UTC' strips the tz dependency and makes the expression IMMUTABLE.
+--     Aligned with the daily-salt convention in computeIpHash() (also UTC day boundaries).
 CREATE UNIQUE INDEX vendor_profile_views_dedupe_idx
-  ON vendor_profile_views (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at)));
+  ON vendor_profile_views
+  (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at AT TIME ZONE 'UTC')));
 
 CREATE INDEX vendor_profile_views_vendor_idx
   ON vendor_profile_views (vendor_profile_id, viewed_at DESC);

@@ -60,8 +60,13 @@ CREATE TABLE IF NOT EXISTS vendor_profile_views (
 );
 
 -- Dedupe via expression-based unique index (inline UNIQUE doesn't allow expressions in PG).
+-- AT TIME ZONE 'UTC' is required: date_trunc on timestamptz is STABLE (depends on session
+-- timezone), but index expressions must be IMMUTABLE. Casting to UTC removes the
+-- timezone dependency. Matches the daily-salt convention used by computeIpHash() which
+-- builds keys from UTC day boundaries.
 CREATE UNIQUE INDEX IF NOT EXISTS vendor_profile_views_dedupe_idx
-  ON vendor_profile_views (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at)));
+  ON vendor_profile_views
+  (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at AT TIME ZONE 'UTC')));
 
 CREATE INDEX IF NOT EXISTS vendor_profile_views_vendor_idx
   ON vendor_profile_views (vendor_profile_id, viewed_at DESC);
