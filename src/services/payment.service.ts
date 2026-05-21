@@ -1152,3 +1152,195 @@ async function autoTransferEarnedFunds(
     });
   }
 }
+
+// ─── Sub-project E: Payouts ledger ──────────────────────────────────
+
+import type Stripe from 'stripe';
+import { CASH_DEPOSIT_RATE } from '@/lib/utils';
+
+const PAYOUT_STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'> = {
+  'payout.created': 'pending',
+  'payout.paid': 'paid',
+  'payout.failed': 'failed',
+  'payout.canceled': 'canceled',
+};
+
+/**
+ * Persist a Stripe payout event into the payouts ledger and (on payout.paid)
+ * derive contributing bookings from transactions transferred during the payout
+ * window. Idempotent via UNIQUE(stripe_payout_id).
+ */
+export async function handlePayoutEvent(
+  supabase: SupabaseClient<Database>,
+  event: Stripe.Event
+): Promise<void> {
+  const status = PAYOUT_STATUS_MAP[event.type];
+  if (!status) return;
+
+  const payout = event.data.object as Stripe.Payout;
+  const stripeAccount = event.account;
+  if (!stripeAccount) {
+    console.warn('[payouts] event without account field, skipping', event.id);
+    return;
+  }
+
+  const { data: acc } = await supabase
+    .from('stripe_accounts')
+    .select('vendor_profile_id')
+    .eq('stripe_account_id', stripeAccount)
+    .maybeSingle();
+  if (!acc) {
+    console.warn('[payouts] no stripe_account row for', stripeAccount);
+    return;
+  }
+
+  const arrivalDate = payout.arrival_date
+    ? new Date(payout.arrival_date * 1000).toISOString().slice(0, 10)
+    : null;
+
+  await supabase
+    .from('payouts')
+    .upsert(
+      {
+        vendor_profile_id: acc.vendor_profile_id,
+        stripe_payout_id: payout.id,
+        amount_cents: payout.amount,
+        currency: payout.currency,
+        status,
+        arrival_date: arrivalDate,
+        failure_message: payout.failure_message ?? null,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'stripe_payout_id' }
+    );
+
+  // On payout.paid, attribute the payout to the bookings whose transferred_at
+  // falls inside the payout window (created → arrival_date).
+  if (event.type === 'payout.paid' && payout.arrival_date) {
+    const createdAt = new Date(payout.created * 1000).toISOString();
+    const arrivalISO = new Date(payout.arrival_date * 1000).toISOString();
+
+    const { data: txs } = await supabase
+      .from('transactions')
+      .select('booking_request_id, bookings!inner(vendor_profile_id)')
+      .eq('bookings.vendor_profile_id', acc.vendor_profile_id)
+      .gte('transferred_at', createdAt)
+      .lte('transferred_at', arrivalISO);
+
+    if (txs && txs.length > 0) {
+      const { data: po } = await supabase
+        .from('payouts')
+        .select('id')
+        .eq('stripe_payout_id', payout.id)
+        .single();
+      if (po) {
+        await supabase.from('payout_bookings').upsert(
+          txs.map((t) => ({
+            payout_id: po.id,
+            booking_id: t.booking_request_id as string,
+          })),
+          { onConflict: 'payout_id,booking_id', ignoreDuplicates: true }
+        );
+      }
+    }
+  }
+}
+
+export interface PayoutHistoryRow {
+  id: string;
+  stripe_payout_id: string;
+  amount_cents: number;
+  status: string;
+  arrival_date: string | null;
+  failure_message: string | null;
+  bookings_count: number;
+}
+
+export async function getPayoutHistory(
+  supabase: SupabaseClient<Database>,
+  vendorProfileId: string,
+  params: { cursor?: string; limit?: number } = {}
+): Promise<{ data: PayoutHistoryRow[] | null; error: unknown; nextCursor?: string }> {
+  const { cursor, limit = 25 } = params;
+  let query = supabase
+    .from('payouts')
+    .select(
+      'id, stripe_payout_id, amount_cents, status, arrival_date, failure_message, payout_bookings(count)'
+    )
+    .eq('vendor_profile_id', vendorProfileId)
+    .order('arrival_date', { ascending: false, nullsFirst: false })
+    .limit(limit + 1);
+  if (cursor) query = query.lt('arrival_date', cursor);
+
+  const { data, error } = await query;
+  if (error) return { data: null, error };
+
+  const rows: PayoutHistoryRow[] = (data ?? []).map((r) => ({
+    id: r.id as string,
+    stripe_payout_id: r.stripe_payout_id as string,
+    amount_cents: r.amount_cents as number,
+    status: r.status as string,
+    arrival_date: (r.arrival_date as string | null) ?? null,
+    failure_message: (r.failure_message as string | null) ?? null,
+    bookings_count: ((r.payout_bookings as { count: number }[] | null) ?? []).reduce(
+      (s, c) => s + (c.count ?? 0),
+      0
+    ),
+  }));
+
+  const hasMore = rows.length > limit;
+  const trimmed = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore
+    ? trimmed[trimmed.length - 1].arrival_date ?? undefined
+    : undefined;
+  return { data: trimmed, error: null, nextCursor };
+}
+
+export interface CashToCollectRow {
+  bookingEventId: string;
+  bookingId: string;
+  eventDate: string;
+  coupleName: string;
+  packageLabel: string;
+  amountCents: number;
+}
+
+export async function getCashToCollect(
+  supabase: SupabaseClient<Database>,
+  vendorProfileId: string,
+  daysAhead = 30
+): Promise<{ data: CashToCollectRow[] | null; error: unknown }> {
+  const today = new Date().toISOString().slice(0, 10);
+  const end = new Date(Date.now() + daysAhead * 86_400_000).toISOString().slice(0, 10);
+
+  const { data, error } = await supabase
+    .from('booking_events')
+    .select(
+      'id, booking_id, event_date, event_type_label, bookings!inner(status, vendor_profile_id, couple_full_name, package_name_snapshot, total_price_cents)'
+    )
+    .eq('bookings.vendor_profile_id', vendorProfileId)
+    .eq('bookings.status', 'deposit_paid')
+    .gte('event_date', today)
+    .lte('event_date', end)
+    .order('event_date');
+
+  if (error) return { data: null, error };
+
+  const rows = (data ?? []).map((r) => {
+    const b = r.bookings as unknown as {
+      couple_full_name: string | null;
+      package_name_snapshot: string | null;
+      total_price_cents: number;
+    };
+    return {
+      bookingEventId: r.id as string,
+      bookingId: r.booking_id as string,
+      eventDate: r.event_date as string,
+      coupleName: b.couple_full_name ?? 'Couple',
+      packageLabel: b.package_name_snapshot ?? 'Booking',
+      amountCents: Math.round(b.total_price_cents * (1 - CASH_DEPOSIT_RATE)),
+    };
+  });
+
+  return { data: rows, error: null };
+}

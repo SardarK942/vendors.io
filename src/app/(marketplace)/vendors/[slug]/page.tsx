@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { notFound } from 'next/navigation';
 import { VendorProfile } from '@/components/marketplace/VendorProfile';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
+import { recordVendorProfileView } from '@/services/analytics.actions';
 
 interface VendorPageProps {
   params: Promise<{ slug: string }>;
@@ -61,6 +62,10 @@ export default async function VendorPage({ params }: VendorPageProps) {
       (a, b) => a.display_order - b.display_order
     ),
   }));
+
+  // Fire-and-forget view tracking (Sub-project E §9). Not awaited — never blocks
+  // the page render. Dedupes per (vendor, ip_hash, UTC day) at the DB layer.
+  recordVendorProfileView(vendor.id, vendor.user_id).catch(() => {});
 
   return (
     <div className="py-8">

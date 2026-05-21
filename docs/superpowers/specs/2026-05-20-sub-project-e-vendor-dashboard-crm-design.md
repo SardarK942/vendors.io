@@ -412,13 +412,20 @@ CREATE POLICY "Vendors can update vendor_notes on own booking_events"
 
 **Public view** (belt-and-suspenders against column leakage — Postgres RLS doesn't filter columns):
 
+`security_invoker = on` is mandatory: Postgres 15+ views default to bypassing RLS (security_definer-like behavior), which would let any authenticated user read everyone's booking events through the view. With `security_invoker = on`, the view honors the caller's RLS and `booking_events`' existing policies (couple sees own, vendor sees their) still apply.
+
 ```sql
-CREATE VIEW booking_events_public AS
-  SELECT id, booking_id, event_date, event_start_time, event_end_time,
-         event_type_label, address_line_1, address_line_2, city, state,
-         postal_code, latitude, longitude, created_at, updated_at
+CREATE VIEW booking_events_public
+  WITH (security_invoker = on)
+  AS
+  SELECT id, booking_id, sequence, event_date, event_start_time, event_end_time,
+         event_type_label, location_name, address_line_1, city, state, postal_code,
+         google_place_id, guest_count_override, location_overridden,
+         completed_at, created_at
   FROM booking_events;
 ```
+
+(Column list mirrors `booking_events`' actual schema — see `supabase/migrations/00016_create_booking_events.sql` for the source-of-truth column inventory.)
 
 Couple-side code uses `booking_events_public`. Vendor-side uses `booking_events` directly (existing RLS filters to vendor's own rows). All existing couple-facing queries in the codebase must be audited and updated to use the view — see Implementation checklist below.
 
@@ -431,9 +438,17 @@ CREATE TABLE vendor_profile_views (
   viewer_user_id    uuid REFERENCES users(id) ON DELETE SET NULL,
   ip_hash           text NOT NULL,
   user_agent        text,
-  viewed_at         timestamptz NOT NULL DEFAULT now(),
-  UNIQUE (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at)))
+  viewed_at         timestamptz NOT NULL DEFAULT now()
 );
+
+-- Dedupe via expression-based unique index. Two PG quirks together:
+-- (1) inline UNIQUE doesn't allow expressions, so use CREATE UNIQUE INDEX.
+-- (2) date_trunc on timestamptz is STABLE (session-tz dependent); indexes require IMMUTABLE.
+--     AT TIME ZONE 'UTC' strips the tz dependency and makes the expression IMMUTABLE.
+--     Aligned with the daily-salt convention in computeIpHash() (also UTC day boundaries).
+CREATE UNIQUE INDEX vendor_profile_views_dedupe_idx
+  ON vendor_profile_views
+  (vendor_profile_id, ip_hash, (date_trunc('day', viewed_at AT TIME ZONE 'UTC')));
 
 CREATE INDEX vendor_profile_views_vendor_idx
   ON vendor_profile_views (vendor_profile_id, viewed_at DESC);

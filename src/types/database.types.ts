@@ -13,7 +13,11 @@
  *     vendor_quote_amount/notes/responded_at from bookings;
  *     starting_price_min/max from vendor_profiles); 'quoted'/'rejected' statuses removed
  *   - 00030 notifications table + RLS + realtime publication (Sub-project F)
+ *   - 00031 ai_bio_assist_calls (Sub-project B)
+ *   - 00032 vendor_calendar_holds (Sub-project G)
  *   - 00033 vendor_profiles.payment_mode nullable text ('stripe' | 'cash') (Sub-project C)
+ *   - 00034 booking_events.vendor_notes + booking_events_public view + vendor_profile_views
+ *           + payouts + payout_bookings (Sub-project E)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -336,6 +340,7 @@ export interface Database {
           location_overridden: boolean;
           completed_at: string | null;
           created_at: string;
+          vendor_notes: string | null;
         };
         Insert: {
           id?: string;
@@ -355,6 +360,7 @@ export interface Database {
           location_overridden?: boolean;
           completed_at?: string | null;
           created_at?: string;
+          vendor_notes?: string | null;
         };
         Update: {
           sequence?: number;
@@ -371,6 +377,7 @@ export interface Database {
           guest_count_override?: number | null;
           location_overridden?: boolean;
           completed_at?: string | null;
+          vendor_notes?: string | null;
         };
         Relationships: [
           {
@@ -823,8 +830,153 @@ export interface Database {
           },
         ];
       };
+      vendor_profile_views: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          viewer_user_id: string | null;
+          ip_hash: string;
+          user_agent: string | null;
+          viewed_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          viewer_user_id?: string | null;
+          ip_hash: string;
+          user_agent?: string | null;
+          viewed_at?: string;
+        };
+        Update: {
+          vendor_profile_id?: string;
+          viewer_user_id?: string | null;
+          ip_hash?: string;
+          user_agent?: string | null;
+          viewed_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vendor_profile_views_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'vendor_profile_views_viewer_user_id_fkey';
+            columns: ['viewer_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      payouts: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          stripe_payout_id: string;
+          amount_cents: number;
+          currency: string;
+          status: 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled';
+          arrival_date: string | null;
+          failure_message: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          stripe_payout_id: string;
+          amount_cents: number;
+          currency?: string;
+          status: 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled';
+          arrival_date?: string | null;
+          failure_message?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          stripe_payout_id?: string;
+          amount_cents?: number;
+          currency?: string;
+          status?: 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled';
+          arrival_date?: string | null;
+          failure_message?: string | null;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'payouts_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      payout_bookings: {
+        Row: {
+          payout_id: string;
+          booking_id: string;
+        };
+        Insert: {
+          payout_id: string;
+          booking_id: string;
+        };
+        Update: {
+          payout_id?: string;
+          booking_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'payout_bookings_payout_id_fkey';
+            columns: ['payout_id'];
+            isOneToOne: false;
+            referencedRelation: 'payouts';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'payout_bookings_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: false;
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
+      booking_events_public: {
+        Row: {
+          id: string;
+          booking_id: string;
+          sequence: number;
+          event_date: string;
+          event_start_time: string;
+          event_end_time: string;
+          event_type_label: string;
+          location_name: string | null;
+          address_line_1: string;
+          city: string;
+          state: string;
+          postal_code: string;
+          google_place_id: string | null;
+          guest_count_override: number | null;
+          location_overridden: boolean;
+          completed_at: string | null;
+          created_at: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'booking_events_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: false;
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       vendor_packages_price_band: {
         Row: {
           vendor_profile_id: string | null;
