@@ -9,6 +9,7 @@ import { type EventCardData } from '@/components/dashboard/EventCard';
 import { InboxBlock } from '@/components/dashboard/InboxBlock';
 import { OperationsBlock } from '@/components/dashboard/OperationsBlock';
 import { AnalyticsTeaser } from '@/components/dashboard/AnalyticsTeaser';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,14 +92,10 @@ export default async function DashboardPage() {
   }
 
   // Vendor branch — Sub-project E: Inbox + Operations + Analytics teaser.
-  const { data: vendorProfileRaw } = await supabase
-    .from('vendor_profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
-  const vendorProfile = vendorProfileRaw as
-    | (typeof vendorProfileRaw & { is_active?: boolean })
-    | null;
+  // Sub-project I §5: use the active vendor profile resolver (falls back to the
+  // user's only profile when active_vendor_profile_id is null — zero behavior
+  // change for single-business vendors).
+  const { profile: vendorProfile } = await getActiveVendorProfile(supabase, user.id);
 
   if (!vendorProfile) {
     return (

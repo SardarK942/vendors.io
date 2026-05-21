@@ -11,6 +11,7 @@ import {
   getCashToCollect,
 } from '@/services/payment.service';
 import type { PaymentMode } from '@/lib/utils';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,11 +37,8 @@ export default async function MoneyPage() {
     .single();
   if (profile?.role !== 'vendor') redirect('/dashboard');
 
-  const { data: vendorProfileRaw } = await supabase
-    .from('vendor_profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  // Sub-project I §5: per-business money page.
+  const { profile: vendorProfileRaw } = await getActiveVendorProfile(supabase, user.id);
   if (!vendorProfileRaw) redirect('/dashboard/profile/setup');
 
   const paymentMode = ((vendorProfileRaw as unknown as { payment_mode?: string }).payment_mode ??

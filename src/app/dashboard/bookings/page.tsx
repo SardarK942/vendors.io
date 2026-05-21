@@ -4,6 +4,7 @@ import { getBookingRequests } from '@/services/booking.service';
 import { BookingCard } from '@/components/dashboard/BookingCard';
 import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
 import { BookingsArchive } from '@/components/dashboard/BookingsArchive';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 import type { Database } from '@/types/database.types';
 
 type BookingStatus = Database['public']['Tables']['bookings']['Row']['status'];
@@ -71,11 +72,8 @@ export default async function BookingsPage({ searchParams }: PageProps) {
   const result = await getBookingRequests(supabase, user.id, 'vendor', { status, limit: 25 });
 
   // Per-tab counts via head:true queries (5 round-trips; each is a single COUNT).
-  const { data: vendorProfile } = await supabase
-    .from('vendor_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
+  // Sub-project I §5: resolve the active vendor profile.
+  const { profile: vendorProfile } = await getActiveVendorProfile(supabase, user.id);
 
   const counts: Record<TabKey, number> = {
     all: 0,

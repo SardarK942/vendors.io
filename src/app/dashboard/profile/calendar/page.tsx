@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { CalendarHoldsList } from '@/components/dashboard/CalendarHoldsList';
 import { BlockDateForm } from '@/components/dashboard/BlockDateForm';
 import { CapacityField } from '@/components/dashboard/CapacityField';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +14,8 @@ export default async function CalendarPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: vendor } = await supabase
-    .from('vendor_profiles')
-    .select('id, concurrent_capacity, onboarding_complete')
-    .eq('user_id', user.id)
-    .maybeSingle();
+  // Sub-project I §5: per-business calendar.
+  const { profile: vendor } = await getActiveVendorProfile(supabase, user.id);
   if (!vendor) redirect('/dashboard/profile/setup');
   if (!vendor.onboarding_complete) redirect('/dashboard/profile/setup');
 
