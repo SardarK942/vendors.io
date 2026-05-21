@@ -12,9 +12,11 @@ type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
 interface Props {
   profile: VendorRow;
+  profileId: string;
+  mode: 'first' | 'next';
 }
 
-export function StepReview({ profile }: Props) {
+export function StepReview({ profile, profileId, mode }: Props) {
   const router = useRouter();
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
@@ -23,12 +25,26 @@ export function StepReview({ profile }: Props) {
   async function onPublish() {
     setPublishing(true);
     setPublishError(null);
+
+    // Sub-project I §6: in 'next' mode, also send the Stripe override choice
+    // (stashed in sessionStorage by StepPaymentMode).
+    let stripeMode: 'reuse' | 'new' | null = null;
+    if (mode === 'next' && typeof window !== 'undefined') {
+      const stored = sessionStorage.getItem(`wizard:stripe_mode:${profileId}`);
+      if (stored === 'reuse' || stored === 'new') stripeMode = stored;
+    }
+
     const res = await fetch('/api/vendor-profile/publish', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ profile_id: profileId, mode, stripe_mode: stripeMode }),
     });
     setPublishing(false);
     if (res.ok) {
+      // Clean up the sessionStorage stash now that the publish has read it.
+      if (typeof window !== 'undefined') {
+        sessionStorage.removeItem(`wizard:stripe_mode:${profileId}`);
+      }
       router.push('/dashboard/profile/packages?just_onboarded=1');
       return;
     }

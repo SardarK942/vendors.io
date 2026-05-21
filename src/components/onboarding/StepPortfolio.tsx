@@ -9,9 +9,11 @@ import { portfolioSchema } from '@/lib/onboarding/validation';
 
 interface Props {
   initial: { portfolioImages: string[] };
+  profileId: string;
+  mode: 'first' | 'next';
 }
 
-export function StepPortfolio({ initial }: Props) {
+export function StepPortfolio({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [images, setImages] = useState<string[]>(initial.portfolioImages);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function StepPortfolio({ initial }: Props) {
     const res = await fetch('/api/vendor-profile/setup/portfolio', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
+      body: JSON.stringify({ ...parsed.data, profile_id: profileId }),
     });
     setSubmitting(false);
     if (!res.ok) {
@@ -39,7 +41,8 @@ export function StepPortfolio({ initial }: Props) {
       setError(json.error ?? 'Save failed');
       return;
     }
-    router.push('/dashboard/profile/setup/review');
+    const nextParam = mode === 'next' ? '?next=true' : '';
+    router.push(`/dashboard/profile/setup/payment-mode${nextParam}`);
   }
 
   return (

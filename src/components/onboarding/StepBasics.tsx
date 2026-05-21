@@ -18,13 +18,17 @@ import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 
 interface Props {
   initial: { businessName: string; category: string; bio: string };
+  profileId: string;
+  mode: 'first' | 'next';
 }
 
-export function StepBasics({ initial }: Props) {
+export function StepBasics({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [data, setData] = useState(initial);
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  const nextParam = mode === 'next' ? '?next=true' : '';
 
   async function onNext() {
     const parsed = basicsSchema.safeParse(data);
@@ -36,7 +40,7 @@ export function StepBasics({ initial }: Props) {
     const res = await fetch('/api/vendor-profile/setup/basics', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
+      body: JSON.stringify({ ...parsed.data, profile_id: profileId }),
     });
     setSubmitting(false);
     if (!res.ok) {
@@ -44,7 +48,7 @@ export function StepBasics({ initial }: Props) {
       setError(json.error ?? 'Save failed');
       return;
     }
-    router.push('/dashboard/profile/setup/location');
+    router.push(`/dashboard/profile/setup/location${nextParam}`);
   }
 
   return (
