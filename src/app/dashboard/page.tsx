@@ -35,8 +35,9 @@ export default async function DashboardPage() {
 
   // Couple branch — early return with event card grid
   if (role === 'couple') {
+    // Read from booking_events_public (excludes vendor_notes — Sub-project E §8).
     const { data: rawEvents } = await supabase
-      .from('booking_events')
+      .from('booking_events_public')
       .select(`
         id,
         event_date,

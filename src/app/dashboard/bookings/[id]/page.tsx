@@ -59,9 +59,12 @@ export default async function BookingDetailPage({ params }: BookingDetailPagePro
           .maybeSingle()
       : { data: null };
 
-  // Load booking events
+  // Load booking events.
+  // Couple reads from booking_events_public (excludes vendor_notes — Sub-project E §8).
+  // Vendor reads raw booking_events (needs vendor_notes for the notes editor).
+  const eventsTable = role === 'vendor' ? 'booking_events' : 'booking_events_public';
   const { data: bookingEvents } = await supabase
-    .from('booking_events')
+    .from(eventsTable as 'booking_events')
     .select('*')
     .eq('booking_id', id)
     .order('sequence');
