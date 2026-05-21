@@ -101,6 +101,22 @@ export default async function MoneyPage() {
   const earnings = earningsResult.data ?? null;
   const payouts = await getPayoutHistory(supabase, vendorProfileRaw.id, { limit: 25 });
 
+  // Sub-project I §7: detect if the active business shares its Stripe account
+  // with at least one sibling business owned by the same user. When true, the
+  // 3-card earnings summary reflects combined activity across all sharing
+  // businesses, so we surface a footnote.
+  let isSharedStripeAccount = false;
+  const activeStripeAccountId = (vendorProfileRaw as unknown as { stripe_account_id?: string | null })
+    .stripe_account_id ?? null;
+  if (activeStripeAccountId) {
+    const { count: sharingCount } = await supabase
+      .from('vendor_profiles')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .eq('stripe_account_id', activeStripeAccountId);
+    isSharedStripeAccount = (sharingCount ?? 0) > 1;
+  }
+
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
   const { data: completed } = await supabase
     .from('bookings')
@@ -133,14 +149,22 @@ export default async function MoneyPage() {
       <h1 className="text-2xl font-bold">Money</h1>
 
       {earnings && (
-        <EarningsCard
-          pendingEscrowCents={earnings.pending_escrow_cents}
-          availableCents={earnings.available_cents}
-          transferredCents={earnings.transferred_cents}
-          requiresOnboarding={earnings.requires_onboarding}
-          verificationPending={earnings.verification_pending}
-          frozenReason={earnings.frozen_reason}
-        />
+        <>
+          <EarningsCard
+            pendingEscrowCents={earnings.pending_escrow_cents}
+            availableCents={earnings.available_cents}
+            transferredCents={earnings.transferred_cents}
+            requiresOnboarding={earnings.requires_onboarding}
+            verificationPending={earnings.verification_pending}
+            frozenReason={earnings.frozen_reason}
+          />
+          {/* Sub-project I §7: shared-Stripe-account footnote */}
+          {isSharedStripeAccount && (
+            <p className="text-xs text-muted-foreground">
+              Shared Stripe account with your other businesses — these numbers include all of them.
+            </p>
+          )}
+        </>
       )}
 
       <section className="space-y-2">
