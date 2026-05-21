@@ -16,11 +16,54 @@ function slugWithSuffix(name: string): string {
   return `${base}-${hex}`;
 }
 
+/**
+ * Resolve the target vendor_profile.
+ *
+ * Sub-project I §6: when a `profile_id` is provided in the body, use it
+ * (after ownership check). This is the multi-business path — the wizard
+ * layout creates/resolves the profile via getOrCreateWizardProfile and
+ * threads it down to step components which include it in the PATCH body.
+ *
+ * Legacy fallback (when no `profile_id` provided): match by user_id. Returns
+ * null if no profile exists yet; only the 'basics' step's INSERT path uses
+ * that branch.
+ */
+async function resolveProfileId(
+  supabase: Awaited<ReturnType<typeof requireUser>>['supabase'],
+  userId: string,
+  bodyProfileId: unknown
+): Promise<{ profileId: string | null; existingSlug: string | null }> {
+  if (typeof bodyProfileId === 'string' && bodyProfileId.length > 0) {
+    // Multi-business path: ownership check.
+    const { data: target } = await supabase
+      .from('vendor_profiles')
+      .select('id, user_id, slug')
+      .eq('id', bodyProfileId)
+      .maybeSingle();
+    if (!target) throw new HttpError(404, 'Profile not found');
+    if (target.user_id !== userId) throw new HttpError(403, 'Not your profile');
+    return { profileId: target.id, existingSlug: target.slug ?? null };
+  }
+  // Legacy fallback: look up by user_id.
+  const { data: existing } = await supabase
+    .from('vendor_profiles')
+    .select('id, slug')
+    .eq('user_id', userId)
+    .maybeSingle();
+  return {
+    profileId: existing?.id ?? null,
+    existingSlug: existing?.slug ?? null,
+  };
+}
+
 export const PATCH = withErrorBoundary(
   async (req: NextRequest, { params }: { params: Promise<{ step: string }> }) => {
     const { step } = await params;
     const { user, supabase } = await requireUser();
     const body = await req.json();
+
+    const bodyProfileId = (body as { profile_id?: unknown }).profile_id;
+    const { profileId, existingSlug } = await resolveProfileId(supabase, user.id, bodyProfileId);
 
     if (step === 'basics') {
       let data;
@@ -31,29 +74,28 @@ export const PATCH = withErrorBoundary(
         throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');
       }
 
-      const { data: existing } = await supabase
-        .from('vendor_profiles')
-        .select('id, slug')
-        .eq('user_id', user.id)
-        .maybeSingle();
-
       const payload = {
         user_id: user.id,
         business_name: data.businessName,
         category: data.category,
         bio: data.bio,
-        slug: existing?.slug ?? slugWithSuffix(data.businessName),
+        slug: existingSlug ?? slugWithSuffix(data.businessName),
       };
 
-      const { error } = existing
+      const { error } = profileId
         ? await supabase
             .from('vendor_profiles')
             .update(payload)
-            .eq('id', existing.id)
+            .eq('id', profileId)
         : await supabase.from('vendor_profiles').insert(payload);
 
       if (error) throw new HttpError(500, error.message);
       return NextResponse.json({ ok: true });
+    }
+
+    // Every other step requires an existing profile.
+    if (!profileId) {
+      throw new HttpError(400, 'Complete the basics step first');
     }
 
     if (step === 'location') {
@@ -75,7 +117,7 @@ export const PATCH = withErrorBoundary(
           base_google_place_id: data.baseGooglePlaceId,
           base_address_public: data.baseAddressPublic,
         })
-        .eq('user_id', user.id);
+        .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
       return NextResponse.json({ ok: true });
@@ -96,7 +138,7 @@ export const PATCH = withErrorBoundary(
           instagram_handle: data.instagramHandle,
           website_url: data.websiteUrl || null,
         })
-        .eq('user_id', user.id);
+        .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
       return NextResponse.json({ ok: true });
@@ -116,7 +158,7 @@ export const PATCH = withErrorBoundary(
         .update({
           portfolio_images: data.portfolioImages,
         })
-        .eq('user_id', user.id);
+        .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
       return NextResponse.json({ ok: true });
@@ -134,7 +176,7 @@ export const PATCH = withErrorBoundary(
       const { error } = await supabase
         .from('vendor_profiles')
         .update({ payment_mode: data.paymentMode })
-        .eq('user_id', user.id);
+        .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
       return NextResponse.json({ ok: true });

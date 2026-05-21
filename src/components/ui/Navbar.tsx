@@ -15,6 +15,14 @@ import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { createClient } from '@/lib/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
 import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { BusinessSwitcher, type SwitcherBusiness } from '@/components/dashboard/BusinessSwitcher';
+
+interface BusinessesResponse {
+  role: 'couple' | 'vendor' | 'admin' | null;
+  activeBusinessId: string | null;
+  businesses: SwitcherBusiness[];
+  totalCount: number;
+}
 
 const navLinks = [{ href: '/vendors', label: 'Browse Vendors' }];
 
@@ -22,6 +30,7 @@ export function Navbar() {
   const pathname = usePathname();
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [businessState, setBusinessState] = useState<BusinessesResponse | null>(null);
   const supabase = createClient();
 
   useEffect(() => {
@@ -41,6 +50,38 @@ export function Navbar() {
 
     return () => subscription.unsubscribe();
   }, [supabase.auth]);
+
+  // Sub-project I §3: fetch business state for vendors to drive the switcher
+  // visibility + the "Add another business" menu item.
+  useEffect(() => {
+    if (!user) {
+      setBusinessState(null);
+      return;
+    }
+    let cancelled = false;
+    const fetchState = async () => {
+      try {
+        const res = await fetch('/api/users/me/businesses', { credentials: 'include' });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as BusinessesResponse;
+        if (!cancelled) setBusinessState(data);
+      } catch {
+        // Silent — the menu/switcher just won't render until the next route change.
+      }
+    };
+    fetchState();
+    return () => {
+      cancelled = true;
+    };
+    // Re-fetch when pathname changes so the switcher reflects post-action state
+    // (e.g., adding a second business via the wizard).
+  }, [user, pathname]);
+
+  const showSwitcher =
+    businessState?.role === 'vendor' &&
+    businessState.totalCount > 1 &&
+    businessState.activeBusinessId !== null;
+  const isVendor = businessState?.role === 'vendor';
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -73,6 +114,12 @@ export function Navbar() {
 
           {user ? (
             <>
+              {showSwitcher && businessState && (
+                <BusinessSwitcher
+                  activeBusinessId={businessState.activeBusinessId!}
+                  businesses={businessState.businesses}
+                />
+              )}
               <NotificationBell userId={user.id} />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -85,6 +132,11 @@ export function Navbar() {
                   <DropdownMenuItem asChild>
                     <Link href="/dashboard">Dashboard</Link>
                   </DropdownMenuItem>
+                  {isVendor && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/dashboard/profile/setup?next=true">Add another business</Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleSignOut} className="text-destructive">
                     <LogOut className="mr-2 h-4 w-4" />
                     Sign Out

@@ -12,6 +12,7 @@ import { VendorBookingActions } from '@/components/booking/VendorBookingActions'
 import { AdjustmentReview } from '@/components/booking/AdjustmentReview';
 import { ConflictWarning } from '@/components/dashboard/ConflictWarning';
 import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
+import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import Link from 'next/link';
 
 interface BookingDetailProps {
@@ -44,6 +45,15 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
   if (result.error || !result.data) notFound();
 
   const booking = result.data;
+
+  // Sub-project I §8: detect cross-business — booking belongs to a vendor_profile
+  // different from the caller's active business.
+  const activeBusinessId =
+    role === 'vendor' ? await getActiveVendorProfileId(supabase, user.id) : null;
+  const isCrossBusiness =
+    role === 'vendor' &&
+    activeBusinessId !== null &&
+    booking.vendor_profile_id !== activeBusinessId;
 
   const { data: vendorProfile } = await supabase
     .from('vendor_profiles')
@@ -141,9 +151,17 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
               {(bookingAsAny.package_name_snapshot as string) ?? 'Package Booking'}
             </p>
           </div>
-          <Badge className={`text-sm ${statusBadgeStyle(booking.status)}`}>
-            {booking.status.replace(/_/g, ' ')}
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Badge className={`text-sm ${statusBadgeStyle(booking.status)}`}>
+              {booking.status.replace(/_/g, ' ')}
+            </Badge>
+            {/* Sub-project I §8: business-name chip when viewing a cross-business booking */}
+            {isCrossBusiness && vendorProfile?.business_name && (
+              <Badge variant="outline" className="text-xs">
+                {vendorProfile.business_name}
+              </Badge>
+            )}
+          </div>
         </div>
       )}
 
@@ -152,6 +170,12 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
           <Badge className={`text-sm ${statusBadgeStyle(booking.status)}`}>
             {booking.status.replace(/_/g, ' ')}
           </Badge>
+          {/* Sub-project I §8: business-name chip when viewing a cross-business booking */}
+          {isCrossBusiness && vendorProfile?.business_name && (
+            <Badge variant="outline" className="text-xs">
+              {vendorProfile.business_name}
+            </Badge>
+          )}
           <span className="text-sm text-muted-foreground">
             {role === 'couple' ? vendorProfile?.business_name : 'Booking Request'}
             {' · '}
@@ -370,6 +394,8 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
                   totalPriceCents={
                     ((booking as Record<string, unknown>).total_price_cents as number) ?? 0
                   }
+                  bookingBusinessId={booking.vendor_profile_id}
+                  bookingBusinessName={vendorProfile?.business_name ?? undefined}
                 />
               )}
 

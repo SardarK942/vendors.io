@@ -18,6 +18,8 @@
  *   - 00033 vendor_profiles.payment_mode nullable text ('stripe' | 'cash') (Sub-project C)
  *   - 00034 booking_events.vendor_notes + booking_events_public view + vendor_profile_views
  *           + payouts + payout_bookings (Sub-project E)
+ *   - 00035 vendor_profiles.stripe_account_id (FK flipped from stripe_accounts.vendor_profile_id)
+ *           + users.active_vendor_profile_id nullable FK (Sub-project I)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -106,6 +108,7 @@ export interface Database {
           role: 'couple' | 'vendor' | 'admin';
           created_at: string;
           updated_at: string;
+          active_vendor_profile_id: string | null;
         };
         Insert: {
           id: string;
@@ -115,6 +118,7 @@ export interface Database {
           role: 'couple' | 'vendor' | 'admin';
           created_at?: string;
           updated_at?: string;
+          active_vendor_profile_id?: string | null;
         };
         Update: {
           id?: string;
@@ -123,8 +127,17 @@ export interface Database {
           phone?: string | null;
           role?: 'couple' | 'vendor' | 'admin';
           updated_at?: string;
+          active_vendor_profile_id?: string | null;
         };
-        Relationships: [];
+        Relationships: [
+          {
+            foreignKeyName: 'users_active_vendor_profile_id_fkey';
+            columns: ['active_vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       vendor_profiles: {
         Row: {
@@ -154,6 +167,7 @@ export interface Database {
           onboarding_complete: boolean;
           concurrent_capacity: number;
           payment_mode: 'stripe' | 'cash' | null;
+          stripe_account_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -183,6 +197,7 @@ export interface Database {
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
           payment_mode?: 'stripe' | 'cash' | null;
+          stripe_account_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -211,6 +226,7 @@ export interface Database {
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
           payment_mode?: 'stripe' | 'cash' | null;
+          stripe_account_id?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -219,6 +235,13 @@ export interface Database {
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'vendor_profiles_stripe_account_id_fkey';
+            columns: ['stripe_account_id'];
+            isOneToOne: false;
+            referencedRelation: 'stripe_accounts';
             referencedColumns: ['id'];
           },
         ];
@@ -520,7 +543,6 @@ export interface Database {
       stripe_accounts: {
         Row: {
           id: string;
-          vendor_profile_id: string;
           stripe_account_id: string;
           onboarding_complete: boolean;
           payouts_enabled: boolean;
@@ -536,7 +558,6 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          vendor_profile_id: string;
           stripe_account_id: string;
           onboarding_complete?: boolean;
           payouts_enabled?: boolean;
@@ -551,7 +572,6 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          vendor_profile_id?: string;
           stripe_account_id?: string;
           onboarding_complete?: boolean;
           payouts_enabled?: boolean;
@@ -564,15 +584,7 @@ export interface Database {
           details_submitted_at?: string | null;
           updated_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: 'stripe_accounts_vendor_profile_id_fkey';
-            columns: ['vendor_profile_id'];
-            isOneToOne: true;
-            referencedRelation: 'vendor_profiles';
-            referencedColumns: ['id'];
-          },
-        ];
+        Relationships: [];
       };
       transactions: {
         Row: {

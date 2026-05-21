@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { VendorProfileForm } from '@/components/forms/VendorProfileForm';
 import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,11 +14,8 @@ export default async function VendorProfilePage() {
 
   if (!user) redirect('/login');
 
-  const { data: vendorProfile } = await supabase
-    .from('vendor_profiles')
-    .select('*')
-    .eq('user_id', user.id)
-    .single();
+  // Sub-project I §5: resolve active business (falls back to user's only profile).
+  const { profile: vendorProfile } = await getActiveVendorProfile(supabase, user.id);
 
   if (!vendorProfile) redirect('/dashboard/profile/setup');
   if (!(vendorProfile as Record<string, unknown>).onboarding_complete) redirect('/dashboard/profile/setup');

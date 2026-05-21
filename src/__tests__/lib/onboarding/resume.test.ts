@@ -1,5 +1,7 @@
-import { describe, it, expect } from 'vitest';
-import { nextIncompleteStep } from '@/lib/onboarding/resume';
+import { describe, it, expect, vi } from 'vitest';
+import { nextIncompleteStep, getOrCreateWizardProfile } from '@/lib/onboarding/resume';
+import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/types/database.types';
 
 const baseProfile = {
   business_name: 'X',
@@ -47,5 +49,155 @@ describe('nextIncompleteStep', () => {
   });
   it('returns review when payment_mode is cash and all steps complete', () => {
     expect(nextIncompleteStep({ ...baseProfile, payment_mode: 'cash' })).toBe('review');
+  });
+});
+
+// ─── getOrCreateWizardProfile (Sub-project I §6) ──────────────────────────────
+
+interface WizardMockState {
+  /** Profiles owned by the user, in creation order. */
+  profiles: Array<{ id: string; onboarding_complete: boolean }>;
+  /** Id returned by the next .insert(). */
+  newId: string;
+}
+
+function makeWizardMockSupabase(state: WizardMockState) {
+  const captured = { inserted: false };
+
+  // Each .select() call returns a chain that tracks how many .eq() calls were
+  // made before .order() is awaited. If 1 eq → "all profiles for user" (first
+  // mode). If 2 eqs → "partials" filter (next mode). The head:true count
+  // variant is handled separately.
+  function makeSelectChain(opts?: { count?: string; head?: boolean }) {
+    let eqCount = 0;
+    const chain = {
+      eq: vi.fn(() => {
+        eqCount++;
+        return chain;
+      }),
+      order: vi.fn(() => {
+        if (eqCount === 1) {
+          // First-mode lookup: all profiles for the user (any state).
+          return Promise.resolve({
+            data: state.profiles.map((p) => ({
+              id: p.id,
+              created_at: '2026-01-01T00:00:00Z',
+            })),
+            error: null,
+          });
+        }
+        // Two eqs → partials filter (user_id + onboarding_complete=false).
+        return Promise.resolve({
+          data: state.profiles
+            .filter((p) => !p.onboarding_complete)
+            .map((p) => ({ id: p.id, created_at: '2026-01-01T00:00:00Z' })),
+          error: null,
+        });
+      }),
+    };
+
+    // Count-style chain: select('id', { count: 'exact', head: true }).eq().eq()
+    // resolves to { count } awaited promise.
+    if (opts?.count === 'exact' && opts?.head === true) {
+      const countChain = {
+        eq: vi.fn(() => {
+          eqCount++;
+          if (eqCount === 2) {
+            return Promise.resolve({
+              data: null,
+              count: state.profiles.filter((p) => p.onboarding_complete).length,
+              error: null,
+            });
+          }
+          return countChain;
+        }),
+      };
+      return countChain;
+    }
+
+    return chain;
+  }
+
+  const mockClient = {
+    from: vi.fn((_table: string) => {
+      return {
+        select: vi.fn((_cols: string, opts?: { count?: string; head?: boolean }) =>
+          makeSelectChain(opts)
+        ),
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn(() => {
+              captured.inserted = true;
+              return Promise.resolve({ data: { id: state.newId }, error: null });
+            }),
+          })),
+        })),
+      };
+    }),
+  } as unknown as SupabaseClient<Database>;
+
+  return { client: mockClient, captured };
+}
+
+describe('getOrCreateWizardProfile', () => {
+  it('first mode: finds existing profile when user has one', async () => {
+    const { client, captured } = makeWizardMockSupabase({
+      profiles: [{ id: 'vp-1', onboarding_complete: true }],
+      newId: 'should-not-be-used',
+    });
+    const result = await getOrCreateWizardProfile(client, 'user-A', 'first');
+    expect(result.profileId).toBe('vp-1');
+    expect(result.isNew).toBe(false);
+    expect(captured.inserted).toBe(false);
+  });
+
+  it('first mode: creates new profile when user has none', async () => {
+    const { client, captured } = makeWizardMockSupabase({
+      profiles: [],
+      newId: 'vp-fresh',
+    });
+    const result = await getOrCreateWizardProfile(client, 'user-A', 'first');
+    expect(result.profileId).toBe('vp-fresh');
+    expect(result.isNew).toBe(true);
+    expect(captured.inserted).toBe(true);
+  });
+
+  it('next mode: creates new when user has only a complete profile (no partial)', async () => {
+    const { client, captured } = makeWizardMockSupabase({
+      profiles: [{ id: 'vp-1', onboarding_complete: true }],
+      newId: 'vp-2',
+    });
+    const result = await getOrCreateWizardProfile(client, 'user-A', 'next');
+    expect(result.profileId).toBe('vp-2');
+    expect(result.isNew).toBe(true);
+    expect(captured.inserted).toBe(true);
+  });
+
+  it('next mode: resumes the partial second-business attempt', async () => {
+    const { client, captured } = makeWizardMockSupabase({
+      profiles: [
+        { id: 'vp-1', onboarding_complete: true },
+        { id: 'vp-2-partial', onboarding_complete: false },
+      ],
+      newId: 'should-not-be-used',
+    });
+    const result = await getOrCreateWizardProfile(client, 'user-A', 'next');
+    expect(result.profileId).toBe('vp-2-partial');
+    expect(result.isNew).toBe(false);
+    expect(captured.inserted).toBe(false);
+  });
+
+  it('next mode: creates new when user has no complete profile yet (edge case)', async () => {
+    // Edge case: user has a single in-progress profile but no completed one.
+    // The 'resume partial' branch only fires when at least one complete profile
+    // exists (otherwise we don't know if that partial is a first-business attempt).
+    const { client, captured } = makeWizardMockSupabase({
+      profiles: [{ id: 'vp-1', onboarding_complete: false }],
+      newId: 'vp-new',
+    });
+    const result = await getOrCreateWizardProfile(client, 'user-A', 'next');
+    expect(result.profileId).toBe('vp-new');
+    expect(result.isNew).toBe(true);
+    expect(captured.inserted).toBe(true);
   });
 });

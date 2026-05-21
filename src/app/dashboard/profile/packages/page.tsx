@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { listPackagesForVendor } from '@/services/packages.service';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,12 +24,8 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  const { data: vendorProfile } = await supabase
-    .from('vendor_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
-
+  // Sub-project I §5: per-business package list.
+  const { profile: vendorProfile } = await getActiveVendorProfile(supabase, user.id);
   if (!vendorProfile) redirect('/dashboard/profile');
 
   const { data: packagesData } = await listPackagesForVendor(

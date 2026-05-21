@@ -65,11 +65,26 @@ function buildSupabaseForBasics({
 
 function buildSupabaseForUpdate({
   updateError = null,
+  existingProfileId = 'vp-existing',
 }: {
   updateError?: { message: string } | null;
+  existingProfileId?: string | null;
 } = {}) {
+  // Sub-project I §6: the route now resolves profileId via select first.
+  // When no profile_id is in the body (legacy path), it looks up by user_id.
+  // We return a mock existing row so the resolution succeeds and the route
+  // proceeds to validation + update.
   return {
     from: (_table: string) => ({
+      select: (_cols: unknown) => ({
+        eq: (_col: string, _val: string) => ({
+          maybeSingle: () =>
+            Promise.resolve({
+              data: existingProfileId ? { id: existingProfileId, slug: 'test-slug', user_id: 'u-1' } : null,
+              error: null,
+            }),
+        }),
+      }),
       update: (_payload: unknown) => ({
         eq: (_col: string, _val: string) =>
           Promise.resolve({ data: null, error: updateError }),

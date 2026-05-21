@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PackageEditorForm } from '@/components/forms/PackageEditorForm';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,11 +13,8 @@ export default async function NewPackagePage() {
   if (!user) redirect('/login');
 
   // Guard: vendor must complete profile setup before adding packages.
-  const { data: vendorProfile } = await supabase
-    .from('vendor_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
+  // Sub-project I §5: active business (falls back to user's only profile).
+  const { profile: vendorProfile } = await getActiveVendorProfile(supabase, user.id);
   if (!vendorProfile) redirect('/dashboard/profile?next=/dashboard/profile/packages/new');
 
   return (

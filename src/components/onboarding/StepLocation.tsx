@@ -18,9 +18,11 @@ interface Initial {
 
 interface Props {
   initial: Initial;
+  profileId: string;
+  mode: 'first' | 'next';
 }
 
-export function StepLocation({ initial }: Props) {
+export function StepLocation({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [place, setPlace] = useState<Partial<PlaceData>>({
     address_line_1: initial.baseAddressLine1,
@@ -50,7 +52,7 @@ export function StepLocation({ initial }: Props) {
     const res = await fetch('/api/vendor-profile/setup/location', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
+      body: JSON.stringify({ ...parsed.data, profile_id: profileId }),
     });
     setSubmitting(false);
     if (!res.ok) {
@@ -58,7 +60,8 @@ export function StepLocation({ initial }: Props) {
       setError(json.error ?? 'Save failed');
       return;
     }
-    router.push('/dashboard/profile/setup/online');
+    const nextParam = mode === 'next' ? '?next=true' : '';
+    router.push(`/dashboard/profile/setup/online${nextParam}`);
   }
 
   return (

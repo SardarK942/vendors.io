@@ -7,17 +7,31 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { VendorAdjustQuoteForm } from '@/components/booking/VendorAdjustQuoteForm';
+import { useCrossBusinessActionToast } from '@/components/dashboard/CrossBusinessActionToast';
 
 interface Props {
   bookingId: string;
   status: string;
   totalPriceCents: number;
+  // Sub-project I §8: identify the booking's owning business for the
+  // cross-business toast. Optional so this component is backwards-compatible
+  // with callers that don't pass them yet (single-business vendors won't see
+  // a toast anyway since active business === booking business).
+  bookingBusinessId?: string;
+  bookingBusinessName?: string;
 }
 
-export function VendorBookingActions({ bookingId, status, totalPriceCents }: Props) {
+export function VendorBookingActions({
+  bookingId,
+  status,
+  totalPriceCents,
+  bookingBusinessId,
+  bookingBusinessName,
+}: Props) {
   const router = useRouter();
   const [showAdjustForm, setShowAdjustForm] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const triggerCrossBusinessToast = useCrossBusinessActionToast();
 
   const isPending = status === 'pending';
   const isDeclined = status === 'adjusted_quote_declined';
@@ -40,6 +54,17 @@ export function VendorBookingActions({ bookingId, status, totalPriceCents }: Pro
       }
 
       toast.success('Booking accepted. Couple has been notified to pay the deposit.');
+
+      // Sub-project I §8: cross-business toast if the booking is for a non-
+      // active business.
+      if (bookingBusinessId && bookingBusinessName) {
+        triggerCrossBusinessToast({
+          action: 'accept',
+          bookingBusinessId,
+          bookingBusinessName,
+        });
+      }
+
       router.refresh();
     } catch {
       toast.error('Network error, please try again.');

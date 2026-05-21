@@ -8,9 +8,11 @@ import { onlineSchema } from '@/lib/onboarding/validation';
 
 interface Props {
   initial: { instagramHandle: string; websiteUrl: string };
+  profileId: string;
+  mode: 'first' | 'next';
 }
 
-export function StepOnline({ initial }: Props) {
+export function StepOnline({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [data, setData] = useState(initial);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function StepOnline({ initial }: Props) {
     const res = await fetch('/api/vendor-profile/setup/online', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsed.data),
+      body: JSON.stringify({ ...parsed.data, profile_id: profileId }),
     });
     setSubmitting(false);
     if (!res.ok) {
@@ -39,7 +41,8 @@ export function StepOnline({ initial }: Props) {
       setError(json.error ?? 'Save failed');
       return;
     }
-    router.push('/dashboard/profile/setup/portfolio');
+    const nextParam = mode === 'next' ? '?next=true' : '';
+    router.push(`/dashboard/profile/setup/portfolio${nextParam}`);
   }
 
   return (
