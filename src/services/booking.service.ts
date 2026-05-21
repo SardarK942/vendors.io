@@ -91,17 +91,36 @@ export async function getBookingDateRange(
 
 // ─── Service Functions ──────────────────────────────────────────
 
+type BookingStatus = Database['public']['Tables']['bookings']['Row']['status'];
+
+export interface GetBookingRequestsParams {
+  status?: BookingStatus[];
+  q?: string;
+  cursor?: string;                 // ISO timestamp for cursor-based pagination
+  limit?: number;                  // default 100 (existing behavior); pages use 25
+  sort?: 'created_at' | 'updated_at';
+}
+
+export interface GetBookingRequestsResult<T> extends ServiceResult<T> {
+  nextCursor?: string;
+}
+
 export async function getBookingRequests(
   supabase: SupabaseClient<Database>,
   userId: string,
-  role: 'couple' | 'vendor'
-): Promise<ServiceResult<BookingRow[]>> {
-  let query = supabase.from('bookings').select('*, vendor_profiles(business_name, slug, category, payment_mode)');
+  role: 'couple' | 'vendor',
+  params: GetBookingRequestsParams = {}
+): Promise<GetBookingRequestsResult<BookingRow[]>> {
+  const { status, q, cursor, limit = 100, sort = 'created_at' } = params;
+
+  let query = supabase
+    .from('bookings')
+    .select('*, vendor_profiles(business_name, slug, category, payment_mode)');
 
   if (role === 'couple') {
     query = query.eq('couple_user_id', userId);
   } else {
-    // Vendor: get bookings for their profiles
+    // Vendor: get bookings for their profile
     const { data: vendorProfile } = await supabase
       .from('vendor_profiles')
       .select('id')
@@ -115,13 +134,105 @@ export async function getBookingRequests(
     query = query.eq('vendor_profile_id', vendorProfile.id);
   }
 
-  const { data, error } = await query.order('created_at', { ascending: false });
+  if (status && status.length > 0) query = query.in('status', status);
+  if (q) query = query.ilike('couple_full_name', `%${q}%`);
+  if (cursor) query = query.lt(sort, cursor);
+
+  // Fetch limit+1 to detect "has more" without a second count query.
+  const { data, error } = await query.order(sort, { ascending: false }).limit(limit + 1);
 
   if (error) {
     return { error: 'Failed to fetch bookings', status: 500 };
   }
 
-  return { data: data ?? [], status: 200 };
+  const rows = data ?? [];
+  const hasMore = rows.length > limit;
+  const trimmed = hasMore ? rows.slice(0, limit) : rows;
+  const nextCursor = hasMore
+    ? (trimmed[trimmed.length - 1] as unknown as Record<string, string>)[sort]
+    : undefined;
+
+  return { data: trimmed, status: 200, nextCursor };
+}
+
+// ─── Operations Block (next 30 days bucketed) ───────────────────
+
+export interface OperationsEvent {
+  id: string;
+  booking_id: string;
+  sequence: number;
+  event_date: string;
+  event_start_time: string;
+  event_end_time: string;
+  event_type_label: string;
+  location_name: string | null;
+  address_line_1: string | null;
+  city: string | null;
+  couple_full_name: string | null;
+  package_label: string | null;
+  status: string;
+}
+
+export interface OperationsBuckets {
+  today: OperationsEvent[];
+  tomorrow: OperationsEvent[];
+  thisWeek: OperationsEvent[];
+  later: OperationsEvent[];
+}
+
+export async function getOperationsBuckets(
+  supabase: SupabaseClient<Database>,
+  vendorProfileId: string,
+  daysAhead = 30
+): Promise<OperationsBuckets> {
+  const now = new Date();
+  const todayStr = now.toISOString().slice(0, 10);
+  const tomorrowStr = new Date(now.getTime() + 86_400_000).toISOString().slice(0, 10);
+  const weekEndStr = new Date(now.getTime() + 7 * 86_400_000).toISOString().slice(0, 10);
+  const endStr = new Date(now.getTime() + daysAhead * 86_400_000).toISOString().slice(0, 10);
+
+  const { data } = await supabase
+    .from('booking_events')
+    .select(
+      `id, booking_id, sequence, event_date, event_start_time, event_end_time, event_type_label,
+       location_name, address_line_1, city,
+       bookings!inner(vendor_profile_id, status, couple_full_name, package_name_snapshot)`
+    )
+    .eq('bookings.vendor_profile_id', vendorProfileId)
+    .in('bookings.status', ['deposit_paid', 'completed'])
+    .gte('event_date', todayStr)
+    .lte('event_date', endStr)
+    .order('event_date', { ascending: true });
+
+  const rows: OperationsEvent[] = (data ?? []).map((r) => {
+    const b = r.bookings as unknown as {
+      status: string;
+      couple_full_name: string | null;
+      package_name_snapshot: string | null;
+    };
+    return {
+      id: r.id as string,
+      booking_id: r.booking_id as string,
+      sequence: r.sequence as number,
+      event_date: r.event_date as string,
+      event_start_time: r.event_start_time as string,
+      event_end_time: r.event_end_time as string,
+      event_type_label: r.event_type_label as string,
+      location_name: (r.location_name as string | null) ?? null,
+      address_line_1: (r.address_line_1 as string | null) ?? null,
+      city: (r.city as string | null) ?? null,
+      couple_full_name: b.couple_full_name,
+      package_label: b.package_name_snapshot,
+      status: b.status,
+    };
+  });
+
+  return {
+    today: rows.filter((r) => r.event_date === todayStr),
+    tomorrow: rows.filter((r) => r.event_date === tomorrowStr),
+    thisWeek: rows.filter((r) => r.event_date > tomorrowStr && r.event_date <= weekEndStr),
+    later: rows.filter((r) => r.event_date > weekEndStr),
+  };
 }
 
 export async function getBookingById(
