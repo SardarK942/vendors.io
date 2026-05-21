@@ -1128,28 +1128,47 @@ export async function initiatePayout(
 }
 
 /**
- * Called from handleAccountUpdated when a vendor's onboarding completes. Finds the
- * vendor by stripe_account_id and triggers payout of any earned funds in one shot.
+ * Called from handleAccountUpdated when a vendor's onboarding completes. Finds
+ * the vendor(s) by stripe_account_id and triggers payout of any earned funds
+ * in one shot for each owning user.
+ *
+ * Sub-project I §5: the FK direction is now vendor_profiles.stripe_account_id.
+ * Multiple vendor_profiles can share one stripe_account under the hybrid model.
+ * We trigger a payout for each distinct owning user (in practice, all linked
+ * vendor_profiles belong to the same user — the hybrid model is one-user-many-
+ * businesses, not many-users-one-stripe — but the loop is defensive).
  */
 async function autoTransferEarnedFunds(
   supabase: SupabaseClient<Database>,
   stripeAccountId: string
 ): Promise<void> {
+  // Look up the stripe_account by its Stripe ID, then find all vendor_profiles
+  // pointing at it (new FK direction).
   const { data: account } = await supabase
     .from('stripe_accounts')
-    .select('vendor_profile_id, vendor_profiles!inner(user_id)')
+    .select('id')
     .eq('stripe_account_id', stripeAccountId)
-    .single();
-
+    .maybeSingle();
   if (!account) return;
-  const vp = account.vendor_profiles as unknown as { user_id: string };
-  const result = await initiatePayout(supabase, vp.user_id);
-  if (result.error) {
-    logger.warn('auto transfer skipped', {
-      site: 'autoTransferEarnedFunds',
-      stripeAccountId,
-      reason: result.error,
-    });
+
+  const { data: linkedProfiles } = await supabase
+    .from('vendor_profiles')
+    .select('user_id')
+    .eq('stripe_account_id', account.id);
+
+  const seenUserIds = new Set<string>();
+  for (const vp of linkedProfiles ?? []) {
+    if (seenUserIds.has(vp.user_id)) continue;
+    seenUserIds.add(vp.user_id);
+    const result = await initiatePayout(supabase, vp.user_id);
+    if (result.error) {
+      logger.warn('auto transfer skipped', {
+        site: 'autoTransferEarnedFunds',
+        stripeAccountId,
+        userId: vp.user_id,
+        reason: result.error,
+      });
+    }
   }
 }
 
@@ -1184,15 +1203,38 @@ export async function handlePayoutEvent(
     return;
   }
 
+  // Sub-project I §5: look up stripe_account by Stripe ID, then find linked
+  // vendor_profile(s) via the reversed FK direction. Under the hybrid model,
+  // one stripe_account may serve multiple vendor_profiles for the same user;
+  // pick the oldest (created_at ASC, by id ordering since vendor_profiles.id is
+  // not date-ordered we use the order index) as the canonical attribution for
+  // the payouts ledger. The full payout_bookings join attributes individual
+  // bookings regardless of which vendor_profile owns the stripe_account.
   const { data: acc } = await supabase
     .from('stripe_accounts')
-    .select('vendor_profile_id')
+    .select('id')
     .eq('stripe_account_id', stripeAccount)
     .maybeSingle();
   if (!acc) {
     console.warn('[payouts] no stripe_account row for', stripeAccount);
     return;
   }
+
+  // Find vendor_profile(s) linked to this stripe_account; use the oldest
+  // (created_at ASC) as the canonical "primary" attribution.
+  const { data: linkedProfiles } = await supabase
+    .from('vendor_profiles')
+    .select('id, created_at')
+    .eq('stripe_account_id', acc.id)
+    .order('created_at', { ascending: true });
+
+  const primaryVendorProfileId = linkedProfiles?.[0]?.id ?? null;
+  if (!primaryVendorProfileId) {
+    console.warn('[payouts] no vendor_profile linked to stripe_account', acc.id);
+    return;
+  }
+
+  const linkedProfileIds = (linkedProfiles ?? []).map((p) => p.id);
 
   const arrivalDate = payout.arrival_date
     ? new Date(payout.arrival_date * 1000).toISOString().slice(0, 10)
@@ -1202,7 +1244,7 @@ export async function handlePayoutEvent(
     .from('payouts')
     .upsert(
       {
-        vendor_profile_id: acc.vendor_profile_id,
+        vendor_profile_id: primaryVendorProfileId,
         stripe_payout_id: payout.id,
         amount_cents: payout.amount,
         currency: payout.currency,
@@ -1215,7 +1257,8 @@ export async function handlePayoutEvent(
     );
 
   // On payout.paid, attribute the payout to the bookings whose transferred_at
-  // falls inside the payout window (created → arrival_date).
+  // falls inside the payout window (created → arrival_date). Bookings can
+  // belong to ANY of the vendor_profiles linked to this stripe_account.
   if (event.type === 'payout.paid' && payout.arrival_date) {
     const createdAt = new Date(payout.created * 1000).toISOString();
     const arrivalISO = new Date(payout.arrival_date * 1000).toISOString();
@@ -1223,7 +1266,7 @@ export async function handlePayoutEvent(
     const { data: txs } = await supabase
       .from('transactions')
       .select('booking_request_id, bookings!inner(vendor_profile_id)')
-      .eq('bookings.vendor_profile_id', acc.vendor_profile_id)
+      .in('bookings.vendor_profile_id', linkedProfileIds)
       .gte('transferred_at', createdAt)
       .lte('transferred_at', arrivalISO);
 

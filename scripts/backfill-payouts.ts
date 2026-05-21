@@ -50,21 +50,39 @@ const STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 
 };
 
 async function main() {
-  const { data: accounts, error: accErr } = await supabase
-    .from('stripe_accounts')
-    .select('vendor_profile_id, stripe_account_id')
+  // Sub-project I §5: the FK direction flipped. Join from vendor_profiles
+  // (which now owns stripe_account_id) to the stripe_accounts row.
+  const { data: accountsRaw, error: accErr } = await supabase
+    .from('vendor_profiles')
+    .select('id, stripe_account_id, stripe_accounts!inner(id, stripe_account_id)')
     .not('stripe_account_id', 'is', null);
 
   if (accErr) {
-    console.error('[backfill] failed to read stripe_accounts:', accErr.message);
+    console.error('[backfill] failed to read vendor_profiles → stripe_accounts:', accErr.message);
     process.exit(1);
   }
+
+  // Normalize: one row per vendor_profile linked to a stripe_account. Multiple
+  // vendor_profiles may share one stripe_account under the hybrid model — we
+  // attribute payouts to the canonical (oldest) vendor_profile per stripe_account.
+  // For backfill purposes, attribute to whichever vendor_profile we encounter
+  // first for that stripe_account; the payouts table's UNIQUE on stripe_payout_id
+  // prevents duplicate rows even if multiple vendor_profiles map to the same one.
+  const seenStripeAccountIds = new Set<string>();
+  type Account = { vendor_profile_id: string; stripe_account_id: string };
+  const accounts: Account[] = (accountsRaw ?? []).flatMap((row) => {
+    const sa = (row.stripe_accounts as unknown as { id: string; stripe_account_id: string }) || null;
+    if (!sa || !sa.stripe_account_id) return [];
+    if (seenStripeAccountIds.has(sa.stripe_account_id)) return [];
+    seenStripeAccountIds.add(sa.stripe_account_id);
+    return [{ vendor_profile_id: row.id, stripe_account_id: sa.stripe_account_id }];
+  });
 
   let totalSeen = 0;
   let totalUpserted = 0;
   let totalSkipped = 0;
 
-  for (const acc of accounts ?? []) {
+  for (const acc of accounts) {
     const accountId = acc.stripe_account_id;
     if (!accountId) continue;
 
