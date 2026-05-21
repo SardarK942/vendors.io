@@ -132,11 +132,16 @@ CREATE POLICY "Vendors can update vendor_notes on own booking_events"
   );
 
 -- Public view (couple-side reads must go through this — Postgres RLS can't filter columns).
-CREATE VIEW booking_events_public AS
-  SELECT id, booking_id, event_date, event_start_time, event_end_time,
-         event_type_label, sequence, address_line_1, address_line_2,
-         city, state, postal_code, latitude, longitude,
-         completed_at, created_at, updated_at
+-- Explicitly enumerates safe columns from booking_events; vendor_notes is omitted.
+-- security_invoker = on ensures the view propagates the calling user's identity to RLS
+-- on the underlying booking_events table (default is off in PG 15+, which would bypass RLS).
+CREATE VIEW booking_events_public
+  WITH (security_invoker = on)
+  AS
+  SELECT id, booking_id, sequence, event_date, event_start_time, event_end_time,
+         event_type_label, location_name, address_line_1, city, state, postal_code,
+         google_place_id, guest_count_override, location_overridden,
+         completed_at, created_at
   FROM booking_events;
 
 COMMENT ON VIEW booking_events_public IS
