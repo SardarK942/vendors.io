@@ -69,11 +69,24 @@ async function main() {
     if (!accountId) continue;
 
     let cursor: string | undefined;
-    while (true) {
-      const payouts = await stripe.payouts.list(
-        { limit: 100, starting_after: cursor },
-        { stripeAccount: accountId }
-      );
+    let accountFailed = false;
+    while (!accountFailed) {
+      let payouts: Stripe.ApiList<Stripe.Payout>;
+      try {
+        payouts = await stripe.payouts.list(
+          { limit: 100, starting_after: cursor },
+          { stripeAccount: accountId }
+        );
+      } catch (err) {
+        // Common reasons: test-mode Connect account hit with a live key (leftover
+        // smoke-test data), Connect account deleted on the Stripe side, account
+        // restricted. Log and move to the next account — don't fail the whole run.
+        console.warn(
+          `[backfill] skip ${accountId}: ${err instanceof Error ? err.message : String(err)}`
+        );
+        accountFailed = true;
+        break;
+      }
 
       for (const payout of payouts.data) {
         totalSeen++;
