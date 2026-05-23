@@ -75,7 +75,7 @@ function isIconComponent(
 
 const Spinner = ({ className }: { className?: string }) => (
   <svg
-    className={cn('animate-spin', className)}
+    className={cn('animate-spin motion-reduce:animate-none', className)}
     width="14"
     height="14"
     viewBox="0 0 14 14"
@@ -125,8 +125,12 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         );
       }
       if (size !== resolvedSize) {
+        const message =
+          size === 'icon'
+            ? `[Button] size="icon" is deprecated. Drop the prop and pass an iconLeading/iconTrailing without children — icon-only mode is auto-detected.`
+            : `[Button] size="${size}" is deprecated. Use size="${resolvedSize}" instead.`;
         // eslint-disable-next-line no-console
-        console.warn(`[Button] size="${size}" is deprecated. Use size="${resolvedSize}" instead.`);
+        console.warn(message);
       }
     }
 
