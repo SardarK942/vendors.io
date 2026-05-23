@@ -6,10 +6,12 @@ export function Footer() {
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-3">
           <div>
-            <h3 className="text-sm font-semibold">Desi Wedding.io</h3>
+            <h3 className="font-display text-lg font-medium lowercase tracking-tight">
+              baazar<span className="text-hot-pink">.</span>
+            </h3>
             <p className="mt-2 text-sm text-muted-foreground">
-              Chicago&apos;s marketplace for Desi wedding vendors. Discover, compare, and book with
-              confidence.
+              Chicago&apos;s marketplace for South Asian wedding vendors. Discover, compare, and
+              book with confidence.
             </p>
           </div>
           <div>
@@ -47,7 +49,7 @@ export function Footer() {
           </div>
         </div>
         <div className="mt-8 flex flex-col items-center gap-2 border-t pt-4 text-xs text-muted-foreground sm:flex-row sm:justify-between">
-          <span>&copy; {new Date().getFullYear()} Desi Wedding Marketplace. Chicago, IL.</span>
+          <span>&copy; {new Date().getFullYear()} Baazar Marketplace. Chicago, IL.</span>
           <div className="flex gap-4">
             <Link href="/terms" className="hover:text-primary">
               Terms

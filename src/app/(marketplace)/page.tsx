@@ -25,14 +25,24 @@ export default async function HomePage() {
     <div className="space-y-16 py-8">
       {/* Hero Section */}
       <section className="space-y-6 pt-8 text-center md:pt-16">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
-          Find Your Perfect
+        {/* Indigo kicker — system chrome per DESIGN.md role discipline */}
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+          Baazar · Chicago weddings
+        </p>
+
+        {/* Hero headline — Spectral display, italic hot-pink accent */}
+        <h1 className="text-[clamp(48px,7.5vw,84px)] font-extrabold leading-[0.92] tracking-[-0.025em]">
+          Loud weddings.
           <br />
-          <span className="text-primary/80">Desi Wedding</span> Vendors
+          <span className="font-bold italic text-hot-pink">Quiet chaos.</span>
         </h1>
-        <p className="mx-auto max-w-2xl text-lg text-muted-foreground">
-          Chicago&apos;s marketplace for South Asian wedding vendors. Discover, compare, and book
-          verified vendors with transparent pricing and secure hold deposits.
+
+        {/* Subhead — haldi highlighter on the cultural phrase */}
+        <p className="mx-auto max-w-2xl text-lg text-ink-muted">
+          Chicago&apos;s marketplace for{' '}
+          <span className="bg-haldi box-decoration-clone px-2 pb-1 pt-0 text-ink">South Asian</span>{' '}
+          wedding vendors. Discover, compare, and book verified vendors with transparent pricing and
+          secure hold deposits.
         </p>
 
         {/* Search Bar */}

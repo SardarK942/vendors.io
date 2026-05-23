@@ -91,10 +91,10 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* Logo */}
-        <Link href="/" className="flex items-center space-x-2">
-          <span className="text-xl font-bold tracking-tight">
-            Desi Wedding<span className="text-primary/70">.io</span>
+        {/* Wordmark — Baazar static lockup. Cycling pan-cultural mark TBD. */}
+        <Link href="/" className="flex items-center">
+          <span className="font-display text-2xl font-medium lowercase tracking-tight">
+            baazar<span className="text-hot-pink">.</span>
           </span>
         </Link>
 

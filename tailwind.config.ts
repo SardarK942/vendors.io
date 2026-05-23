@@ -11,6 +11,30 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // ── Baazar M+ brand tokens — prefer these for NEW code ─────
+        // Supports alpha modifiers: bg-ink/50, text-cream/80, etc.
+        cream: {
+          DEFAULT: 'hsl(var(--cream) / <alpha-value>)',
+          soft: 'hsl(var(--cream-soft) / <alpha-value>)',
+        },
+        ink: {
+          DEFAULT: 'hsl(var(--ink) / <alpha-value>)',
+          muted: 'hsl(var(--ink-muted) / <alpha-value>)',
+          soft: 'hsl(var(--ink-soft) / <alpha-value>)',
+        },
+        indigo: {
+          DEFAULT: 'hsl(var(--indigo) / <alpha-value>)',
+          soft: 'hsl(var(--indigo-soft) / <alpha-value>)',
+        },
+        'hot-pink': 'hsl(var(--hot-pink) / <alpha-value>)',
+        haldi: 'hsl(var(--haldi) / <alpha-value>)',
+        hairline: {
+          DEFAULT: 'hsl(var(--hairline) / <alpha-value>)',
+          soft: 'hsl(var(--hairline-soft) / <alpha-value>)',
+        },
+        error: 'hsl(var(--error) / <alpha-value>)',
+
+        // ── shadcn semantic tokens — kept for existing component compat ──
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -53,9 +77,22 @@ const config: Config = {
         },
       },
       borderRadius: {
-        lg: 'var(--radius)',
-        md: 'calc(var(--radius) - 2px)',
-        sm: 'calc(var(--radius) - 4px)',
+        // DESIGN.md radii — overrides Tailwind defaults for sm/md/lg.
+        // xl, 2xl, 3xl, full inherit Tailwind defaults (12/16/24/9999px).
+        sm: '4px', // radii.sm
+        md: '6px', // radii.md
+        lg: '10px', // radii.lg
+      },
+      fontFamily: {
+        // DESIGN.md TY-C — Spectral display, Schibsted Grotesk body, DM Mono.
+        // Variables set by next/font in src/app/layout.tsx.
+        display: ['var(--font-display)', 'Georgia', 'serif'],
+        body: ['var(--font-body)', 'system-ui', '-apple-system', 'sans-serif'],
+        mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        // Override Tailwind's default sans so every untyped element gets Schibsted.
+        sans: ['var(--font-body)', 'system-ui', '-apple-system', 'sans-serif'],
+        // serif maps to display family for headlines/eds.
+        serif: ['var(--font-display)', 'Georgia', 'serif'],
       },
     },
   },
