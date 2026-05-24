@@ -99,24 +99,32 @@ export function applyVendorFilters<Q extends { eq: any; gte: any; lte: any; cont
 
 /**
  * Count vendors matching the given filters. Used by /api/vendors/count.
+ * NOTE: Price-band filtering is NOT applied in this count endpoint.
+ * The vendor_packages_price_band view cannot be joined via PostgREST foreign key syntax,
+ * so price filtering only works in full vendor queries (getVendors in vendor.service.ts)
+ * where filtering is applied in the application layer after fetching.
+ * This is acceptable for the UI's live footer count, which only filters by
+ * category, verification, cashFriendly, respondsIn, years, languages — all vendor_profiles columns.
  */
 export async function countFilteredVendors(
   supabase: SupabaseClient,
   filters: VendorFilterParams
 ): Promise<number> {
-  let query = supabase
-    .from('vendor_profiles')
-    .select(
-      'id, vendor_packages_price_band!vendor_packages_price_band_vendor_profile_id_fkey(id)',
-      {
-        count: 'exact',
-        head: true,
-      }
-    )
-    .eq('is_active', true)
-    .eq('onboarding_complete', true);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  query = applyVendorFilters(query as any, filters);
+  let query = supabase.from('vendor_profiles').select('id', {
+    count: 'exact',
+    head: true,
+  });
+
+  // Apply only non-price filters (price filtering is app-layer only)
+  if (filters.category) query = query.eq('category', filters.category);
+  if (filters.verified) query = query.eq('verified', true);
+  if (filters.cashFriendly) query = query.eq('payment_mode', 'cash');
+  if (filters.respondsIn) query = query.lte('response_sla_hours', filters.respondsIn);
+  if (filters.years) query = query.gte('years_in_business', filters.years);
+  if (filters.languages && filters.languages.length > 0) {
+    query = query.contains('languages', filters.languages);
+  }
+
   const { count, error } = await query;
   if (error) throw error;
   return count ?? 0;
