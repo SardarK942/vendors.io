@@ -126,6 +126,15 @@ components:
     typography:    "caption token — 12px / 500 / Schibsted Grotesk"
     timing:        "400ms open delay, 100ms close, 150ms fade-in (motion.ease-out)"
     api:           "<Tooltip content='...'>{trigger}</Tooltip>"
+  search-bar:
+    pattern:       "Segmented pill — When / Category / What + ink submit orb"
+    interaction:   "Click segment → active state (ink-inset ring + cream-soft fill) + docked panel below. Click outside or Esc to close."
+    pickers:       "When = react-day-picker, Category = vertical list with icons, What = free-text + typeahead popular queries"
+    variants:      "hero (64px segments, hero placement) and sticky-header (52px segments, sticky on /vendors)"
+    mobile:        "Collapses to single 'Search Chicago weddings' bar → Vaul bottom sheet with stacked sections + sticky ink Search button"
+    submit:        "Always navigates to /vendors with URL params (?date=, ?category=, ?q=)"
+    motion:        "200ms panel fade-in, 320ms sheet open. -1px lift on orb hover (lighter than button -3px since orb is smaller)"
+    accessibility: "Full keyboard nav, aria-expanded + aria-controls on segments, role=dialog on panels, prefers-reduced-motion honored"
 
 # Future migration target (Indian Type Foundry — paid, ~$800/yr total)
 typography-v2:
