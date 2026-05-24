@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VendorGrid } from '@/components/marketplace/VendorGrid';
-import { FilterSidebar } from '@/components/marketplace/FilterSidebar';
-import { SearchBar } from '@/components/marketplace/SearchBar';
+import { FilterShell } from '@/components/marketplace/filters/FilterShell';
+import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filters';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -17,7 +17,8 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const params = await searchParams;
   const supabase = await createServerSupabaseClient();
 
-  const category = typeof params.category === 'string' ? params.category : undefined;
+  const filters = parseVendorFilterParams(params as Record<string, string | string[] | undefined>);
+  const category = filters.category; // for FilterShell prop
   const page = typeof params.page === 'string' ? Number(params.page) : 1;
   const limit = 20;
   const offset = (page - 1) * limit;
@@ -31,7 +32,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     .eq('is_active', true)
     .eq('onboarding_complete', true);
 
-  if (category) query = query.eq('category', category);
+  query = applyVendorFilters(query, filters);
 
   query = query
     .order('verified', { ascending: false })
@@ -50,44 +51,28 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
         </p>
       </div>
 
-      {/* Sticky search band — top-16 matches the Navbar's h-16. Negative margins
-          cancel the parent's padding so the band spans full width, then restore
-          with matching px-*. backdrop-blur mirrors the Navbar blur pattern.
-          TODO: add scroll-triggered shadow once scrolled > 100px (spec §7 polish). */}
-      <div className="sticky top-16 z-30 -mx-4 mb-6 border-b border-hairline bg-cream/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-cream/80 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
-        <SearchBar variant="sticky-header" initialCategory={category} />
-      </div>
+      <FilterShell initialCategory={category} />
+      <VendorGrid vendors={vendors ?? []} />
 
-      <div className="flex gap-8">
-        <div className="hidden w-56 shrink-0 lg:block">
-          <FilterSidebar />
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center gap-2">
+          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+            <a
+              key={p}
+              href={`/vendors?${new URLSearchParams({
+                ...(category ? { category } : {}),
+                page: String(p),
+              }).toString()}`}
+              className={`rounded border px-3 py-1 text-sm ${
+                p === page ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'
+              }`}
+            >
+              {p}
+            </a>
+          ))}
         </div>
-        <div className="flex-1">
-          <VendorGrid vendors={vendors ?? []} />
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="mt-8 flex justify-center gap-2">
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-                <a
-                  key={p}
-                  href={`/vendors?${new URLSearchParams({
-                    ...(category ? { category } : {}),
-                    page: String(p),
-                  }).toString()}`}
-                  className={`rounded border px-3 py-1 text-sm ${
-                    p === page
-                      ? 'border-primary bg-primary text-primary-foreground'
-                      : 'hover:bg-muted'
-                  }`}
-                >
-                  {p}
-                </a>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+      )}
     </div>
   );
 }
