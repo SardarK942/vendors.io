@@ -85,4 +85,13 @@
   h6 {
     @apply font-display;
   }
+
+  /* react-day-picker v10: "today" modifier applies data-today to the <td>.
+   * Buttons reset text-decoration so we target via data attribute instead. */
+  [data-today='true'] button {
+    text-decoration: underline;
+    text-decoration-color: hsl(var(--haldi));
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
 }

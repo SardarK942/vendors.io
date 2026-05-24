@@ -50,8 +50,12 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
         </p>
       </div>
 
-      <div className="mb-6">
-        <SearchBar />
+      {/* Sticky search band — top-16 matches the Navbar's h-16. Negative margins
+          cancel the parent's padding so the band spans full width, then restore
+          with matching px-*. backdrop-blur mirrors the Navbar blur pattern.
+          TODO: add scroll-triggered shadow once scrolled > 100px (spec §7 polish). */}
+      <div className="sticky top-16 z-30 -mx-4 mb-6 border-b border-hairline bg-cream/95 px-4 py-3 backdrop-blur supports-[backdrop-filter]:bg-cream/80 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+        <SearchBar variant="sticky-header" initialCategory={category} />
       </div>
 
       <div className="flex gap-8">
