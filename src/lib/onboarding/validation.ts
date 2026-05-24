@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import { LANGUAGES, RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
+
+const VALID_LANGUAGE_SLUGS = LANGUAGES.map((l) => l.slug);
+const VALID_SLA_VALUES = RESPONSE_SLA_OPTIONS.map((o) => o.value);
 
 const instagramHandle = z
   .string()
@@ -9,7 +13,10 @@ const instagramHandle = z
 export const basicsSchema = z.object({
   businessName: z.string().min(1).max(120),
   category: z.string().min(1),
-  bio: z.string().min(50, 'Bio must be at least 50 characters').max(500, 'Bio must be at most 500 characters'),
+  bio: z
+    .string()
+    .min(50, 'Bio must be at least 50 characters')
+    .max(500, 'Bio must be at most 500 characters'),
 });
 
 export const locationSchema = z.object({
@@ -23,7 +30,10 @@ export const locationSchema = z.object({
 
 export const onlineSchema = z.object({
   instagramHandle: instagramHandle,
-  websiteUrl: z.union([z.string().url(), z.literal('')]).optional().transform((v) => v || ''),
+  websiteUrl: z
+    .union([z.string().url(), z.literal('')])
+    .optional()
+    .transform((v) => v || ''),
 });
 
 export const portfolioSchema = z.object({
@@ -32,6 +42,15 @@ export const portfolioSchema = z.object({
 
 export const paymentModeSchema = z.object({
   paymentMode: z.enum(['stripe', 'cash']),
+});
+
+export const detailsSchema = z.object({
+  languages: z
+    .array(z.string())
+    .min(1, 'At least one language is required')
+    .refine((arr) => arr.every((s) => VALID_LANGUAGE_SLUGS.includes(s)), 'Invalid language slug'),
+  years_in_business: z.number().int().min(0).max(99),
+  response_sla_hours: z.number().refine((n) => VALID_SLA_VALUES.includes(n), 'Invalid SLA value'),
 });
 
 export type PaymentModeInput = z.infer<typeof paymentModeSchema>;
@@ -58,3 +77,4 @@ export type BasicsInput = z.infer<typeof basicsSchema>;
 export type LocationInput = z.infer<typeof locationSchema>;
 export type OnlineInput = z.infer<typeof onlineSchema>;
 export type PortfolioInput = z.infer<typeof portfolioSchema>;
+export type DetailsInput = z.infer<typeof detailsSchema>;

@@ -96,7 +96,7 @@ export interface Database {
             columns: ['user_id'];
             referencedRelation: 'users';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       users: {
@@ -152,6 +152,8 @@ export interface Database {
           instagram_handle: string | null;
           website_url: string | null;
           verified: boolean;
+          languages: string[] | null;
+          years_in_business: number | null;
           response_sla_hours: number;
           total_bookings: number;
           average_rating: number | null;
@@ -183,6 +185,8 @@ export interface Database {
           instagram_handle?: string | null;
           website_url?: string | null;
           verified?: boolean;
+          languages?: string[] | null;
+          years_in_business?: number | null;
           response_sla_hours?: number;
           total_bookings?: number;
           average_rating?: number | null;
@@ -212,6 +216,8 @@ export interface Database {
           instagram_handle?: string | null;
           website_url?: string | null;
           verified?: boolean;
+          languages?: string[] | null;
+          years_in_business?: number | null;
           response_sla_hours?: number;
           total_bookings?: number;
           average_rating?: number | null;
