@@ -37,8 +37,9 @@ export interface UseSearchStateReturn {
  */
 export function useSearchState(options: UseSearchStateOptions = {}): UseSearchStateReturn {
   const router = useRouter();
-  // useSearchParams is read once on mount to seed; we don't reactively re-sync because
-  // the user's in-progress edits should not be clobbered by URL changes during typing.
+  // useSearchParams runs every render (App Router is fine with that); we only use the
+  // value during initial useState seeding below. State is seeded once, never re-synced
+  // from URL, so in-progress edits aren't clobbered by URL changes during typing.
   const searchParams = useSearchParams();
 
   const initial: SearchState = {
