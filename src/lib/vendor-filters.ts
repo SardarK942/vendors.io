@@ -70,25 +70,18 @@ export function applyVendorFilters<Q extends { eq: any; gte: any; lte: any; cont
   if (filters.respondsIn) q = q.lte('response_sla_hours', filters.respondsIn);
   if (filters.years) q = q.gte('years_in_business', filters.years);
 
-  // Price band → derived min/max range. priceMin/priceMax (explicit) override band.
-  let minCents = filters.priceMin;
-  let maxCents = filters.priceMax;
-  if (filters.priceBand && minCents === undefined && maxCents === undefined) {
-    const band = PRICE_BANDS.find((b) => b.slug === filters.priceBand);
-    if (band) {
-      minCents = band.minCents;
-      if (band.maxCents !== null) maxCents = band.maxCents;
-    }
-  }
-  if (minCents !== undefined) {
-    // Joined table vendor_packages_price_band — filter via inner-join semantics
-    // requires using or(); here we filter the band relation's max_price_cents >= minCents.
-    // (Adjust to match actual relation if needed at implementation time.)
-    q = q.gte('vendor_packages_price_band.max_price_cents', minCents);
-  }
-  if (maxCents !== undefined) {
-    q = q.lte('vendor_packages_price_band.min_price_cents', maxCents);
-  }
+  // NOTE: Price filtering (priceBand / priceMin / priceMax) is DEFERRED.
+  // `vendor_packages_price_band` is a VIEW without a PostgREST-discoverable FK
+  // relationship to `vendor_profiles`, so dotted-column filters
+  // (`vendor_packages_price_band.max_price_cents`) silently fail or error.
+  // Proper fix is one of:
+  //   (a) materialize vendor_packages_price_band with explicit FKs, or
+  //   (b) denormalize min/max price band onto vendor_profiles, or
+  //   (c) app-layer filter after fetching (existing vendor.service.ts pattern).
+  // For Day-1 chip ship, URL params are accepted + reflected in the UI but
+  // the DB query ignores them — matches the existing FilterSidebar behavior
+  // (which also stored price URL params without filtering on them).
+  // Follow-up PR will implement option (b) or (c).
 
   if (filters.languages && filters.languages.length > 0) {
     q = q.contains('languages', filters.languages);
