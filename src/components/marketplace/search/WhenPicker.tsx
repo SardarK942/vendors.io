@@ -65,7 +65,9 @@ export function WhenPicker({ selected, onSelect, className }: WhenPickerProps) {
             'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink hover:bg-cream-soft transition-colors',
           // v10: day_selected → selected; day_today → today; day_outside → outside; day_disabled → disabled
           selected: 'bg-ink !text-cream hover:bg-ink',
-          today: 'underline decoration-haldi decoration-1 underline-offset-2',
+          // today: underline handled via globals.css [data-today='true'] button selector
+          // (Tailwind underline won't pierce the button's text-decoration reset)
+          today: '',
           outside: 'text-ink-soft opacity-50',
           disabled: 'text-ink-soft opacity-30 cursor-not-allowed',
         }}

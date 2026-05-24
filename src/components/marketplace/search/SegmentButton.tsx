@@ -44,7 +44,7 @@ export const SegmentButton = React.forwardRef<HTMLButtonElement, SegmentButtonPr
           !isActive && 'hover:bg-cream-soft',
           // Active: ink-inset ring, cream fill, soft lift shadow, fully rounded
           isActive &&
-            'relative z-10 rounded-full bg-cream shadow-[inset_0_0_0_2px_var(--ink),_0_4px_12px_rgba(27,20,20,0.10)]'
+            'relative z-10 rounded-full bg-cream shadow-[inset_0_0_0_2px_hsl(var(--ink)),_0_4px_12px_rgba(27,20,20,0.10)]'
         )}
       >
         <span className="mb-1 text-[10px] font-bold uppercase leading-none tracking-[0.12em] text-ink">

@@ -46,7 +46,7 @@ export default async function HomePage() {
         </p>
 
         {/* Search Bar */}
-        <div className="mx-auto max-w-xl">
+        <div className="mx-auto max-w-[720px]">
           <SearchBar />
         </div>
 
