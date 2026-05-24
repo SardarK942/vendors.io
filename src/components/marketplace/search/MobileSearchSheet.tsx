@@ -76,6 +76,9 @@ export function MobileSearchSheet({
           <div className="mx-auto mb-1 mt-3 h-1 w-12 rounded-full bg-hairline" aria-hidden="true" />
 
           <Drawer.Title className="sr-only">Search vendors</Drawer.Title>
+          <Drawer.Description className="sr-only">
+            Search by date, category, and free text
+          </Drawer.Description>
 
           <div className="flex-1 space-y-3 overflow-y-auto px-5 py-4">
             {/* When */}

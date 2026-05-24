@@ -222,6 +222,7 @@ function Panel({ id, align, widthClass = 'w-[320px]', children }: PanelProps) {
         'absolute top-[calc(100%+12px)] z-30',
         'rounded-lg border border-hairline bg-cream p-5',
         'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]',
+        'duration-200 animate-in fade-in-0',
         'motion-reduce:animate-none',
         widthClass,
         alignClass

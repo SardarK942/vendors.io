@@ -11,6 +11,7 @@ import {
   Flower2,
   Mail,
 } from 'lucide-react';
+import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 
 export interface Category {
   slug: string;
@@ -19,24 +20,38 @@ export interface Category {
 }
 
 /**
- * Static category list for the search bar Category picker.
- *
- * NOTE: This duplicates the `vendor_profiles.category` enum on the backend.
- * If the enum drifts, this list drifts. Follow-up: derive both from a single
- * shared constant or generate from a Supabase types file.
+ * Icon mapping for each DB vendor category slug.
+ * Icons are UI-only and not shared with the backend, so we keep this local.
+ * Slugs must match VENDOR_CATEGORIES in src/lib/utils.ts — that file is the
+ * single source of truth for the vendor_profiles.category DB enum.
+ */
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  photography: Camera,
+  videography: Video,
+  mehndi: Sparkles,
+  hair_makeup: Scissors,
+  dj: Music,
+  photobooth: Camera,
+  catering: ChefHat,
+  venue: Building2,
+  decor: Flower2,
+  invitations: Mail,
+};
+
+/**
+ * Full category list for the search bar Category picker.
+ * Derived from the canonical VENDOR_CATEGORIES + VENDOR_CATEGORY_LABELS in
+ * src/lib/utils.ts so slugs always match the DB CHECK constraint — no drift.
+ * The "all" entry at the head is the pill's "no filter" state and is not a
+ * real DB category.
  */
 export const CATEGORIES: Category[] = [
   { slug: 'all', label: 'All vendors', icon: Grid },
-  { slug: 'photography', label: 'Photography', icon: Camera },
-  { slug: 'videography', label: 'Videography', icon: Video },
-  { slug: 'mehndi-henna', label: 'Mehndi / Henna', icon: Sparkles },
-  { slug: 'hair-makeup', label: 'Hair & Makeup', icon: Scissors },
-  { slug: 'dj-music', label: 'DJ & Music', icon: Music },
-  { slug: 'photo-booth', label: 'Photo Booth', icon: Camera },
-  { slug: 'catering', label: 'Catering', icon: ChefHat },
-  { slug: 'venue', label: 'Venue', icon: Building2 },
-  { slug: 'decor-floral', label: 'Decor & Floral', icon: Flower2 },
-  { slug: 'invitations', label: 'Invitations', icon: Mail },
+  ...VENDOR_CATEGORIES.map((slug) => ({
+    slug,
+    label: VENDOR_CATEGORY_LABELS[slug] ?? slug,
+    icon: CATEGORY_ICONS[slug] ?? Grid,
+  })),
 ];
 
 /**
