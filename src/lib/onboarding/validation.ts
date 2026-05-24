@@ -71,6 +71,9 @@ export const publishGateSchema = z.object({
   website_url: z.string().nullable(),
   portfolio_images: z.array(z.string()).min(1),
   payment_mode: z.enum(['stripe', 'cash']),
+  languages: z.array(z.string()).min(1),
+  years_in_business: z.number().int().min(0).max(99),
+  response_sla_hours: z.number().refine((n) => [1, 4, 24, 48, 72].includes(n)),
 });
 
 export type BasicsInput = z.infer<typeof basicsSchema>;

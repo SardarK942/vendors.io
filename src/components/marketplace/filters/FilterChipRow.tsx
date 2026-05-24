@@ -28,10 +28,15 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const languagesChipRef = React.useRef<HTMLButtonElement>(null);
 
   // Click-outside closes active dropdown.
+  // NOTE: AnchoredPanel portals its div to document.body, so it is NOT inside
+  // containerRef. We also accept clicks inside any [data-filter-panel] element.
   React.useEffect(() => {
     if (!activeDropdown) return;
     const onMouseDown = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as HTMLElement | null;
+      const inContainer = containerRef.current?.contains(target ?? null) ?? false;
+      const inPanel = !!target?.closest('[data-filter-panel]');
+      if (!inContainer && !inPanel) {
         setActiveDropdown(null);
       }
     };
@@ -54,9 +59,11 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   // Commit pending language changes to URL when the Languages dropdown closes.
   // (Languages is multi-select; toggling chips uses patch() during the dropdown
   // session to avoid re-fetching after every click. On close, push to URL.)
+  // Fire whenever languages WAS active and is NO LONGER active — regardless of
+  // what dropdown opens next (e.g. Languages → Price must not lose the patch).
   const prevDropdownRef = React.useRef<FilterDropdown>(null);
   React.useEffect(() => {
-    if (prevDropdownRef.current === 'languages' && activeDropdown === null) {
+    if (prevDropdownRef.current === 'languages' && activeDropdown !== 'languages') {
       apply();
     }
     prevDropdownRef.current = activeDropdown;
@@ -170,13 +177,27 @@ function AnchoredPanel({ id, anchorRef, children }: AnchoredPanelProps) {
   const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = React.useState(false);
 
-  React.useLayoutEffect(() => {
-    setMounted(true);
+  const updatePos = React.useCallback(() => {
     if (anchorRef.current) {
       const rect = anchorRef.current.getBoundingClientRect();
       setCoords({ top: rect.bottom + 8, left: rect.left });
     }
   }, [anchorRef]);
+
+  React.useLayoutEffect(() => {
+    setMounted(true);
+    updatePos();
+  }, [updatePos]);
+
+  // Reposition on scroll (capture phase catches scrollable parents) + resize.
+  React.useEffect(() => {
+    window.addEventListener('resize', updatePos);
+    window.addEventListener('scroll', updatePos, true);
+    return () => {
+      window.removeEventListener('resize', updatePos);
+      window.removeEventListener('scroll', updatePos, true);
+    };
+  }, [updatePos]);
 
   if (!mounted || !coords) return null;
 
@@ -185,6 +206,7 @@ function AnchoredPanel({ id, anchorRef, children }: AnchoredPanelProps) {
       id={id}
       role="dialog"
       aria-modal="false"
+      data-filter-panel="true"
       style={{ top: coords.top, left: coords.left }}
       className={cn(
         'fixed z-[100]',

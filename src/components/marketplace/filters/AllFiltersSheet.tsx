@@ -114,7 +114,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
               variant="primary"
               size="md"
               isLoading={countLoading}
-              showTextWhileLoading={false}
+              showTextWhileLoading={true}
               onClick={handleApply}
               disabled={count === 0}
               aria-live="polite"
