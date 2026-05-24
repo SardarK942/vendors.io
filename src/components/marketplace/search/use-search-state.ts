@@ -23,7 +23,12 @@ export interface UseSearchStateReturn {
   setQuery: (q: string) => void;
   activeSegment: SearchSegment;
   setActiveSegment: (s: SearchSegment) => void;
-  submit: () => void;
+  /**
+   * Submit to /vendors. Optional `overrides` merge over current state at submit
+   * time — necessary when a handler does setX(value) + submit() on the same tick
+   * (the React state update is async; the override carries the fresh value).
+   */
+  submit: (overrides?: Partial<SearchState>) => void;
 }
 
 /**
@@ -55,15 +60,19 @@ export function useSearchState(options: UseSearchStateOptions = {}): UseSearchSt
   const setCategory = useCallback((c: string) => setState((s) => ({ ...s, category: c })), []);
   const setQuery = useCallback((q: string) => setState((s) => ({ ...s, query: q })), []);
 
-  const submit = useCallback(() => {
-    const params = new URLSearchParams();
-    if (state.date) params.set('date', state.date);
-    if (state.category && state.category !== 'all') params.set('category', state.category);
-    if (state.query.trim()) params.set('q', state.query.trim());
-    const qs = params.toString();
-    router.push(`/vendors${qs ? `?${qs}` : ''}`);
-    setActiveSegment(null);
-  }, [router, state.date, state.category, state.query]);
+  const submit = useCallback(
+    (overrides?: Partial<SearchState>) => {
+      const final: SearchState = { ...state, ...(overrides ?? {}) };
+      const params = new URLSearchParams();
+      if (final.date) params.set('date', final.date);
+      if (final.category && final.category !== 'all') params.set('category', final.category);
+      if (final.query.trim()) params.set('q', final.query.trim());
+      const qs = params.toString();
+      router.push(`/vendors${qs ? `?${qs}` : ''}`);
+      setActiveSegment(null);
+    },
+    [router, state]
+  );
 
   return {
     state,

@@ -93,7 +93,8 @@ export function SearchBar({
 
   const handleQuerySubmit = (q: string) => {
     setQuery(q);
-    submit();
+    // Override carries the fresh value — state.query won't have updated yet on this tick
+    submit({ query: q });
   };
 
   const heroSize = variant === 'hero';

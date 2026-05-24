@@ -16,7 +16,7 @@ export interface MobileSearchSheetProps {
   setDate: (d: string) => void;
   setCategory: (c: string) => void;
   setQuery: (q: string) => void;
-  submit: () => void;
+  submit: (overrides?: Partial<SearchState>) => void;
 }
 
 type MobileSection = 'when' | 'category' | 'what' | null;
@@ -125,7 +125,9 @@ export function MobileSearchSheet({
                 onChange={setQuery}
                 onSubmit={(q) => {
                   setQuery(q);
-                  handleSubmit();
+                  setOpen(false);
+                  // Override carries fresh value; setQuery's state update is async
+                  submit({ query: q });
                 }}
               />
             </MobileSection>
