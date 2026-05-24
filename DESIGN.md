@@ -135,6 +135,17 @@ components:
     submit:        "Always navigates to /vendors with URL params (?date=, ?category=, ?q=)"
     motion:        "200ms panel fade-in, 320ms sheet open. -1px lift on orb hover (lighter than button -3px since orb is smaller)"
     accessibility: "Full keyboard nav, aria-expanded + aria-controls on segments, role=dialog on panels, prefers-reduced-motion honored"
+  filter-chip:
+    pattern:       "5 variants — toggle, dropdown, with-count, applied-removable, all-filters trigger"
+    surface:       "32px tall, pill-shaped (radii.full), ink fill on active, cream-soft fill on applied"
+    interaction:   "Toggle = aria-pressed click flip. Dropdown = aria-expanded + docked panel. Applied = nested × button removes filter."
+    motion:        "180ms hover bg, 200ms panel fade-in (motion.fast)"
+    accessibility: "WCAG AA on all variant×state combos. Sheet uses focus trap; chip row keyboard-navigable."
+  filter-sheet:
+    pattern:       "Vaul side drawer (right desktop, bottom mobile) with sectioned filters + live-count footer CTA"
+    sections:      "Trust · Price · Languages · Experience · Event types · Category-specific (conditional)"
+    footer:        "Sticky — Clear-all link left, ink primary 'Show N vendors' CTA right with debounced live count"
+    motion:        "320ms slide-in/out (motion.medium)"
 
 # Future migration target (Indian Type Foundry — paid, ~$800/yr total)
 typography-v2:
