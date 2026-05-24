@@ -9,7 +9,7 @@ import type { SearchSegment } from './search/use-search-state';
 import { SegmentButton } from './search/SegmentButton';
 import { WhenPicker } from './search/WhenPicker';
 import { CategoryPicker } from './search/CategoryPicker';
-import { WhatPicker } from './search/WhatPicker';
+import { WhatSuggestions } from './search/WhatSuggestions';
 import { MobileSearchSheet } from './search/MobileSearchSheet';
 
 export interface SearchBarProps {
@@ -52,7 +52,9 @@ export function SearchBar({
   const pillRef = React.useRef<HTMLDivElement>(null);
   const whenRef = React.useRef<HTMLButtonElement>(null);
   const categoryRef = React.useRef<HTMLButtonElement>(null);
-  const whatRef = React.useRef<HTMLButtonElement>(null);
+  // What is an inline input (not a button) so users can type directly into the segment,
+  // matching Airbnb's "Where" pattern — single input, suggestions docked below.
+  const whatInputRef = React.useRef<HTMLInputElement>(null);
 
   // Click-outside to close
   React.useEffect(() => {
@@ -88,7 +90,7 @@ export function SearchBar({
   const handleCategoryPicked = (slug: string) => {
     setCategory(slug);
     setActiveSegment('what');
-    whatRef.current?.focus();
+    whatInputRef.current?.focus();
   };
 
   const handleQuerySubmit = (q: string) => {
@@ -157,24 +159,49 @@ export function SearchBar({
                 </Panel>
               )}
             </div>
-            <div className="relative flex flex-1">
-              <SegmentButton
-                ref={whatRef}
-                label="What"
-                value={state.query || '"Bollywood DJ" or "Mehndi artist"'}
-                isPlaceholder={!state.query}
-                isFreeText
-                isActive={activeSegment === 'what'}
-                panelId="search-panel-what"
-                onClick={() => toggleSegment('what')}
+            {/* What segment: inline input (not a button) — type directly into the segment. */}
+            {/* Panel below shows suggestions only, no second input. */}
+            <div
+              className={cn(
+                'relative flex flex-1 cursor-text flex-col items-start justify-center px-5 text-left lg:px-6',
+                'duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)] transition-all',
+                activeSegment !== 'what' && 'hover:bg-cream-soft',
+                activeSegment === 'what' &&
+                  'relative z-10 rounded-full bg-cream shadow-[inset_0_0_0_2px_hsl(var(--ink)),_0_4px_12px_rgba(27,20,20,0.10)]'
+              )}
+              onClick={() => whatInputRef.current?.focus()}
+            >
+              <label
+                htmlFor="search-what-input"
+                className="mb-1 cursor-text text-[10px] font-bold uppercase leading-none tracking-[0.12em] text-ink"
+              >
+                What
+              </label>
+              <input
+                ref={whatInputRef}
+                id="search-what-input"
+                type="text"
+                value={state.query}
+                onChange={(e) => setQuery(e.target.value)}
+                onFocus={() => setActiveSegment('what')}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    submit({ query: state.query });
+                  }
+                }}
+                placeholder='"Bollywood DJ" or "Mehndi artist"'
+                aria-controls="search-panel-what"
+                aria-expanded={activeSegment === 'what'}
+                className={cn(
+                  'w-full border-none bg-transparent p-0 font-sans text-[13px] outline-none',
+                  'placeholder:italic placeholder:text-ink-soft',
+                  state.query ? 'font-medium text-ink' : 'text-ink-muted'
+                )}
               />
               {activeSegment === 'what' && (
                 <Panel id="search-panel-what" widthClass="w-[340px]">
-                  <WhatPicker
-                    query={state.query}
-                    onChange={setQuery}
-                    onSubmit={handleQuerySubmit}
-                  />
+                  <WhatSuggestions query={state.query} onSubmit={handleQuerySubmit} />
                 </Panel>
               )}
             </div>
