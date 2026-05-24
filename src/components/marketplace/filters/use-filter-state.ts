@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import type { PriceBand } from './constants';
 
@@ -107,22 +107,45 @@ export function useFilterState(): UseFilterStateReturn {
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
-  const [state, setState] = useState<FilterState>(() =>
-    readFilterState(new URLSearchParams(searchParams.toString()))
+  // urlState is always derived from the live URL — updates automatically whenever
+  // router.push() completes and Next.js propagates the new searchParams.
+  const urlState = useMemo(
+    () => readFilterState(new URLSearchParams(searchParams.toString())),
+    [searchParams]
   );
+
+  // localPatch holds in-progress edits (e.g. multi-select language session) that
+  // haven't been committed to the URL yet. Cleared on apply() / reset().
+  const [localPatch, setLocalPatch] = useState<Partial<FilterState>>({});
+
+  // Merged view: local overrides win over URL-derived values.
+  const state: FilterState = useMemo(
+    () => ({ ...urlState, ...localPatch }),
+    [urlState, localPatch]
+  );
+
   const [activeDropdown, setActiveDropdown] = useState<FilterDropdown>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const patch = useCallback(
-    (changes: Partial<FilterState>) => setState((s) => ({ ...s, ...changes })),
+    (changes: Partial<FilterState>) => setLocalPatch((p) => ({ ...p, ...changes })),
     []
   );
 
-  const reset = useCallback(() => setState(EMPTY_STATE), []);
+  const reset = useCallback(() => {
+    setLocalPatch({});
+    const params = serializeFilterState(EMPTY_STATE);
+    const qs = params.toString();
+    const target = pathname + (qs ? `?${qs}` : '');
+    router.push(target);
+  }, [router, pathname]);
 
   const apply = useCallback(
     (overrides?: Partial<FilterState>) => {
-      const next: FilterState = { ...state, ...(overrides ?? {}) };
+      // Merge: url base → local patch → call-site overrides
+      const next: FilterState = { ...urlState, ...localPatch, ...(overrides ?? {}) };
+      // Clear local patch — the URL will become the new source of truth.
+      setLocalPatch({});
       const params = serializeFilterState(next);
       // Preserve category from search bar (managed by search-state hook) by
       // copying it over if present on the current URL.
@@ -132,7 +155,7 @@ export function useFilterState(): UseFilterStateReturn {
       const target = pathname + (qs ? `?${qs}` : '');
       router.push(target);
     },
-    [router, pathname, searchParams, state]
+    [router, pathname, searchParams, urlState, localPatch]
   );
 
   return {

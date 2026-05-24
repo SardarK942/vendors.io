@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Chip } from './Chip';
 import { PriceDropdown } from './PriceDropdown';
@@ -23,6 +24,8 @@ export interface FilterChipRowProps {
 export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const { state, patch, activeDropdown, setActiveDropdown, apply } = useFilterState();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const priceChipRef = React.useRef<HTMLButtonElement>(null);
+  const languagesChipRef = React.useRef<HTMLButtonElement>(null);
 
   // Click-outside closes active dropdown.
   React.useEffect(() => {
@@ -91,6 +94,7 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
       {/* Price */}
       <div className="relative">
         <Chip
+          ref={priceChipRef}
           variant="dropdown"
           isActive={activeDropdown === 'price' || !!state.priceBand}
           panelId="filter-panel-price"
@@ -99,7 +103,7 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
           {priceBandLabel}
         </Chip>
         {activeDropdown === 'price' && (
-          <Panel id="filter-panel-price">
+          <AnchoredPanel id="filter-panel-price" anchorRef={priceChipRef}>
             <PriceDropdown
               selected={state.priceBand}
               onSelect={(b) => {
@@ -107,7 +111,7 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
                 setActiveDropdown(null);
               }}
             />
-          </Panel>
+          </AnchoredPanel>
         )}
       </div>
 
@@ -123,6 +127,7 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
       {/* Languages */}
       <div className="relative">
         <Chip
+          ref={languagesChipRef}
           variant="dropdown"
           isActive={activeDropdown === 'languages' || state.languages.length > 0}
           count={state.languages.length}
@@ -132,12 +137,12 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
           Languages
         </Chip>
         {activeDropdown === 'languages' && (
-          <Panel id="filter-panel-languages">
+          <AnchoredPanel id="filter-panel-languages" anchorRef={languagesChipRef}>
             <LanguagesDropdown
               selected={state.languages}
               onChange={(next) => patch({ languages: next })}
             />
-          </Panel>
+          </AnchoredPanel>
         )}
       </div>
 
@@ -149,25 +154,47 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   );
 }
 
-interface PanelProps {
+interface AnchoredPanelProps {
   id: string;
+  /** Ref to the trigger button — used to compute fixed position. */
+  anchorRef: React.RefObject<HTMLButtonElement | null>;
   children: React.ReactNode;
 }
 
-function Panel({ id, children }: PanelProps) {
-  return (
+/**
+ * Dropdown panel rendered into document.body via a portal so it escapes any
+ * overflow:auto ancestor (e.g. the chip row's overflow-x-auto container).
+ * Position is anchored below the trigger button using getBoundingClientRect().
+ */
+function AnchoredPanel({ id, anchorRef, children }: AnchoredPanelProps) {
+  const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useLayoutEffect(() => {
+    setMounted(true);
+    if (anchorRef.current) {
+      const rect = anchorRef.current.getBoundingClientRect();
+      setCoords({ top: rect.bottom + 8, left: rect.left });
+    }
+  }, [anchorRef]);
+
+  if (!mounted || !coords) return null;
+
+  return createPortal(
     <div
       id={id}
       role="dialog"
       aria-modal="false"
+      style={{ top: coords.top, left: coords.left }}
       className={cn(
-        'absolute left-0 top-[calc(100%+8px)] z-30',
+        'fixed z-[100]',
         'rounded-lg border border-hairline bg-cream p-2',
         'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]',
         'duration-200 animate-in fade-in-0 motion-reduce:animate-none'
       )}
     >
       {children}
-    </div>
+    </div>,
+    document.body
   );
 }
