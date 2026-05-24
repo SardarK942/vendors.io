@@ -123,34 +123,61 @@ export function SearchBar({
           )}
         >
           <div className={cn('flex flex-1 items-stretch divide-x divide-hairline', segmentHeight)}>
-            <SegmentButton
-              ref={whenRef}
-              label="When"
-              value={formatDateShort(state.date)}
-              isPlaceholder={!state.date}
-              isActive={activeSegment === 'when'}
-              panelId="search-panel-when"
-              onClick={() => toggleSegment('when')}
-            />
-            <SegmentButton
-              ref={categoryRef}
-              label="Category"
-              value={category?.label ?? 'All vendors'}
-              isPlaceholder={!state.category || state.category === 'all'}
-              isActive={activeSegment === 'category'}
-              panelId="search-panel-category"
-              onClick={() => toggleSegment('category')}
-            />
-            <SegmentButton
-              ref={whatRef}
-              label="What"
-              value={state.query || '"Bollywood DJ" or "Mehndi artist"'}
-              isPlaceholder={!state.query}
-              isFreeText
-              isActive={activeSegment === 'what'}
-              panelId="search-panel-what"
-              onClick={() => toggleSegment('what')}
-            />
+            {/* Each segment wraps itself + its docked panel in a relative container, */}
+            {/* so the panel anchors to the triggering segment, not the pill edges. */}
+            <div className="relative flex">
+              <SegmentButton
+                ref={whenRef}
+                label="When"
+                value={formatDateShort(state.date)}
+                isPlaceholder={!state.date}
+                isActive={activeSegment === 'when'}
+                panelId="search-panel-when"
+                onClick={() => toggleSegment('when')}
+              />
+              {activeSegment === 'when' && (
+                <Panel id="search-panel-when">
+                  <WhenPicker selected={state.date} onSelect={handleDatePicked} />
+                </Panel>
+              )}
+            </div>
+            <div className="relative flex">
+              <SegmentButton
+                ref={categoryRef}
+                label="Category"
+                value={category?.label ?? 'All vendors'}
+                isPlaceholder={!state.category || state.category === 'all'}
+                isActive={activeSegment === 'category'}
+                panelId="search-panel-category"
+                onClick={() => toggleSegment('category')}
+              />
+              {activeSegment === 'category' && (
+                <Panel id="search-panel-category" widthClass="w-[260px]">
+                  <CategoryPicker selected={state.category} onSelect={handleCategoryPicked} />
+                </Panel>
+              )}
+            </div>
+            <div className="relative flex flex-1">
+              <SegmentButton
+                ref={whatRef}
+                label="What"
+                value={state.query || '"Bollywood DJ" or "Mehndi artist"'}
+                isPlaceholder={!state.query}
+                isFreeText
+                isActive={activeSegment === 'what'}
+                panelId="search-panel-what"
+                onClick={() => toggleSegment('what')}
+              />
+              {activeSegment === 'what' && (
+                <Panel id="search-panel-what" widthClass="w-[340px]">
+                  <WhatPicker
+                    query={state.query}
+                    onChange={setQuery}
+                    onSubmit={handleQuerySubmit}
+                  />
+                </Panel>
+              )}
+            </div>
           </div>
 
           <button
@@ -170,23 +197,6 @@ export function SearchBar({
             <Search className="h-[18px] w-[18px] stroke-cream" strokeWidth={2} />
           </button>
         </form>
-
-        {/* Docked panels */}
-        {activeSegment === 'when' && (
-          <Panel id="search-panel-when" align="left">
-            <WhenPicker selected={state.date} onSelect={handleDatePicked} />
-          </Panel>
-        )}
-        {activeSegment === 'category' && (
-          <Panel id="search-panel-category" align="center" widthClass="w-[260px]">
-            <CategoryPicker selected={state.category} onSelect={handleCategoryPicked} />
-          </Panel>
-        )}
-        {activeSegment === 'what' && (
-          <Panel id="search-panel-what" align="right" widthClass="w-[340px]">
-            <WhatPicker query={state.query} onChange={setQuery} onSubmit={handleQuerySubmit} />
-          </Panel>
-        )}
       </div>
 
       {/* Mobile collapsed bar + sheet (below md) */}
@@ -205,27 +215,27 @@ export function SearchBar({
 
 interface PanelProps {
   id: string;
-  align: 'left' | 'center' | 'right';
   widthClass?: string;
   children: React.ReactNode;
 }
 
-function Panel({ id, align, widthClass = 'w-[320px]', children }: PanelProps) {
-  const alignClass =
-    align === 'left' ? 'left-0' : align === 'right' ? 'right-0' : 'left-1/2 -translate-x-1/2';
+/**
+ * Docked picker panel. Anchored to its parent segment wrapper via `left-0`;
+ * the wrapper must be position:relative. Width defaults to 320px (WhenPicker).
+ */
+function Panel({ id, widthClass = 'w-[320px]', children }: PanelProps) {
   return (
     <div
       id={id}
       role="dialog"
       aria-modal="false"
       className={cn(
-        'absolute top-[calc(100%+12px)] z-30',
+        'absolute left-0 top-[calc(100%+12px)] z-30',
         'rounded-lg border border-hairline bg-cream p-5',
         'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]',
         'duration-200 animate-in fade-in-0',
         'motion-reduce:animate-none',
-        widthClass,
-        alignClass
+        widthClass
       )}
     >
       {children}
