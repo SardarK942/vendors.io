@@ -51,7 +51,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
       </div>
 
       <div className="mb-6">
-        <SearchBar />
+        <SearchBar variant="sticky-header" initialCategory={category} />
       </div>
 
       <div className="flex gap-8">
