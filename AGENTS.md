@@ -48,11 +48,14 @@
 - Do not move forward when verification fails.
 - Run `npm run lint` and `npm run typecheck` after every change.
 
-## Checkpoints & Pre-Commit Hooks
+## Git Workflow (Required)
 
-- Create git commits after milestones (each completed feature).
-- Ensure pre-commit hooks pass before commits.
-- Use conventional commit messages: `feat:`, `fix:`, `chore:`, `docs:`, `test:`.
+- **Never commit directly to `main`.** Every change — features, fixes, docs, chore — lands on a feature branch and merges via PR.
+- **Branch naming:** `feat/<scope>-<short-name>` for features, `fix/<scope>-<short-name>` for fixes, `docs/<scope>` for docs, `chore/<scope>` for cleanup. Example: `feat/baazar-day-1-brand-button`, `fix/calendar-double-booking`.
+- **Before starting work**, branch off the latest `main`: `git checkout main && git pull && git checkout -b feat/<branch-name>`.
+- **PR workflow:** push the feature branch (`git push -u origin <branch>`), open a PR (`gh pr create`), get review, merge via squash-merge so each PR is one commit on `main`. The merge commit message follows the PR title with the `(#NN)` suffix that GitHub adds automatically.
+- **Commits:** create commits after milestones (each completed feature). Ensure pre-commit hooks pass before commits.
+- **Conventional commit messages:** `feat:`, `fix:`, `chore:`, `docs:`, `test:` — scope in parens when relevant (e.g., `feat(button): …`).
 
 ---
 
@@ -219,3 +222,4 @@ Refer to these for details (load only when needed):
 - Pre-commit hooks must pass before commits
 - If verification fails, fix issues before continuing
 - One feature per PR; keep changes small and reviewable
+- Never commit directly to `main` — always feature branch + PR. See "Git Workflow (Required)" above for branch naming + flow.
