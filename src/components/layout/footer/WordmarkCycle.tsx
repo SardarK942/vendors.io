@@ -23,16 +23,9 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
   const [opacity, setOpacity] = React.useState(1);
   const wrapperRef = React.useRef<HTMLHeadingElement | null>(null);
   const visibleRef = React.useRef(false);
-  const indexRef = React.useRef(0);
 
   React.useEffect(() => {
-    indexRef.current = index;
-  }, [index]);
-
-  React.useEffect(() => {
-    const reduced =
-      typeof window !== 'undefined' &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (reduced) return;
 
     const el = wrapperRef.current;
@@ -45,8 +38,7 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
       if (!visibleRef.current) return;
       setOpacity(0);
       fadeTimeout = setTimeout(() => {
-        const next = nextScriptIndex(indexRef.current);
-        setIndex(next);
+        setIndex((prev) => nextScriptIndex(prev));
         setOpacity(1);
       }, FADE_MS);
     };
@@ -70,8 +62,12 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
       (entries) => {
         entries.forEach((e) => {
           visibleRef.current = e.isIntersecting;
-          if (e.isIntersecting) start();
-          else stop();
+          if (e.isIntersecting) {
+            setOpacity(1); // recover from any interrupted fade
+            start();
+          } else {
+            stop();
+          }
         });
       },
       { threshold: 0.1 }
