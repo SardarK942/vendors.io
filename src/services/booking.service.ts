@@ -1,10 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
-import type {
-  ServiceResult,
-  CreateBookingInput,
-  AdjustQuoteInput,
-} from '@/types';
+import type { ServiceResult, CreateBookingInput, AdjustQuoteInput } from '@/types';
 import { sendExpirationEmail, sendBookingAutoCancelEmail } from '@/lib/email/resend';
 import {
   notifyBookingRequestReceived,
@@ -24,6 +20,7 @@ type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   pending: ['expired', 'couple_cancelled', 'accepted', 'adjusted_quote_sent'],
+  pending_quote: ['adjusted_quote_sent', 'couple_cancelled', 'vendor_cancelled', 'expired'],
   accepted: ['deposit_paid', 'couple_cancelled', 'vendor_cancelled', 'expired'],
   adjusted_quote_sent: [
     'accepted',
@@ -96,8 +93,8 @@ type BookingStatus = Database['public']['Tables']['bookings']['Row']['status'];
 export interface GetBookingRequestsParams {
   status?: BookingStatus[];
   q?: string;
-  cursor?: string;                 // ISO timestamp for cursor-based pagination
-  limit?: number;                  // default 100 (existing behavior); pages use 25
+  cursor?: string; // ISO timestamp for cursor-based pagination
+  limit?: number; // default 100 (existing behavior); pages use 25
   sort?: 'created_at' | 'updated_at';
 }
 
@@ -431,9 +428,7 @@ export async function acceptBooking(
   void (async () => {
     const { data: ctx } = await supabase
       .from('bookings')
-      .select(
-        'couple_user_id, total_price_cents, vendor_profiles!inner(business_name)'
-      )
+      .select('couple_user_id, total_price_cents, vendor_profiles!inner(business_name)')
       .eq('id', bookingId)
       .single();
     if (!ctx) return;
@@ -442,7 +437,7 @@ export async function acceptBooking(
     notifyVendorAccepted(supabase, ctx.couple_user_id, {
       bookingId,
       vendorName: vCtx?.business_name ?? 'Your vendor',
-      totalCents: (ctx as Record<string, unknown>).total_price_cents as number ?? 0,
+      totalCents: ((ctx as Record<string, unknown>).total_price_cents as number) ?? 0,
     });
   })();
 
@@ -473,7 +468,7 @@ export async function adjustBookingQuote(
     return { error: { code: 'FORBIDDEN', message: 'Not your booking' }, status: 403 };
   }
 
-  if (!['pending', 'adjusted_quote_declined'].includes(booking.status)) {
+  if (!['pending', 'pending_quote', 'adjusted_quote_declined'].includes(booking.status)) {
     return {
       error: {
         code: 'INVALID_STATE',
@@ -519,9 +514,7 @@ export async function adjustBookingQuote(
   void (async () => {
     const { data: ctx } = await supabase
       .from('bookings')
-      .select(
-        'couple_user_id, total_price_cents, vendor_profiles!inner(business_name)'
-      )
+      .select('couple_user_id, total_price_cents, vendor_profiles!inner(business_name)')
       .eq('id', bookingId)
       .single();
     if (!ctx) return;
@@ -530,7 +523,7 @@ export async function adjustBookingQuote(
     notifyVendorAdjustedQuote(supabase, ctx.couple_user_id, {
       bookingId,
       vendorName: vCtx?.business_name ?? 'Your vendor',
-      newTotalCents: (ctx as Record<string, unknown>).total_price_cents as number ?? 0,
+      newTotalCents: ((ctx as Record<string, unknown>).total_price_cents as number) ?? 0,
       reason: input.reason,
     });
   })();
@@ -639,9 +632,7 @@ export async function createBooking(
   void (async () => {
     const { data: ctx } = await supabase
       .from('bookings')
-      .select(
-        'vendor_profiles!inner(user_id), users!couple_user_id(full_name)'
-      )
+      .select('vendor_profiles!inner(user_id), users!couple_user_id(full_name)')
       .eq('id', booking.id)
       .single();
     if (!ctx) return;
@@ -651,7 +642,7 @@ export async function createBooking(
       bookingId: booking.id,
       coupleName: cu?.full_name ?? 'A couple',
       packageName: pkg.name,
-      totalCents: (booking as Record<string, unknown>).total_price_cents as number ?? 0,
+      totalCents: ((booking as Record<string, unknown>).total_price_cents as number) ?? 0,
     });
   })();
 
@@ -700,9 +691,7 @@ export async function coupleAcceptAdjusted(
   void (async () => {
     const { data: ctx } = await supabase
       .from('bookings')
-      .select(
-        'total_price_cents, vendor_profiles!inner(user_id), users!couple_user_id(full_name)'
-      )
+      .select('total_price_cents, vendor_profiles!inner(user_id), users!couple_user_id(full_name)')
       .eq('id', bookingId)
       .single();
     if (!ctx) return;
@@ -712,7 +701,7 @@ export async function coupleAcceptAdjusted(
     notifyCoupleAcceptedAdjusted(supabase, vp.user_id, {
       bookingId,
       coupleName: cu?.full_name ?? 'The couple',
-      totalCents: (ctx as Record<string, unknown>).total_price_cents as number ?? 0,
+      totalCents: ((ctx as Record<string, unknown>).total_price_cents as number) ?? 0,
     });
   })();
 
@@ -759,9 +748,7 @@ export async function coupleDeclineAdjusted(
   void (async () => {
     const { data: ctx } = await supabase
       .from('bookings')
-      .select(
-        'vendor_profiles!inner(user_id), users!couple_user_id(full_name)'
-      )
+      .select('vendor_profiles!inner(user_id), users!couple_user_id(full_name)')
       .eq('id', bookingId)
       .single();
     if (!ctx) return;

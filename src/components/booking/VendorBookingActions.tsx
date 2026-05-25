@@ -34,9 +34,10 @@ export function VendorBookingActions({
   const triggerCrossBusinessToast = useCrossBusinessActionToast();
 
   const isPending = status === 'pending';
+  const isPendingQuote = status === 'pending_quote';
   const isDeclined = status === 'adjusted_quote_declined';
 
-  if (!isPending && !isDeclined) return null;
+  if (!isPending && !isPendingQuote && !isDeclined) return null;
 
   async function handleAccept() {
     setAccepting(true);
@@ -77,7 +78,11 @@ export function VendorBookingActions({
     <Card className="border-primary/20">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">
-          {isPending ? 'Respond to this booking' : 'Send revised quote'}
+          {isPending
+            ? 'Respond to this booking'
+            : isPendingQuote
+              ? 'Send a custom quote'
+              : 'Send revised quote'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -103,12 +108,14 @@ export function VendorBookingActions({
           </div>
         )}
 
+        {isPendingQuote && (
+          <Button variant="default" className="w-full" onClick={() => setShowAdjustForm((s) => !s)}>
+            {showAdjustForm ? 'Cancel' : 'Send quote'}
+          </Button>
+        )}
+
         {isDeclined && (
-          <Button
-            variant="default"
-            className="w-full"
-            onClick={() => setShowAdjustForm((s) => !s)}
-          >
+          <Button variant="default" className="w-full" onClick={() => setShowAdjustForm((s) => !s)}>
             {showAdjustForm ? 'Cancel' : 'Send revised quote'}
           </Button>
         )}

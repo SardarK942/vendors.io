@@ -7,11 +7,17 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 import { deactivatePackage, hardDeletePackage } from '@/services/packages.service';
-import { acceptBooking, adjustBookingQuote, validateStateTransition } from '@/services/booking.service';
+import {
+  acceptBooking,
+  adjustBookingQuote,
+  validateStateTransition,
+} from '@/services/booking.service';
 
 // Mock availability service — capacity pre-check. Default: no conflict.
 vi.mock('@/services/availability.service', () => ({
-  wouldExceedCapacity: vi.fn().mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
+  wouldExceedCapacity: vi
+    .fn()
+    .mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
 }));
 
 // Mock notifications service so fire-and-forget calls don't fail with mock Supabase clients.
@@ -159,6 +165,19 @@ describe('A2 — adjustBookingQuote state machine', () => {
     expect(result.error).toBeUndefined();
     expect(result.data?.negotiation_round_count).toBe(2);
   });
+
+  it('succeeds from pending_quote status (Custom Request first-quote)', async () => {
+    const sb = buildAdjustSupabase({ status: 'pending_quote', vendorUserId: 'u-vendor' });
+    const result = await adjustBookingQuote(sb as never, 'b-1', 'u-vendor', {
+      adjustment_amount_cents: 250000, // $2,500 initial quote on a pending_quote
+      reason: 'custom',
+      explanation: 'Multi-day mehndi coverage with second photographer.',
+    });
+    expect(result.error).toBeUndefined();
+    expect(result.status).toBe(200);
+    expect(result.data?.status).toBe('adjusted_quote_sent');
+    expect(result.data?.negotiation_round_count).toBe(1);
+  });
 });
 
 // ─── State machine: new status transitions ────────────────────────────────────
@@ -174,6 +193,10 @@ describe('A2 — State machine: new statuses', () => {
 
   it('allows adjusted_quote_declined -> adjusted_quote_sent (vendor re-quote)', () => {
     expect(validateStateTransition('adjusted_quote_declined', 'adjusted_quote_sent')).toBe(true);
+  });
+
+  it('allows pending_quote -> adjusted_quote_sent (vendor responds to Custom Request)', () => {
+    expect(validateStateTransition('pending_quote', 'adjusted_quote_sent')).toBe(true);
   });
 });
 
@@ -309,13 +332,7 @@ function buildHardDeleteSupabase({
   };
 }
 
-function buildAcceptSupabase({
-  status,
-  vendorUserId,
-}: {
-  status: string;
-  vendorUserId: string;
-}) {
+function buildAcceptSupabase({ status, vendorUserId }: { status: string; vendorUserId: string }) {
   const booking = {
     id: 'b-1',
     vendor_profile_id: 'vp-1',
@@ -354,8 +371,7 @@ function buildAcceptSupabase({
         return {
           select: () => ({
             eq: () => ({
-              single: () =>
-                Promise.resolve({ data: { vendor_notes_template: null }, error: null }),
+              single: () => Promise.resolve({ data: { vendor_notes_template: null }, error: null }),
             }),
           }),
         };
@@ -433,8 +449,7 @@ function buildAdjustSupabase({
         return {
           select: () => ({
             eq: () => ({
-              single: () =>
-                Promise.resolve({ data: { vendor_notes_template: null }, error: null }),
+              single: () => Promise.resolve({ data: { vendor_notes_template: null }, error: null }),
             }),
           }),
         };
