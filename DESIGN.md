@@ -155,6 +155,17 @@ components:
     sections:      "Trust · Price · Languages · Experience · Event types · Category-specific (conditional)"
     footer:        "Sticky — Clear-all link left, ink primary 'Show N vendors' CTA right with debounced live count"
     motion:        "320ms slide-in/out (motion.medium)"
+  date-picker:
+    pattern:        "M+-styled wrapper around react-day-picker v10 (src/components/ui/date-picker.tsx). Single-select Day-1. Returns ISO YYYY-MM-DD in local TZ."
+    tokens:         "Hairline borders on prev/next nav buttons. Selected day: ink bg + cream text. Today: indigo underline (globals.css [data-today='true']). Outside: ink-soft opacity-50. Disabled: ink-soft opacity-30."
+    modifiers:      "Built-in 'unavailable' (ink-soft strikethrough) + 'partial' (haldi/15 bg). Overridable via modifiersClassNames prop. Pass same matcher to both `disabled` and `modifiers.unavailable` when a date should be blocked AND visually struck-through."
+    consumers:      "WhenPicker (search bar When segment) — thin wrapper. AvailabilityCalendar (vendor profile) — wraps with vendor.calendar_holds-driven modifiers. CustomRequestForm (Custom Request flow) — inline picker for event date."
+    deferred:       "Range-mode (multi-day events), classNames override prop, haldi-highlighted 'popular dates'."
+  custom-request-card:
+    pattern:        "Treatment B — outlined-distinct package card. Virtual entry (server-side appended in vendor profile page) for every vendor. Always rendered as the last card in PackageGrid."
+    tokens:         "bg-cream-soft, border-dashed border-ink-soft (vs solid hairline on real packages). Hot-pink kicker 'QUOTE ON REQUEST'. Italic display 'Custom' price + ink-soft 'price after vendor responds'. Indigo 'Request a quote →' CTA."
+    interaction:    "Click navigates to /vendors/{slug}/request (auth-gated). Skips PackageDetailModal — couple goes straight to the form. Anonymous users redirect to /login?redirect=…"
+    backend:        "Virtual = no DB row. Sentinel id='custom-request', is_custom=true. Form submits to POST /api/bookings/custom-request → bookings row with status='pending_quote'. Vendor sees row in CRM Inbox with haldi 'Needs quote' badge + existing adjust-quote flow handles the rest."
 
 # Future migration target (Indian Type Foundry — paid, ~$800/yr total)
 typography-v2:
