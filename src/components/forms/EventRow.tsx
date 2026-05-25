@@ -109,14 +109,9 @@ export function EventRow({
         {vendorSlug ? (
           <AvailabilityCalendar
             vendorSlug={vendorSlug}
-            selectedDate={data.event_date ? new Date(data.event_date + 'T12:00:00Z') : undefined}
-            onSelect={(date) => {
-              if (date) {
-                const dateStr = date.toISOString().slice(0, 10);
-                onChange(index, { event_date: dateStr });
-              } else {
-                onChange(index, { event_date: '' });
-              }
+            selected={data.event_date || undefined}
+            onSelect={(iso) => {
+              onChange(index, { event_date: iso });
             }}
           />
         ) : (

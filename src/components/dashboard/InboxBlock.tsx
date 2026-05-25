@@ -11,16 +11,20 @@ export async function InboxBlock({ vendorProfileId }: InboxBlockProps) {
   // "Needs your reply" — vendor must act.
   const { data: needsReply } = await supabase
     .from('bookings')
-    .select('id, status, couple_full_name, package_name_snapshot, created_at, updated_at, expires_at')
+    .select(
+      'id, status, couple_full_name, package_name_snapshot, event_type, created_at, updated_at, expires_at'
+    )
     .eq('vendor_profile_id', vendorProfileId)
-    .in('status', ['pending', 'adjusted_quote_declined'])
+    .in('status', ['pending', 'pending_quote', 'adjusted_quote_declined'])
     .order('created_at', { ascending: true });
 
   // "Closing soon" — accepted bookings whose deposit window expires within 24h.
   const in24h = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
   const { data: closingSoon } = await supabase
     .from('bookings')
-    .select('id, status, couple_full_name, package_name_snapshot, created_at, updated_at, expires_at')
+    .select(
+      'id, status, couple_full_name, package_name_snapshot, created_at, updated_at, expires_at'
+    )
     .eq('vendor_profile_id', vendorProfileId)
     .eq('status', 'accepted')
     .lt('expires_at', in24h)
@@ -29,7 +33,9 @@ export async function InboxBlock({ vendorProfileId }: InboxBlockProps) {
   // "Waiting on couple" — accepted (not closing soon) + adjusted_quote_sent.
   const { data: waiting } = await supabase
     .from('bookings')
-    .select('id, status, couple_full_name, package_name_snapshot, created_at, updated_at, expires_at')
+    .select(
+      'id, status, couple_full_name, package_name_snapshot, created_at, updated_at, expires_at'
+    )
     .eq('vendor_profile_id', vendorProfileId)
     .in('status', ['accepted', 'adjusted_quote_sent'])
     .order('updated_at', { ascending: false });
@@ -37,13 +43,34 @@ export async function InboxBlock({ vendorProfileId }: InboxBlockProps) {
   const closingIds = new Set((closingSoon ?? []).map((r) => r.id));
   const waitingFiltered = (waiting ?? []).filter((r) => !closingIds.has(r.id));
 
+  function packageLabel(r: {
+    package_name_snapshot: string | null;
+    status: string;
+    event_type?: string | null;
+  }): string {
+    if (r.package_name_snapshot) return r.package_name_snapshot;
+    if (r.status === 'pending_quote' && r.event_type) {
+      return `Custom request · ${r.event_type}`;
+    }
+    return 'Booking';
+  }
+
   const toRow = (
-    r: { id: string; status: string; couple_full_name: string | null; package_name_snapshot: string | null; created_at: string; updated_at: string; expires_at: string | null },
+    r: {
+      id: string;
+      status: string;
+      couple_full_name: string | null;
+      package_name_snapshot: string | null;
+      event_type?: string | null;
+      created_at: string;
+      updated_at: string;
+      expires_at: string | null;
+    },
     opts?: { urgencyHours?: number; useUpdatedAt?: boolean }
   ): InboxRowData => ({
     bookingId: r.id,
     coupleName: r.couple_full_name ?? 'Couple',
-    packageLabel: r.package_name_snapshot ?? 'Booking',
+    packageLabel: packageLabel(r),
     status: r.status,
     receivedAt: opts?.useUpdatedAt ? r.updated_at : r.created_at,
     urgencyHours: opts?.urgencyHours,

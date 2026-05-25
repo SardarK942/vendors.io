@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { PackageDetailModal } from './PackageDetailModal';
+import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
 
 export interface PackageWithAddons {
   id: string;
@@ -24,15 +26,22 @@ export interface PackageWithAddons {
   }[];
 }
 
+type PackageItem = PackageWithAddons | CustomRequestPackage;
+
 interface Props {
-  packages: PackageWithAddons[];
+  packages: PackageItem[];
   vendorSlug: string;
+}
+
+function isCustom(p: PackageItem): p is CustomRequestPackage {
+  return (p as CustomRequestPackage).is_custom === true;
 }
 
 /**
  * Layout C — photo-forward package grid.
  * 3 columns desktop, 2 tablet, 1 mobile.
- * Cards open PackageDetailModal with addon toggles and live total.
+ * Real packages open PackageDetailModal. Custom Request (virtual, always last)
+ * navigates directly to /vendors/{slug}/request (no intermediate modal).
  */
 export function PackageGrid({ packages, vendorSlug }: Props) {
   const [selected, setSelected] = useState<PackageWithAddons | null>(null);
@@ -42,37 +51,69 @@ export function PackageGrid({ packages, vendorSlug }: Props) {
   return (
     <>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {packages.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => setSelected(p)}
-            className="group overflow-hidden rounded-xl border border-border text-left transition-shadow hover:shadow-lg"
-          >
-            <div className="relative aspect-[4/3] bg-muted">
-              <Image
-                src={p.featured_image_url}
-                alt={p.name}
-                fill
-                className="object-cover"
-                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-              />
-            </div>
-            <div className="space-y-2 p-4">
-              <h3 className="text-base font-semibold leading-tight">{p.name}</h3>
-              <p className="text-sm text-muted-foreground">
-                {p.duration_hours}h · up to {p.max_guests} guests
-                {p.events_count > 1 && ` · ${p.events_count} events`}
-              </p>
-              <div className="flex items-center justify-between pt-1">
-                <span className="text-lg font-bold">
-                  ${(p.base_price_cents / 100).toLocaleString()}
+        {packages.map((p) =>
+          isCustom(p) ? (
+            <Link
+              key={p.id}
+              href={`/vendors/${vendorSlug}/request`}
+              className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft bg-cream-soft text-left transition-shadow hover:shadow-md"
+            >
+              <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft">
+                <span className="font-display text-5xl font-bold tracking-[-0.02em] text-ink-soft">
+                  ?
                 </span>
-                <span className="text-sm text-primary group-hover:underline">Select →</span>
               </div>
-            </div>
-          </button>
-        ))}
+              <div className="flex flex-1 flex-col space-y-2 p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-hot-pink">
+                  Quote on request
+                </p>
+                <h3 className="text-base font-semibold leading-tight text-ink">{p.name}</h3>
+                <p className="flex-1 text-sm text-ink-muted">{p.description}</p>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="font-display text-lg font-medium italic text-ink">
+                    Custom
+                    <span className="ml-1 text-xs not-italic text-ink-soft">
+                      — price after vendor responds
+                    </span>
+                  </span>
+                  <span className="text-sm text-indigo group-hover:underline">
+                    Request a quote →
+                  </span>
+                </div>
+              </div>
+            </Link>
+          ) : (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setSelected(p)}
+              className="group overflow-hidden rounded-xl border border-border text-left transition-shadow hover:shadow-lg"
+            >
+              <div className="relative aspect-[4/3] bg-muted">
+                <Image
+                  src={p.featured_image_url}
+                  alt={p.name}
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
+              </div>
+              <div className="space-y-2 p-4">
+                <h3 className="text-base font-semibold leading-tight">{p.name}</h3>
+                <p className="text-sm text-muted-foreground">
+                  {p.duration_hours}h · up to {p.max_guests} guests
+                  {p.events_count > 1 && ` · ${p.events_count} events`}
+                </p>
+                <div className="flex items-center justify-between pt-1">
+                  <span className="text-lg font-bold">
+                    ${(p.base_price_cents / 100).toLocaleString()}
+                  </span>
+                  <span className="text-sm text-primary group-hover:underline">Select →</span>
+                </div>
+              </div>
+            </button>
+          )
+        )}
       </div>
 
       {selected && (

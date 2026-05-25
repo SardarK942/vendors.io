@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { VendorProfile } from '@/components/marketplace/VendorProfile';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { recordVendorProfileView } from '@/services/analytics.actions';
+import { appendCustomRequest } from '@/lib/vendor-packages/with-custom-request';
 
 interface VendorPageProps {
   params: Promise<{ slug: string }>;
@@ -56,12 +57,14 @@ export default async function VendorPage({ params }: VendorPageProps) {
     .eq('is_active', true)
     .order('display_order');
 
-  const packages = (packagesData ?? []).map((p) => ({
+  const realPackages = (packagesData ?? []).map((p) => ({
     ...p,
     addons: ((p as { addons?: { display_order: number }[] }).addons ?? []).sort(
       (a, b) => a.display_order - b.display_order
     ),
   }));
+
+  const packages = appendCustomRequest(realPackages, vendor.id);
 
   // Fire-and-forget view tracking (Sub-project E §9). Not awaited — never blocks
   // the page render. Dedupes per (vendor, ip_hash, UTC day) at the DB layer.

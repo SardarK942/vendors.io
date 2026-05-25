@@ -18,6 +18,7 @@ const TYPE_ICON: Record<NotificationType, string> = {
   event_completed: '✓',
   booking_completed: '🎉',
   review_received: '⭐',
+  custom_request_received: '📋',
 };
 
 function timeAgo(iso: string): string {
@@ -41,19 +42,21 @@ export function NotificationCard({ notification, onClick }: Props) {
   const isUnread = !notification.read_at;
   const inner = (
     <>
-      <span className="text-lg shrink-0" aria-hidden>
+      <span className="shrink-0 text-lg" aria-hidden>
         {TYPE_ICON[notification.type as NotificationType] ?? '🔔'}
       </span>
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <p className={`text-sm ${isUnread ? 'font-semibold' : 'font-normal'} truncate`}>
           {notification.title}
         </p>
-        <p className="text-xs text-muted-foreground truncate">{notification.body}</p>
+        <p className="truncate text-xs text-muted-foreground">{notification.body}</p>
         <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
           {timeAgo(notification.created_at)}
         </p>
       </div>
-      {isUnread && <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" aria-label="unread" />}
+      {isUnread && (
+        <span className="h-2 w-2 shrink-0 rounded-full bg-blue-500" aria-label="unread" />
+      )}
     </>
   );
 

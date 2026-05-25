@@ -1,6 +1,6 @@
 // Sub-project F · Notifications service
 //
-// createNotification + 12 typed helpers — one per notification type. The
+// createNotification + 13 typed helpers — one per notification type. The
 // helpers compose the right title/body/link/metadata from the booking context
 // so call sites in booking.service.ts / payment.service.ts don't have to.
 //
@@ -281,6 +281,24 @@ export function notifyReviewReceived(
       booking_id: ctx.bookingId,
       couple_name: ctx.coupleName,
       rating_overall: ctx.ratingOverall,
+    },
+  });
+}
+
+export function notifyCustomRequestReceived(
+  sb: Sb,
+  vendorUserId: string,
+  ctx: { bookingId: string; coupleName: string; eventDate: string }
+): Promise<{ id: string } | null> {
+  return createNotification(sb, {
+    user_id: vendorUserId,
+    type: 'custom_request_received',
+    title: 'New custom request',
+    body: `${ctx.coupleName} sent a request for ${ctx.eventDate}. Send a quote to lock it in.`,
+    link: `/dashboard/bookings/${ctx.bookingId}`,
+    metadata: {
+      booking_id: ctx.bookingId,
+      event_date: ctx.eventDate,
     },
   });
 }

@@ -37,7 +37,8 @@ export type NotificationType =
   | 'booking_cancelled'
   | 'event_completed'
   | 'booking_completed'
-  | 'review_received';
+  | 'review_received'
+  | 'custom_request_received';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -52,7 +53,8 @@ export type BookingStatus =
   | 'disputed'
   | 'accepted'
   | 'adjusted_quote_sent'
-  | 'adjusted_quote_declined';
+  | 'adjusted_quote_declined'
+  | 'pending_quote';
 
 export type AdjustmentReason =
   | 'travel'
@@ -454,6 +456,7 @@ export interface Database {
           vendor_notes: string | null;
           total_price_cents: number;
           negotiation_round_count: number;
+          event_type: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -488,6 +491,7 @@ export interface Database {
           adjustment_explanation?: string | null;
           vendor_notes?: string | null;
           total_price_cents?: number;
+          event_type?: string | null;
           negotiation_round_count?: number;
           created_at?: string;
           updated_at?: string;
@@ -522,6 +526,7 @@ export interface Database {
           adjustment_explanation?: string | null;
           vendor_notes?: string | null;
           total_price_cents?: number;
+          event_type?: string | null;
           negotiation_round_count?: number;
           updated_at?: string;
         };
