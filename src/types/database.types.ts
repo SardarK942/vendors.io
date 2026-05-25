@@ -1027,6 +1027,14 @@ export interface Database {
         Args: { retention_days?: number };
         Returns: number;
       };
+      vendor_list_enrichments: {
+        Args: { p_search_date?: string | null };
+        Returns: {
+          vendor_profile_id: string;
+          confirmed_wedding_count: number;
+          is_available_for_date: boolean | null;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
