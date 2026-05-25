@@ -4,9 +4,10 @@
 -- SELECT/UPDATE/DELETE are service-role only so the table never reveals which
 -- emails are subscribed (privacy + anti-enumeration).
 
+-- Enables case-insensitive text type used for email deduplication.
 CREATE EXTENSION IF NOT EXISTS citext;
 
-CREATE TABLE newsletter_signups (
+CREATE TABLE IF NOT EXISTS newsletter_signups (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email citext NOT NULL UNIQUE,
   source text NOT NULL DEFAULT 'footer',
@@ -14,7 +15,7 @@ CREATE TABLE newsletter_signups (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX newsletter_signups_created_at_idx ON newsletter_signups (created_at DESC);
+CREATE INDEX IF NOT EXISTS newsletter_signups_created_at_idx ON newsletter_signups (created_at DESC);
 
 ALTER TABLE newsletter_signups ENABLE ROW LEVEL SECURITY;
 
