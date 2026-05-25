@@ -52,7 +52,7 @@ Replace the current `src/app/(marketplace)/page.tsx` hero + `CategoryGrid` block
 │  CATEGORYHOVEREXPAND                                        │
 │  [tile][tile][tile][tile][tile][tile][tile][tile][tile][tile][tile]
 │   ↑ all 11 categories, hover/click any to expand            │
-│   ↑ Decor + Venue have "Coming Soon" treatment              │
+│   ↑ Bridal Wear + Decor + Venue have "Coming Soon" treatment│
 ├─────────────────────────────────────────────────────────────┤
 │  Skiper UI attribution (small caption)                      │
 ├─────────────────────────────────────────────────────────────┤
@@ -210,7 +210,7 @@ export interface FeaturedCategory {
 | 1   | `photography` | Photography              | Visual        | false      |
 | 2   | `videography` | Videography & Content    | Visual        | false      |
 | 3   | `hair_makeup` | Hair & Makeup            | Beauty        | false      |
-| 4   | `bridal_wear` | Bridal Wear              | Beauty        | false      |
+| 4   | `bridal_wear` | Bridal Wear              | Beauty        | **true**   |
 | 5   | `mehndi`      | Mehndi / Henna           | Tradition     | false      |
 | 6   | `catering`    | Catering                 | Food          | false      |
 | 7   | `carts`       | Carts                    | Food          | false      |
