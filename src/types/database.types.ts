@@ -150,7 +150,20 @@ export interface Database {
           user_id: string;
           business_name: string;
           slug: string;
-          category: string;
+          category:
+            | 'photography'
+            | 'videography'
+            | 'mehndi'
+            | 'hair_makeup'
+            | 'dj'
+            | 'photobooth'
+            | 'catering'
+            | 'venue'
+            | 'decor'
+            | 'invitations'
+            | 'bridal_wear'
+            | 'live_music'
+            | 'carts';
           bio: string | null;
           service_area: string[];
           portfolio_images: string[];
@@ -183,7 +196,20 @@ export interface Database {
           user_id: string;
           business_name: string;
           slug: string;
-          category: string;
+          category:
+            | 'photography'
+            | 'videography'
+            | 'mehndi'
+            | 'hair_makeup'
+            | 'dj'
+            | 'photobooth'
+            | 'catering'
+            | 'venue'
+            | 'decor'
+            | 'invitations'
+            | 'bridal_wear'
+            | 'live_music'
+            | 'carts';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
@@ -214,7 +240,20 @@ export interface Database {
           user_id?: string;
           business_name?: string;
           slug?: string;
-          category?: string;
+          category?:
+            | 'photography'
+            | 'videography'
+            | 'mehndi'
+            | 'hair_makeup'
+            | 'dj'
+            | 'photobooth'
+            | 'catering'
+            | 'venue'
+            | 'decor'
+            | 'invitations'
+            | 'bridal_wear'
+            | 'live_music'
+            | 'carts';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];

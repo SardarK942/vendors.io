@@ -69,7 +69,9 @@ export async function getOrCreateWizardProfile(
         user_id: userId,
         business_name: '',
         slug: '',
-        category: '',
+        // Placeholder — replaced when the vendor completes the basics step.
+        category:
+          'photography' as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
         service_area: [],
         portfolio_images: [],
         onboarding_complete: false,
@@ -113,7 +115,9 @@ export async function getOrCreateWizardProfile(
       user_id: userId,
       business_name: '',
       slug: '',
-      category: '',
+      // Placeholder — replaced when the vendor completes the basics step.
+      category:
+        'photography' as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
       service_area: [],
       portfolio_images: [],
       onboarding_complete: false,

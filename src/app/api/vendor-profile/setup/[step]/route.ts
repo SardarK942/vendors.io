@@ -78,7 +78,20 @@ export const PATCH = withErrorBoundary(
       const payload = {
         user_id: user.id,
         business_name: data.businessName,
-        category: data.category,
+        category: data.category as
+          | 'photography'
+          | 'videography'
+          | 'mehndi'
+          | 'hair_makeup'
+          | 'dj'
+          | 'photobooth'
+          | 'catering'
+          | 'venue'
+          | 'decor'
+          | 'invitations'
+          | 'bridal_wear'
+          | 'live_music'
+          | 'carts',
         bio: data.bio,
         slug: existingSlug ?? slugWithSuffix(data.businessName),
       };
