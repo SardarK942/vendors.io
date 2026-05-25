@@ -48,7 +48,7 @@ const tiroDevanagari = Tiro_Devanagari_Hindi({
 const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
   subsets: ['arabic'],
   variable: '--font-wordmark-nastaliq',
-  weight: ['400', '700'],
+  weight: ['400'],
   display: 'swap',
 });
 
@@ -63,7 +63,7 @@ const amiri = Amiri({
 const markaziText = Markazi_Text({
   subsets: ['arabic'],
   variable: '--font-wordmark-persian',
-  weight: ['400', '500', '600', '700'],
+  weight: ['400'],
   display: 'swap',
 });
 
