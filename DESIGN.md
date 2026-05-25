@@ -97,6 +97,15 @@ components:
     shadow:      "elevation.one on hover; border-color → transparent"
     timing:      "motion.medium / motion.ease-out"
     requires:    "vendor-selected single thumbnail (see Vendor portfolio note)"
+  vendor-card:
+    pattern:       "Editorial 4:5 portrait + indigo kicker + Spectral name + enriched meta row"
+    photo:         "4:5 aspect, vendor-selected single thumbnail (see vendor portfolio note + build-time req)"
+    badges:        "Verified pill top-left (indigo dot, cream-bg blur). Optional haldi 'Available {date}' pill below — only when ?date in URL AND vendor has no block on that date."
+    body:          "Indigo uppercase kicker (category) → Spectral 21px name → meta row (neighborhood · indigo-dot Responds in Xh · X+ weddings) → 'From $X' price"
+    save:          "Cream-bg heart top-right; outline ink unsaved, hot-pink filled saved"
+    hover:         "HV-B (locked) — lift -3px + photo scale 1.04 + indigo arrow orb + elevation.one shadow"
+    omissions:     "Wedding count omitted when <10. Response time omitted when SLA NULL. Date pill omitted when no search date or vendor blocked."
+    cta:           "Implicit only — card click navigates to /vendors/[slug]; save heart captures separately. No explicit Inquire button on card (inquiry lives on profile page)."
   site-preloader:
     pattern:     "PL-A — accelerated wordmark cycle"
     duration:    "~1.5s first paint"
