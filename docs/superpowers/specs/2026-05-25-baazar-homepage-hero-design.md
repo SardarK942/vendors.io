@@ -9,12 +9,12 @@
 
 ## Goal
 
-Replace the current `src/app/(marketplace)/page.tsx` hero + `CategoryGrid` block with the locked Direction V2 editorial layout (asymmetric type stack on the left + brand panel with Devanagari wordmark on the right) and a new `CategoryHoverExpand` component (adapted from Skiper UI's HoverExpand_001 pattern) that renders the 11 locked vendor categories as a horizontal expanding strip. Update the canonical vendor-category list to add 3 new categories (`bridal_wear`, `live_music`, `carts`) and add migration support so `vendor_profiles.category` CHECK constraint allows them. Leave `photobooth` and `invitations` in the DB (so existing rows survive) but exclude them from the featured homepage strip. Decor + Venue tiles render with a "Coming Soon" treatment Day 1 (their flat-fee listing business model lands in a future sub-project).
+Replace the current `src/app/(marketplace)/page.tsx` hero + `CategoryGrid` block with the locked Direction V2 editorial layout (asymmetric type stack on the left + brand panel with Devanagari wordmark on the right) and a new `CategoryHoverExpand` component (adapted from Skiper UI's HoverExpand_001 pattern) that renders the 11 locked vendor categories as a horizontal expanding strip. Update the canonical vendor-category list to add 3 new categories (`bridal_wear`, `live_music`, `carts`) and add migration support so `vendor_profiles.category` CHECK constraint allows them. Leave `photobooth` and `invitations` in the DB (so existing rows survive) but exclude them from the featured homepage strip. **Bridal Wear, Decor, and Venue tiles all render with a "Coming Soon" treatment Day 1** — they're flagged as flat-fee directory categories (vendors have multi-SKU inventory or high-touch consultative sales models that don't fit commission), with that flat-fee listing infrastructure shipping in a future sub-project.
 
 ## Non-goals
 
 - **The "Why Couples Trust Us" trust-signals section** (3 generic cards with lucide icons) — leave for a separate cleanup PR or eventual deletion. This PR is scoped to hero + category surface only.
-- **The flat-fee business model for Decor + Venue** — flagged for a separate sub-project. Day 1, those tiles just say "Coming Soon."
+- **The flat-fee business model for Bridal Wear + Decor + Venue** — flagged for a separate sub-project. Day 1, those three tiles say "Coming Soon." All three share the same business reason for flat-fee: multi-SKU inventory (Bridal Wear) or high-touch consultative sales (Decor, Venue) that don't translate to per-booking Stripe Connect commission.
 - **Photo curation for the HoverExpand tiles** — Day 1 uses Unsplash stand-ins. Licensed/vendor-supplied photography lands in a follow-up PR.
 - **Animated wordmark cycle in the hero right panel** — the footer carries the page's one animated cycle. The hero's right panel renders the wordmark static (Devanagari) with the 4-script glyph row below as a passive cultural signature. One brand-moment animation per page is enough.
 - **CategoryGrid removal as a code surface** — we delete it because the homepage was its only call site. If a future page wants a category grid, it should consume the same `CATEGORIES_FEATURED` list as the HoverExpand.
@@ -260,7 +260,7 @@ If a category has `comingSoon: true` OR `count === 0`, the tile renders the Comi
 
 ## Coming Soon treatment
 
-For tiles where `comingSoon: true` (always: decor + venue) OR `counts[slug] === 0`:
+For tiles where `comingSoon: true` (always: bridal_wear + decor + venue Day 1) OR `counts[slug] === 0`:
 
 - **Active state copy**:
   - Kicker: `COMING SOON` (haldi color — but this is page haldi #3 if added, breaks the rule — so kicker stays indigo and "Coming Soon" appears as a small badge instead. **Use indigo kicker with text "COMING SOON" + an inline pill badge `bg-ink-soft/20 text-ink-soft` reading "Joining soon"**)
@@ -388,7 +388,7 @@ Per Skiper's free-tier license, attribution is required. The implementer adds:
 ## Out of scope (deferred)
 
 - **Resend integration for the "Get notified" link on Coming Soon tiles** — uses the existing footer newsletter for now (scroll target). Per-category notification preferences are a future enhancement.
-- **Flat-fee listing model for Decor + Venue** — separate sub-project. Includes: `vendor_profiles.business_model` column (`'commission' | 'flat_fee'`), Stripe Billing surface, vendor-facing "manage your listing" dashboard, admin reconciliation for both models.
+- **Flat-fee listing model for Bridal Wear + Decor + Venue** — separate sub-project. Includes: `vendor_profiles.business_model` column (`'commission' | 'flat_fee'`), Stripe Billing surface, vendor-facing "manage your listing" dashboard, admin reconciliation for both models. The 3 flat-fee categories share the same reason for opting out of commission (multi-SKU inventory or consultative sales).
 - **Empty-state design for `/vendors?category={slug}` when 0 vendors exist** — flag in PENDING_ISSUES.md. Day 1 the existing empty state (whatever it shows) is acceptable.
 - **Vendor-curated category photos** — Day 1 uses Unsplash stand-ins. Future: each category gets a vendor-supplied or licensed hero shot.
 - **The "Why Couples Trust Us" section refresh** — leave as-is for now. Will get its own M+ port or full replacement in a separate PR.
