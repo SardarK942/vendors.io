@@ -8,6 +8,7 @@ const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'basics', label: 'Basics' },
   { key: 'location', label: 'Location' },
   { key: 'online', label: 'Online presence' },
+  { key: 'details', label: 'Profile details' },
   { key: 'portfolio', label: 'Portfolio' },
   { key: 'payment-mode', label: 'Payment mode' },
   { key: 'review', label: 'Review & publish' },
@@ -39,8 +40,8 @@ export function WizardStepper({ profile }: Props) {
                 isCurrent
                   ? 'bg-primary/10 font-semibold text-primary'
                   : isComplete
-                  ? 'text-foreground hover:bg-accent'
-                  : 'text-muted-foreground'
+                    ? 'text-foreground hover:bg-accent'
+                    : 'text-muted-foreground'
               }`}
             >
               <span
@@ -48,8 +49,8 @@ export function WizardStepper({ profile }: Props) {
                   isComplete
                     ? 'border-green-500 bg-green-500 text-white'
                     : isCurrent
-                    ? 'border-primary text-primary'
-                    : 'border-muted-foreground/40'
+                      ? 'border-primary text-primary'
+                      : 'border-muted-foreground/40'
                 }`}
               >
                 {isComplete ? <Check className="h-3 w-3" /> : idx + 1}

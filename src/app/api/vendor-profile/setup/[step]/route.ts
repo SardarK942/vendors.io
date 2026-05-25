@@ -7,6 +7,7 @@ import {
   onlineSchema,
   portfolioSchema,
   paymentModeSchema,
+  detailsSchema,
 } from '@/lib/onboarding/validation';
 import { generateSlug } from '@/lib/utils';
 
@@ -83,10 +84,7 @@ export const PATCH = withErrorBoundary(
       };
 
       const { error } = profileId
-        ? await supabase
-            .from('vendor_profiles')
-            .update(payload)
-            .eq('id', profileId)
+        ? await supabase.from('vendor_profiles').update(payload).eq('id', profileId)
         : await supabase.from('vendor_profiles').insert(payload);
 
       if (error) throw new HttpError(500, error.message);
@@ -176,6 +174,28 @@ export const PATCH = withErrorBoundary(
       const { error } = await supabase
         .from('vendor_profiles')
         .update({ payment_mode: data.paymentMode })
+        .eq('id', profileId);
+
+      if (error) throw new HttpError(500, error.message);
+      return NextResponse.json({ ok: true });
+    }
+
+    if (step === 'details') {
+      let data;
+      try {
+        data = detailsSchema.parse(body);
+      } catch (err: unknown) {
+        const zodErr = err as { issues?: { message: string }[] };
+        throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');
+      }
+
+      const { error } = await supabase
+        .from('vendor_profiles')
+        .update({
+          languages: data.languages,
+          years_in_business: data.years_in_business,
+          response_sla_hours: data.response_sla_hours,
+        })
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);

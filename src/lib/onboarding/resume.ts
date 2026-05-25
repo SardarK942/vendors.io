@@ -1,7 +1,14 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 
-export type WizardStep = 'basics' | 'location' | 'online' | 'portfolio' | 'payment-mode' | 'review';
+export type WizardStep =
+  | 'basics'
+  | 'location'
+  | 'online'
+  | 'details'
+  | 'portfolio'
+  | 'payment-mode'
+  | 'review';
 
 export type WizardMode = 'first' | 'next';
 
@@ -15,6 +22,9 @@ export interface ProfileRowShape {
   base_postal_code: string | null;
   base_google_place_id: string | null;
   instagram_handle: string | null;
+  languages?: string[] | null;
+  years_in_business?: number | null;
+  response_sla_hours?: number | null;
   portfolio_images: string[] | null;
   payment_mode: 'stripe' | 'cash' | null;
 }
@@ -135,6 +145,16 @@ export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep 
     return 'location';
   }
   if (!profile.instagram_handle) return 'online';
+  if (
+    !profile.languages ||
+    profile.languages.length === 0 ||
+    profile.years_in_business === null ||
+    profile.years_in_business === undefined ||
+    profile.response_sla_hours === null ||
+    profile.response_sla_hours === undefined
+  ) {
+    return 'details';
+  }
   if (!profile.portfolio_images || profile.portfolio_images.length < 1) return 'portfolio';
   if (!profile.payment_mode) return 'payment-mode';
   return 'review';

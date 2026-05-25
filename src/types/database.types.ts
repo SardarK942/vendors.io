@@ -96,7 +96,7 @@ export interface Database {
             columns: ['user_id'];
             referencedRelation: 'users';
             referencedColumns: ['id'];
-          }
+          },
         ];
       };
       users: {
@@ -109,6 +109,7 @@ export interface Database {
           created_at: string;
           updated_at: string;
           active_vendor_profile_id: string | null;
+          profile_backfill_dismissed_at: string | null;
         };
         Insert: {
           id: string;
@@ -119,6 +120,7 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           active_vendor_profile_id?: string | null;
+          profile_backfill_dismissed_at?: string | null;
         };
         Update: {
           id?: string;
@@ -128,6 +130,7 @@ export interface Database {
           role?: 'couple' | 'vendor' | 'admin';
           updated_at?: string;
           active_vendor_profile_id?: string | null;
+          profile_backfill_dismissed_at?: string | null;
         };
         Relationships: [
           {
@@ -152,6 +155,8 @@ export interface Database {
           instagram_handle: string | null;
           website_url: string | null;
           verified: boolean;
+          languages: string[] | null;
+          years_in_business: number | null;
           response_sla_hours: number;
           total_bookings: number;
           average_rating: number | null;
@@ -183,6 +188,8 @@ export interface Database {
           instagram_handle?: string | null;
           website_url?: string | null;
           verified?: boolean;
+          languages?: string[] | null;
+          years_in_business?: number | null;
           response_sla_hours?: number;
           total_bookings?: number;
           average_rating?: number | null;
@@ -212,6 +219,8 @@ export interface Database {
           instagram_handle?: string | null;
           website_url?: string | null;
           verified?: boolean;
+          languages?: string[] | null;
+          years_in_business?: number | null;
           response_sla_hours?: number;
           total_bookings?: number;
           average_rating?: number | null;

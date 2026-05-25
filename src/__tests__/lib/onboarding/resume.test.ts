@@ -15,6 +15,9 @@ const baseProfile = {
   base_address_public: false,
   instagram_handle: 'x',
   website_url: null,
+  languages: ['english'],
+  years_in_business: 3,
+  response_sla_hours: 24,
   portfolio_images: ['x.jpg'],
   payment_mode: 'stripe' as const,
 };
@@ -34,6 +37,15 @@ describe('nextIncompleteStep', () => {
   });
   it('returns online when instagram_handle missing', () => {
     expect(nextIncompleteStep({ ...baseProfile, instagram_handle: null })).toBe('online');
+  });
+  it('returns details when languages missing', () => {
+    expect(nextIncompleteStep({ ...baseProfile, languages: [] })).toBe('details');
+  });
+  it('returns details when years_in_business missing', () => {
+    expect(nextIncompleteStep({ ...baseProfile, years_in_business: null })).toBe('details');
+  });
+  it('returns details when response_sla_hours missing', () => {
+    expect(nextIncompleteStep({ ...baseProfile, response_sla_hours: null })).toBe('details');
   });
   it('returns portfolio when no images', () => {
     expect(nextIncompleteStep({ ...baseProfile, portfolio_images: [] })).toBe('portfolio');
