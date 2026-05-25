@@ -77,18 +77,13 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     string,
     { min_price_cents: number | null; max_price_cents: number | null }
   >();
-  (priceBands ?? []).forEach(
-    (row: {
-      vendor_profile_id: string;
-      min_price_cents: number | null;
-      max_price_cents: number | null;
-    }) => {
-      priceBandMap.set(row.vendor_profile_id, {
-        min_price_cents: row.min_price_cents,
-        max_price_cents: row.max_price_cents,
-      });
-    }
-  );
+  (priceBands ?? []).forEach((row) => {
+    if (!row.vendor_profile_id) return;
+    priceBandMap.set(row.vendor_profile_id, {
+      min_price_cents: row.min_price_cents,
+      max_price_cents: row.max_price_cents,
+    });
+  });
 
   const enrichedVendors = (vendors ?? []).map((v) => ({
     ...v,
