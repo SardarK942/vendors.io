@@ -28,7 +28,7 @@ export async function parseSearchQuery(query: string): Promise<ParsedQuery> {
           role: 'system',
           content: `You extract search intent from wedding vendor queries. Return JSON with:
 - searchText: the core search text for embedding (concise)
-- category: one of photography,videography,mehndi,hair_makeup,dj,photobooth,catering,venue,decor,invitations (or null)
+- category: one of photography,videography,mehndi,hair_makeup,dj,photobooth,catering,venue,decor,invitations,bridal_wear,live_music,carts (or null)
 - budgetHint: any budget mentioned (or null)
 - locationHint: any location mentioned (or null)
 Respond ONLY with valid JSON, no markdown.`,
