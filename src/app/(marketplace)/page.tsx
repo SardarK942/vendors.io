@@ -1,12 +1,15 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { SearchBar } from '@/components/marketplace/SearchBar';
-import { CategoryGrid } from '@/components/marketplace/CategoryGrid';
 import { CheckCircle, Shield, Clock } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { HomepageHero } from '@/components/marketplace/HomepageHero';
+import { CategoryHoverExpand } from '@/components/marketplace/CategoryHoverExpand';
+import { CategoryHoverExpandMobile } from '@/components/marketplace/CategoryHoverExpandMobile';
+import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
+import { getCategoryVendorCounts } from '@/lib/vendor-categories/queries';
 
 export default async function HomePage() {
   const supabase = await createServerSupabaseClient();
+
+  // Determine whether to show the "List your business" CTA (hide for couples).
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -21,55 +24,50 @@ export default async function HomePage() {
   }
   const showVendorCta = role !== 'couple';
 
+  // Per-category vendor counts for the HoverExpand tiles.
+  const counts = await getCategoryVendorCounts(supabase);
+
   return (
-    <div className="space-y-16 py-8">
-      {/* Hero Section */}
-      <section className="space-y-6 pt-8 text-center md:pt-16">
-        {/* Indigo kicker — system chrome per DESIGN.md role discipline */}
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-          Baazar · Chicago weddings
+    <div>
+      {/* Hero — V2 asymmetric */}
+      <HomepageHero showVendorCta={showVendorCta} />
+
+      {/* Section header */}
+      <header className="mx-auto max-w-[1280px] px-6 pb-2 pt-12 text-center lg:px-14">
+        <p className="m-0 mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+          Browse by category
         </p>
-
-        {/* Hero headline — Spectral display, italic hot-pink accent */}
-        <h1 className="text-[clamp(48px,7.5vw,84px)] font-extrabold leading-[0.92] tracking-[-0.025em]">
-          Loud weddings.
-          <br />
-          <span className="font-bold italic text-hot-pink">Quiet chaos.</span>
-        </h1>
-
-        {/* Subhead — haldi highlighter on the cultural phrase */}
-        <p className="mx-auto max-w-2xl text-lg text-ink-muted">
-          Chicago&apos;s marketplace for{' '}
-          <span className="bg-haldi box-decoration-clone px-2 pb-1 pt-0 text-ink">South Asian</span>{' '}
-          wedding vendors. Discover, compare, and book verified vendors with transparent pricing and
-          secure hold deposits.
+        <h2
+          className="m-0 mb-2 font-serif font-bold leading-[0.96] tracking-[-0.020em] text-ink"
+          style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}
+        >
+          Every vendor your celebration needs.
+        </h2>
+        <p className="m-0 mx-auto max-w-[540px] text-base text-ink-muted">
+          Photography, mehndi, catering, and eight more. Hover to peek; click to browse.
         </p>
+      </header>
 
-        {/* Search Bar */}
-        <div className="mx-auto max-w-[720px]">
-          <SearchBar />
-        </div>
+      {/* HoverExpand — desktop */}
+      <CategoryHoverExpand categories={CATEGORIES_FEATURED} counts={counts} />
 
-        <div className="flex justify-center gap-4">
-          <Button size="lg" asChild>
-            <Link href="/vendors">Browse All Vendors</Link>
-          </Button>
-          {showVendorCta && (
-            <Button size="lg" variant="outline" asChild>
-              <Link href="/signup">List Your Business</Link>
-            </Button>
-          )}
-        </div>
-      </section>
+      {/* Mobile fallback */}
+      <CategoryHoverExpandMobile categories={CATEGORIES_FEATURED} counts={counts} />
 
-      {/* Categories */}
-      <section className="space-y-6">
-        <h2 className="text-center text-2xl font-bold">Browse by Category</h2>
-        <CategoryGrid />
-      </section>
+      {/* Skiper UI attribution */}
+      <p className="mx-auto max-w-[1280px] px-6 pb-8 text-center text-[10px] text-ink-soft lg:px-14">
+        Category browser pattern adapted from{' '}
+        <a href="https://skiper-ui.com" target="_blank" rel="noopener" className="hover:text-ink">
+          Skiper UI
+        </a>{' '}
+        · Original by{' '}
+        <a href="https://x.com/Gur__vi" target="_blank" rel="noopener" className="hover:text-ink">
+          @Gur__vi
+        </a>
+      </p>
 
-      {/* Trust Signals */}
-      <section className="rounded-xl bg-muted/50 px-6 py-12">
+      {/* Trust Signals — pre-M+, deferred refresh per spec */}
+      <section className="mx-auto max-w-[1280px] rounded-xl bg-muted/50 px-6 py-12 lg:px-14">
         <h2 className="mb-8 text-center text-2xl font-bold">Why Couples Trust Us</h2>
         <div className="grid gap-8 sm:grid-cols-3">
           <div className="text-center">

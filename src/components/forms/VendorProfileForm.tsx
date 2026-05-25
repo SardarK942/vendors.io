@@ -18,7 +18,10 @@ import {
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS, generateSlug } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import type { Database } from '@/types/database.types';
-import { GooglePlacesAutocomplete, type PlaceData } from '@/components/forms/GooglePlacesAutocomplete';
+import {
+  GooglePlacesAutocomplete,
+  type PlaceData,
+} from '@/components/forms/GooglePlacesAutocomplete';
 
 // Supabase client is still used for profile creation (INSERT) where user_id is needed
 // Profile updates (UPDATE) go through PATCH /api/vendor-profile
@@ -34,11 +37,17 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [baseAddress, setBaseAddress] = useState<Partial<PlaceData>>({
-    address_line_1: (vendorProfile as Record<string, unknown> | null)?.base_address_line_1 as string | undefined,
+    address_line_1: (vendorProfile as Record<string, unknown> | null)?.base_address_line_1 as
+      | string
+      | undefined,
     city: (vendorProfile as Record<string, unknown> | null)?.base_city as string | undefined,
     state: (vendorProfile as Record<string, unknown> | null)?.base_state as string | undefined,
-    postal_code: (vendorProfile as Record<string, unknown> | null)?.base_postal_code as string | undefined,
-    google_place_id: (vendorProfile as Record<string, unknown> | null)?.base_google_place_id as string | undefined,
+    postal_code: (vendorProfile as Record<string, unknown> | null)?.base_postal_code as
+      | string
+      | undefined,
+    google_place_id: (vendorProfile as Record<string, unknown> | null)?.base_google_place_id as
+      | string
+      | undefined,
   });
   const [baseAddressPublic, setBaseAddressPublic] = useState<boolean>(
     Boolean((vendorProfile as Record<string, unknown> | null)?.base_address_public)
@@ -54,7 +63,9 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
     const payload = {
       business_name: businessName,
       slug: vendorProfile?.slug || generateSlug(businessName),
-      category: formData.get('category') as string,
+      category: formData.get(
+        'category'
+      ) as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
       bio: formData.get('bio') as string,
       service_area: ['Chicago'],
       instagram_handle: (formData.get('instagram') as string) || null,
@@ -77,8 +88,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
       });
       if (!res.ok) {
         const json = await res.json();
-        const msg =
-          json?.error?.message ?? json?.error ?? 'Failed to update profile';
+        const msg = json?.error?.message ?? json?.error ?? 'Failed to update profile';
         toast.error(typeof msg === 'string' ? msg : 'Failed to update profile');
         setLoading(false);
         return;
@@ -197,8 +207,8 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
             <div>
               <h3 className="font-medium">Base Address</h3>
               <p className="text-xs text-muted-foreground">
-                Required if any of your packages have &ldquo;At my location&rdquo; set.
-                Your city and state are always public.
+                Required if any of your packages have &ldquo;At my location&rdquo; set. Your city
+                and state are always public.
               </p>
             </div>
             <div className="space-y-2">
@@ -215,7 +225,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 </p>
               )}
             </div>
-            <label className="flex items-start gap-2 cursor-pointer">
+            <label className="flex cursor-pointer items-start gap-2">
               <input
                 type="checkbox"
                 className="mt-0.5"

@@ -14,7 +14,7 @@ export function formatPrice(cents: number): string {
 }
 
 /** Deposit rate for Stripe vendors (10% of total). */
-export const STRIPE_DEPOSIT_RATE = 0.10;
+export const STRIPE_DEPOSIT_RATE = 0.1;
 
 /** Deposit rate for cash vendors (5% of total). */
 export const CASH_DEPOSIT_RATE = 0.05;
@@ -82,7 +82,10 @@ export function generateSlug(name: string): string {
     .replace(/^-|-$/g, '');
 }
 
-/** Vendor categories */
+// All categories valid in the DB (vendor_profiles.category CHECK).
+// Some are not featured on the homepage but are kept for existing-row compatibility
+// (photobooth + invitations) or land Day 1 as "Coming Soon" (bridal_wear + decor + venue).
+// Featured-on-homepage subset is exported separately from src/lib/vendor-categories/featured.ts.
 export const VENDOR_CATEGORIES = [
   'photography',
   'videography',
@@ -94,19 +97,25 @@ export const VENDOR_CATEGORIES = [
   'venue',
   'decor',
   'invitations',
+  'bridal_wear',
+  'live_music',
+  'carts',
 ] as const;
 
 export const VENDOR_CATEGORY_LABELS: Record<string, string> = {
   photography: 'Photography',
-  videography: 'Videography',
+  videography: 'Videography & Content',
   mehndi: 'Mehndi / Henna',
   hair_makeup: 'Hair & Makeup',
-  dj: 'DJ & Music',
+  dj: 'DJ',
   photobooth: 'Photo Booth',
   catering: 'Catering',
   venue: 'Venue',
   decor: 'Decor & Floral',
   invitations: 'Invitations',
+  bridal_wear: 'Bridal Wear',
+  live_music: 'Live Music & Performance',
+  carts: 'Carts',
 };
 
 export const EVENT_TYPES = [

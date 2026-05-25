@@ -174,6 +174,19 @@ components:
     tokens:         "bg-cream-soft, border-dashed border-ink-soft (vs solid hairline on real packages). Hot-pink kicker 'QUOTE ON REQUEST'. Italic display 'Custom' price + ink-soft 'price after vendor responds'. Indigo 'Request a quote →' CTA."
     interaction:    "Click navigates to /vendors/{slug}/request (auth-gated). Skips PackageDetailModal — couple goes straight to the form. Anonymous users redirect to /login?redirect=…"
     backend:        "Virtual = no DB row. Sentinel id='custom-request', is_custom=true. Form submits to POST /api/bookings/custom-request → bookings row with status='pending_quote'. Vendor sees row in CRM Inbox with haldi 'Needs quote' badge + existing adjust-quote flow handles the rest."
+  homepage-hero:
+    pattern:      "V2 asymmetric editorial. Left = type stack (kicker + Spectral headline + haldi-highlighted subhead + SearchBar + dual CTAs). Right = brand panel (hairline-separated, static Devanagari wordmark + 4-script glyph row). Stacks to single-column under lg:."
+    headline:     "'All your vendors. <em>One bazaar.</em>' — display-md (clamp 36-60px). Italic hot-pink accent on 'One bazaar.' Locked copy."
+    subhead:      "'Chicago's marketplace for <Cultural> wedding vendors. Discover, compare, and book with confidence.' — body-lg / ink-muted. Haldi highlighter on 'Cultural'. Locked copy."
+    haldi-budget: "Two haldi appearances per page: 'Cultural' in subhead + 'CHICAGO' in right-panel tagline. Per palette rule, no third."
+    right-panel:  "Hidden under lg: breakpoint (hero stacks to single-column on mobile). Tagline 'MADE IN CHICAGO' (haldi) + static Devanagari 'बाज़ार.' (hot-pink dot) + 4-script glyph row (Devanagari active = ink+600, others = ink-soft). No animation (footer carries the page's one cycling wordmark)."
+  category-hover-expand:
+    pattern:      "Horizontal strip of 11 vendor-category tiles (Skiper UI HoverExpand_001 pattern, framer-motion-driven). Hover or click expands a tile to ~26rem; others collapse to ~4rem. Click expanded tile navigates to /vendors?category={slug}."
+    tokens:       "Tiles use radii.lg (10px) — overrides Skiper's rounded-3xl. Active state: bottom gradient (from-transparent to-ink/78) + content overlay (haldi kicker + Spectral category name + count + cream/16 pill CTA). Inactive: bg-ink/45 wash + rotated cream label."
+    motion:       "320ms width transition, cubic-bezier(.22,1,.36,1) (motion.medium + ease-out-quart). Content fade-in delayed 100ms after width. Respects prefers-reduced-motion via framer's useReducedMotion (snap-instant)."
+    coming-soon:  "Tiles with comingSoon: true OR vendor count = 0 render with 'Joining soon' pill (ink-soft/20 bg) + 'Get notified' link that scrolls to footer newsletter. Click still navigates to /vendors?category={slug} (will show empty state)."
+    mobile:       "lg:-and-up only. Mobile renders CategoryHoverExpandMobile — 2-col grid of square cards, no animation, content always visible."
+    attribution:  "Pattern adapted from Skiper UI (https://skiper-ui.com); original by @Gur__vi. Required attribution caption rendered between component and footer."
 
 # Future migration target (Indian Type Foundry — paid, ~$800/yr total)
 typography-v2:
@@ -202,7 +215,7 @@ The Airbnb reference extraction that originally lived in this file is preserved 
 | `colors.cream`    | `#FBF6EC` | `oklch(0.97 0.018 90)` | Page canvas. Every floor.                                                                                                                             |
 | `colors.indigo`   | `#2E3DA3` | `oklch(0.42 0.18 270)` | Chrome / system: kicker labels, filter chip outlines, links, focus rings, sort indicators.                                                            |
 | `colors.ink`      | `#1B1414` | `oklch(0.18 0.005 30)` | Display headlines, body type, primary CTA. Never pure black.                                                                                          |
-| `colors.hot-pink` | `#D1006C` | `oklch(0.57 0.24 0)`   | Italic display accent ("Quiet chaos"), save-heart filled state, category labels, wordmark accent.                                                     |
+| `colors.hot-pink` | `#D1006C` | `oklch(0.57 0.24 0)`   | Italic display accent ("One bazaar"), save-heart filled state, category labels, wordmark accent.                                                      |
 | `colors.haldi`    | `#F2B92E` | `oklch(0.81 0.15 80)`  | Highlighter treatment behind ONE word per page + small dot accents for time-sensitive markers. **Never a CTA. Never more than ~2 elements per page.** |
 
 ### Role discipline — the rules that keep M+ from collapsing
@@ -215,7 +228,7 @@ The Airbnb reference extraction that originally lived in this file is preserved 
 
 **Pink.** Hot pink is the _italic emphasis_ color, not an action color.
 
-- The only italic accent inside display headlines (e.g., "Loud weddings. _Quiet chaos_.").
+- The only italic accent inside display headlines (e.g., "All your vendors. _One bazaar_.").
 - The filled save-heart state on vendor cards (outline-only when unsaved, ink fill on hover, hot-pink fill when saved).
 - Wordmark embellishment — a single character flourish only, never the whole mark.
 - Category labels on vendor profile pages.
@@ -288,7 +301,7 @@ The vendor dashboard (`/vendors/*`) keeps the same tokens but **quiets the chrom
 | Token        | Size                       | Weight | Line-height | Tracking           | Use                                               |
 | ------------ | -------------------------- | ------ | ----------- | ------------------ | ------------------------------------------------- |
 | `display-lg` | `clamp(48px, 7.5vw, 84px)` | 800    | 0.92        | -0.025em           | Campaign hero, rare                               |
-| `display-md` | `clamp(36px, 5vw, 60px)`   | 800    | 0.94        | -0.022em           | Homepage hero ("Loud weddings…")                  |
+| `display-md` | `clamp(36px, 5vw, 60px)`   | 800    | 0.94        | -0.022em           | Homepage hero ("All your vendors…")               |
 | `display-sm` | `clamp(28px, 3.5vw, 44px)` | 700    | 0.96        | -0.020em           | Vendor profile header, category hero              |
 | `title-md`   | 26px                       | 700    | 1.10        | -0.012em           | Section header ("142 photographers near Chicago") |
 | `title-sm`   | 20px                       | 600    | 1.20        | -0.005em           | Sub-section, card title                           |
@@ -303,7 +316,7 @@ The vendor dashboard (`/vendors/*`) keeps the same tokens but **quiets the chrom
 
 **Scale ratio.** Display steps are ≥1.25× apart (44 → 60 → 84 = 1.36×, 1.40×). Body steps tighten to 1.10–1.20× because reading-size differences need to be subtler. Per impeccable brand-register law.
 
-**Italic accents.** Only one italic moment per display headline (e.g., "Loud weddings. _Quiet chaos_."). Italic body is reserved for vendor quote callouts. Both render in the display family's italic cut, not the body family's.
+**Italic accents.** Only one italic moment per display headline (e.g., "All your vendors. _One bazaar_."). Italic body is reserved for vendor quote callouts. Both render in the display family's italic cut, not the body family's.
 
 ### Wordmark spec — the pan-cultural cycle
 

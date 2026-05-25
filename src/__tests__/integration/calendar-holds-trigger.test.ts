@@ -42,7 +42,7 @@ async function seedVendor(sb: ReturnType<typeof createClient<Database>>, capacit
     user_id: TEST_USER_ID,
     business_name: 'G Test Studio',
     slug: 'g-test-studio',
-    category: 'Photography',
+    category: 'photography' as const,
     service_area: ['London'],
     portfolio_images: [],
     is_active: true,
@@ -93,10 +93,7 @@ async function cleanup(sb: ReturnType<typeof createClient<Database>>) {
   await sb.from('booking_events').delete().eq('id', TEST_EVENT_ID);
   await sb.from('bookings').delete().eq('id', TEST_BOOKING_ID);
   await sb.from('vendor_profiles').delete().eq('id', TEST_VENDOR_ID);
-  await sb.from('users').delete().in('id', [
-    TEST_USER_ID,
-    '00000000-0000-0000-0000-000000000g05',
-  ]);
+  await sb.from('users').delete().in('id', [TEST_USER_ID, '00000000-0000-0000-0000-000000000g05']);
 }
 
 // Skip when SUPABASE_SERVICE_ROLE_KEY is not set (CI)
