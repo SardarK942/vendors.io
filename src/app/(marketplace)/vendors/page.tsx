@@ -26,14 +26,9 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const limit = 20;
   const offset = (page - 1) * limit;
 
-  let query = supabase
-    .from('vendor_profiles')
-    .select(
-      '*, vendor_packages_price_band!vendor_packages_price_band_vendor_profile_id_fkey(min_price_cents, max_price_cents)',
-      { count: 'exact' }
-    )
-    .eq('is_active', true)
-    .eq('onboarding_complete', true);
+  // NOTE: vendor_packages_price_band is a VIEW — PostgREST cannot resolve FK joins
+  // to views. Price band is fetched in a separate parallel query and merged by vendor id.
+  let query = supabase.from('vendor_profiles').select('*', { count: 'exact' });
 
   query = applyVendorFilters(query, filters);
 
@@ -42,18 +37,24 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     .order('total_bookings', { ascending: false })
     .range(offset, offset + limit - 1);
 
-  const { data: vendors, count } = await query;
-  const totalPages = Math.ceil((count ?? 0) / limit);
-
   // Date availability: parse from URL params, only forward if it matches ISO format.
   const searchDateParam =
     typeof params.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : null;
 
-  // Fetch enrichments via RPC and merge by vendor id.
-  const { data: enrichments } = await supabase.rpc('vendor_list_enrichments', {
-    p_search_date: searchDateParam,
-  });
+  // Run vendors + enrichments + price band in parallel.
+  const [{ data: vendors, count }, { data: enrichments }, { data: priceBands }] = await Promise.all(
+    [
+      query,
+      supabase.rpc('vendor_list_enrichments', { p_search_date: searchDateParam }),
+      supabase
+        .from('vendor_packages_price_band')
+        .select('vendor_profile_id, min_price_cents, max_price_cents'),
+    ]
+  );
 
+  const totalPages = Math.ceil((count ?? 0) / limit);
+
+  // Build enrichment lookup map.
   const enrichmentMap = new Map<
     string,
     { confirmed_wedding_count: number; is_available_for_date: boolean | null }
@@ -71,14 +72,27 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     }
   );
 
+  // Build price band lookup map.
+  const priceBandMap = new Map<
+    string,
+    { min_price_cents: number | null; max_price_cents: number | null }
+  >();
+  (priceBands ?? []).forEach(
+    (row: {
+      vendor_profile_id: string;
+      min_price_cents: number | null;
+      max_price_cents: number | null;
+    }) => {
+      priceBandMap.set(row.vendor_profile_id, {
+        min_price_cents: row.min_price_cents,
+        max_price_cents: row.max_price_cents,
+      });
+    }
+  );
+
   const enrichedVendors = (vendors ?? []).map((v) => ({
     ...v,
-    // Supabase types the FK join as SelectQueryError when the relation hint is
-    // used — cast the price band to the narrow shape VendorCard expects.
-    vendor_packages_price_band: v.vendor_packages_price_band as unknown as
-      | { min_price_cents: number | null; max_price_cents: number | null }
-      | null
-      | undefined,
+    vendor_packages_price_band: priceBandMap.get(v.id) ?? null,
     ...(enrichmentMap.get(v.id) ?? {
       confirmed_wedding_count: 0,
       is_available_for_date: null,
