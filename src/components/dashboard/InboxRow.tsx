@@ -12,8 +12,9 @@ export interface InboxRowData {
 }
 
 function statusChip(status: string) {
-  if (status === 'pending')
-    return { label: 'New request', cls: 'bg-blue-100 text-blue-800' };
+  if (status === 'pending_quote')
+    return { label: 'Needs quote', cls: 'bg-haldi/20 text-ink border border-haldi/40' };
+  if (status === 'pending') return { label: 'New request', cls: 'bg-blue-100 text-blue-800' };
   if (status === 'adjusted_quote_declined')
     return { label: 'Adjustment declined', cls: 'bg-orange-100 text-orange-800' };
   if (status === 'accepted')
@@ -41,9 +42,7 @@ export function InboxRow({ data }: { data: InboxRowData }) {
             {formatDistanceToNow(new Date(data.receivedAt), { addSuffix: true })}
           </div>
           {data.urgencyHours !== undefined && (
-            <div className="mt-1 text-xs font-medium text-red-600">
-              {data.urgencyHours}h left
-            </div>
+            <div className="mt-1 text-xs font-medium text-red-600">{data.urgencyHours}h left</div>
           )}
         </div>
       </div>
