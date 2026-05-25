@@ -92,6 +92,10 @@ const config: Config = {
         sans: ['var(--font-body)', 'system-ui', '-apple-system', 'sans-serif'],
         // serif maps to display family for headlines/eds.
         serif: ['var(--font-display)', 'Georgia', 'serif'],
+        'wordmark-deva': ['var(--font-wordmark-deva)', 'serif'],
+        'wordmark-nastaliq': ['var(--font-wordmark-nastaliq)', 'serif'],
+        'wordmark-naskh': ['var(--font-wordmark-naskh)', 'serif'],
+        'wordmark-persian': ['var(--font-wordmark-persian)', 'serif'],
       },
     },
   },

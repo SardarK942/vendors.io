@@ -155,6 +155,14 @@ components:
     sections:      "Trust · Price · Languages · Experience · Event types · Category-specific (conditional)"
     footer:        "Sticky — Clear-all link left, ink primary 'Show N vendors' CTA right with debounced live count"
     motion:        "320ms slide-in/out (motion.medium)"
+  footer:
+    pattern:      "Direction C — full-bleed editorial. Black hero band carries the 4-script cycling wordmark + in-hero newsletter signup; cream body band has 3 columns (brand blurb + For vendors + Company) and a legal row with static 4-script lang-dots."
+    hero-band:    "bg-ink, py-section. Tagline 'MADE IN CHICAGO' top-right (Chicago in haldi — counts as one of the page's two haldi appearances). Wordmark cycles Devanagari → Nastaliq → Naskh → Persian on motion.cycle-hold + motion.cycle-fade, paused offscreen and under prefers-reduced-motion. Trailing dot always hot-pink."
+    newsletter:   "In-hero, below wordmark + hairline. Label 'THE BAZAAR LETTER' kicker + Spectral italic 'monthly, no noise'. Email pill + 40px hot-pink arrow orb. POSTs to /api/newsletter/subscribe (idempotent — always returns {ok:true}). 5 states: default / submitting / success / error-format / error-server. Stub-only Day-1; Resend wire-up deferred."
+    body-band:    "bg-cream, py-xxl. 3 cols at lg: brand blurb (1.5fr) + For vendors + Company. Column kickers indigo, links ink → indigo on hover. Mobile stacks to 1-col."
+    legal-band:   "border-t hairline. Left: © Baazar 2026 + Terms/Privacy/Contact text-links (ink-soft → ink on hover). Right: 4 static lang-dots (Devanagari active, others ink-soft). No interactivity; title= attrs for AT."
+    integration:  "Full-bleed; placed outside main's max-w-7xl wrapper in (marketplace)/layout.tsx. Each band has its own max-w-7xl inner wrapper for gutter alignment."
+    accessibility:"WordmarkCycle h2 has stable aria-label='Baazar' (cycling glyphs aria-hidden). Newsletter form has visually-hidden label, aria-invalid + role='alert' on error. LangDots wrapper has aria-label='Scripts'. All focus-visible rings use hot-pink + ink offset on dark, cream offset on light."
 
 # Future migration target (Indian Type Foundry — paid, ~$800/yr total)
 typography-v2:
