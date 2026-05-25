@@ -83,7 +83,8 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
   // Compute subtotals for display
   const bookingAsAny = booking as unknown as Record<string, unknown>;
   const packageBase = (bookingAsAny.package_base_price_cents_snapshot as number) ?? 0;
-  const selectedAddons = (bookingAsAny.selected_addons as { name: string; price_delta_cents: number }[]) ?? [];
+  const selectedAddons =
+    (bookingAsAny.selected_addons as { name: string; price_delta_cents: number }[]) ?? [];
   const addonsSum = selectedAddons.reduce((s: number, a) => s + (a.price_delta_cents ?? 0), 0);
   const originalSubtotal = packageBase + addonsSum;
   const adjustmentAmount = (bookingAsAny.adjustment_amount_cents as number) ?? 0;
@@ -358,36 +359,32 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
                 <div className="rounded-lg bg-green-50 p-4">
                   <p className="text-sm font-medium text-green-800">Contact Information</p>
                   {(bookingAsAny.couple_contact_phone as string | null) && (
-                    <p className="text-sm">
-                      Phone: {bookingAsAny.couple_contact_phone as string}
-                    </p>
+                    <p className="text-sm">Phone: {bookingAsAny.couple_contact_phone as string}</p>
                   )}
                 </div>
               )}
 
             {/* Bookings-level vendor_notes (instructions to couple after deposit paid).
                 Different from booking_events.vendor_notes (private vendor notes — see below). */}
-            {booking.status === 'deposit_paid' &&
-              (bookingAsAny.vendor_notes as string | null) && (
-                <div className="rounded-lg bg-muted p-4">
-                  <p className="mb-1 text-sm font-medium">Vendor Notes</p>
-                  <p className="text-sm text-muted-foreground">
-                    {bookingAsAny.vendor_notes as string}
-                  </p>
-                </div>
-              )}
+            {booking.status === 'deposit_paid' && (bookingAsAny.vendor_notes as string | null) && (
+              <div className="rounded-lg bg-muted p-4">
+                <p className="mb-1 text-sm font-medium">Vendor Notes</p>
+                <p className="text-sm text-muted-foreground">
+                  {bookingAsAny.vendor_notes as string}
+                </p>
+              </div>
+            )}
 
             {/* Conflict warning — shown above Accept when vendor views a pending that would exceed capacity */}
             {role === 'vendor' && booking.status === 'pending' && showConflictWarning && (
-              <ConflictWarning
-                overlapCount={conflictOverlapCount}
-                capacity={conflictCapacity}
-              />
+              <ConflictWarning overlapCount={conflictOverlapCount} capacity={conflictCapacity} />
             )}
 
             {/* Vendor accept/adjust CTAs */}
             {role === 'vendor' &&
-              (booking.status === 'pending' || booking.status === 'adjusted_quote_declined') && (
+              (booking.status === 'pending' ||
+                booking.status === 'pending_quote' ||
+                booking.status === 'adjusted_quote_declined') && (
                 <VendorBookingActions
                   bookingId={booking.id}
                   status={booking.status}
