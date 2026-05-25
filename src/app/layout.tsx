@@ -1,5 +1,13 @@
 import type { Metadata } from 'next';
-import { Spectral, Schibsted_Grotesk, DM_Mono } from 'next/font/google';
+import {
+  Spectral,
+  Schibsted_Grotesk,
+  DM_Mono,
+  Tiro_Devanagari_Hindi,
+  Noto_Nastaliq_Urdu,
+  Amiri,
+  Markazi_Text,
+} from 'next/font/google';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
@@ -24,6 +32,38 @@ const dmMono = DM_Mono({
   subsets: ['latin'],
   variable: '--font-mono',
   weight: ['400', '500'],
+  display: 'swap',
+});
+
+// Wordmark cycle fonts (DESIGN.md typography.wordmark-*) — used by the footer
+// WordmarkCycle component and any future hero wordmark surfaces.
+const tiroDevanagari = Tiro_Devanagari_Hindi({
+  subsets: ['latin', 'devanagari'],
+  variable: '--font-wordmark-deva',
+  weight: ['400'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+});
+
+const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
+  subsets: ['arabic'],
+  variable: '--font-wordmark-nastaliq',
+  weight: ['400'],
+  display: 'swap',
+});
+
+const amiri = Amiri({
+  subsets: ['arabic'],
+  variable: '--font-wordmark-naskh',
+  weight: ['400', '700'],
+  style: ['normal', 'italic'],
+  display: 'swap',
+});
+
+const markaziText = Markazi_Text({
+  subsets: ['arabic'],
+  variable: '--font-wordmark-persian',
+  weight: ['400'],
   display: 'swap',
 });
 
@@ -53,7 +93,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${spectral.variable} ${schibstedGrotesk.variable} ${dmMono.variable} antialiased`}
+        className={`${spectral.variable} ${schibstedGrotesk.variable} ${dmMono.variable} ${tiroDevanagari.variable} ${notoNastaliqUrdu.variable} ${amiri.variable} ${markaziText.variable} antialiased`}
       >
         {children}
         <Toaster richColors position="top-right" />

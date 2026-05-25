@@ -1,5 +1,5 @@
 import { Navbar } from '@/components/ui/Navbar';
-import { Footer } from '@/components/ui/Footer';
+import { Footer } from '@/components/layout/Footer';
 
 export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
   return (
