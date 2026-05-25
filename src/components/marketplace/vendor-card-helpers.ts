@@ -9,8 +9,15 @@
  */
 export function formatShortDate(iso: string): string {
   if (!iso) return '';
-  const d = new Date(`${iso}T00:00:00`);
-  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const parts = iso.split('-');
+  if (parts.length !== 3) return '';
+  const [y, m, d] = parts.map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });
 }
 
 /**
@@ -27,7 +34,7 @@ export function formatWeddingCount(count: number | null | undefined): string | n
 
 /**
  * Format cents → "$X,XXX" (no trailing zeros for whole-dollar amounts).
- * Pure copy of the existing src/lib/utils.ts:formatPrice with a stable name.
+ * Whole-dollar formatter — "$5,000" not "$5,000.00". Differs from formatPrice in src/lib/utils.ts.
  */
 export function formatPriceFromCents(cents: number | null | undefined): string | null {
   if (cents === null || cents === undefined) return null;

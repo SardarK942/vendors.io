@@ -31,9 +31,7 @@ export interface VendorCardProps {
 
 export function VendorCard({ vendor, searchDate, isSaved = false, onSaveToggle }: VendorCardProps) {
   const heroImage = vendor.portfolio_images?.[0];
-  const categoryLabel =
-    VENDOR_CATEGORY_LABELS[vendor.category as keyof typeof VENDOR_CATEGORY_LABELS] ??
-    vendor.category;
+  const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
   const neighborhood = vendor.base_city ?? vendor.service_area?.[0] ?? 'Chicago';
   const respondsIn = vendor.response_sla_hours ? `Responds in ${vendor.response_sla_hours}h` : null;
   const weddingCount = formatWeddingCount(vendor.confirmed_wedding_count);
@@ -81,7 +79,6 @@ export function VendorCard({ vendor, searchDate, isSaved = false, onSaveToggle }
         {/* Verified pill */}
         {vendor.verified && (
           <span
-            aria-label="Verified vendor"
             className={cn(
               'absolute left-3 top-3 inline-flex items-center gap-1.5',
               'rounded-full border border-ink/10 bg-cream/95 px-2.5 py-1 backdrop-blur',
@@ -119,7 +116,7 @@ export function VendorCard({ vendor, searchDate, isSaved = false, onSaveToggle }
             'border border-ink/10 bg-cream/95 backdrop-blur',
             'transition-colors',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
-            isSaved ? 'text-hot-pink' : 'hover:text-ink-light text-ink'
+            isSaved ? 'text-hot-pink' : 'text-ink hover:text-ink-muted'
           )}
         >
           <Heart className={cn('size-4', isSaved ? 'fill-current' : 'fill-none')} strokeWidth={2} />
