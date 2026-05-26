@@ -187,6 +187,14 @@ components:
     coming-soon:  "Tiles with comingSoon: true OR vendor count = 0 render with 'Joining soon' pill (ink-soft/20 bg) + 'Get notified' link that scrolls to footer newsletter. Click still navigates to /vendors?category={slug} (will show empty state)."
     mobile:       "lg:-and-up only. Mobile renders CategoryHoverExpandMobile — 2-col grid of square cards, no animation, content always visible."
     attribution:  "Pattern adapted from Skiper UI (https://skiper-ui.com); original by @Gur__vi. Required attribution caption rendered between component and footer."
+  onboarding-welcome:
+    pattern:       "3-step modal (Welcome features → Personalize → Tips), composed from cult-ui Onboarding primitives. Auto-fires on first dashboard visit; dismissible. Two role-specific flows (CoupleOnboarding, VendorOnboarding) share the same shell but render different content + collect different data."
+    trigger:       "OnboardingGate mounted in dashboard layout. Server-fetches users.onboarding_completed_at; renders modal when null. Sets timestamp on complete OR skip so it never re-fires."
+    couple-data:   "event_date (or null = still planning) + categories (1–5 from 10 commission-active slugs). Persisted in users.onboarding_data jsonb."
+    vendor-data:   "category (single, from 10 commission-active) + years_in_business ('0-1' | '1-3' | '3-10' | '10+'). Category writes to vendor_profiles.category so the existing Sub-project B wizard pre-fills. years_in_business stays in users.onboarding_data."
+    coming-soon:   "Bridal Wear, Decor, Venue excluded from both flows' category pickers. They'll get a separate flat-fee onboarding flow in a future sub-project."
+    tokens:        "M+ adapted from cult-ui defaults — border-indigo/30 + bg-indigo/10 for selected states; bg-cream-soft for the modal frame; text-ink/text-ink-muted/text-ink-soft for typography hierarchy."
+    accessibility: "role='dialog' + aria-modal. Skip on Esc, backdrop click, or X mark — all wired to mark completed. ChoiceGroup is role='radiogroup'. Step indicator gets aria-current='step' on active dot."
 
 # Future migration target (Indian Type Foundry — paid, ~$800/yr total)
 typography-v2:
