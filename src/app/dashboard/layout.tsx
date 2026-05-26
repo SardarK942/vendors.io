@@ -5,6 +5,7 @@ import { Navbar } from '@/components/ui/Navbar';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import { ActiveBusinessProvider } from '@/contexts/ActiveBusinessContext';
+import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
 
 export default async function DashboardLayout({
   children,
@@ -20,9 +21,15 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/login');
 
-  const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role, onboarding_completed_at')
+    .eq('id', user.id)
+    .single();
 
   const role = (profile?.role as 'couple' | 'vendor') || 'couple';
+  const onboardingCompleted =
+    profile?.onboarding_completed_at !== null && profile?.onboarding_completed_at !== undefined;
 
   // Sub-project I §3.5: expose the active business id to client components
   // inside the dashboard subtree (e.g., booking action handlers in I6).
@@ -40,6 +47,7 @@ export default async function DashboardLayout({
           <main className="flex-1">{children}</main>
         </div>
         {panel}
+        <OnboardingGate role={role} onboardingCompleted={onboardingCompleted} />
       </div>
     </ActiveBusinessProvider>
   );
