@@ -187,6 +187,13 @@ components:
     coming-soon:  "Tiles with comingSoon: true OR vendor count = 0 render with 'Joining soon' pill (ink-soft/20 bg) + 'Get notified' link that scrolls to footer newsletter. Click still navigates to /vendors?category={slug} (will show empty state)."
     mobile:       "lg:-and-up only. Mobile renders CategoryHoverExpandMobile — 2-col grid of square cards, no animation, content always visible."
     attribution:  "Pattern adapted from Skiper UI (https://skiper-ui.com); original by @Gur__vi. Required attribution caption rendered between component and footer."
+  transactional-email:
+    pattern:       "All transactional + welcome emails share a single M+ chrome via renderBrandedEmail() in src/lib/email/render.ts. Cream page bg + cream-soft header band + Spectral-fallback baazar wordmark with hot-pink dot + hairline divider + 600px content block + ink-soft footer. Table-based + inline styles for email-client compatibility (Outlook, Gmail, Apple Mail)."
+    tokens:        "Hardcoded hex in inline styles because email clients don't support CSS variables. Matches DESIGN.md palette: #FBF6EC (cream), #F4ECDC (cream-soft), #1B1414 (ink), #5F5650 (ink-soft), #D1006C (hot-pink), #E8DFC8 (hairline). Drift risk: palette updates require hand-update of email styles."
+    fonts:         "Wordmark = Georgia (Spectral fallback in email clients). Body = Helvetica/Arial system stack (Schibsted Grotesk doesn't render in most email clients)."
+    cta-buttons:   "Inline-styled <a> with ink bg, cream text, 6px radius, 12px/24px padding, font-weight:600. Centered or left-aligned in their paragraph wrapper."
+    unsubscribe:   "Not Day 1 — transactional CAN-SPAM exempt; newsletter welcome relies on a 'if not you, ignore' line. Future sub-project adds /unsubscribe route + per-user preferences."
+    dispatch:      "Each send*Email() lives in src/lib/email/resend.ts and is called from a single dispatch site (notifications.service.ts helpers OR API routes). Future architectural refactor: have notifications.service.ts auto-fire emails so the pattern can't drift."
 
 # Future migration target (Indian Type Foundry — paid, ~$800/yr total)
 typography-v2:
