@@ -1,18 +1,12 @@
 # Pending Issues
 
-Living list of follow-ups, deferred work, and known gaps. Started 2026-05-25 after the Day-1 brand component queue closed (PRs #17–#22). Last updated 2026-05-25 after PR #23 + prod migrations 00039–00041.
+Living list of follow-ups, deferred work, and known gaps. Started 2026-05-25 after the Day-1 brand component queue closed (PRs #17–#22). Last updated 2026-05-25 after PR #25 (homepage hero) + prod migration 00042.
 
 ---
 
 ## 🔴 Blockers / immediate
 
-### ~~1. `VendorAdjustQuoteForm` doesn't handle `pending_quote` status~~ — FIXED, PR #23 PENDING MERGE
-
-**Resolution:** PR #23 patches 4 surfaces (booking.service `VALID_TRANSITIONS` + `adjustBookingQuote` guard, `VendorBookingActions` render gate + new "Send quote" CTA, `BookingDetail` outer gate) and adds 2 tests. End-to-end flow verified: pending_quote → adjusted_quote_sent → standard deposit pipeline.
-
-**Status:** awaiting review/merge.
-
-### 2. 3 pre-existing test failures on main
+### 1. 3 pre-existing test failures on main
 
 **Tests:**
 
@@ -30,19 +24,45 @@ Living list of follow-ups, deferred work, and known gaps. Started 2026-05-25 aft
 
 ---
 
-## ✅ Pending prod migrations — APPLIED 2026-05-25
+## ✅ Pending prod migrations — ALL APPLIED
 
-All 3 applied directly to prod (`obpdgihdskbxzgyctaib`) via psql:
+All 4 applied directly to prod (`obpdgihdskbxzgyctaib`) via psql:
 
-- ~~00039 `create_newsletter_signups.sql`~~ — CREATE EXTENSION + TABLE + INDEX + ALTER TABLE + CREATE POLICY ✅
-- ~~00040 `bookings_pending_quote.sql`~~ — 5 × ALTER TABLE ✅
-- ~~00041 `notifications_custom_request_type.sql`~~ — 2 × ALTER TABLE ✅
+- ~~00039 `create_newsletter_signups.sql`~~ — applied 2026-05-25 ✅
+- ~~00040 `bookings_pending_quote.sql`~~ — applied 2026-05-25 ✅
+- ~~00041 `notifications_custom_request_type.sql`~~ — applied 2026-05-25 ✅
+- ~~00042 `vendor_categories_expand.sql`~~ — applied 2026-05-25 (after PR #25 merge) ✅
 
-`/api/newsletter/subscribe` and `/api/bookings/custom-request` are live on prod.
+`/api/newsletter/subscribe`, `/api/bookings/custom-request`, the new `bridal_wear`/`live_music`/`carts` categories are all live on prod.
 
 ---
 
 ## 🟠 Deferred features (planned, not built)
+
+### 🆕 Flat-fee listing business model (Bridal Wear + Decor + Venue)
+
+- **State:** Three categories (Bridal Wear, Decor, Venue) ship as "Coming Soon" Day 1 because their vendors don't fit the per-booking commission model — multi-SKU inventory (Bridal Wear) and consultative high-touch sales (Decor, Venue) need a different business model.
+- **Needs:**
+  - New `vendor_profiles.business_model` column (`'commission' | 'flat_fee'`)
+  - Stripe Billing subscription surface for yearly $300 listing fee
+  - Vendor-facing "manage your listing" dashboard for flat-fee vendors
+  - Admin reconciliation for both models
+  - Profile/booking UI variant for flat-fee vendors (no checkout flow; "Contact this vendor" surface instead — direct contact unlocks after subscription is active)
+- **Defer signal:** Begin when bandwidth available to negotiate first 5-10 flat-fee vendors per category
+- **PR ref:** #25 (categories created with `comingSoon: true` flag in `CATEGORIES_FEATURED`)
+
+### 🆕 Licensed/curated category photography
+
+- **State:** All 11 HoverExpand tiles use Unsplash stand-in photos Day 1
+- **Needs:** Licensed photography (or vendor-supplied hero shots) per category. Replace `photoUrl` values in `src/lib/vendor-categories/featured.ts`.
+- **Risk:** Some Unsplash URLs may have been removed from the platform — if so, tiles will render broken-image state until swapped. Not browser-verified on PR #25.
+- **PR ref:** #25 (deferred)
+
+### 🆕 Empty-state design for `/vendors?category=X`
+
+- **State:** When user clicks a "Coming Soon" HoverExpand tile or a category with 0 active vendors, they land on `/vendors?category={slug}` which shows the existing empty state (whatever it shows by default — likely just "no vendors found").
+- **Needs:** Branded empty-state with category context, "Vendors joining — get notified" newsletter CTA, link back to homepage / browse all
+- **PR ref:** #25 (deferred)
 
 ### Save heart persistence (vendor card)
 
@@ -88,6 +108,18 @@ All 3 applied directly to prod (`obpdgihdskbxzgyctaib`) via psql:
 - **Needs:** Integrate with `concurrent_capacity` so a 2-team vendor shows "Available" until 2 bookings overlap
 - **PR ref:** #20 (deferred)
 
+### "Why Couples Trust Us" trust-signals section refresh
+
+- **State:** Section is still rendered on the homepage using pre-M+ shadcn tokens (`bg-muted/50`, `text-primary`, `text-muted-foreground`). Generic copy with lucide icons.
+- **Needs:** Either port to M+ tokens with refreshed copy, or replace with editorial content (real-vendor preview grid, recent weddings, etc.)
+- **PR ref:** #25 (deferred — scope-limited to hero + category surface)
+
+### Sticky-on-scroll search bar
+
+- **State:** SearchBar lives in the hero. When the user scrolls past it, no sticky variant takes over (despite `variant="sticky-header"` existing per DESIGN.md).
+- **Needs:** Wire the sticky variant into the marketplace layout, conditional on scroll position past the hero
+- **PR ref:** #25 (deferred)
+
 ---
 
 ## 🟢 Tech debt
@@ -120,6 +152,13 @@ All 3 applied directly to prod (`obpdgihdskbxzgyctaib`) via psql:
 - **Fix:** Look up `users.full_name` (or whatever stores the couple's display name) and use that instead
 - **Flagged in:** PR #22 implementer notes (`// refined when we wire user.full_name lookup`)
 
+### 🆕 `resume.ts` placeholder category
+
+- **Where:** `src/lib/onboarding/resume.ts`
+- **What:** Placeholder vendor profile rows previously used `category: ''` which would have failed the CHECK constraint. PR #25 changed to `category: 'photography'` as a valid placeholder. Works because the basics step overwrites it before publish.
+- **Risk:** A vendor who abandons onboarding before the basics step will have an orphan row with `category: 'photography'` incorrectly. Worth a deeper look at whether placeholder rows should exist at all, or whether onboarding should be a "fill the buffer, commit at the end" flow.
+- **Flagged in:** PR #25 implementer notes
+
 ---
 
 ## 🔒 Security: secrets rotation pending — UPDATED 2026-05-25
@@ -129,7 +168,7 @@ Per `[[secrets-rotation-pending-2026-05-21]]` memory, these credentials have bee
 1. **Stripe live secret key** (`sk_live_51T78VM...`) — exposed 2026-05-21 during E backfill. Currently in Vercel as `STRIPE_SECRET_KEY`. Rotate via Stripe dashboard → roll → update Vercel → redeploy.
 2. **Prod Supabase service-role key** (`sb_secret_6RJwL...`) — same exposure. Currently in Vercel as `SUPABASE_SERVICE_ROLE_KEY`. Rotate via prod Supabase project → Settings → API.
 3. **Dev Supabase DB password** (multiple values exposed across sessions). Used by Claude's psql sessions only, not in any deployed env var. Lower urgency.
-4. **Prod Supabase DB password** — exposed 2026-05-24 during 00037/00038 prod apply, **AND re-exposed 2026-05-25 during 00039/00040/00041 prod apply**. Not in any deployed env var. **Higher urgency** because (a) it's prod and (b) it's been in two separate session transcripts now.
+4. **Prod Supabase DB password** — **🔥 ELEVATED URGENCY** — exposed 2026-05-24 during 00037/00038 prod apply, re-exposed 2026-05-25 during 00039/00040/00041 prod apply, **AND re-exposed 2026-05-25 (third time) during 00042 prod apply**. Not in any deployed env var. **Highest rotation priority** because it's prod AND has been in 3 separate session transcripts now.
 
 ---
 
@@ -143,11 +182,17 @@ For context — these are no longer pending:
 - ~~PR #20 vendor card~~ — merged; migrations 00037+00038 prod-applied 2026-05-24
 - ~~PR #21 footer~~ — merged 2026-05-25; migration 00039 prod-applied 2026-05-25
 - ~~PR #22 custom request + date picker primitive~~ — merged 2026-05-25; migrations 00040+00041 prod-applied 2026-05-25
-- PR #23 VendorAdjustQuoteForm pending_quote branch — **open**, awaiting review/merge
+- ~~PR #23 VendorAdjustQuoteForm pending_quote branch~~ — merged 2026-05-25
+- ~~PR #24 PENDING_ISSUES.md tracker~~ — merged 2026-05-25
+- ~~PR #25 homepage hero + CategoryHoverExpand~~ — merged 2026-05-25; migration 00042 prod-applied 2026-05-25. V2 asymmetric hero + 11-tile category strip + 3 new vendor categories (bridal_wear, live_music, carts).
 
 ---
 
-## Next phase (per [[sub-project-sequencing]] memory)
+## Next phase
 
-1. **Homepage hero in code** — first real production component using all locked foundation tokens (palette + typography + spacing + motion + wordmark cycle).
-2. **K sub-project (scraper)** — intentionally LAST in the sub-project sequence; don't dispatch early.
+The Day-1 brand component queue + the first production page (homepage hero) are now complete. Open avenues per [[sub-project-sequencing]] and recent strategic discussion:
+
+1. **Flat-fee listing sub-project** (Bridal Wear + Decor + Venue) — see 🟠 deferred section above. Unblocks the 3 Coming Soon tiles on the homepage strip.
+2. **Trust signals section refresh / replacement** — easy follow-up to homepage hero; could ship as editorial content (recent weddings, vendor spotlights, etc.)
+3. **Resend wire-up** (newsletter + custom request) — both stubbed currently; one focused sub-project would unblock both.
+4. **K sub-project (scraper)** — intentionally LAST in the sub-project sequence; don't dispatch early.
