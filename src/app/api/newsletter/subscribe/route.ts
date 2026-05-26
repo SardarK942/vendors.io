@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { newsletterSubscribeSchema } from '@/lib/newsletter/validation';
+import { sendNewsletterWelcomeEmail } from '@/lib/email/resend';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,5 +40,11 @@ export async function POST(req: NextRequest) {
   }
 
   logger.info('newsletter_signup_submitted', { source, was_duplicate: error?.code === '23505' });
+
+  // Send welcome email — fire-and-forget. Fires for both new and duplicate signups.
+  void sendNewsletterWelcomeEmail(email).catch((err) =>
+    logger.error('sendNewsletterWelcomeEmail failed', err, { email_domain: email.split('@')[1] })
+  );
+
   return NextResponse.json({ ok: true }, { status: 200 });
 }

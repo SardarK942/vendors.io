@@ -9,6 +9,10 @@ vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(),
 }));
 
+vi.mock('@/lib/email/resend', () => ({
+  sendNewsletterWelcomeEmail: vi.fn().mockResolvedValue(true),
+}));
+
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { POST } from '@/app/api/newsletter/subscribe/route';
 
@@ -57,6 +61,8 @@ describe('POST /api/newsletter/subscribe', () => {
       source: 'footer',
       user_id: null,
     });
+    const { sendNewsletterWelcomeEmail } = await import('@/lib/email/resend');
+    expect(sendNewsletterWelcomeEmail).toHaveBeenCalledWith('jane@example.com');
   });
 
   it('returns 200 + sets user_id when authenticated', async () => {
@@ -84,6 +90,8 @@ describe('POST /api/newsletter/subscribe', () => {
 
     expect(res.status).toBe(200);
     expect(json).toEqual({ ok: true });
+    const { sendNewsletterWelcomeEmail } = await import('@/lib/email/resend');
+    expect(sendNewsletterWelcomeEmail).toHaveBeenCalledWith('jane@example.com');
   });
 
   it('returns 400 on invalid email', async () => {
