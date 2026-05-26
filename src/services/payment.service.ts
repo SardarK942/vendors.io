@@ -13,6 +13,7 @@ import {
 } from '@/lib/utils';
 import {
   sendDepositConfirmationEmail,
+  sendBookingConfirmedEmail,
   sendCompletionEmailToVendor,
   sendReviewRequestEmail,
   sendCancellationEmail,
@@ -185,7 +186,7 @@ export async function handlePaymentSuccess(
   const { data: ctx } = await supabase
     .from('bookings')
     .select(
-      'couple_email, couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
+      'couple_email, couple_user_id, vendor_notes, users!couple_user_id(email), vendor_profiles!inner(business_name, base_address_line_1, base_city, base_state, base_postal_code, users!user_id(email))'
     )
     .eq('id', bookingId)
     .single();
@@ -193,16 +194,37 @@ export async function handlePaymentSuccess(
   if (ctx) {
     const vp = ctx.vendor_profiles as unknown as {
       business_name: string;
+      base_address_line_1: string | null;
+      base_city: string | null;
+      base_state: string | null;
+      base_postal_code: string | null;
       users: { email: string } | { email: string }[] | null;
     };
     const vendorUser = Array.isArray(vp.users) ? vp.users[0] : vp.users;
     const coupleUser = Array.isArray(ctx.users) ? ctx.users[0] : ctx.users;
     const coupleEmail = ctx.couple_email ?? (coupleUser as { email: string } | null)?.email;
 
+    // Format the vendor's full address from parts. Falls back to business_name
+    // if any part is missing (graceful degradation).
+    const vendorFullAddress =
+      [vp.base_address_line_1, vp.base_city, vp.base_state, vp.base_postal_code]
+        .filter(Boolean)
+        .join(', ') || vp.business_name;
+
+    const vendorNotes = (ctx as { vendor_notes?: string | null }).vendor_notes ?? null;
+
     if (coupleEmail) {
-      await sendDepositConfirmationEmail(coupleEmail, vp.business_name, amount, false);
+      // Couple gets the richer confirmation with vendor address + notes revealed.
+      await sendBookingConfirmedEmail(
+        coupleEmail,
+        vp.business_name,
+        vendorFullAddress,
+        vendorNotes,
+        bookingId
+      );
     }
     if (vendorUser?.email) {
+      // Vendor still gets the generic deposit-confirmation (no address reveal needed).
       await sendDepositConfirmationEmail(vendorUser.email, vp.business_name, amount, true);
     }
 
@@ -216,7 +238,10 @@ export async function handlePaymentSuccess(
         .eq('id', bookingId)
         .single();
       if (!notifyCtx) return;
-      const nvp = notifyCtx.vendor_profiles as unknown as { user_id: string; business_name: string };
+      const nvp = notifyCtx.vendor_profiles as unknown as {
+        user_id: string;
+        business_name: string;
+      };
       const ncu = notifyCtx.users as unknown as { full_name: string | null } | null;
       const coupleName = ncu?.full_name ?? 'The couple';
       const packageName = notifyCtx.package_name_snapshot ?? 'Package';
@@ -463,7 +488,11 @@ export async function cancelBooking(
 
   if (!booking) return { error: 'Booking not found', status: 404 };
 
-  const vp = booking.vendor_profiles as unknown as { id: string; user_id: string; payment_mode: string | null };
+  const vp = booking.vendor_profiles as unknown as {
+    id: string;
+    user_id: string;
+    payment_mode: string | null;
+  };
   const isCouple = booking.couple_user_id === cancellerUserId;
   const isVendor = vp.user_id === cancellerUserId;
 
@@ -493,7 +522,13 @@ export async function cancelBooking(
       cancellation_fault: effectiveFault,
     })
     .eq('id', bookingId)
-    .in('status', ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid'])
+    .in('status', [
+      'pending',
+      'accepted',
+      'adjusted_quote_sent',
+      'adjusted_quote_declined',
+      'deposit_paid',
+    ])
     .select('id');
 
   if (!lockRows || lockRows.length === 0) {
@@ -504,7 +539,12 @@ export async function cancelBooking(
   }
 
   // Pre-deposit: no money to move.
-  const preDepositStatuses = ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'];
+  const preDepositStatuses = [
+    'pending',
+    'accepted',
+    'adjusted_quote_sent',
+    'adjusted_quote_declined',
+  ];
   if (preDepositStatuses.includes(booking.status)) {
     return { data: { refund_amount_cents: 0, new_status: newStatus }, status: 200 };
   }
@@ -865,13 +905,14 @@ export async function autoCompleteBookings(
   let bookingsCompleted = 0;
 
   for (const b of bookings ?? []) {
-    const events = (b.booking_events as {
-      id: string;
-      event_end_time: string;
-      event_type_label: string;
-      sequence: number;
-      completed_at: string | null;
-    }[]) ?? [];
+    const events =
+      (b.booking_events as {
+        id: string;
+        event_end_time: string;
+        event_type_label: string;
+        sequence: number;
+        completed_at: string | null;
+      }[]) ?? [];
     const bvp = b.vendor_profiles as unknown as { user_id: string };
     const incomplete = events.filter((e) => !e.completed_at);
     const dueNow = incomplete.filter((e) => e.event_end_time < cutoff);
@@ -880,7 +921,10 @@ export async function autoCompleteBookings(
     await supabase
       .from('booking_events')
       .update({ completed_at: now })
-      .in('id', dueNow.map((e) => e.id));
+      .in(
+        'id',
+        dueNow.map((e) => e.id)
+      );
     eventsCompleted += dueNow.length;
 
     // Notify both parties for each newly completed event.
@@ -1177,12 +1221,13 @@ async function autoTransferEarnedFunds(
 import type Stripe from 'stripe';
 import { CASH_DEPOSIT_RATE } from '@/lib/utils';
 
-const PAYOUT_STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'> = {
-  'payout.created': 'pending',
-  'payout.paid': 'paid',
-  'payout.failed': 'failed',
-  'payout.canceled': 'canceled',
-};
+const PAYOUT_STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'> =
+  {
+    'payout.created': 'pending',
+    'payout.paid': 'paid',
+    'payout.failed': 'failed',
+    'payout.canceled': 'canceled',
+  };
 
 /**
  * Persist a Stripe payout event into the payouts ledger and (on payout.paid)
@@ -1240,21 +1285,19 @@ export async function handlePayoutEvent(
     ? new Date(payout.arrival_date * 1000).toISOString().slice(0, 10)
     : null;
 
-  await supabase
-    .from('payouts')
-    .upsert(
-      {
-        vendor_profile_id: primaryVendorProfileId,
-        stripe_payout_id: payout.id,
-        amount_cents: payout.amount,
-        currency: payout.currency,
-        status,
-        arrival_date: arrivalDate,
-        failure_message: payout.failure_message ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'stripe_payout_id' }
-    );
+  await supabase.from('payouts').upsert(
+    {
+      vendor_profile_id: primaryVendorProfileId,
+      stripe_payout_id: payout.id,
+      amount_cents: payout.amount,
+      currency: payout.currency,
+      status,
+      arrival_date: arrivalDate,
+      failure_message: payout.failure_message ?? null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'stripe_payout_id' }
+  );
 
   // On payout.paid, attribute the payout to the bookings whose transferred_at
   // falls inside the payout window (created → arrival_date). Bookings can
@@ -1333,9 +1376,7 @@ export async function getPayoutHistory(
 
   const hasMore = rows.length > limit;
   const trimmed = hasMore ? rows.slice(0, limit) : rows;
-  const nextCursor = hasMore
-    ? trimmed[trimmed.length - 1].arrival_date ?? undefined
-    : undefined;
+  const nextCursor = hasMore ? (trimmed[trimmed.length - 1].arrival_date ?? undefined) : undefined;
   return { data: trimmed, error: null, nextCursor };
 }
 

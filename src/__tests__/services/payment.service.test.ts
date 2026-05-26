@@ -1,9 +1,19 @@
 import { describe, it, expect, vi } from 'vitest';
-import { calculateDepositAmount, calculatePlatformCut, calculateVendorPending, getDepositRate } from '@/lib/utils';
+import {
+  calculateDepositAmount,
+  calculatePlatformCut,
+  calculateVendorPending,
+  getDepositRate,
+} from '@/lib/utils';
 
 // Mock external dependencies that payment.service.ts imports at module load time.
 vi.mock('@/lib/stripe/client', () => ({
-  stripe: { checkout: { sessions: { create: vi.fn() } }, refunds: { create: vi.fn() }, transfers: { create: vi.fn(), createReversal: vi.fn() }, paymentIntents: { retrieve: vi.fn() } },
+  stripe: {
+    checkout: { sessions: { create: vi.fn() } },
+    refunds: { create: vi.fn() },
+    transfers: { create: vi.fn(), createReversal: vi.fn() },
+    paymentIntents: { retrieve: vi.fn() },
+  },
 }));
 vi.mock('@/lib/stripe/connect', () => ({
   createMinimalAccount: vi.fn(),
@@ -14,6 +24,7 @@ vi.mock('@/lib/supabase/server', () => ({
 }));
 vi.mock('@/lib/email/resend', () => ({
   sendDepositConfirmationEmail: vi.fn(),
+  sendBookingConfirmedEmail: vi.fn(),
   sendCompletionEmailToVendor: vi.fn(),
   sendReviewRequestEmail: vi.fn(),
   sendCancellationEmail: vi.fn(),
@@ -152,7 +163,15 @@ describe('Cash vendor — cancellation policy (computeRefundPolicy)', () => {
   it('<24h cooling off: couple gets full refund, platform keeps 0', () => {
     const depositPaidAt = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(); // 2h ago
     const firstEventDate = '2026-09-15'; // >30d out
-    const policy = computeRefundPolicy('couple', 'deposit_paid', firstEventDate, depositPaidAt, 'none', now, 'cash');
+    const policy = computeRefundPolicy(
+      'couple',
+      'deposit_paid',
+      firstEventDate,
+      depositPaidAt,
+      'none',
+      now,
+      'cash'
+    );
 
     expect(policy.coupleRefundPct).toBe(1);
     expect(policy.vendorKeepPct).toBe(0);
@@ -164,7 +183,15 @@ describe('Cash vendor — cancellation policy (computeRefundPolicy)', () => {
   it('>30d couple cancel: 50% refund, platform keeps 50%, vendor keeps 0', () => {
     const depositPaidAt = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(); // 2d ago
     const firstEventDate = '2026-09-15'; // >30d out
-    const policy = computeRefundPolicy('couple', 'deposit_paid', firstEventDate, depositPaidAt, 'none', now, 'cash');
+    const policy = computeRefundPolicy(
+      'couple',
+      'deposit_paid',
+      firstEventDate,
+      depositPaidAt,
+      'none',
+      now,
+      'cash'
+    );
 
     expect(policy.coupleRefundPct).toBe(0.5);
     expect(policy.vendorKeepPct).toBe(0);
@@ -176,7 +203,15 @@ describe('Cash vendor — cancellation policy (computeRefundPolicy)', () => {
   it('≤30d couple cancel: 0% refund, platform keeps 100%, vendor keeps 0', () => {
     const depositPaidAt = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(); // 2d ago
     const firstEventDate = '2026-06-20'; // ≤30d out
-    const policy = computeRefundPolicy('couple', 'deposit_paid', firstEventDate, depositPaidAt, 'none', now, 'cash');
+    const policy = computeRefundPolicy(
+      'couple',
+      'deposit_paid',
+      firstEventDate,
+      depositPaidAt,
+      'none',
+      now,
+      'cash'
+    );
 
     expect(policy.coupleRefundPct).toBe(0);
     expect(policy.vendorKeepPct).toBe(0);
@@ -188,7 +223,15 @@ describe('Cash vendor — cancellation policy (computeRefundPolicy)', () => {
   it('vendor cancel: couple gets full refund, platform keeps 0, no claw', () => {
     const depositPaidAt = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
     const firstEventDate = '2026-09-15';
-    const policy = computeRefundPolicy('vendor', 'deposit_paid', firstEventDate, depositPaidAt, 'none', now, 'cash');
+    const policy = computeRefundPolicy(
+      'vendor',
+      'deposit_paid',
+      firstEventDate,
+      depositPaidAt,
+      'none',
+      now,
+      'cash'
+    );
 
     expect(policy.coupleRefundPct).toBe(1);
     expect(policy.vendorKeepPct).toBe(0);
