@@ -27,7 +27,9 @@ function buildSupabase(opts: {
   vendorUpsertError?: { message: string } | null;
 }) {
   const userUpdate = vi.fn().mockResolvedValue({ error: opts.userUpdateError ?? null });
-  const vendorUpsert = vi.fn().mockResolvedValue({ error: opts.vendorUpsertError ?? null });
+  const vendorUpdate = vi
+    .fn()
+    .mockReturnValue({ eq: vi.fn().mockResolvedValue({ error: opts.vendorUpsertError ?? null }) });
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue({ data: { user: opts.user ?? null }, error: null }),
@@ -50,13 +52,13 @@ function buildSupabase(opts: {
       }
       if (table === 'vendor_profiles') {
         return {
-          upsert: vendorUpsert,
+          update: vendorUpdate,
         };
       }
       throw new Error(`Unexpected table ${table}`);
     }),
     userUpdate,
-    vendorUpsert,
+    vendorUpdate,
   };
 }
 
@@ -105,9 +107,8 @@ describe('POST /api/users/onboarding-complete', () => {
       })
     );
     expect(res.status).toBe(200);
-    expect(sb.vendorUpsert).toHaveBeenCalledWith(
-      expect.objectContaining({ user_id: 'u-1', category: 'photography' }),
-      expect.objectContaining({ onConflict: 'user_id' })
+    expect(sb.vendorUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({ category: 'photography' })
     );
   });
 

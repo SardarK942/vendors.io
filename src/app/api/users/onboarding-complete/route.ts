@@ -44,7 +44,23 @@ export async function POST(req: NextRequest) {
   } else if (isVendorData(input.data)) {
     const { error: upsertError } = await supabase
       .from('vendor_profiles')
-      .upsert({ user_id: user.id, category: input.data.category }, { onConflict: 'user_id' });
+      .update({
+        category: input.data.category as
+          | 'photography'
+          | 'videography'
+          | 'mehndi'
+          | 'hair_makeup'
+          | 'dj'
+          | 'photobooth'
+          | 'catering'
+          | 'venue'
+          | 'decor'
+          | 'invitations'
+          | 'bridal_wear'
+          | 'live_music'
+          | 'carts',
+      })
+      .eq('user_id', user.id);
     if (upsertError) {
       // Non-fatal: log + proceed. The user can change category in the wizard.
       logger.error('vendor_profiles category upsert failed', upsertError, {
