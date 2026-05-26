@@ -13,6 +13,10 @@ vi.mock('@/services/notifications.service', () => ({
   notifyCustomRequestReceived: vi.fn().mockResolvedValue({ id: 'notif-1' }),
 }));
 
+vi.mock('@/lib/email/resend', () => ({
+  sendCustomRequestReceivedEmail: vi.fn().mockResolvedValue(true),
+}));
+
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { notifyCustomRequestReceived } from '@/services/notifications.service';
 import { POST } from '@/app/api/bookings/custom-request/route';
@@ -35,7 +39,7 @@ function makePostRequest(body: unknown): NextRequest {
 
 function buildSupabase(opts: {
   user?: { id: string } | null;
-  vendor?: { id: string; user_id: string } | null;
+  vendor?: { id: string; user_id: string; users?: { email: string } | null } | null;
   insertResult?: { data?: { id: string } | null; error?: { message: string } | null };
 }) {
   const insertChain = {
@@ -101,7 +105,7 @@ describe('POST /api/bookings/custom-request', () => {
   it('returns 200 + booking_id on success + dispatches notification', async () => {
     const sb = buildSupabase({
       user: { id: 'u-1' },
-      vendor: { id: 'vp-1', user_id: 'vendor-user-1' },
+      vendor: { id: 'vp-1', user_id: 'vendor-user-1', users: { email: 'vendor@example.com' } },
     });
     mockCreateClient.mockResolvedValueOnce(sb);
 
@@ -131,6 +135,8 @@ describe('POST /api/bookings/custom-request', () => {
         eventDate: '2026-10-17',
       })
     );
+    const { sendCustomRequestReceivedEmail } = await import('@/lib/email/resend');
+    expect(sendCustomRequestReceivedEmail).toHaveBeenCalled();
   });
 
   it('returns 500 on insert error', async () => {

@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { customRequestSchema } from '@/lib/booking/custom-request-validation';
 import { notifyCustomRequestReceived } from '@/services/notifications.service';
+import { sendCustomRequestReceivedEmail } from '@/lib/email/resend';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,7 +35,7 @@ export async function POST(req: NextRequest) {
   // to be able to send requests (mirrors /book page gate).
   const { data: vendor } = await supabase
     .from('vendor_profiles')
-    .select('id, user_id')
+    .select('id, user_id, users:user_id(email)')
     .eq('slug', vendor_slug)
     .eq('is_active', true)
     .maybeSingle();
@@ -70,6 +71,27 @@ export async function POST(req: NextRequest) {
     coupleName: user.email ?? 'A couple', // refined when we wire user.full_name lookup
     eventDate: event_date,
   }).catch(() => {});
+
+  // Send email to vendor — fire-and-forget.
+  const vendorUsers = vendor.users as { email: string } | { email: string }[] | null;
+  const vendorEmail = Array.isArray(vendorUsers)
+    ? vendorUsers[0]?.email
+    : (vendorUsers as { email: string } | null)?.email;
+
+  if (vendorEmail) {
+    const descriptionPreview =
+      description.length > 140 ? `${description.slice(0, 140)}…` : description;
+    void sendCustomRequestReceivedEmail(vendorEmail, {
+      bookingId: inserted.id,
+      coupleName: user.email ?? 'A couple',
+      eventDate: event_date,
+      eventType: event_type,
+      guestCount: guest_count,
+      descriptionPreview,
+    }).catch((err) =>
+      logger.error('sendCustomRequestReceivedEmail failed', err, { bookingId: inserted.id })
+    );
+  }
 
   logger.info('custom_request_submitted', { vendor_slug, booking_id: inserted.id });
 
