@@ -20,6 +20,7 @@
  *           + payouts + payout_bookings (Sub-project E)
  *   - 00035 vendor_profiles.stripe_account_id (FK flipped from stripe_accounts.vendor_profile_id)
  *           + users.active_vendor_profile_id nullable FK (Sub-project I)
+ *   - 00043 users.onboarding_completed_at + users.onboarding_data (onboarding welcome)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -112,6 +113,8 @@ export interface Database {
           updated_at: string;
           active_vendor_profile_id: string | null;
           profile_backfill_dismissed_at: string | null;
+          onboarding_completed_at: string | null;
+          onboarding_data: Record<string, unknown> | null;
         };
         Insert: {
           id: string;
@@ -123,6 +126,8 @@ export interface Database {
           updated_at?: string;
           active_vendor_profile_id?: string | null;
           profile_backfill_dismissed_at?: string | null;
+          onboarding_completed_at?: string | null;
+          onboarding_data?: Record<string, unknown> | null;
         };
         Update: {
           id?: string;
@@ -133,6 +138,8 @@ export interface Database {
           updated_at?: string;
           active_vendor_profile_id?: string | null;
           profile_backfill_dismissed_at?: string | null;
+          onboarding_completed_at?: string | null;
+          onboarding_data?: Record<string, unknown> | null;
         };
         Relationships: [
           {
