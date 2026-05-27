@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { headers } from 'next/headers';
 import { WizardStepper } from '@/components/onboarding/WizardStepper';
 import { getOrCreateWizardProfile, type WizardMode } from '@/lib/onboarding/resume';
 
@@ -7,21 +8,19 @@ export const dynamic = 'force-dynamic';
 
 interface SetupLayoutProps {
   children: React.ReactNode;
-  searchParams?: Promise<{ next?: string }>;
 }
 
-export default async function SetupLayout({ children, searchParams }: SetupLayoutProps) {
+export default async function SetupLayout({ children }: SetupLayoutProps) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
-  // Sub-project I §6: detect "Add another business" via ?next=true. In that
-  // mode we resolve or create a NEW (second) vendor_profile rather than the
-  // user's primary one.
-  const sp = (await searchParams) ?? {};
-  const mode: WizardMode = sp.next === 'true' ? 'next' : 'first';
+  // Sub-project I §6: detect "Add another business" via ?next=true. Next.js 14
+  // layouts don't receive searchParams, so middleware (updateSession) mirrors
+  // the URL into the x-wizard-mode request header.
+  const mode: WizardMode = headers().get('x-wizard-mode') === 'next' ? 'next' : 'first';
 
   const { profileId } = await getOrCreateWizardProfile(supabase, user.id, mode);
 
@@ -44,12 +43,10 @@ export default async function SetupLayout({ children, searchParams }: SetupLayou
 
   return (
     <div className="flex min-h-screen">
-      <aside className="hidden md:block w-64 border-r bg-muted/30 p-6">
+      <aside className="hidden w-64 border-r bg-muted/30 p-6 md:block">
         <WizardStepper profile={profile} />
         {mode === 'next' && (
-          <p className="mt-6 text-xs text-muted-foreground">
-            Setting up an additional business.
-          </p>
+          <p className="mt-6 text-xs text-muted-foreground">Setting up an additional business.</p>
         )}
       </aside>
       <main className="flex-1 p-8">

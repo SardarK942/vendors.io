@@ -103,10 +103,14 @@ export async function countFilteredVendors(
   supabase: SupabaseClient,
   filters: VendorFilterParams
 ): Promise<number> {
-  let query = supabase.from('vendor_profiles').select('id', {
-    count: 'exact',
-    head: true,
-  });
+  let query = supabase
+    .from('vendor_profiles')
+    .select('id', {
+      count: 'exact',
+      head: true,
+    })
+    .eq('is_active', true)
+    .eq('onboarding_complete', true);
 
   // Apply only non-price filters (price filtering is app-layer only)
   if (filters.category) query = query.eq('category', filters.category);

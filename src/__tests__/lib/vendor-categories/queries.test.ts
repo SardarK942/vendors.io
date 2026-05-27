@@ -4,7 +4,11 @@ import { getCategoryVendorCounts } from '@/lib/vendor-categories/queries';
 function buildSupabase(rows: Array<{ category: string }>) {
   return {
     from: vi.fn(() => ({
-      select: vi.fn().mockResolvedValue({ data: rows, error: null }),
+      select: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          eq: vi.fn().mockResolvedValue({ data: rows, error: null }),
+        })),
+      })),
     })),
   } as never;
 }
@@ -50,7 +54,11 @@ describe('getCategoryVendorCounts', () => {
   it('returns all-zero map when query errors', async () => {
     const sb = {
       from: vi.fn(() => ({
-        select: vi.fn().mockResolvedValue({ data: null, error: { message: 'boom' } }),
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            eq: vi.fn().mockResolvedValue({ data: null, error: { message: 'boom' } }),
+          })),
+        })),
       })),
     } as never;
     const result = await getCategoryVendorCounts(sb);
