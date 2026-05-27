@@ -21,7 +21,11 @@ export async function getCategoryVendorCounts(supabase: Sb): Promise<Record<stri
     number
   >;
 
-  const { data, error } = await supabase.from('vendor_profiles').select('category');
+  const { data, error } = await supabase
+    .from('vendor_profiles')
+    .select('category')
+    .eq('is_active', true)
+    .eq('onboarding_complete', true);
 
   if (error || !data) {
     return initial;

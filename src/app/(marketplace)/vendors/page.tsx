@@ -28,7 +28,11 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
 
   // NOTE: vendor_packages_price_band is a VIEW — PostgREST cannot resolve FK joins
   // to views. Price band is fetched in a separate parallel query and merged by vendor id.
-  let query = supabase.from('vendor_profiles').select('*', { count: 'exact' });
+  let query = supabase
+    .from('vendor_profiles')
+    .select('*', { count: 'exact' })
+    .eq('is_active', true)
+    .eq('onboarding_complete', true);
 
   query = applyVendorFilters(query, filters);
 

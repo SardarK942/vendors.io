@@ -48,6 +48,9 @@ const COMPLETE_PROFILE = {
   website_url: null,
   portfolio_images: ['https://utfs.io/f/abc.jpg'],
   payment_mode: 'stripe',
+  languages: ['english'],
+  years_in_business: 3,
+  response_sla_hours: 24,
   onboarding_complete: false,
   is_active: false,
 };
@@ -83,8 +86,7 @@ function buildSupabase({
       update: (payload: unknown) => {
         updatePayloadCaptured = payload;
         return {
-          eq: (_col: string, _val: string) =>
-            Promise.resolve({ data: null, error: updateError }),
+          eq: (_col: string, _val: string) => Promise.resolve({ data: null, error: updateError }),
         };
       },
     }),

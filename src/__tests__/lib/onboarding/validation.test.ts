@@ -24,7 +24,11 @@ describe('basicsSchema', () => {
   });
 
   it('rejects bio > 500 chars', () => {
-    const r = basicsSchema.safeParse({ businessName: 'X', category: 'mehndi', bio: 'a'.repeat(501) });
+    const r = basicsSchema.safeParse({
+      businessName: 'X',
+      category: 'mehndi',
+      bio: 'a'.repeat(501),
+    });
     expect(r.success).toBe(false);
   });
 });
@@ -33,16 +37,24 @@ describe('locationSchema', () => {
   it('accepts complete address', () => {
     expect(
       locationSchema.safeParse({
-        baseAddressLine1: '123 Main', baseCity: 'Chicago', baseState: 'IL',
-        basePostalCode: '60601', baseGooglePlaceId: 'ChIJxxx', baseAddressPublic: false,
+        baseAddressLine1: '123 Main',
+        baseCity: 'Chicago',
+        baseState: 'IL',
+        basePostalCode: '60601',
+        baseGooglePlaceId: 'ChIJxxx',
+        baseAddressPublic: false,
       }).success
     ).toBe(true);
   });
   it('rejects missing line_1', () => {
     expect(
       locationSchema.safeParse({
-        baseAddressLine1: '', baseCity: 'Chicago', baseState: 'IL',
-        basePostalCode: '60601', baseGooglePlaceId: 'ChIJxxx', baseAddressPublic: false,
+        baseAddressLine1: '',
+        baseCity: 'Chicago',
+        baseState: 'IL',
+        basePostalCode: '60601',
+        baseGooglePlaceId: 'ChIJxxx',
+        baseAddressPublic: false,
       }).success
     ).toBe(false);
   });
@@ -50,10 +62,14 @@ describe('locationSchema', () => {
 
 describe('onlineSchema', () => {
   it('accepts instagram only', () => {
-    expect(onlineSchema.safeParse({ instagramHandle: 'hennaart', websiteUrl: '' }).success).toBe(true);
+    expect(onlineSchema.safeParse({ instagramHandle: 'hennaart', websiteUrl: '' }).success).toBe(
+      true
+    );
   });
   it('rejects missing instagram', () => {
-    expect(onlineSchema.safeParse({ instagramHandle: '', websiteUrl: 'https://x.com' }).success).toBe(false);
+    expect(
+      onlineSchema.safeParse({ instagramHandle: '', websiteUrl: 'https://x.com' }).success
+    ).toBe(false);
   });
   it('strips leading @ from instagram', () => {
     const r = onlineSchema.parse({ instagramHandle: '@hennaart', websiteUrl: '' });
@@ -63,7 +79,9 @@ describe('onlineSchema', () => {
 
 describe('portfolioSchema', () => {
   it('accepts 1 image', () => {
-    expect(portfolioSchema.safeParse({ portfolioImages: ['https://utfs.io/a.jpg'] }).success).toBe(true);
+    expect(portfolioSchema.safeParse({ portfolioImages: ['https://utfs.io/a.jpg'] }).success).toBe(
+      true
+    );
   });
   it('rejects 0 images', () => {
     expect(portfolioSchema.safeParse({ portfolioImages: [] }).success).toBe(false);
@@ -84,12 +102,22 @@ describe('paymentModeSchema', () => {
 
 describe('publishGateSchema (server-side guard)', () => {
   const completeProfile = {
-    business_name: 'X', category: 'mehndi', bio: 'a'.repeat(60),
-    base_address_line_1: '1', base_city: 'C', base_state: 'IL', base_postal_code: '1',
-    base_google_place_id: 'P', base_address_public: false,
-    instagram_handle: 'x', website_url: null,
+    business_name: 'X',
+    category: 'mehndi',
+    bio: 'a'.repeat(60),
+    base_address_line_1: '1',
+    base_city: 'C',
+    base_state: 'IL',
+    base_postal_code: '1',
+    base_google_place_id: 'P',
+    base_address_public: false,
+    instagram_handle: 'x',
+    website_url: null,
     portfolio_images: ['x.jpg'],
     payment_mode: 'stripe' as const,
+    languages: ['english'],
+    years_in_business: 3,
+    response_sla_hours: 24,
   };
 
   it('rejects profile missing instagram', () => {
