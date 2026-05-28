@@ -21,6 +21,11 @@
  *   - 00035 vendor_profiles.stripe_account_id (FK flipped from stripe_accounts.vendor_profile_id)
  *           + users.active_vendor_profile_id nullable FK (Sub-project I)
  *   - 00043 users.onboarding_completed_at + users.onboarding_data (onboarding welcome)
+ *   - 00044 vendor_profiles.is_active + onboarding_complete (PR #29 schema drift)
+ *   - 00045 added 'content_creation' to vendor_profiles_category_check (Sub-project K)
+ *   - 00046 scraped_vendors staging table (Sub-project K)
+ *   - 00047 claim_tokens table (Sub-project K)
+ *   - 00048 pg_trgm extension + trigram indexes (Sub-project K)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -170,7 +175,8 @@ export interface Database {
             | 'invitations'
             | 'bridal_wear'
             | 'live_music'
-            | 'carts';
+            | 'carts'
+            | 'content_creation';
           bio: string | null;
           service_area: string[];
           portfolio_images: string[];
@@ -216,7 +222,8 @@ export interface Database {
             | 'invitations'
             | 'bridal_wear'
             | 'live_music'
-            | 'carts';
+            | 'carts'
+            | 'content_creation';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
@@ -260,7 +267,8 @@ export interface Database {
             | 'invitations'
             | 'bridal_wear'
             | 'live_music'
-            | 'carts';
+            | 'carts'
+            | 'content_creation';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
@@ -1045,6 +1053,145 @@ export interface Database {
             columns: ['booking_id'];
             isOneToOne: false;
             referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scraped_vendors: {
+        Row: {
+          id: string;
+          source:
+            | 'google_maps'
+            | 'instagram'
+            | 'il_desi_arab_catering'
+            | 'hand_curated'
+            | 'searchgraph';
+          source_external_id: string | null;
+          business_name: string;
+          category: string | null;
+          tags: string[];
+          city: string | null;
+          state: string;
+          postal_code: string | null;
+          lat: number | null;
+          lng: number | null;
+          phone: string | null;
+          email: string | null;
+          website: string | null;
+          instagram_handle: string | null;
+          facebook_url: string | null;
+          bio: string | null;
+          photos: string[];
+          raw: Record<string, unknown>;
+          enriched: Record<string, unknown> | null;
+          scraped_at: string;
+          last_seen_at: string;
+          claimed_at: string | null;
+          claimed_vendor_profile_id: string | null;
+          disputed_at: string | null;
+          review_status: 'pending' | 'approved' | 'rejected' | 'duplicate';
+        };
+        Insert: {
+          id?: string;
+          source:
+            | 'google_maps'
+            | 'instagram'
+            | 'il_desi_arab_catering'
+            | 'hand_curated'
+            | 'searchgraph';
+          source_external_id?: string | null;
+          business_name: string;
+          category?: string | null;
+          tags?: string[];
+          city?: string | null;
+          state?: string;
+          postal_code?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          phone?: string | null;
+          email?: string | null;
+          website?: string | null;
+          instagram_handle?: string | null;
+          facebook_url?: string | null;
+          bio?: string | null;
+          photos?: string[];
+          raw: Record<string, unknown>;
+          enriched?: Record<string, unknown> | null;
+          scraped_at?: string;
+          last_seen_at?: string;
+          claimed_at?: string | null;
+          claimed_vendor_profile_id?: string | null;
+          disputed_at?: string | null;
+          review_status?: 'pending' | 'approved' | 'rejected' | 'duplicate';
+        };
+        Update: {
+          category?: string | null;
+          tags?: string[];
+          city?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          website?: string | null;
+          instagram_handle?: string | null;
+          bio?: string | null;
+          photos?: string[];
+          enriched?: Record<string, unknown> | null;
+          last_seen_at?: string;
+          claimed_at?: string | null;
+          claimed_vendor_profile_id?: string | null;
+          disputed_at?: string | null;
+          review_status?: 'pending' | 'approved' | 'rejected' | 'duplicate';
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scraped_vendors_claimed_vendor_profile_id_fkey';
+            columns: ['claimed_vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      claim_tokens: {
+        Row: {
+          id: string;
+          scraped_vendor_id: string;
+          token_hash: string;
+          issued_at: string;
+          expires_at: string;
+          claimed_at: string | null;
+          claimed_by_user_id: string | null;
+          revoked_at: string | null;
+          campaign_label: string | null;
+        };
+        Insert: {
+          id?: string;
+          scraped_vendor_id: string;
+          token_hash: string;
+          issued_at?: string;
+          expires_at: string;
+          claimed_at?: string | null;
+          claimed_by_user_id?: string | null;
+          revoked_at?: string | null;
+          campaign_label?: string | null;
+        };
+        Update: {
+          claimed_at?: string | null;
+          claimed_by_user_id?: string | null;
+          revoked_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'claim_tokens_scraped_vendor_id_fkey';
+            columns: ['scraped_vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'scraped_vendors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'claim_tokens_claimed_by_user_id_fkey';
+            columns: ['claimed_by_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
