@@ -21,6 +21,7 @@
     "scrape:google-maps": "tsx scripts/scraper/sources/google-maps.ts",
     "scrape:merge": "tsx scripts/scraper/merge.ts",
     "scrape:mint-tokens": "tsx scripts/scraper/mint-tokens.ts",
+    "scrape:instagram:hashtags": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).runInstagramHashtagLayer({ category: process.env.SCRAPE_CATEGORY || 'carts' }))\"",
     "prepare": "husky"
   },
   "lint-staged": {
@@ -56,6 +57,7 @@
     "@uploadthing/react": "^7.3.3",
     "@upstash/ratelimit": "^2.0.8",
     "@upstash/redis": "^1.37.0",
+    "apify-client": "^2.23.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "framer-motion": "^12.40.0",

@@ -56,3 +56,11 @@ data/scraped/*-merged/
 
 # K — mint-tokens CSV outputs (operational artifacts, not source)
 mint-tokens-*.csv
+
+# K — scraper run outputs
+data/scraped/google-maps/
+data/scraped/instagram/
+data/scraped/il-desi-arab-catering/
+data/scraped/searchgraph/
+data/scraped/enriched/
+data/scraped/hand-curated-merged/
