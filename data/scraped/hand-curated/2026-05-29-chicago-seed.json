@@ -1,0 +1,14 @@
+[
+  {
+    "source": "hand_curated",
+    "business_name": "Example Chai Cart",
+    "category": "carts",
+    "tags": ["chai"],
+    "city": "Chicago",
+    "state": "IL",
+    "instagram_handle": "examplechaicart_seed",
+    "phone": "+13125551234",
+    "bio": "Seed entry to validate the merge pipeline. Replace before outreach.",
+    "raw": { "note": "manually authored 2026-05-29 by Sardar" }
+  }
+]
