@@ -23,6 +23,7 @@
     "scrape:mint-tokens": "tsx scripts/scraper/mint-tokens.ts",
     "scrape:instagram:hashtags": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).runInstagramHashtagLayer({ category: process.env.SCRAPE_CATEGORY || 'carts' }))\"",
     "scrape:instagram:locations": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).runInstagramLocationLayer())\"",
+    "scrape:instagram:expand": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).runInstagramProfileExpansion(new Date().toISOString().slice(0,10)))\"",
     "prepare": "husky"
   },
   "lint-staged": {
