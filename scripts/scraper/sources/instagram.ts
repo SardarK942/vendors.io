@@ -199,6 +199,98 @@ export async function runInstagramProfileExpansion(runDate: string): Promise<voi
   console.log(`instagram profile expansion: ${expanded.length} rows from ${seeds.length} seeds`);
 }
 
+const BIO_KEYWORDS = [
+  'chicago chai',
+  'chicago cart',
+  'chicago mehndi',
+  'illinois mehndi',
+  'illinois cart',
+  'desi wedding chicago',
+];
+
+export async function runInstagramBioSearch(): Promise<void> {
+  const token = process.env.APIFY_API_TOKEN;
+  if (!token) throw new Error('APIFY_API_TOKEN required');
+  const client = new ApifyClient({ token });
+  const runDate = todayRunDate();
+  const outDir = path.join(OUTPUT_ROOT, runDate);
+  await fs.mkdir(outDir, { recursive: true });
+  const manifest = emptyManifest('instagram', runDate);
+  manifest.notes = 'bio search';
+  const rows: ScrapedRow[] = [];
+
+  for (const q of BIO_KEYWORDS) {
+    manifest.queries_executed += 1;
+    try {
+      const run = await client.actor('apify/instagram-search-scraper').call({
+        searchQueries: [q],
+        searchType: 'user',
+        resultsLimit: 25,
+      });
+      const { items } = await client.dataset(run.defaultDatasetId).listItems();
+      for (const raw of items) {
+        const item = raw as Record<string, unknown>;
+        const h = normalizeInstagramHandle((item.username as string) ?? null);
+        if (!h) continue;
+        rows.push({
+          source: 'instagram',
+          source_external_id: h,
+          business_name: (item.fullName as string) ?? h,
+          tags: [`bio:${q}`],
+          state: 'IL',
+          instagram_handle: h,
+          bio: (item.biography as string) ?? undefined,
+          photos: [],
+          raw: item,
+        });
+      }
+    } catch (e) {
+      manifest.errors.push({
+        context: q,
+        code: 'APIFY_ERROR',
+        message: e instanceof Error ? e.message : String(e),
+        ts: new Date().toISOString(),
+      });
+    }
+  }
+  manifest.records_returned = rows.length;
+  await fs.writeFile(path.join(outDir, 'bio-search-layer.json'), JSON.stringify(rows, null, 2));
+  await writeManifest(path.join(outDir, '_bio-search-manifest'), manifest);
+  console.log(`instagram bio search: ${rows.length} rows`);
+}
+
+/** After all 4 layers have written their JSONs, combine into a single rows.json
+ *  that merge.ts will pick up. Dedups within the run on instagram_handle. */
+export async function combineInstagramLayers(runDate: string): Promise<void> {
+  const dir = path.join(OUTPUT_ROOT, runDate);
+  const files = [
+    'hashtag-layer.json',
+    'location-layer.json',
+    'profile-expansion-layer.json',
+    'bio-search-layer.json',
+  ];
+  const seen = new Set<string>();
+  const combined: ScrapedRow[] = [];
+  for (const file of files) {
+    const text = await fs.readFile(path.join(dir, file), 'utf8').catch(() => '[]');
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(text);
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(parsed)) continue;
+    for (const row of parsed as ScrapedRow[]) {
+      if (!row.instagram_handle) continue;
+      if (seen.has(row.instagram_handle)) continue;
+      seen.add(row.instagram_handle);
+      combined.push(row);
+    }
+  }
+  await fs.writeFile(path.join(dir, 'rows.json'), JSON.stringify(combined, null, 2));
+  console.log(`instagram: combined ${combined.length} unique handles into rows.json`);
+}
+
 if (require.main === module) {
   runInstagramHashtagLayer().catch((e) => {
     console.error(e);
