@@ -28,6 +28,7 @@
     "scrape:instagram:bio": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).runInstagramBioSearch())\"",
     "scrape:instagram:combine": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).combineInstagramLayers(new Date().toISOString().slice(0,10)))\"",
     "scrape:searchgraph": "tsx scripts/scraper/sources/searchgraph.ts",
+    "scrape:rehost-photos": "tsx scripts/scraper/rehost-photos.ts",
     "prepare": "husky"
   },
   "lint-staged": {
