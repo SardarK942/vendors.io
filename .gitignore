@@ -53,3 +53,6 @@ data/scraped/*-merged/
 # claude code local-only settings (may contain secrets in Bash allow patterns)
 .claude/settings.local.json
 .claude/worktrees/
+
+# K — mint-tokens CSV outputs (operational artifacts, not source)
+mint-tokens-*.csv

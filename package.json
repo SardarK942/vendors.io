@@ -19,6 +19,7 @@
     "test:e2e:headed": "playwright test --headed",
     "scrape:hand-curated": "tsx scripts/scraper/sources/hand-curated.ts",
     "scrape:merge": "tsx scripts/scraper/merge.ts",
+    "scrape:mint-tokens": "tsx scripts/scraper/mint-tokens.ts",
     "prepare": "husky"
   },
   "lint-staged": {
