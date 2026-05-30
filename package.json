@@ -18,6 +18,7 @@
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
     "scrape:hand-curated": "tsx scripts/scraper/sources/hand-curated.ts",
+    "scrape:merge": "tsx scripts/scraper/merge.ts",
     "prepare": "husky"
   },
   "lint-staged": {
