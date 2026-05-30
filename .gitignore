@@ -64,3 +64,7 @@ data/scraped/il-desi-arab-catering/
 data/scraped/searchgraph/
 data/scraped/enriched/
 data/scraped/hand-curated-merged/
+
+# K — Python sidecar venv (managed by uv)
+scripts/scraper/python/.venv/
+scripts/scraper/python/__pycache__/
