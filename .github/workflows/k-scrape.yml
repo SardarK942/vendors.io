@@ -1,0 +1,89 @@
+name: K — Vendor scrape (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      sources:
+        description: 'Comma-separated sources to run (google-maps,instagram,catering,searchgraph,all)'
+        required: true
+        default: 'all'
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350  # ~6h cap
+    env:
+      GOOGLE_MAPS_API_KEY: ${{ secrets.GOOGLE_MAPS_API_KEY }}
+      APIFY_API_TOKEN: ${{ secrets.APIFY_API_TOKEN }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+      UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      - run: npm ci
+
+      - uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Bootstrap Python sidecar
+        run: |
+          cd scripts/scraper/python
+          uv sync
+          uv run playwright install chromium
+
+      - name: Hand-curated source
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'hand-curated')
+        run: npm run scrape:hand-curated
+
+      - name: Google Maps source
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'google-maps')
+        run: npm run scrape:google-maps
+
+      - name: Instagram hashtag layer
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'instagram')
+        run: npm run scrape:instagram:hashtags
+
+      - name: Instagram location layer
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'instagram')
+        run: npm run scrape:instagram:locations
+
+      - name: Instagram bio-search layer
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'instagram')
+        run: npm run scrape:instagram:bio
+
+      - name: Instagram profile expansion (requires layers 1+2 dumps)
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'instagram')
+        run: npm run scrape:instagram:expand
+
+      - name: Instagram combine
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'instagram')
+        run: npm run scrape:instagram:combine
+
+      - name: IL desi/Arab catering source
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'catering')
+        run: npm run scrape:catering
+
+      - name: SearchGraph discovery
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'searchgraph')
+        run: npm run scrape:searchgraph
+
+      - name: Merge to scraped_vendors
+        run: npm run scrape:merge
+
+      - name: Re-host CDN photos to UploadThing
+        run: npm run scrape:rehost-photos
+
+      - name: Upload run artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: k-scrape-${{ github.run_number }}
+          path: data/scraped/
+          retention-days: 14
