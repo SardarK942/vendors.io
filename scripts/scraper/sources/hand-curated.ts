@@ -29,7 +29,8 @@ export async function runHandCuratedSource(): Promise<void> {
         });
         continue;
       }
-      for (const [i, item] of data.entries()) {
+      for (let i = 0; i < data.length; i++) {
+        const item = data[i];
         const parsed = scrapedRowSchema.safeParse(item);
         if (!parsed.success) {
           manifest.errors.push({

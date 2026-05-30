@@ -1265,6 +1265,32 @@ export interface Database {
           is_available_for_date: boolean | null;
         }[];
       };
+      match_scraped_vendors_by_name: {
+        Args: {
+          p_name: string;
+          p_city: string;
+          p_min_similarity?: number;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          business_name: string;
+          category: string | null;
+          city: string | null;
+          instagram_handle: string | null;
+          photos: string[];
+          bio: string | null;
+          similarity_score: number;
+        }[];
+      };
+      select_scraped_vendors_for_mint: {
+        Args: { p_where: string };
+        Returns: {
+          id: string;
+          business_name: string;
+          instagram_handle: string | null;
+        }[];
+      };
     };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;

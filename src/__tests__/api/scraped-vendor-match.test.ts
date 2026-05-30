@@ -23,8 +23,8 @@ describe('POST /api/scraped-vendors/match', () => {
   it('returns matches array on valid input', async () => {
     vi.mocked(requireUser).mockResolvedValueOnce({
       // We only use the call as an auth check; user object content doesn't matter here
-      user: { id: 'u1' } as unknown as Parameters<typeof requireUser>[0],
-      supabase: {} as unknown as Parameters<typeof requireUser>[0],
+      user: { id: 'u1' },
+      supabase: {},
     } as unknown as Awaited<ReturnType<typeof requireUser>>);
     vi.mocked(findMatches).mockResolvedValueOnce([
       {
