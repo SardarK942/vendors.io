@@ -4,6 +4,8 @@ import { VendorProfile } from '@/components/marketplace/VendorProfile';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { recordVendorProfileView } from '@/services/analytics.actions';
 import { appendCustomRequest } from '@/lib/vendor-packages/with-custom-request';
+import { getUnclaimedBySlug } from '@/lib/scraped-vendor/public';
+import { UnclaimedVendorRoute } from '@/components/marketplace/UnclaimedVendorRoute';
 
 interface VendorPageProps {
   params: Promise<{ slug: string }>;
@@ -17,9 +19,13 @@ export default async function VendorPage({ params }: VendorPageProps) {
     .from('vendor_profiles')
     .select('*')
     .eq('slug', slug)
-    .single();
+    .maybeSingle();
 
-  if (!vendor) notFound();
+  if (!vendor) {
+    const unclaimed = await getUnclaimedBySlug(slug);
+    if (!unclaimed) notFound();
+    return <UnclaimedVendorRoute vendor={unclaimed} />;
+  }
 
   if (!vendor.onboarding_complete || !vendor.is_active) {
     const {
