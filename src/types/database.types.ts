@@ -26,6 +26,11 @@
  *   - 00046 scraped_vendors staging table (Sub-project K)
  *   - 00047 claim_tokens table (Sub-project K)
  *   - 00048 pg_trgm extension + trigram indexes (Sub-project K)
+ *   - 00049 match_scraped_vendors_by_name RPC (Sub-project K)
+ *   - 00050 select_scraped_vendors_for_mint RPC (Sub-project K)
+ *   - 00051 scraped_vendors.slug NOT NULL UNIQUE (Sub-project K-2)
+ *   - 00052 public_scraped_vendors_{list, by_slug} RPCs (Sub-project K-2)
+ *   - 00053 scraped_vendor_engagement + scraped_vendor_requests (Sub-project K-2)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -1060,6 +1065,7 @@ export interface Database {
       scraped_vendors: {
         Row: {
           id: string;
+          slug: string;
           source:
             | 'google_maps'
             | 'instagram'
@@ -1093,6 +1099,7 @@ export interface Database {
         };
         Insert: {
           id?: string;
+          slug?: string;
           source:
             | 'google_maps'
             | 'instagram'
@@ -1125,6 +1132,7 @@ export interface Database {
           review_status?: 'pending' | 'approved' | 'rejected' | 'duplicate';
         };
         Update: {
+          slug?: string;
           category?: string | null;
           tags?: string[];
           city?: string | null;
@@ -1147,6 +1155,83 @@ export interface Database {
             columns: ['claimed_vendor_profile_id'];
             isOneToOne: false;
             referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scraped_vendor_engagement: {
+        Row: {
+          id: string;
+          scraped_vendor_id: string;
+          event_type: 'view' | 'ig_click';
+          ip_hash: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          scraped_vendor_id: string;
+          event_type: 'view' | 'ig_click';
+          ip_hash: string;
+          created_at?: string;
+        };
+        Update: {
+          event_type?: 'view' | 'ig_click';
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scraped_vendor_engagement_scraped_vendor_id_fkey';
+            columns: ['scraped_vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'scraped_vendors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scraped_vendor_requests: {
+        Row: {
+          id: string;
+          scraped_vendor_id: string;
+          action: 'remove' | 'claim_request';
+          requester_name: string | null;
+          requester_email: string;
+          requester_ig: string | null;
+          reason: string | null;
+          status: 'open' | 'actioned' | 'rejected';
+          created_at: string;
+          actioned_at: string | null;
+          actioned_by_user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          scraped_vendor_id: string;
+          action: 'remove' | 'claim_request';
+          requester_name?: string | null;
+          requester_email: string;
+          requester_ig?: string | null;
+          reason?: string | null;
+          status?: 'open' | 'actioned' | 'rejected';
+          created_at?: string;
+          actioned_at?: string | null;
+          actioned_by_user_id?: string | null;
+        };
+        Update: {
+          status?: 'open' | 'actioned' | 'rejected';
+          actioned_at?: string | null;
+          actioned_by_user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scraped_vendor_requests_scraped_vendor_id_fkey';
+            columns: ['scraped_vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'scraped_vendors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'scraped_vendor_requests_actioned_by_user_id_fkey';
+            columns: ['actioned_by_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
@@ -1289,6 +1374,40 @@ export interface Database {
           id: string;
           business_name: string;
           instagram_handle: string | null;
+        }[];
+      };
+      public_scraped_vendors_by_slug: {
+        Args: { p_slug: string };
+        Returns: {
+          id: string;
+          slug: string;
+          business_name: string;
+          category: string | null;
+          city: string | null;
+          state: string;
+          tags: string[];
+          instagram_handle: string | null;
+          website: string | null;
+          bio: string | null;
+          photos: string[];
+        }[];
+      };
+      public_scraped_vendors_list: {
+        Args: {
+          p_category?: string | null;
+          p_city?: string | null;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          slug: string;
+          business_name: string;
+          category: string | null;
+          city: string | null;
+          state: string;
+          instagram_handle: string | null;
+          bio: string | null;
+          photos: string[];
         }[];
       };
     };
