@@ -10,6 +10,7 @@ export interface MatchInput {
 
 export interface ScrapedVendorMatch {
   id: string;
+  slug: string;
   business_name: string;
   category: string | null;
   city: string | null;
@@ -32,7 +33,7 @@ export async function findMatches(input: MatchInput): Promise<ScrapedVendorMatch
   if (ig) {
     const { data } = await supabase
       .from('scraped_vendors')
-      .select('id, business_name, category, city, instagram_handle, photos, bio')
+      .select('id, slug, business_name, category, city, instagram_handle, photos, bio')
       .eq('instagram_handle', ig)
       .is('claimed_at', null);
     for (const row of data ?? []) {
@@ -43,7 +44,7 @@ export async function findMatches(input: MatchInput): Promise<ScrapedVendorMatch
   if (phone) {
     const { data } = await supabase
       .from('scraped_vendors')
-      .select('id, business_name, category, city, instagram_handle, photos, bio')
+      .select('id, slug, business_name, category, city, instagram_handle, photos, bio')
       .eq('phone', phone)
       .is('claimed_at', null);
     for (const row of data ?? []) {
@@ -60,6 +61,7 @@ export async function findMatches(input: MatchInput): Promise<ScrapedVendorMatch
     });
     for (const row of (data as Array<{
       id: string;
+      slug: string;
       business_name: string;
       category: string | null;
       city: string | null;
@@ -71,6 +73,7 @@ export async function findMatches(input: MatchInput): Promise<ScrapedVendorMatch
       if (!matches.has(row.id)) {
         matches.set(row.id, {
           id: row.id,
+          slug: row.slug,
           business_name: row.business_name,
           category: row.category,
           city: row.city,

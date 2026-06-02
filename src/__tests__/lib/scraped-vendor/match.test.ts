@@ -12,6 +12,7 @@ describe.skipIf(skip)('findMatches (integration)', () => {
       {
         source: 'hand_curated',
         business_name: 'Premium Chai Wallah',
+        slug: `premium-chai-wallah-${Date.now()}`,
         city: 'Chicago',
         state: 'IL',
         instagram_handle: 'premiumchaiwallah',
@@ -22,6 +23,7 @@ describe.skipIf(skip)('findMatches (integration)', () => {
       {
         source: 'hand_curated',
         business_name: 'Chai Cart Chicago',
+        slug: `chai-cart-chicago-${Date.now() + 1}`,
         city: 'Chicago',
         state: 'IL',
         phone: '+13125559999',

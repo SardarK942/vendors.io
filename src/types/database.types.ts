@@ -1359,6 +1359,7 @@ export interface Database {
         };
         Returns: {
           id: string;
+          slug: string;
           business_name: string;
           category: string | null;
           city: string | null;

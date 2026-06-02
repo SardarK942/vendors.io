@@ -36,6 +36,7 @@ describe.skipIf(skip)('promoteScrapedVendor (integration)', () => {
       .insert({
         source: 'hand_curated',
         business_name: 'Promote Test Cart',
+        slug: `promote-test-cart-${Date.now()}`,
         category: 'carts',
         tags: [TEST_TAG],
         city: 'Chicago',
@@ -84,6 +85,7 @@ describe.skipIf(skip)('promoteScrapedVendor (integration)', () => {
       .insert({
         source: 'hand_curated',
         business_name: 'Promote Test NoCat',
+        slug: `promote-test-nocat-${Date.now()}`,
         tags: [TEST_TAG],
         city: 'Chicago',
         state: 'IL',

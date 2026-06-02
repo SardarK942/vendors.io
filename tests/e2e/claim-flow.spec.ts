@@ -26,6 +26,7 @@ test.describe('claim flow', () => {
       .insert({
         source: 'hand_curated',
         business_name: 'E2E Test Cart',
+        slug: `e2e-claim-${Date.now()}`,
         category: 'carts',
         tags: ['__e2e_claim__'],
         city: 'Chicago',

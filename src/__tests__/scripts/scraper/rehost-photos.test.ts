@@ -41,6 +41,7 @@ describe.skipIf(skip)('rehostPhotosForUnclaimedRows (integration, env-gated)', (
     await supabase.from('scraped_vendors').insert({
       source: 'hand_curated',
       business_name: 'Already-Stable Row',
+      slug: `rehost-test-${Date.now()}`,
       tags: [TEST_TAG],
       state: 'IL',
       photos: ['https://utfs.io/f/abc-def.jpg'],
