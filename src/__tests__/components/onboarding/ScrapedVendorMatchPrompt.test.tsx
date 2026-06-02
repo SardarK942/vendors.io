@@ -1,10 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import { render, screen } from '@testing-library/react';
 import { ScrapedVendorMatchPrompt } from '@/components/onboarding/ScrapedVendorMatchPrompt';
 import type { ScrapedVendorMatch } from '@/lib/scraped-vendor/match';
 
 const fakeMatch: ScrapedVendorMatch = {
   id: 'sv1',
+  slug: 'best-cart-abc123',
   business_name: 'Best Cart',
   category: 'carts',
   city: 'Chicago',
@@ -14,23 +15,22 @@ const fakeMatch: ScrapedVendorMatch = {
   similarity_score: 1,
 };
 
-describe('<ScrapedVendorMatchPrompt>', () => {
-  it('renders one card per match', () => {
-    render(<ScrapedVendorMatchPrompt matches={[fakeMatch]} onPick={vi.fn()} onReject={vi.fn()} />);
+describe('<ScrapedVendorMatchPrompt> (block view)', () => {
+  it('renders the matched listing header + claim instructions', () => {
+    render(<ScrapedVendorMatchPrompt matches={[fakeMatch]} />);
+    expect(screen.getByText(/We already have a listing/i)).toBeInTheDocument();
     expect(screen.getByText(/Best Cart/i)).toBeInTheDocument();
+    expect(screen.getByText(/I own this business/i)).toBeInTheDocument();
   });
 
-  it('calls onPick(match.id) when a candidate is selected', () => {
-    const onPick = vi.fn();
-    render(<ScrapedVendorMatchPrompt matches={[fakeMatch]} onPick={onPick} onReject={vi.fn()} />);
-    fireEvent.click(screen.getByRole('button', { name: /yes.*this/i }));
-    expect(onPick).toHaveBeenCalledWith('sv1');
+  it('links to the unclaimed listing via slug', () => {
+    render(<ScrapedVendorMatchPrompt matches={[fakeMatch]} />);
+    const link = screen.getByRole('link', { name: /Visit my listing/i });
+    expect(link).toHaveAttribute('href', '/vendors/best-cart-abc123');
   });
 
-  it('calls onReject() when "none of these" clicked', () => {
-    const onReject = vi.fn();
-    render(<ScrapedVendorMatchPrompt matches={[fakeMatch]} onPick={vi.fn()} onReject={onReject} />);
-    fireEvent.click(screen.getByRole('button', { name: /none of these/i }));
-    expect(onReject).toHaveBeenCalled();
+  it('renders null when matches is empty', () => {
+    const { container } = render(<ScrapedVendorMatchPrompt matches={[]} />);
+    expect(container.firstChild).toBeNull();
   });
 });

@@ -88,39 +88,9 @@ export function StepBasics({ initial, profileId, mode }: Props) {
     setSubmitting(false);
   }
 
-  async function onMatchPick(scrapedVendorId: string) {
-    setSubmitting(true);
-    const res = await fetch('/api/scraped-vendors/claim', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ scrapedVendorId }),
-    });
-    setSubmitting(false);
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({ error: 'Claim failed' }));
-      setError(json.error ?? 'Claim failed');
-      setPendingMatches(null);
-      return;
-    }
-    router.push(`/dashboard/profile/setup/location${nextParam}`);
-  }
-
-  async function onMatchReject() {
-    setPendingMatches(null);
-    setSubmitting(true);
-    await saveAndAdvance();
-    setSubmitting(false);
-  }
-
   return (
     <div className="max-w-2xl space-y-6">
-      {pendingMatches && (
-        <ScrapedVendorMatchPrompt
-          matches={pendingMatches}
-          onPick={onMatchPick}
-          onReject={onMatchReject}
-        />
-      )}
+      {pendingMatches && <ScrapedVendorMatchPrompt matches={pendingMatches} />}
       <div>
         <h1 className="text-2xl font-bold">Tell us about your business</h1>
         <p className="text-sm text-muted-foreground">Step 1 of 5</p>
@@ -175,7 +145,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
       {error && <p className="text-sm text-destructive">{error}</p>}
 
       <div className="flex justify-end">
-        <Button onClick={onNext} disabled={submitting}>
+        <Button onClick={onNext} disabled={submitting || !!pendingMatches}>
           {submitting ? 'Saving…' : 'Next'}
         </Button>
       </div>
