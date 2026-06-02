@@ -3,6 +3,8 @@ import path from 'node:path';
 import { createServiceRoleClient } from '../../src/lib/supabase/server';
 import { scrapedRowSchema, type ScrapedRow } from './lib/schemas';
 import { normalizeInstagramHandle, normalizePhone } from './lib/normalize';
+import crypto from 'node:crypto';
+import { generateScrapedVendorSlug } from './lib/slug';
 
 export interface MergeResult {
   inserted: number;
@@ -62,7 +64,13 @@ export async function mergeRowsToScrapedVendors(rows: ScrapedRow[]): Promise<Mer
       if (error) errors++;
       else updated++;
     } else {
-      const { error } = await supabase.from('scraped_vendors').insert(normalized);
+      const newId = crypto.randomUUID();
+      const slug = generateScrapedVendorSlug(normalized.business_name, newId);
+      const { error } = await supabase.from('scraped_vendors').insert({
+        ...normalized,
+        id: newId,
+        slug,
+      });
       if (error) errors++;
       else inserted++;
     }
