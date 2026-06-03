@@ -40,49 +40,66 @@ export async function rehostPhotosForUnclaimedRows(opts: Options = {}): Promise<
     photosFailed: 0,
   };
 
-  let query = supabase
-    .from('scraped_vendors')
-    .select('id, photos')
-    .is('claimed_at', null)
-    .limit(opts.limit ?? 100);
-  if (opts.tagFilter) {
-    query = query.contains('tags', [opts.tagFilter]);
-  }
-  const { data: rows, error } = await query;
-  if (error) throw error;
-  if (!rows) return result;
+  // Supabase PostgREST caps responses at 1000 rows by default — paginate via
+  // .range() so a single call can sweep an arbitrarily large unclaimed set.
+  // Stable ORDER BY id keeps pages from re-shuffling as rows get updated.
+  const PAGE_SIZE = 1000;
+  const targetLimit = opts.limit ?? 100;
+  let offset = 0;
 
-  for (const row of rows) {
-    result.rowsVisited += 1;
-    const photos = (row.photos ?? []) as string[];
-    const expiringUrls = photos.filter(isCdnExpiryRisk);
-    if (expiringUrls.length === 0) continue;
+  while (result.rowsVisited < targetLimit) {
+    const remainingBudget = targetLimit - result.rowsVisited;
+    const pageSize = Math.min(PAGE_SIZE, remainingBudget);
 
-    const replacements = new Map<string, string>();
-    // Lazy-init UTApi only when there is actual upload work to do.
-    if (!ut) ut = new UTApi();
-    for (const url of expiringUrls) {
-      try {
-        const upload = await ut.uploadFilesFromUrl(url);
-        if (upload && !Array.isArray(upload) && upload.data?.ufsUrl) {
-          replacements.set(url, upload.data.ufsUrl);
-          result.photosUploaded += 1;
-        } else {
-          result.photosFailed += 1;
-        }
-      } catch {
-        result.photosFailed += 1;
-      }
+    let pageQuery = supabase
+      .from('scraped_vendors')
+      .select('id, photos')
+      .is('claimed_at', null)
+      .order('id')
+      .range(offset, offset + pageSize - 1);
+    if (opts.tagFilter) {
+      pageQuery = pageQuery.contains('tags', [opts.tagFilter]);
     }
 
-    if (replacements.size === 0) continue;
+    const { data: rows, error } = await pageQuery;
+    if (error) throw error;
+    if (!rows || rows.length === 0) break;
 
-    const newPhotos = photos.map((u) => replacements.get(u) ?? u);
-    const { error: updErr } = await supabase
-      .from('scraped_vendors')
-      .update({ photos: newPhotos })
-      .eq('id', row.id);
-    if (!updErr) result.rowsUpdated += 1;
+    for (const row of rows) {
+      result.rowsVisited += 1;
+      const photos = (row.photos ?? []) as string[];
+      const expiringUrls = photos.filter(isCdnExpiryRisk);
+      if (expiringUrls.length === 0) continue;
+
+      const replacements = new Map<string, string>();
+      // Lazy-init UTApi only when there is actual upload work to do.
+      if (!ut) ut = new UTApi();
+      for (const url of expiringUrls) {
+        try {
+          const upload = await ut.uploadFilesFromUrl(url);
+          if (upload && !Array.isArray(upload) && upload.data?.ufsUrl) {
+            replacements.set(url, upload.data.ufsUrl);
+            result.photosUploaded += 1;
+          } else {
+            result.photosFailed += 1;
+          }
+        } catch {
+          result.photosFailed += 1;
+        }
+      }
+
+      if (replacements.size === 0) continue;
+
+      const newPhotos = photos.map((u) => replacements.get(u) ?? u);
+      const { error: updErr } = await supabase
+        .from('scraped_vendors')
+        .update({ photos: newPhotos })
+        .eq('id', row.id);
+      if (!updErr) result.rowsUpdated += 1;
+    }
+
+    offset += pageSize;
+    if (rows.length < pageSize) break; // no more rows to fetch
   }
 
   return result;
