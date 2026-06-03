@@ -29,6 +29,7 @@ describe('POST /api/scraped-vendors/match', () => {
     vi.mocked(findMatches).mockResolvedValueOnce([
       {
         id: 'sv1',
+        slug: 'x-abc123',
         business_name: 'X',
         category: 'carts',
         city: 'Chicago',
