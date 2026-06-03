@@ -1,0 +1,95 @@
+'use client';
+import { useState } from 'react';
+import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
+import type { UnclaimedVendor } from '@/lib/scraped-vendor/public';
+
+interface Props {
+  vendor: UnclaimedVendor;
+  onOpenOwnership: () => void;
+  onIgClick: () => void;
+}
+
+export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: Props) {
+  const [igRevealed, setIgRevealed] = useState(false);
+  const categoryLabel =
+    (vendor.category && (VENDOR_CATEGORY_LABELS as Record<string, string>)[vendor.category]) ||
+    vendor.category ||
+    'Vendor';
+
+  function handleIgClick() {
+    onIgClick();
+    setIgRevealed(true);
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-6 py-8">
+      <div className="rounded-lg border bg-muted/30 p-4 text-sm">
+        <p className="font-medium">Unclaimed listing</p>
+        <p className="text-muted-foreground">
+          This vendor hasn&apos;t joined Baazar yet. Booking will be available after they claim this
+          listing.
+        </p>
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-[1fr_2fr]">
+        <div className="aspect-[4/5] overflow-hidden rounded-lg bg-muted">
+          {vendor.photos[0] ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={vendor.photos[0]}
+              alt={vendor.business_name}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
+              No photo
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-3">
+          <h1 className="text-2xl font-semibold">{vendor.business_name}</h1>
+          <p className="text-sm text-muted-foreground">
+            {categoryLabel}
+            {vendor.city ? ` · ${vendor.city}, ${vendor.state}` : ''}
+          </p>
+          {vendor.bio && <p className="text-sm">{vendor.bio}</p>}
+
+          {vendor.instagram_handle && (
+            <div>
+              {igRevealed ? (
+                <a
+                  href={`https://instagram.com/${vendor.instagram_handle}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm font-medium text-foreground underline"
+                >
+                  @{vendor.instagram_handle}
+                </a>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleIgClick}
+                  className="rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
+                >
+                  Show on Instagram
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <div className="rounded-lg border p-4">
+        <p className="mb-3 font-medium">Are you the owner?</p>
+        <button
+          type="button"
+          onClick={onOpenOwnership}
+          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:opacity-90"
+        >
+          I own this business
+        </button>
+      </div>
+    </div>
+  );
+}

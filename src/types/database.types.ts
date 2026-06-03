@@ -21,6 +21,16 @@
  *   - 00035 vendor_profiles.stripe_account_id (FK flipped from stripe_accounts.vendor_profile_id)
  *           + users.active_vendor_profile_id nullable FK (Sub-project I)
  *   - 00043 users.onboarding_completed_at + users.onboarding_data (onboarding welcome)
+ *   - 00044 vendor_profiles.is_active + onboarding_complete (PR #29 schema drift)
+ *   - 00045 added 'content_creation' to vendor_profiles_category_check (Sub-project K)
+ *   - 00046 scraped_vendors staging table (Sub-project K)
+ *   - 00047 claim_tokens table (Sub-project K)
+ *   - 00048 pg_trgm extension + trigram indexes (Sub-project K)
+ *   - 00049 match_scraped_vendors_by_name RPC (Sub-project K)
+ *   - 00050 select_scraped_vendors_for_mint RPC (Sub-project K)
+ *   - 00051 scraped_vendors.slug NOT NULL UNIQUE (Sub-project K-2)
+ *   - 00052 public_scraped_vendors_{list, by_slug} RPCs (Sub-project K-2)
+ *   - 00053 scraped_vendor_engagement + scraped_vendor_requests (Sub-project K-2)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -170,7 +180,8 @@ export interface Database {
             | 'invitations'
             | 'bridal_wear'
             | 'live_music'
-            | 'carts';
+            | 'carts'
+            | 'content_creation';
           bio: string | null;
           service_area: string[];
           portfolio_images: string[];
@@ -216,7 +227,8 @@ export interface Database {
             | 'invitations'
             | 'bridal_wear'
             | 'live_music'
-            | 'carts';
+            | 'carts'
+            | 'content_creation';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
@@ -260,7 +272,8 @@ export interface Database {
             | 'invitations'
             | 'bridal_wear'
             | 'live_music'
-            | 'carts';
+            | 'carts'
+            | 'content_creation';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
@@ -1049,6 +1062,225 @@ export interface Database {
           },
         ];
       };
+      scraped_vendors: {
+        Row: {
+          id: string;
+          slug: string;
+          source:
+            | 'google_maps'
+            | 'instagram'
+            | 'il_desi_arab_catering'
+            | 'hand_curated'
+            | 'searchgraph';
+          source_external_id: string | null;
+          business_name: string;
+          category: string | null;
+          tags: string[];
+          city: string | null;
+          state: string;
+          postal_code: string | null;
+          lat: number | null;
+          lng: number | null;
+          phone: string | null;
+          email: string | null;
+          website: string | null;
+          instagram_handle: string | null;
+          facebook_url: string | null;
+          bio: string | null;
+          photos: string[];
+          raw: Record<string, unknown>;
+          enriched: Record<string, unknown> | null;
+          scraped_at: string;
+          last_seen_at: string;
+          claimed_at: string | null;
+          claimed_vendor_profile_id: string | null;
+          disputed_at: string | null;
+          review_status: 'pending' | 'approved' | 'rejected' | 'duplicate';
+        };
+        Insert: {
+          id?: string;
+          slug?: string;
+          source:
+            | 'google_maps'
+            | 'instagram'
+            | 'il_desi_arab_catering'
+            | 'hand_curated'
+            | 'searchgraph';
+          source_external_id?: string | null;
+          business_name: string;
+          category?: string | null;
+          tags?: string[];
+          city?: string | null;
+          state?: string;
+          postal_code?: string | null;
+          lat?: number | null;
+          lng?: number | null;
+          phone?: string | null;
+          email?: string | null;
+          website?: string | null;
+          instagram_handle?: string | null;
+          facebook_url?: string | null;
+          bio?: string | null;
+          photos?: string[];
+          raw: Record<string, unknown>;
+          enriched?: Record<string, unknown> | null;
+          scraped_at?: string;
+          last_seen_at?: string;
+          claimed_at?: string | null;
+          claimed_vendor_profile_id?: string | null;
+          disputed_at?: string | null;
+          review_status?: 'pending' | 'approved' | 'rejected' | 'duplicate';
+        };
+        Update: {
+          slug?: string;
+          category?: string | null;
+          tags?: string[];
+          city?: string | null;
+          phone?: string | null;
+          email?: string | null;
+          website?: string | null;
+          instagram_handle?: string | null;
+          bio?: string | null;
+          photos?: string[];
+          enriched?: Record<string, unknown> | null;
+          last_seen_at?: string;
+          claimed_at?: string | null;
+          claimed_vendor_profile_id?: string | null;
+          disputed_at?: string | null;
+          review_status?: 'pending' | 'approved' | 'rejected' | 'duplicate';
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scraped_vendors_claimed_vendor_profile_id_fkey';
+            columns: ['claimed_vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scraped_vendor_engagement: {
+        Row: {
+          id: string;
+          scraped_vendor_id: string;
+          event_type: 'view' | 'ig_click';
+          ip_hash: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          scraped_vendor_id: string;
+          event_type: 'view' | 'ig_click';
+          ip_hash: string;
+          created_at?: string;
+        };
+        Update: {
+          event_type?: 'view' | 'ig_click';
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scraped_vendor_engagement_scraped_vendor_id_fkey';
+            columns: ['scraped_vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'scraped_vendors';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      scraped_vendor_requests: {
+        Row: {
+          id: string;
+          scraped_vendor_id: string;
+          action: 'remove' | 'claim_request';
+          requester_name: string | null;
+          requester_email: string;
+          requester_ig: string | null;
+          reason: string | null;
+          status: 'open' | 'actioned' | 'rejected';
+          created_at: string;
+          actioned_at: string | null;
+          actioned_by_user_id: string | null;
+        };
+        Insert: {
+          id?: string;
+          scraped_vendor_id: string;
+          action: 'remove' | 'claim_request';
+          requester_name?: string | null;
+          requester_email: string;
+          requester_ig?: string | null;
+          reason?: string | null;
+          status?: 'open' | 'actioned' | 'rejected';
+          created_at?: string;
+          actioned_at?: string | null;
+          actioned_by_user_id?: string | null;
+        };
+        Update: {
+          status?: 'open' | 'actioned' | 'rejected';
+          actioned_at?: string | null;
+          actioned_by_user_id?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'scraped_vendor_requests_scraped_vendor_id_fkey';
+            columns: ['scraped_vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'scraped_vendors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'scraped_vendor_requests_actioned_by_user_id_fkey';
+            columns: ['actioned_by_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      claim_tokens: {
+        Row: {
+          id: string;
+          scraped_vendor_id: string;
+          token_hash: string;
+          issued_at: string;
+          expires_at: string;
+          claimed_at: string | null;
+          claimed_by_user_id: string | null;
+          revoked_at: string | null;
+          campaign_label: string | null;
+        };
+        Insert: {
+          id?: string;
+          scraped_vendor_id: string;
+          token_hash: string;
+          issued_at?: string;
+          expires_at: string;
+          claimed_at?: string | null;
+          claimed_by_user_id?: string | null;
+          revoked_at?: string | null;
+          campaign_label?: string | null;
+        };
+        Update: {
+          claimed_at?: string | null;
+          claimed_by_user_id?: string | null;
+          revoked_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'claim_tokens_scraped_vendor_id_fkey';
+            columns: ['scraped_vendor_id'];
+            isOneToOne: false;
+            referencedRelation: 'scraped_vendors';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'claim_tokens_claimed_by_user_id_fkey';
+            columns: ['claimed_by_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
     };
     Views: {
       booking_events_public: {
@@ -1116,6 +1348,67 @@ export interface Database {
           vendor_profile_id: string;
           confirmed_wedding_count: number;
           is_available_for_date: boolean | null;
+        }[];
+      };
+      match_scraped_vendors_by_name: {
+        Args: {
+          p_name: string;
+          p_city: string;
+          p_min_similarity?: number;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          slug: string;
+          business_name: string;
+          category: string | null;
+          city: string | null;
+          instagram_handle: string | null;
+          photos: string[];
+          bio: string | null;
+          similarity_score: number;
+        }[];
+      };
+      select_scraped_vendors_for_mint: {
+        Args: { p_where: string };
+        Returns: {
+          id: string;
+          business_name: string;
+          instagram_handle: string | null;
+        }[];
+      };
+      public_scraped_vendors_by_slug: {
+        Args: { p_slug: string };
+        Returns: {
+          id: string;
+          slug: string;
+          business_name: string;
+          category: string | null;
+          city: string | null;
+          state: string;
+          tags: string[];
+          instagram_handle: string | null;
+          website: string | null;
+          bio: string | null;
+          photos: string[];
+        }[];
+      };
+      public_scraped_vendors_list: {
+        Args: {
+          p_category?: string | null;
+          p_city?: string | null;
+          p_limit?: number;
+        };
+        Returns: {
+          id: string;
+          slug: string;
+          business_name: string;
+          category: string | null;
+          city: string | null;
+          state: string;
+          instagram_handle: string | null;
+          bio: string | null;
+          photos: string[];
         }[];
       };
     };

@@ -417,3 +417,99 @@ export async function sendCancellationEmail(
     `,
   });
 }
+
+// ─── K-2: Unclaimed listing ownership requests ────────────────────────────────
+
+const OPS_INBOX = process.env.OPS_INBOX_EMAIL || 'hello@baazar.io';
+
+/** Fired when a vendor clicks "I own this business" → "Get help claiming". */
+export async function sendClaimRequestTeamEmail(
+  businessName: string,
+  requesterName: string | null,
+  requesterEmail: string,
+  requesterIg: string | null,
+  scrapedVendorId: string
+): Promise<boolean> {
+  const safeName = escapeHtml(businessName);
+  const safeRequester = escapeHtml(requesterName ?? '(no name)');
+  const safeIg = escapeHtml(requesterIg ?? '(none)');
+  return sendEmail({
+    to: OPS_INBOX,
+    subject: `[Claim request] ${businessName}`,
+    html: `
+      <h2>New claim request</h2>
+      <p><strong>Business:</strong> ${safeName}</p>
+      <p><strong>Requested by:</strong> ${safeRequester} &lt;${escapeHtml(requesterEmail)}&gt;</p>
+      <p><strong>Instagram:</strong> ${safeIg}</p>
+      <p><strong>scraped_vendor_id:</strong> <code>${escapeHtml(scrapedVendorId)}</code></p>
+      <p>Action: verify the claim, then mint a token via
+        <code>npm run scrape:mint-tokens -- --campaign claim-${escapeHtml(scrapedVendorId).slice(0, 8)} --filter "id = '${escapeHtml(scrapedVendorId)}'"</code>
+        and DM the link to <strong>@${safeIg}</strong>.</p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/** Auto-reply to the vendor who submitted a claim request. */
+export async function sendClaimRequestVendorEmail(
+  requesterEmail: string,
+  businessName: string
+): Promise<boolean> {
+  return sendEmail({
+    to: requesterEmail,
+    subject: 'We received your Baazar claim request',
+    html: `
+      <h2>Thanks for reaching out</h2>
+      <p>We received your request to claim <strong>${escapeHtml(businessName)}</strong>.</p>
+      <p>We verify all claims via Instagram DM. You'll receive a unique claim link
+        from our team's Instagram account within 7 days. Click the link to take
+        ownership of your listing.</p>
+      <p>If you don't see the DM, check your Instagram message requests folder.</p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/** Fired when a vendor clicks "I own this business" → "Remove my listing". */
+export async function sendRemovalRequestTeamEmail(
+  businessName: string,
+  requesterName: string | null,
+  requesterEmail: string,
+  reason: string | null,
+  scrapedVendorId: string
+): Promise<boolean> {
+  const safeName = escapeHtml(businessName);
+  const safeRequester = escapeHtml(requesterName ?? '(no name)');
+  const safeReason = escapeHtml(reason ?? '(none)');
+  return sendEmail({
+    to: OPS_INBOX,
+    subject: `[Removal request] ${businessName}`,
+    html: `
+      <h2>New removal request</h2>
+      <p><strong>Business:</strong> ${safeName}</p>
+      <p><strong>Requested by:</strong> ${safeRequester} &lt;${escapeHtml(requesterEmail)}&gt;</p>
+      <p><strong>Reason:</strong> ${safeReason}</p>
+      <p><strong>scraped_vendor_id:</strong> <code>${escapeHtml(scrapedVendorId)}</code></p>
+      <p><em>The row was automatically marked disputed at submit time.</em></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/** Auto-reply to the vendor who requested removal. */
+export async function sendRemovalConfirmationVendorEmail(
+  requesterEmail: string,
+  businessName: string
+): Promise<boolean> {
+  return sendEmail({
+    to: requesterEmail,
+    subject: `Your Baazar listing will be removed — ${businessName}`,
+    html: `
+      <h2>Listing taken offline</h2>
+      <p>We've removed <strong>${escapeHtml(businessName)}</strong> from Baazar
+        within the next 48 hours. The business will not be re-scraped or relisted.</p>
+      <p>If anything else is needed, reply to this email.</p>
+      ${FOOTER}
+    `,
+  });
+}
