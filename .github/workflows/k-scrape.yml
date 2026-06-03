@@ -20,6 +20,10 @@ jobs:
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
       UPLOADTHING_TOKEN: ${{ secrets.UPLOADTHING_TOKEN }}
+      # Re-host this many unclaimed scraped_vendors rows per run. Default is 50
+      # in the script; we bump to 5000 so a single run can sweep the full
+      # Chicago seed in one pass instead of needing ~66 reruns.
+      K_REHOST_LIMIT: '5000'
 
     steps:
       - uses: actions/checkout@v4
