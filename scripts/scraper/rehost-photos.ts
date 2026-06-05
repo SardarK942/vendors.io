@@ -28,6 +28,7 @@ interface RehostResult {
 interface Options {
   limit?: number;
   tagFilter?: string; // optional tag to scope the run (used by tests)
+  sourceFilter?: string; // optional scraped_vendors.source restriction
 }
 
 export async function rehostPhotosForUnclaimedRows(opts: Options = {}): Promise<RehostResult> {
@@ -59,6 +60,11 @@ export async function rehostPhotosForUnclaimedRows(opts: Options = {}): Promise<
       .range(offset, offset + pageSize - 1);
     if (opts.tagFilter) {
       pageQuery = pageQuery.contains('tags', [opts.tagFilter]);
+    }
+    if (opts.sourceFilter) {
+      // sourceFilter is a string env var; Supabase typing wants the literal
+      // union of allowed source values, so cast at the call site.
+      pageQuery = pageQuery.eq('source', opts.sourceFilter as never);
     }
 
     const { data: rows, error } = await pageQuery;
@@ -109,6 +115,7 @@ if (require.main === module) {
   (async () => {
     const r = await rehostPhotosForUnclaimedRows({
       limit: Number(process.env.K_REHOST_LIMIT ?? 50),
+      sourceFilter: process.env.K_REHOST_SOURCE || undefined,
     });
     console.log(
       `rehost-photos: visited=${r.rowsVisited} updated=${r.rowsUpdated} uploaded=${r.photosUploaded} failed=${r.photosFailed}`

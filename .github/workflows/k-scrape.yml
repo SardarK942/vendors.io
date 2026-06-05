@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       sources:
-        description: 'Comma-separated sources to run (google-maps,instagram,catering,searchgraph,all)'
+        description: 'Comma-separated sources to run (google-maps,instagram,tiktok,catering,searchgraph,all)'
         required: true
         default: 'all'
 
@@ -74,6 +74,10 @@ jobs:
       - name: IL desi/Arab catering source
         if: contains(inputs.sources, 'all') || contains(inputs.sources, 'catering')
         run: npm run scrape:catering
+
+      - name: TikTok search layer (with Google Maps photo enrichment + Chicago-metro filter)
+        if: contains(inputs.sources, 'all') || contains(inputs.sources, 'tiktok')
+        run: npm run scrape:tiktok
 
       - name: SearchGraph discovery
         if: contains(inputs.sources, 'all') || contains(inputs.sources, 'searchgraph')

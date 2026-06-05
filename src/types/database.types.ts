@@ -31,6 +31,8 @@
  *   - 00051 scraped_vendors.slug NOT NULL UNIQUE (Sub-project K-2)
  *   - 00052 public_scraped_vendors_{list, by_slug} RPCs (Sub-project K-2)
  *   - 00053 scraped_vendor_engagement + scraped_vendor_requests (Sub-project K-2)
+ *   - 00054 match_scraped_vendors_by_name returns slug (Sub-project K-2)
+ *   - 00055 scraped_vendors.tiktok_handle nullable (Sub-project K — cultural re-scrape 2026-06-04)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -1071,7 +1073,8 @@ export interface Database {
             | 'instagram'
             | 'il_desi_arab_catering'
             | 'hand_curated'
-            | 'searchgraph';
+            | 'searchgraph'
+            | 'tiktok';
           source_external_id: string | null;
           business_name: string;
           category: string | null;
@@ -1085,6 +1088,7 @@ export interface Database {
           email: string | null;
           website: string | null;
           instagram_handle: string | null;
+          tiktok_handle: string | null;
           facebook_url: string | null;
           bio: string | null;
           photos: string[];
@@ -1105,7 +1109,8 @@ export interface Database {
             | 'instagram'
             | 'il_desi_arab_catering'
             | 'hand_curated'
-            | 'searchgraph';
+            | 'searchgraph'
+            | 'tiktok';
           source_external_id?: string | null;
           business_name: string;
           category?: string | null;
@@ -1119,6 +1124,7 @@ export interface Database {
           email?: string | null;
           website?: string | null;
           instagram_handle?: string | null;
+          tiktok_handle?: string | null;
           facebook_url?: string | null;
           bio?: string | null;
           photos?: string[];
@@ -1140,6 +1146,7 @@ export interface Database {
           email?: string | null;
           website?: string | null;
           instagram_handle?: string | null;
+          tiktok_handle?: string | null;
           bio?: string | null;
           photos?: string[];
           enriched?: Record<string, unknown> | null;

@@ -1,25 +1,32 @@
+// IG hashtag list refocused 2026-06-04 after the original sweep returned
+// global content (Prague restaurants, DMV Chai Cart, etc.) due to broad
+// hashtags. Now only desi-specific or Arab-specific Chicago-locked tags.
+
 export const HASHTAGS_BY_CATEGORY: Record<string, string[]> = {
-  carts: [
-    'chicagocarts',
-    'weddingcartchicago',
-    'chaicart',
-    'chaistand',
-    'panipuristand',
-    'kulficart',
-    'paancart',
-    'dessertcartchicago',
-    'cottoncandycartchicago',
-    'kebabcart',
-    'shawarmacart',
+  // Desi
+  carts: ['chicagochaicart', 'chicagopanipuri', 'chicagopaancart', 'chicagokulficart'],
+  mehndi: ['chicagomehndi', 'chicagomehndiartist', 'chicagohennaartist', 'chicagohenna'],
+  hair_makeup: [
+    'chicagodesimua',
+    'chicagoshaadimua',
+    'chicagoarabbridalmua',
+    'chicagomuslimbridalmua',
   ],
-  mehndi: ['chicagomehndi', 'illinoismehndi', 'mehndiartistchicago', 'hennaartistchicago'],
-  hair_makeup: ['chicagobridalmua', 'illinoisbridalmua', 'desiweddingmua'],
-  dj: ['chicagoshaadidj', 'desiweddingdjchicago'],
-  photography: ['chicagoweddingphotographer', 'desiweddingphotographer'],
-  videography: ['chicagoweddingvideo', 'desiweddingvideographerchicago'],
-  decor: ['chicagoshaadidecor', 'illinoisweddingdecor'],
-  content_creation: ['weddingreelschicago', 'shaadicontentcreator'],
-  live_music: ['dholplayerchicago', 'chicagodhol', 'singerchicagoshaadi'],
+  dj: ['chicagoshaadidj', 'chicagodesidj', 'chicagoarabdj'],
+  decor: ['chicagoshaadidecor', 'chicagodesiweddingdecor', 'chicagoarabweddingdecor'],
+  photography: [
+    'chicagodesiPhotographer',
+    'chicagoshaadiphotographer',
+    'chicagoarabweddingphotographer',
+    'chicagolebaneseweddingphotographer',
+  ],
+  videography: [
+    'chicagodesivideographer',
+    'chicagoshaadivideographer',
+    'chicagoarabweddingvideographer',
+  ],
+  venue: ['chicagoshaadivenue', 'chicagodesiweddingvenue', 'chicagoarabweddingvenue'],
+  live_music: ['chicagodholplayer', 'chicagobaraat', 'chicagozaffa'],
 };
 
 // Top desi wedding venues in Chicago metro — for Layer 2 (location-tagged scraping)
