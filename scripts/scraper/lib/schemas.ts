@@ -6,6 +6,7 @@ export const SCRAPED_SOURCES = [
   'il_desi_arab_catering',
   'hand_curated',
   'searchgraph',
+  'tiktok',
 ] as const;
 
 export const scrapedRowSchema = z.object({
@@ -15,6 +16,7 @@ export const scrapedRowSchema = z.object({
     'il_desi_arab_catering',
     'hand_curated',
     'searchgraph',
+    'tiktok',
   ]),
   source_external_id: z.string().optional(),
   business_name: z.string().min(1),
@@ -29,6 +31,7 @@ export const scrapedRowSchema = z.object({
   email: z.string().optional(),
   website: z.string().optional(),
   instagram_handle: z.string().optional(),
+  tiktok_handle: z.string().optional(),
   facebook_url: z.string().optional(),
   bio: z.string().optional(),
   photos: z.array(z.string()).default([]),

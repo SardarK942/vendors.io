@@ -22,6 +22,7 @@ export async function mergeRowsToScrapedVendors(rows: ScrapedRow[]): Promise<Mer
     const normalized = {
       ...row,
       instagram_handle: normalizeInstagramHandle(row.instagram_handle ?? null),
+      tiktok_handle: row.tiktok_handle?.replace(/^@/, '').trim().toLowerCase() || null,
       phone: normalizePhone(row.phone ?? null),
     };
 
@@ -41,6 +42,14 @@ export async function mergeRowsToScrapedVendors(rows: ScrapedRow[]): Promise<Mer
         .from('scraped_vendors')
         .select('id')
         .eq('instagram_handle', normalized.instagram_handle)
+        .maybeSingle();
+      existingId = data?.id ?? null;
+    }
+    if (!existingId && normalized.tiktok_handle) {
+      const { data } = await supabase
+        .from('scraped_vendors')
+        .select('id')
+        .eq('tiktok_handle', normalized.tiktok_handle)
         .maybeSingle();
       existingId = data?.id ?? null;
     }

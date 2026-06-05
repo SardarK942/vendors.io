@@ -20,6 +20,7 @@
     "scrape:hand-curated": "tsx scripts/scraper/sources/hand-curated.ts",
     "scrape:google-maps": "tsx scripts/scraper/sources/google-maps.ts",
     "scrape:catering": "tsx scripts/scraper/sources/il-desi-arab-catering.ts",
+    "scrape:tiktok": "tsx scripts/scraper/sources/tiktok.ts",
     "scrape:merge": "tsx scripts/scraper/merge.ts",
     "scrape:mint-tokens": "tsx scripts/scraper/mint-tokens.ts",
     "scrape:instagram:hashtags": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).runInstagramHashtagLayer({ category: process.env.SCRAPE_CATEGORY || 'carts' }))\"",

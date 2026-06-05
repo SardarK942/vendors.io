@@ -62,7 +62,9 @@ export async function rehostPhotosForUnclaimedRows(opts: Options = {}): Promise<
       pageQuery = pageQuery.contains('tags', [opts.tagFilter]);
     }
     if (opts.sourceFilter) {
-      pageQuery = pageQuery.eq('source', opts.sourceFilter);
+      // sourceFilter is a string env var; Supabase typing wants the literal
+      // union of allowed source values, so cast at the call site.
+      pageQuery = pageQuery.eq('source', opts.sourceFilter as never);
     }
 
     const { data: rows, error } = await pageQuery;
