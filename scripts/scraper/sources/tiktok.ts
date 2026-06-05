@@ -177,31 +177,39 @@ export async function runTiktokSearchLayer(): Promise<void> {
     for (const query of queries) {
       manifest.queries_executed += 1;
       try {
-        const run = await apify.actor('apify/tiktok-search-scraper').call({
+        // clockworks/tiktok-scraper is the canonical community actor; there's
+        // no dedicated "search" actor. Search runs return video items with
+        // creator info under `authorMeta`.
+        const run = await apify.actor('clockworks/tiktok-scraper').call({
           searchQueries: [query],
-          searchSection: '/user',
           resultsPerPage: 30,
-          maxItems: 30,
+          shouldDownloadVideos: false,
+          shouldDownloadCovers: false,
+          shouldDownloadSubtitles: false,
+          shouldDownloadSlideshowImages: false,
         });
         const { items } = await apify.dataset(run.defaultDatasetId).listItems();
 
-        // Apify TikTok search returns user objects; the exact shape varies by
-        // searchSection. Defensive extraction below.
+        // Dedup videos by creator handle within a single query — the same
+        // creator can show up many times in one search.
+        const seenInQuery = new Set<string>();
         for (const raw of items) {
           const item = raw as Record<string, unknown>;
+          const author = (item.authorMeta as Record<string, unknown> | undefined) ?? {};
           const handle = normalizeTikTokHandle(
-            (item.uniqueId as string) ??
-              (item.username as string) ??
-              (item.nickname as string) ??
+            (author.name as string) ??
+              (author.nickName as string) ??
+              (item.authorUserName as string) ??
               null
           );
-          if (!handle) continue;
+          if (!handle || seenInQuery.has(handle)) continue;
+          seenInQuery.add(handle);
           const businessName = (
-            (item.nickname as string) ||
-            (item.signature as string) ||
+            (author.nickName as string) ||
+            (author.name as string) ||
             handle
           ).trim();
-          const bio = (item.signature as string) ?? undefined;
+          const bio = (author.signature as string) ?? undefined;
 
           // Now ask Google Maps. This is BOTH the location filter and the
           // photo enrichment. Loose-match: take the top result.
