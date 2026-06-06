@@ -18,7 +18,12 @@ const REASONS: Record<NonNullable<ClaimResult['reason']>, string> = {
 };
 
 export default async function ClaimPage({ params }: Props) {
-  const { token } = await params;
+  const { token: rawToken } = await params;
+  // Tokens contain `:` (b64url ID + b64url random). Browsers (notably Chromium)
+  // sometimes encode `:` to %3A in path segments during navigation, and
+  // Next.js doesn't auto-decode dynamic params. Decode defensively so both
+  // forms (raw `:` and encoded `%3A`) reach parseTokenString correctly.
+  const token = decodeURIComponent(rawToken);
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },

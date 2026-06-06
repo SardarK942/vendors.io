@@ -1,219 +1,44 @@
-'use client';
-
-import { useState } from 'react';
-import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { toast } from 'sonner';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { createClient } from '@/lib/supabase/client';
+import { parseTokenString } from '../../../../scripts/scraper/lib/claim-token';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { SignupForm } from './signup-form';
 import type { UserRole } from '@/types';
 
-export default function SignupPage() {
-  const router = useRouter();
-  const supabase = createClient();
-  const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState<UserRole | null>(null);
-  const [agreed, setAgreed] = useState(false);
+interface Props {
+  searchParams: Promise<{ return_to?: string }>;
+}
 
-  const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    if (!role) {
-      toast.error('Please select whether you are planning a wedding or are a vendor.');
-      return;
-    }
-    if (!agreed) {
-      toast.error('Please accept the Terms and Privacy Policy to continue.');
-      return;
-    }
-    setLoading(true);
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
-    const fullName = formData.get('fullName') as string;
+export default async function SignupPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const returnTo = params.return_to ?? null;
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { full_name: fullName, role },
-        emailRedirectTo: `${window.location.origin}/api/auth/callback`,
-      },
-    });
+  let claimContext: { businessName: string } | null = null;
+  let prefilledRole: UserRole | null = null;
 
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-      return;
+  // If the user arrived here from a /claim/<token> redirect, decode the token
+  // server-side to look up the business name. The vendor row id is encoded
+  // (not encrypted) in the token; lookup is safe with service-role.
+  if (returnTo?.startsWith('/claim/')) {
+    // Defensive decode: the /claim route's redirect can result in the `:` in
+    // the token being double-encoded (`%253A` instead of `%3A`), which would
+    // leave us with %3A in the sliced string. Decoding is a no-op if the
+    // string is already raw.
+    const token = decodeURIComponent(returnTo.slice('/claim/'.length));
+    const parsed = parseTokenString(token);
+    if (parsed) {
+      const supabase = createServiceRoleClient();
+      const { data } = await supabase
+        .from('scraped_vendors')
+        .select('business_name')
+        .eq('id', parsed.scrapedVendorId)
+        .maybeSingle();
+      if (data?.business_name) {
+        claimContext = { businessName: data.business_name };
+        prefilledRole = 'vendor';
+      }
     }
-
-    toast.success('Account created! Check your email to confirm.');
-    router.push('/login');
-  };
-
-  const handleGoogleSignup = async () => {
-    if (!role) {
-      toast.error('Please select whether you are planning a wedding or are a vendor.');
-      return;
-    }
-    if (!agreed) {
-      toast.error('Please accept the Terms and Privacy Policy to continue.');
-      return;
-    }
-    setLoading(true);
-    // Persist role through the OAuth round-trip via cookie. URL query params
-    // can be stripped by the Supabase auth proxy; a cookie is reliable.
-    document.cookie = `signup_role=${role}; path=/; max-age=300; SameSite=Lax`;
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: {
-        redirectTo: `${window.location.origin}/api/auth/callback?signup_role=${role}`,
-      },
-    });
-    if (error) {
-      toast.error(error.message);
-      setLoading(false);
-    }
-  };
+  }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Create Account</CardTitle>
-        <CardDescription>Join the Desi Wedding Marketplace</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Role Selection — required before any signup option is enabled */}
-        <div className="space-y-2">
-          <p className="text-center text-sm font-medium">
-            First, tell us who you are
-            <span className="ml-1 text-destructive">*</span>
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              onClick={() => setRole('couple')}
-              className={`rounded-lg border-2 p-4 text-center transition-colors ${
-                role === 'couple'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              }`}
-            >
-              <span className="block text-2xl">💍</span>
-              <span className="mt-1 block text-sm font-medium">Planning a Wedding</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setRole('vendor')}
-              className={`rounded-lg border-2 p-4 text-center transition-colors ${
-                role === 'vendor'
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary/50'
-              }`}
-            >
-              <span className="block text-2xl">🏪</span>
-              <span className="mt-1 block text-sm font-medium">I&apos;m a Vendor</span>
-            </button>
-          </div>
-        </div>
-
-        <Button
-          type="button"
-          variant="outline"
-          className="w-full bg-white text-foreground hover:bg-gray-50"
-          disabled={loading || !role}
-          onClick={handleGoogleSignup}
-        >
-          <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC04"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-            />
-          </svg>
-          Continue with Google
-        </Button>
-
-        <div className="relative">
-          <Separator />
-          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-2 text-xs text-muted-foreground">
-            or
-          </span>
-        </div>
-
-        <form onSubmit={handleSignup} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
-            <Input id="fullName" name="fullName" required placeholder="Your full name" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required placeholder="you@example.com" />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              required
-              minLength={8}
-              placeholder="Min 8 characters"
-            />
-          </div>
-          <div className="flex items-start gap-2">
-            <input
-              id="agree"
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-input"
-            />
-            <label htmlFor="agree" className="text-xs text-muted-foreground">
-              I agree to the{' '}
-              <Link href="/terms" target="_blank" className="underline">
-                Terms of Service
-              </Link>{' '}
-              and{' '}
-              <Link href="/privacy" target="_blank" className="underline">
-                Privacy Policy
-              </Link>
-              .
-            </label>
-          </div>
-          <Button type="submit" className="w-full" disabled={loading || !agreed || !role}>
-            {loading
-              ? 'Creating account...'
-              : !role
-                ? 'Select an account type above'
-                : `Sign Up as ${role === 'couple' ? 'Couple' : 'Vendor'}`}
-          </Button>
-        </form>
-
-        <p className="text-center text-sm text-muted-foreground">
-          Already have an account?{' '}
-          <Link
-            href="/login"
-            className="font-medium text-primary underline-offset-4 hover:underline"
-          >
-            Log in
-          </Link>
-        </p>
-      </CardContent>
-    </Card>
+    <SignupForm returnTo={returnTo} prefilledRole={prefilledRole} claimContext={claimContext} />
   );
 }

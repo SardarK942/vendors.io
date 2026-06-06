@@ -104,24 +104,45 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     }),
   })) as VendorWithEnrichments[];
 
+  const claimedCount = count ?? 0;
+  const unclaimedCount = unclaimed.length;
+  const totalCount = claimedCount + unclaimedCount;
+
+  // When there are no claimed vendors but there ARE unclaimed ones, suppress
+  // the VendorGrid empty state — it'd read as "nothing here" while real
+  // listings are visible below.
+  const showVendorGrid = claimedCount > 0 || unclaimedCount === 0;
+
   return (
     <div className="py-8">
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Browse Vendors</h1>
         <p className="text-muted-foreground">
-          {count ?? 0} vendor{(count ?? 0) !== 1 ? 's' : ''} found
+          {totalCount} vendor{totalCount !== 1 ? 's' : ''}
+          {unclaimedCount > 0 && claimedCount > 0
+            ? ` (${claimedCount} ready to book, ${unclaimedCount} unclaimed)`
+            : unclaimedCount > 0
+              ? ' listed — most haven’t joined Baazar yet'
+              : ''}
         </p>
       </div>
 
       <FilterShell initialCategory={category} />
-      <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
+      {showVendorGrid && (
+        <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
+      )}
 
       {unclaimed.length > 0 && (
-        <section className="mt-12">
-          <h2 className="mb-4 text-lg font-semibold">More vendors</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
-            These vendors haven&apos;t claimed their Baazar listing yet. Booking opens when they do.
-          </p>
+        <section className={showVendorGrid ? 'mt-12' : 'mt-2'}>
+          {showVendorGrid && (
+            <>
+              <h2 className="mb-4 text-lg font-semibold">More vendors</h2>
+              <p className="mb-4 text-sm text-muted-foreground">
+                These vendors haven&apos;t claimed their Baazar listing yet. Booking opens when they
+                do.
+              </p>
+            </>
+          )}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
             {unclaimed.map((v) => (
               <UnclaimedVendorCard key={v.id} vendor={v} />
