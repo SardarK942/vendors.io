@@ -50,7 +50,7 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">How do you want to receive payments?</h1>
-        <p className="text-sm text-muted-foreground">Step 5 of 6</p>
+        <p className="text-sm text-muted-foreground">Step 6 of 7</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
@@ -58,13 +58,16 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
           type="button"
           onClick={() => setPaymentMode('stripe')}
           className={`rounded-lg border-2 p-6 text-left transition-colors ${
-            paymentMode === 'stripe' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'
+            paymentMode === 'stripe'
+              ? 'border-primary bg-primary/5'
+              : 'border-muted hover:border-muted-foreground/30'
           }`}
         >
-          <CreditCard className="h-8 w-8 mb-3 text-primary" />
-          <h3 className="font-semibold mb-1">Through Baazar (recommended)</h3>
+          <CreditCard className="mb-3 h-8 w-8 text-primary" />
+          <h3 className="mb-1 font-semibold">Through Baazar (recommended)</h3>
           <p className="text-sm text-muted-foreground">
-            Couples pay a 10% deposit. We hold your portion until you set up Stripe Connect later. Best for tracking and dispute protection.
+            Couples pay a 10% deposit. We hold your portion until you set up Stripe Connect later.
+            Best for tracking and dispute protection.
           </p>
         </button>
 
@@ -72,21 +75,24 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
           type="button"
           onClick={() => setPaymentMode('cash')}
           className={`rounded-lg border-2 p-6 text-left transition-colors ${
-            paymentMode === 'cash' ? 'border-primary bg-primary/5' : 'border-muted hover:border-muted-foreground/30'
+            paymentMode === 'cash'
+              ? 'border-primary bg-primary/5'
+              : 'border-muted hover:border-muted-foreground/30'
           }`}
         >
-          <Wallet className="h-8 w-8 mb-3 text-primary" />
-          <h3 className="font-semibold mb-1">Direct payments</h3>
+          <Wallet className="mb-3 h-8 w-8 text-primary" />
+          <h3 className="mb-1 font-semibold">Direct payments</h3>
           <p className="text-sm text-muted-foreground">
-            Coordinate with each couple yourself (cash, Zelle, check, etc.). Baazar handles a small platform fee at booking — you handle the rest.
+            Coordinate with each couple yourself (cash, Zelle, check, etc.). Baazar handles a small
+            platform fee at booking — you handle the rest.
           </p>
         </button>
       </div>
 
       {showStripeOverride && (
-        <div className="rounded-lg border bg-muted/30 p-4 space-y-3">
+        <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
           <p className="text-sm font-medium">Stripe account for this business</p>
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex cursor-pointer items-start gap-3">
             <input
               type="radio"
               checked={stripeMode === 'reuse'}
@@ -98,7 +104,7 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
               <span className="text-muted-foreground">(recommended — zero new KYC)</span>
             </span>
           </label>
-          <label className="flex items-start gap-3 cursor-pointer">
+          <label className="flex cursor-pointer items-start gap-3">
             <input
               type="radio"
               checked={stripeMode === 'new'}
@@ -108,7 +114,7 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
             <span className="text-sm">
               <span className="font-medium">Set up a new Stripe account for this business</span>
               <br />
-              <span className="text-muted-foreground text-xs">
+              <span className="text-xs text-muted-foreground">
                 Pick this if you operate this business as a separate legal entity (separate tax ID).
               </span>
             </span>

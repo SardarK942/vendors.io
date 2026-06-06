@@ -104,6 +104,14 @@ test('first-time vendor: public → claim → signup → onboarding → dashboar
   await page.goto(seed.claim_url);
   await page.waitForLoadState('networkidle').catch(() => {});
   await page.waitForTimeout(1500);
+  // Dismiss the "Welcome to Baazar for vendors" intro modal if it's mounted —
+  // otherwise it overlays every subsequent snapshot.
+  await page
+    .locator('text=/skip for now/i')
+    .first()
+    .click({ timeout: 3000 })
+    .catch(() => {});
+  await page.waitForTimeout(500);
   await snap(page, '08-onboarding-after-claim');
 
   // ─── 7. Walk each onboarding step (don't fill, just look) ─────────────────

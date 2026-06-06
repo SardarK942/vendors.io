@@ -77,41 +77,42 @@ export function StepReview({ profile, profileId, mode }: Props) {
     <div className="max-w-2xl space-y-8">
       <div>
         <h1 className="text-2xl font-bold">Review your profile</h1>
-        <p className="text-sm text-muted-foreground">Step 6 of 6 — check everything looks right before publishing.</p>
+        <p className="text-sm text-muted-foreground">
+          Step 7 of 7 — check everything looks right before publishing.
+        </p>
       </div>
 
       {/* Summary cards */}
       <div className="space-y-4">
         {/* Basics */}
         <div className="rounded-md border p-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Basics</h2>
-            <Link
-              href="/dashboard/profile/setup/basics"
-              className="text-xs text-primary underline"
-            >
+            <Link href="/dashboard/profile/setup/basics" className="text-xs text-primary underline">
               Edit
             </Link>
           </div>
           <dl className="space-y-1 text-sm">
             <div className="flex gap-2">
-              <dt className="font-medium text-muted-foreground w-32">Business name</dt>
+              <dt className="w-32 font-medium text-muted-foreground">Business name</dt>
               <dd>{profile.business_name}</dd>
             </div>
             <div className="flex gap-2">
-              <dt className="font-medium text-muted-foreground w-32">Category</dt>
+              <dt className="w-32 font-medium text-muted-foreground">Category</dt>
               <dd>{VENDOR_CATEGORY_LABELS[profile.category] ?? profile.category}</dd>
             </div>
             <div className="flex gap-2">
-              <dt className="font-medium text-muted-foreground w-32">Bio</dt>
-              <dd className="whitespace-pre-wrap">{profile.bio ?? <span className="text-destructive">Missing</span>}</dd>
+              <dt className="w-32 font-medium text-muted-foreground">Bio</dt>
+              <dd className="whitespace-pre-wrap">
+                {profile.bio ?? <span className="text-destructive">Missing</span>}
+              </dd>
             </div>
           </dl>
         </div>
 
         {/* Location */}
         <div className="rounded-md border p-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Location</h2>
             <Link
               href="/dashboard/profile/setup/location"
@@ -122,15 +123,17 @@ export function StepReview({ profile, profileId, mode }: Props) {
           </div>
           <dl className="space-y-1 text-sm">
             <div className="flex gap-2">
-              <dt className="font-medium text-muted-foreground w-32">Address</dt>
+              <dt className="w-32 font-medium text-muted-foreground">Address</dt>
               <dd>
-                {profile.base_address_line_1
-                  ? `${profile.base_address_line_1}, ${profile.base_city}, ${profile.base_state} ${profile.base_postal_code}`
-                  : <span className="text-destructive">Missing</span>}
+                {profile.base_address_line_1 ? (
+                  `${profile.base_address_line_1}, ${profile.base_city}, ${profile.base_state} ${profile.base_postal_code}`
+                ) : (
+                  <span className="text-destructive">Missing</span>
+                )}
               </dd>
             </div>
             <div className="flex gap-2">
-              <dt className="font-medium text-muted-foreground w-32">Address public</dt>
+              <dt className="w-32 font-medium text-muted-foreground">Address public</dt>
               <dd>{profile.base_address_public ? 'Yes' : 'No (city + state only)'}</dd>
             </div>
           </dl>
@@ -138,29 +141,33 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
         {/* Online */}
         <div className="rounded-md border p-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Online presence</h2>
-            <Link
-              href="/dashboard/profile/setup/online"
-              className="text-xs text-primary underline"
-            >
+            <Link href="/dashboard/profile/setup/online" className="text-xs text-primary underline">
               Edit
             </Link>
           </div>
           <dl className="space-y-1 text-sm">
             <div className="flex gap-2">
-              <dt className="font-medium text-muted-foreground w-32">Instagram</dt>
+              <dt className="w-32 font-medium text-muted-foreground">Instagram</dt>
               <dd>
-                {profile.instagram_handle
-                  ? `@${profile.instagram_handle}`
-                  : <span className="text-destructive">Missing</span>}
+                {profile.instagram_handle ? (
+                  `@${profile.instagram_handle}`
+                ) : (
+                  <span className="text-destructive">Missing</span>
+                )}
               </dd>
             </div>
             {profile.website_url && (
               <div className="flex gap-2">
-                <dt className="font-medium text-muted-foreground w-32">Website</dt>
+                <dt className="w-32 font-medium text-muted-foreground">Website</dt>
                 <dd>
-                  <a href={profile.website_url} target="_blank" rel="noopener noreferrer" className="underline">
+                  <a
+                    href={profile.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="underline"
+                  >
                     {profile.website_url}
                   </a>
                 </dd>
@@ -171,7 +178,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
         {/* Portfolio */}
         <div className="rounded-md border p-4">
-          <div className="flex items-center justify-between mb-2">
+          <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Portfolio</h2>
             <Link
               href="/dashboard/profile/setup/portfolio"
@@ -202,10 +209,17 @@ export function StepReview({ profile, profileId, mode }: Props) {
         <div className="rounded-md border p-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold">Payment mode</h3>
-            <Link href="/dashboard/profile/setup/payment-mode" className="text-sm text-primary underline">Edit</Link>
+            <Link
+              href="/dashboard/profile/setup/payment-mode"
+              className="text-sm text-primary underline"
+            >
+              Edit
+            </Link>
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
-            {profile.payment_mode === 'cash' ? 'Direct payments — coordinate with each couple yourself.' : 'Through Baazar — couples pay deposit via the platform.'}
+            {profile.payment_mode === 'cash'
+              ? 'Direct payments — coordinate with each couple yourself.'
+              : 'Through Baazar — couples pay deposit via the platform.'}
           </p>
         </div>
       </div>
@@ -213,7 +227,9 @@ export function StepReview({ profile, profileId, mode }: Props) {
       {/* Live preview */}
       <div className="space-y-2">
         <h2 className="font-semibold">Preview</h2>
-        <p className="text-xs text-muted-foreground">This is how your listing will appear in the marketplace.</p>
+        <p className="text-xs text-muted-foreground">
+          This is how your listing will appear in the marketplace.
+        </p>
         <div className="max-w-xs">
           <VendorCard vendor={previewVendor} />
         </div>

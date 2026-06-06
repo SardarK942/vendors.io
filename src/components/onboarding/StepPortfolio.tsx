@@ -49,7 +49,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Show your work</h1>
-        <p className="text-sm text-muted-foreground">Step 4 of 5</p>
+        <p className="text-sm text-muted-foreground">Step 5 of 7</p>
       </div>
 
       {images.length > 0 && images.length < 3 && (

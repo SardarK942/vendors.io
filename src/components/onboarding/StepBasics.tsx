@@ -93,7 +93,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
       {pendingMatches && <ScrapedVendorMatchPrompt matches={pendingMatches} />}
       <div>
         <h1 className="text-2xl font-bold">Tell us about your business</h1>
-        <p className="text-sm text-muted-foreground">Step 1 of 5</p>
+        <p className="text-sm text-muted-foreground">Step 1 of 7</p>
       </div>
 
       <div className="space-y-2">
@@ -110,7 +110,14 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         <Label htmlFor="category">Category</Label>
         <Select value={data.category} onValueChange={(v) => setData({ ...data, category: v })}>
           <SelectTrigger id="category">
-            <SelectValue placeholder="Choose a category" />
+            <SelectValue placeholder="Choose a category">
+              {/* Radix's auto-render of the trigger text reads SelectItem
+                  children — but those live inside SelectContent, which is a
+                  Portal that doesn't mount until the dropdown is opened.
+                  So a controlled value never displays on first render unless
+                  we provide the label explicitly here. */}
+              {data.category ? (VENDOR_CATEGORY_LABELS[data.category] ?? data.category) : null}
+            </SelectValue>
           </SelectTrigger>
           <SelectContent>
             {VENDOR_CATEGORIES.map((c) => (

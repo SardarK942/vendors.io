@@ -4,7 +4,10 @@ import { useRouter } from 'next/navigation';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
-import { GooglePlacesAutocomplete, type PlaceData } from '@/components/forms/GooglePlacesAutocomplete';
+import {
+  GooglePlacesAutocomplete,
+  type PlaceData,
+} from '@/components/forms/GooglePlacesAutocomplete';
 import { locationSchema } from '@/lib/onboarding/validation';
 
 interface Initial {
@@ -68,7 +71,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Where are you based?</h1>
-        <p className="text-sm text-muted-foreground">Step 2 of 5</p>
+        <p className="text-sm text-muted-foreground">Step 2 of 7</p>
       </div>
 
       <div className="space-y-2">
@@ -88,16 +91,12 @@ export function StepLocation({ initial, profileId, mode }: Props) {
 
       <div className="space-y-2">
         <div className="flex items-center gap-3">
-          <Switch
-            id="addressPublic"
-            checked={addressPublic}
-            onCheckedChange={setAddressPublic}
-          />
+          <Switch id="addressPublic" checked={addressPublic} onCheckedChange={setAddressPublic} />
           <Label htmlFor="addressPublic" className="cursor-pointer">
             Make my full address publicly visible
           </Label>
         </div>
-        <p className="text-xs text-muted-foreground pl-[calc(2.25rem+0.75rem)]">
+        <p className="pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
           Couples see your city + state always. Full address shown only after they pay the deposit,
           unless you make it public here.
         </p>

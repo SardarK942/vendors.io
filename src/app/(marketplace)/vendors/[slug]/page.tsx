@@ -1,5 +1,5 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { notFound } from 'next/navigation';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server';
+import { notFound, redirect } from 'next/navigation';
 import { VendorProfile } from '@/components/marketplace/VendorProfile';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { recordVendorProfileView } from '@/services/analytics.actions';
@@ -23,8 +23,29 @@ export default async function VendorPage({ params }: VendorPageProps) {
 
   if (!vendor) {
     const unclaimed = await getUnclaimedBySlug(slug);
-    if (!unclaimed) notFound();
-    return <UnclaimedVendorRoute vendor={unclaimed} />;
+    if (unclaimed) return <UnclaimedVendorRoute vendor={unclaimed} />;
+
+    // Slug might have belonged to a scraped_vendor that has since been claimed.
+    // The K-2 public RPC filters out claimed rows, so the unclaimed lookup
+    // misses them. Look it up directly and redirect to the linked vendor
+    // profile's current slug so bookmarks / shared pre-claim URLs keep working.
+    const adminClient = createServiceRoleClient();
+    const { data: claimedScraped } = await adminClient
+      .from('scraped_vendors')
+      .select('claimed_vendor_profile_id')
+      .eq('slug', slug)
+      .not('claimed_at', 'is', null)
+      .maybeSingle();
+    if (claimedScraped?.claimed_vendor_profile_id) {
+      const { data: linked } = await adminClient
+        .from('vendor_profiles')
+        .select('slug')
+        .eq('id', claimedScraped.claimed_vendor_profile_id)
+        .maybeSingle();
+      if (linked?.slug) redirect(`/vendors/${linked.slug}`);
+    }
+
+    notFound();
   }
 
   if (!vendor.onboarding_complete || !vendor.is_active) {
