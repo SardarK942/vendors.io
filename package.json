@@ -32,6 +32,8 @@
     "scrape:rehost-photos": "tsx scripts/scraper/rehost-photos.ts",
     "curate:lookup": "tsx --env-file-if-exists=.env.local scripts/curate/add-vendor.ts lookup",
     "curate:insert": "tsx --env-file-if-exists=.env.local scripts/curate/add-vendor.ts insert",
+    "curate:batch-lookup": "tsx --env-file-if-exists=.env.local scripts/curate/batch-lookup.ts",
+    "curate:batch-insert": "tsx --env-file-if-exists=.env.local scripts/curate/batch-insert.ts",
     "prepare": "husky"
   },
   "lint-staged": {

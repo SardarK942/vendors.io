@@ -67,4 +67,7 @@ data/scraped/hand-curated-merged/
 
 # K — Python sidecar venv (managed by uv)
 scripts/scraper/python/.venv/
+
+# Hand-curation batch queues (input + review CSVs are local working files)
+data/curate/
 scripts/scraper/python/__pycache__/
