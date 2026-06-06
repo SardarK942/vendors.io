@@ -30,6 +30,8 @@
     "scrape:instagram:combine": "tsx -e \"import('./scripts/scraper/sources/instagram.ts').then(m => (m.default || m).combineInstagramLayers(new Date().toISOString().slice(0,10)))\"",
     "scrape:searchgraph": "tsx scripts/scraper/sources/searchgraph.ts",
     "scrape:rehost-photos": "tsx scripts/scraper/rehost-photos.ts",
+    "curate:lookup": "tsx --env-file-if-exists=.env.local scripts/curate/add-vendor.ts lookup",
+    "curate:insert": "tsx --env-file-if-exists=.env.local scripts/curate/add-vendor.ts insert",
     "prepare": "husky"
   },
   "lint-staged": {
