@@ -13,8 +13,9 @@ export interface WordmarkCycleProps {
 
 /**
  * Cycles "baazar" through Devanagari → Nastaliq → Naskh → Persian on a
- * 3.5s hold + 400ms crossfade. Pauses when offscreen (IntersectionObserver)
- * and when prefers-reduced-motion is set (stays on Devanagari).
+ * 3.5s hold + 400ms crossfade. Pauses when offscreen (IntersectionObserver).
+ * Intentionally ignores prefers-reduced-motion — the cycle is a brand
+ * signature and the 400ms crossfade is gentle enough to be safe.
  *
  * Renders Devanagari statically on the server; the cycle starts after hydration.
  */
@@ -25,9 +26,10 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
   const visibleRef = React.useRef(false);
 
   React.useEffect(() => {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) return;
-
+    // Brand decision: force the cycle to run even when prefers-reduced-motion
+    // is set. The wordmark fade is the signature brand moment in the footer
+    // and we want every visitor to see it. Crossfade is 400ms — gentle enough
+    // that it doesn't trigger motion sickness for most reduce-motion users.
     const el = wrapperRef.current;
     if (!el) return;
 
