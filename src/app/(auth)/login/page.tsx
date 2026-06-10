@@ -88,7 +88,7 @@ function LoginPageInner() {
     <Card>
       <CardHeader className="text-center">
         <CardTitle className="text-2xl">Welcome Back</CardTitle>
-        <CardDescription>Sign in to your Desi Wedding Marketplace account</CardDescription>
+        <CardDescription>Sign in to your Baazar account</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <Button
