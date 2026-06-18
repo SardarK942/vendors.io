@@ -390,7 +390,9 @@ export async function acceptBooking(
   // Fetch booking and verify the caller is the vendor
   const { data: booking } = await supabase
     .from('bookings')
-    .select('id, vendor_profile_id, status, package_id, vendor_profiles!inner(user_id)')
+    .select(
+      'id, vendor_profile_id, status, package_id, total_price_cents, couple_counter_amount, couple_counter_count, vendor_profiles!inner(user_id)'
+    )
     .eq('id', bookingId)
     .single();
 
@@ -400,7 +402,8 @@ export async function acceptBooking(
   if (vp.user_id !== vendorUserId) {
     return { error: { code: 'FORBIDDEN', message: 'Not your booking' }, status: 403 };
   }
-  if (booking.status !== 'pending') {
+  const validSources = ['pending', 'couple_countered'] as const;
+  if (!validSources.includes(booking.status as 'pending' | 'couple_countered')) {
     return {
       error: { code: 'INVALID_STATE', message: `Cannot accept from status ${booking.status}` },
       status: 409,
@@ -421,6 +424,19 @@ export async function acceptBooking(
 
   const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
 
+  const isAcceptingCounter = booking.status === 'couple_countered';
+  const newTotalCents = isAcceptingCounter
+    ? (((booking as Record<string, unknown>).couple_counter_amount as number | null) ??
+      ((booking as Record<string, unknown>).total_price_cents as number | null))
+    : ((booking as Record<string, unknown>).total_price_cents as number | null);
+
+  if (isAcceptingCounter && newTotalCents === null) {
+    return {
+      error: { code: 'INVALID_STATE', message: 'Counter-offer has no proposed amount' },
+      status: 409,
+    };
+  }
+
   const { data, error } = await supabase
     .from('bookings')
     .update({
@@ -428,6 +444,7 @@ export async function acceptBooking(
       adjustment_amount_cents: 0,
       vendor_notes: vendorNotesTemplate,
       expires_at: expiresAt,
+      ...(isAcceptingCounter && newTotalCents !== null && { total_price_cents: newTotalCents }),
     })
     .eq('id', bookingId)
     .select('*')
