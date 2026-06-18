@@ -7,7 +7,7 @@
  * 3. 429 when rate-limited
  * 4. Short/missing draft → uses draft (non-polish) system prompt
  * 5. Draft ≥ 20 chars → uses polish system prompt
- * 6. Anthropic throws → 503
+ * 6. Gemini throws → 503
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -36,15 +36,16 @@ vi.mock('@/lib/ai/rate-limit', () => ({
   checkAndIncrement: vi.fn(),
 }));
 
-// Mock getAnthropic
-vi.mock('@/lib/ai/anthropic', () => ({
-  getAnthropic: vi.fn(),
+// Mock getGoogleAI
+vi.mock('@/lib/ai/google', () => ({
+  getGoogleAI: vi.fn(),
+  BIO_ASSIST_MODEL: 'gemini-2.5-flash-lite',
 }));
 
 import { requireUser } from '@/lib/api/auth';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { checkAndIncrement } from '@/lib/ai/rate-limit';
-import { getAnthropic } from '@/lib/ai/anthropic';
+import { getGoogleAI } from '@/lib/ai/google';
 import { POST } from '@/app/api/ai/bio-assist/route';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -62,10 +63,11 @@ function buildServiceRoleClient(role: string | null) {
     from: (_table: string) => ({
       select: (_cols: string) => ({
         eq: (_col: string, _val: string) => ({
-          single: () => Promise.resolve({
-            data: role ? { role } : null,
-            error: null,
-          }),
+          single: () =>
+            Promise.resolve({
+              data: role ? { role } : null,
+              error: null,
+            }),
           maybeSingle: () => Promise.resolve({ data: null, error: null }),
         }),
       }),
@@ -77,15 +79,16 @@ function buildServiceRoleClient(role: string | null) {
   };
 }
 
-/** Creates a fake Anthropic stream that emits text chunks */
-function buildFakeStream(chunks: string[]) {
+/** Creates a fake Gemini stream that emits text chunks */
+function buildFakeGeminiStream(chunks: string[]) {
   async function* gen() {
     for (const chunk of chunks) {
-      yield { type: 'content_block_delta', delta: { type: 'text_delta', text: chunk } };
+      yield { text: () => chunk };
     }
   }
+  const streamIterable = gen();
   return {
-    [Symbol.asyncIterator]: gen,
+    stream: streamIterable,
   };
 }
 
@@ -95,7 +98,7 @@ describe('POST /api/ai/bio-assist', () => {
   const mockRequireUser = requireUser as ReturnType<typeof vi.fn>;
   const mockCreateServiceRoleClient = createServiceRoleClient as ReturnType<typeof vi.fn>;
   const mockCheckAndIncrement = checkAndIncrement as ReturnType<typeof vi.fn>;
-  const mockGetAnthropic = getAnthropic as ReturnType<typeof vi.fn>;
+  const mockGetGoogleAI = getGoogleAI as ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -136,47 +139,67 @@ describe('POST /api/ai/bio-assist', () => {
   it('uses draft system (non-polish) when draft is absent or short', async () => {
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' } });
     mockCreateServiceRoleClient.mockReturnValue(buildServiceRoleClient('vendor'));
-    mockCheckAndIncrement.mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date() });
+    mockCheckAndIncrement.mockResolvedValueOnce({
+      allowed: true,
+      remaining: 9,
+      resetAt: new Date(),
+    });
 
-    const fakeStream = buildFakeStream(['Hello', ' world']);
-    const fakeAnthropic = {
-      messages: { stream: vi.fn().mockReturnValue(fakeStream) },
-    };
-    mockGetAnthropic.mockReturnValue(fakeAnthropic);
+    const generateContentStream = vi
+      .fn()
+      .mockResolvedValue(buildFakeGeminiStream(['Hello', ' world']));
+    const fakeModel = { generateContentStream };
+    mockGetGoogleAI.mockReturnValue({ getGenerativeModel: () => fakeModel });
 
-    const res = await POST(makeRequest({ businessName: 'Mehndi Co', category: 'mehndi', draft: 'short' }));
+    const res = await POST(
+      makeRequest({ businessName: 'Mehndi Co', category: 'mehndi', draft: 'short' })
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get('Content-Type')).toContain('text/event-stream');
 
-    // Verify stream was called with the draft (non-polish) system
-    const streamCall = fakeAnthropic.messages.stream.mock.calls[0][0];
-    expect(streamCall.system).toContain('You write short, warm vendor bios');
+    // Verify stream was called with the draft (non-polish) system prompt in the user content
+    const streamCall = generateContentStream.mock.calls[0][0];
+    const userText: string = streamCall.contents[0].parts[0].text;
+    expect(userText).toContain('You write short, warm vendor bios');
   });
 
   it('uses polish system when draft is >= 20 chars', async () => {
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' } });
     mockCreateServiceRoleClient.mockReturnValue(buildServiceRoleClient('vendor'));
-    mockCheckAndIncrement.mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date() });
+    mockCheckAndIncrement.mockResolvedValueOnce({
+      allowed: true,
+      remaining: 9,
+      resetAt: new Date(),
+    });
 
-    const fakeStream = buildFakeStream(['Polished bio here.']);
-    const fakeAnthropic = {
-      messages: { stream: vi.fn().mockReturnValue(fakeStream) },
-    };
-    mockGetAnthropic.mockReturnValue(fakeAnthropic);
+    const generateContentStream = vi
+      .fn()
+      .mockResolvedValue(buildFakeGeminiStream(['Polished bio here.']));
+    const fakeModel = { generateContentStream };
+    mockGetGoogleAI.mockReturnValue({ getGenerativeModel: () => fakeModel });
 
     const longDraft = 'This is a draft that is long enough to trigger polish mode!';
-    const res = await POST(makeRequest({ businessName: 'Mehndi Co', category: 'mehndi', draft: longDraft }));
+    const res = await POST(
+      makeRequest({ businessName: 'Mehndi Co', category: 'mehndi', draft: longDraft })
+    );
     expect(res.status).toBe(200);
 
-    const streamCall = fakeAnthropic.messages.stream.mock.calls[0][0];
-    expect(streamCall.system).toContain('polish vendor bios');
+    const streamCall = generateContentStream.mock.calls[0][0];
+    const userText: string = streamCall.contents[0].parts[0].text;
+    expect(userText).toContain('polish vendor bios');
   });
 
-  it('returns 503 when Anthropic throws during setup', async () => {
+  it('returns 503 when Gemini throws during setup', async () => {
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' } });
     mockCreateServiceRoleClient.mockReturnValue(buildServiceRoleClient('vendor'));
-    mockCheckAndIncrement.mockResolvedValueOnce({ allowed: true, remaining: 9, resetAt: new Date() });
-    mockGetAnthropic.mockImplementation(() => { throw new Error('API key not set'); });
+    mockCheckAndIncrement.mockResolvedValueOnce({
+      allowed: true,
+      remaining: 9,
+      resetAt: new Date(),
+    });
+    mockGetGoogleAI.mockImplementation(() => {
+      throw new Error('API key not set');
+    });
 
     const res = await POST(makeRequest({ businessName: 'Mehndi Co', category: 'mehndi' }));
     expect(res.status).toBe(503);
