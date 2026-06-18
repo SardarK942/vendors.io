@@ -12,7 +12,10 @@ export const POST = withErrorBoundary(
     const parsed = adjustQuoteSchema.parse(await request.json());
 
     const result = await adjustBookingQuote(supabase, params.id, user.id, parsed);
-    if (result.error) {
+    if ('code' in result && result.code === 'adjust_cap_reached') {
+      return NextResponse.json({ error: { code: 'adjust_cap_reached' } }, { status: 409 });
+    }
+    if ('error' in result && result.error) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
@@ -22,15 +25,13 @@ export const POST = withErrorBoundary(
     void (async () => {
       const { data: ctx } = await supabase
         .from('bookings')
-        .select(
-          'couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name)'
-        )
+        .select('couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name)')
         .eq('id', params.id)
         .single();
 
       if (!ctx) return;
 
-      const coupleEmail = (ctx.users as { email: string } | { email: string }[] | null);
+      const coupleEmail = ctx.users as { email: string } | { email: string }[] | null;
       const email = Array.isArray(coupleEmail)
         ? coupleEmail[0]?.email
         : (coupleEmail as { email: string } | null)?.email;

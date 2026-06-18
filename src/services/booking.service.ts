@@ -469,11 +469,14 @@ export async function adjustBookingQuote(
   bookingId: string,
   vendorUserId: string,
   input: AdjustQuoteInput
-): Promise<{ data?: BookingRow; error?: { code: string; message: string }; status: number }> {
+): Promise<
+  | { data?: BookingRow; error?: { code: string; message: string }; status: number }
+  | { ok: false; code: string }
+> {
   const { data: booking } = await supabase
     .from('bookings')
     .select(
-      'id, vendor_profile_id, status, negotiation_round_count, package_id, vendor_profiles!inner(user_id)'
+      'id, vendor_profile_id, status, negotiation_round_count, package_id, vendor_adjustment_count, vendor_profiles!inner(user_id)'
     )
     .eq('id', bookingId)
     .single();
@@ -483,6 +486,11 @@ export async function adjustBookingQuote(
   const vp = booking.vendor_profiles as unknown as { user_id: string };
   if (vp.user_id !== vendorUserId) {
     return { error: { code: 'FORBIDDEN', message: 'Not your booking' }, status: 403 };
+  }
+
+  const currentAdjustCount = (booking.vendor_adjustment_count as number) ?? 0;
+  if (currentAdjustCount >= 2) {
+    return { ok: false, code: 'adjust_cap_reached' };
   }
 
   if (!['pending', 'pending_quote', 'adjusted_quote_declined'].includes(booking.status)) {
@@ -518,6 +526,7 @@ export async function adjustBookingQuote(
       adjustment_reason: input.reason,
       adjustment_explanation: input.explanation ?? null,
       negotiation_round_count: currentRound + 1,
+      vendor_adjustment_count: currentAdjustCount + 1,
       vendor_notes: vendorNotesTemplate,
       expires_at: expiresAt,
     })
