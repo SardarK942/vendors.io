@@ -66,7 +66,7 @@ function mockSb({ booking }: { booking: Record<string, unknown> }) {
 
 const baseInput = {
   adjustment_amount_cents: 150_000,
-  reason: 'additional setup',
+  reason: 'custom' as const,
   explanation: null,
 };
 
@@ -106,7 +106,8 @@ describe('adjustBookingQuote() — adjust cap enforcement', () => {
 
     const result = await adjustBookingQuote(supabase as never, 'b_2', 'u_vendor', baseInput);
 
-    expect(result.error).toBeUndefined();
+    const success = result as { error?: { code: string }; status: number };
+    expect(success.error).toBeUndefined();
     expect(supabase.updateCalls()).toContainEqual(
       expect.objectContaining({ vendor_adjustment_count: 1 })
     );

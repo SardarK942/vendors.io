@@ -38,7 +38,12 @@ describe('notifyCustomRequestReceived', () => {
 
     expect(result).toEqual({ id: 'notif-1' });
     expect(mockSrClient.from).toHaveBeenCalledWith('notifications');
-    const insertArg = insertSpy.mock.calls[0][0];
+    const insertArg = (insertSpy.mock.calls[0] as unknown[])[0] as unknown as {
+      type: string;
+      user_id: string;
+      body: string;
+      link: string;
+    };
     expect(insertArg.type).toBe('custom_request_received');
     expect(insertArg.user_id).toBe('vendor-user-1');
     expect(insertArg.body).toContain('Anya & Rohan');

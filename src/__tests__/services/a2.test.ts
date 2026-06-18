@@ -122,33 +122,40 @@ describe('A2 — adjustBookingQuote state machine', () => {
     const sb = buildAdjustSupabase({ status: 'deposit_paid', vendorUserId: 'u-vendor' });
     const result = await adjustBookingQuote(sb as never, 'b-1', 'u-vendor', {
       adjustment_amount_cents: 5000,
-      reason: 'travel',
+      reason: 'travel' as const,
       explanation: null,
     });
-    expect(result.error?.code).toBe('INVALID_STATE');
+    const r128 = result as { error?: { code: string } };
+    expect(r128.error?.code).toBe('INVALID_STATE');
   });
 
   it('rejects when status is accepted (not adjustable)', async () => {
     const sb = buildAdjustSupabase({ status: 'accepted', vendorUserId: 'u-vendor' });
     const result = await adjustBookingQuote(sb as never, 'b-1', 'u-vendor', {
       adjustment_amount_cents: 5000,
-      reason: 'travel',
+      reason: 'travel' as const,
       explanation: null,
     });
-    expect(result.error?.code).toBe('INVALID_STATE');
+    const r138 = result as { error?: { code: string } };
+    expect(r138.error?.code).toBe('INVALID_STATE');
   });
 
   it('succeeds from pending status', async () => {
     const sb = buildAdjustSupabase({ status: 'pending', vendorUserId: 'u-vendor' });
     const result = await adjustBookingQuote(sb as never, 'b-1', 'u-vendor', {
       adjustment_amount_cents: 5000,
-      reason: 'travel',
+      reason: 'travel' as const,
       explanation: null,
     });
-    expect(result.error).toBeUndefined();
-    expect(result.status).toBe(200);
-    expect(result.data?.status).toBe('adjusted_quote_sent');
-    expect(result.data?.negotiation_round_count).toBe(1);
+    const s150 = result as {
+      error?: unknown;
+      status: number;
+      data?: { status: string; negotiation_round_count: number };
+    };
+    expect(s150.error).toBeUndefined();
+    expect(s150.status).toBe(200);
+    expect(s150.data?.status).toBe('adjusted_quote_sent');
+    expect(s150.data?.negotiation_round_count).toBe(1);
   });
 
   it('succeeds from adjusted_quote_declined status', async () => {
@@ -159,24 +166,30 @@ describe('A2 — adjustBookingQuote state machine', () => {
     });
     const result = await adjustBookingQuote(sb as never, 'b-1', 'u-vendor', {
       adjustment_amount_cents: -3000,
-      reason: 'discount',
+      reason: 'discount' as const,
       explanation: null,
     });
-    expect(result.error).toBeUndefined();
-    expect(result.data?.negotiation_round_count).toBe(2);
+    const s165 = result as { error?: unknown; data?: { negotiation_round_count: number } };
+    expect(s165.error).toBeUndefined();
+    expect(s165.data?.negotiation_round_count).toBe(2);
   });
 
   it('succeeds from pending_quote status (Custom Request first-quote)', async () => {
     const sb = buildAdjustSupabase({ status: 'pending_quote', vendorUserId: 'u-vendor' });
     const result = await adjustBookingQuote(sb as never, 'b-1', 'u-vendor', {
       adjustment_amount_cents: 250000, // $2,500 initial quote on a pending_quote
-      reason: 'custom',
+      reason: 'custom' as const,
       explanation: 'Multi-day mehndi coverage with second photographer.',
     });
-    expect(result.error).toBeUndefined();
-    expect(result.status).toBe(200);
-    expect(result.data?.status).toBe('adjusted_quote_sent');
-    expect(result.data?.negotiation_round_count).toBe(1);
+    const s176 = result as {
+      error?: unknown;
+      status: number;
+      data?: { status: string; negotiation_round_count: number };
+    };
+    expect(s176.error).toBeUndefined();
+    expect(s176.status).toBe(200);
+    expect(s176.data?.status).toBe('adjusted_quote_sent');
+    expect(s176.data?.negotiation_round_count).toBe(1);
   });
 });
 
