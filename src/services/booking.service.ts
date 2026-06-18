@@ -786,9 +786,7 @@ export async function coupleDeclineAdjusted(
 /**
  * coupleCounterBooking — the couple proposes a new total for a booking.
  *
- * Valid source statuses: 'vendor_accepted' | 'accepted' | 'vendor_adjusted_quote' | 'adjusted_quote_sent'
- * ('vendor_accepted' / 'vendor_adjusted_quote' are the D.1 spec aliases used in tests;
- *  'accepted' / 'adjusted_quote_sent' are the existing DB status values.)
+ * Valid source statuses: 'accepted' | 'adjusted_quote_sent'
  *
  * Cap: couple may counter at most 2 times per booking (couple_counter_count must be < 2 on entry).
  * No notification is fired here — that is wired in T16.
