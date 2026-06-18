@@ -1,6 +1,11 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 
-vi.mock('@/lib/email/resend');
+vi.mock('@/lib/email/resend', () => ({
+  sendClaimRequestTeamEmail: vi.fn(),
+  sendClaimRequestVendorEmail: vi.fn(),
+  sendRemovalRequestTeamEmail: vi.fn(),
+  sendRemovalConfirmationVendorEmail: vi.fn(),
+}));
 vi.mock('@/lib/supabase/server');
 
 import { POST } from '@/app/api/scraped-vendors/[id]/request/route';
@@ -13,7 +18,7 @@ import {
 import { createServiceRoleClient } from '@/lib/supabase/server';
 
 beforeEach(() => {
-  vi.resetAllMocks();
+  vi.clearAllMocks();
   const mockClient = {
     from: vi.fn().mockReturnValue({
       select: vi.fn().mockReturnValue({

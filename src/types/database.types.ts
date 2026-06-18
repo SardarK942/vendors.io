@@ -51,7 +51,8 @@ export type NotificationType =
   | 'event_completed'
   | 'booking_completed'
   | 'review_received'
-  | 'custom_request_received';
+  | 'custom_request_received'
+  | 'couple_countered';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -67,7 +68,8 @@ export type BookingStatus =
   | 'accepted'
   | 'adjusted_quote_sent'
   | 'adjusted_quote_declined'
-  | 'pending_quote';
+  | 'pending_quote'
+  | 'couple_countered';
 
 export type AdjustmentReason =
   | 'travel'
@@ -518,6 +520,10 @@ export interface Database {
           total_price_cents: number;
           negotiation_round_count: number;
           event_type: string | null;
+          vendor_adjustment_count: number;
+          couple_counter_count: number;
+          couple_counter_amount: number | null;
+          couple_counter_note: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -554,6 +560,10 @@ export interface Database {
           total_price_cents?: number;
           event_type?: string | null;
           negotiation_round_count?: number;
+          vendor_adjustment_count?: number;
+          couple_counter_count?: number;
+          couple_counter_amount?: number | null;
+          couple_counter_note?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -589,6 +599,10 @@ export interface Database {
           total_price_cents?: number;
           event_type?: string | null;
           negotiation_round_count?: number;
+          vendor_adjustment_count?: number;
+          couple_counter_count?: number;
+          couple_counter_amount?: number | null;
+          couple_counter_note?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -882,6 +896,9 @@ export interface Database {
           metadata: Record<string, unknown>;
           read_at: string | null;
           created_at: string;
+          email_status: 'pending' | 'sent' | 'failed' | 'skipped';
+          email_error: string | null;
+          email_attempted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -893,9 +910,15 @@ export interface Database {
           metadata?: Record<string, unknown>;
           read_at?: string | null;
           created_at?: string;
+          email_status?: 'pending' | 'sent' | 'failed' | 'skipped';
+          email_error?: string | null;
+          email_attempted_at?: string | null;
         };
         Update: {
           read_at?: string | null;
+          email_status?: 'pending' | 'sent' | 'failed' | 'skipped';
+          email_error?: string | null;
+          email_attempted_at?: string | null;
         };
         Relationships: [
           {

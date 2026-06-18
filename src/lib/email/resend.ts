@@ -1,9 +1,10 @@
 import { Resend } from 'resend';
 import { logger } from '@/lib/logger';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
-function escapeHtml(s: string | null | undefined): string {
+export function escapeHtml(s: string | null | undefined): string {
   if (s === null || s === undefined) return '';
   return s
     .replace(/&/g, '&amp;')
@@ -512,4 +513,43 @@ export async function sendRemovalConfirmationVendorEmail(
       ${FOOTER}
     `,
   });
+}
+
+// ─── sendWithRecord ───────────────────────────────────────────────────────────
+
+/**
+ * Thin Resend send wrapper that, when given an optional `notificationId`,
+ * updates that notification row's `email_status` column to 'sent' or 'failed'
+ * after the Resend call resolves.
+ */
+export async function sendWithRecord(args: {
+  to: string;
+  subject: string;
+  html: string;
+  notificationId?: string;
+}): Promise<{ ok: boolean; id?: string; error?: string }> {
+  const resend = client();
+  const { data, error } = await resend.emails.send({
+    from: FROM_EMAIL,
+    to: args.to,
+    subject: args.subject,
+    html: args.html,
+  });
+
+  const now = new Date().toISOString();
+  const ok = !error;
+  const update = ok
+    ? { email_status: 'sent' as const, email_attempted_at: now }
+    : {
+        email_status: 'failed' as const,
+        email_attempted_at: now,
+        email_error: error?.message ?? 'unknown',
+      };
+
+  if (args.notificationId) {
+    const sb = await createServiceRoleClient();
+    await sb.from('notifications').update(update).eq('id', args.notificationId);
+  }
+
+  return ok ? { ok: true, id: data?.id } : { ok: false, error: error?.message ?? 'unknown' };
 }

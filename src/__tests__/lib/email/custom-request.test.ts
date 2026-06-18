@@ -1,0 +1,47 @@
+// src/__tests__/lib/email/custom-request.test.ts
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+vi.mock('@/lib/email/resend', () => import('@/lib/email/__mocks__/resend'));
+import { sendCustomRequestEmail } from '@/lib/email/custom-request';
+import { getRecordedSends, clearRecordedSends } from '@/lib/email/__mocks__/resend';
+
+describe('sendCustomRequestEmail()', () => {
+  beforeEach(() => clearRecordedSends());
+
+  it('escapes HTML in interpolated values', async () => {
+    await sendCustomRequestEmail({
+      to: 'v@x.com',
+      coupleFirstName: '<script>alert(1)</script>',
+      coupleCity: 'Chicago',
+      eventType: 'sangeet',
+      eventDate: '2026-07-15',
+      headcount: 100,
+      location: 'TBD',
+      description: '<img src=x onerror=alert(1)>',
+      bookingId: 'b_1',
+    });
+    const [send] = getRecordedSends();
+    expect(send.html).not.toContain('<script>alert(1)</script>');
+    expect(send.html).toContain('&lt;script&gt;');
+    expect(send.html).not.toContain('<img src=x onerror=alert(1)>');
+    expect(send.html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  });
+
+  it('subject contains first name only + truncates description to 200', async () => {
+    const longDesc = 'a'.repeat(500);
+    await sendCustomRequestEmail({
+      to: 'v@x.com',
+      coupleFirstName: 'Sam',
+      coupleCity: 'Chicago',
+      eventType: 'sangeet',
+      eventDate: '2026-07-15',
+      headcount: 120,
+      location: 'Drury Lane',
+      description: longDesc,
+      bookingId: 'b_1',
+    });
+    const [send] = getRecordedSends();
+    expect(send.subject).toBe('New custom request from Sam — sangeet on 2026-07-15');
+    expect(send.html).not.toContain('a'.repeat(300));
+    expect(send.html).toContain('a'.repeat(200));
+  });
+});

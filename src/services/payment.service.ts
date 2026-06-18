@@ -17,7 +17,9 @@ import {
   sendReviewRequestEmail,
   sendCancellationEmail,
 } from '@/lib/email/resend';
+import { sendEventCompletedEmail } from '@/lib/email/event-completed';
 import { logger } from '@/lib/logger';
+import { deliver } from '@/lib/notifications/deliver';
 import {
   notifyDepositPaid,
   notifyBookingConfirmed,
@@ -200,13 +202,22 @@ export async function handlePaymentSuccess(
     const coupleEmail = ctx.couple_email ?? (coupleUser as { email: string } | null)?.email;
 
     if (coupleEmail) {
-      await sendDepositConfirmationEmail(coupleEmail, vp.business_name, amount, false);
+      await deliver(
+        'email',
+        () => sendDepositConfirmationEmail(coupleEmail!, vp.business_name, amount, false),
+        { booking_id: bookingId }
+      );
     }
     if (vendorUser?.email) {
-      await sendDepositConfirmationEmail(vendorUser.email, vp.business_name, amount, true);
+      await deliver(
+        'email',
+        () => sendDepositConfirmationEmail(vendorUser!.email, vp.business_name, amount, true),
+        { booking_id: bookingId }
+      );
     }
 
-    // In-app notifications — fetch additional context then fire-and-forget.
+    // In-app notifications — detached from webhook critical path so Stripe isn't
+    // blocked on DB latency. deliver() still catches and logs failures internally.
     void (async () => {
       const { data: notifyCtx } = await supabase
         .from('bookings')
@@ -215,21 +226,35 @@ export async function handlePaymentSuccess(
         )
         .eq('id', bookingId)
         .single();
-      if (!notifyCtx) return;
-      const nvp = notifyCtx.vendor_profiles as unknown as { user_id: string; business_name: string };
-      const ncu = notifyCtx.users as unknown as { full_name: string | null } | null;
-      const coupleName = ncu?.full_name ?? 'The couple';
-      const packageName = notifyCtx.package_name_snapshot ?? 'Package';
-      notifyDepositPaid(supabase, nvp.user_id, {
-        bookingId,
-        coupleName,
-        depositCents: amount,
-        packageName,
-      });
-      notifyBookingConfirmed(supabase, notifyCtx.couple_user_id, {
-        bookingId,
-        vendorName: nvp.business_name,
-      });
+      if (notifyCtx) {
+        const nvp = notifyCtx.vendor_profiles as unknown as {
+          user_id: string;
+          business_name: string;
+        };
+        const ncu = notifyCtx.users as unknown as { full_name: string | null } | null;
+        const coupleName = ncu?.full_name ?? 'The couple';
+        const packageName = notifyCtx.package_name_snapshot ?? 'Package';
+        await deliver(
+          'notify',
+          () =>
+            notifyDepositPaid(supabase, nvp.user_id, {
+              bookingId,
+              coupleName,
+              depositCents: amount,
+              packageName,
+            }),
+          { booking_id: bookingId }
+        );
+        await deliver(
+          'notify',
+          () =>
+            notifyBookingConfirmed(supabase, notifyCtx.couple_user_id, {
+              bookingId,
+              vendorName: nvp.business_name,
+            }),
+          { booking_id: bookingId }
+        );
+      }
     })();
   }
 }
@@ -463,7 +488,11 @@ export async function cancelBooking(
 
   if (!booking) return { error: 'Booking not found', status: 404 };
 
-  const vp = booking.vendor_profiles as unknown as { id: string; user_id: string; payment_mode: string | null };
+  const vp = booking.vendor_profiles as unknown as {
+    id: string;
+    user_id: string;
+    payment_mode: string | null;
+  };
   const isCouple = booking.couple_user_id === cancellerUserId;
   const isVendor = vp.user_id === cancellerUserId;
 
@@ -493,7 +522,13 @@ export async function cancelBooking(
       cancellation_fault: effectiveFault,
     })
     .eq('id', bookingId)
-    .in('status', ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid'])
+    .in('status', [
+      'pending',
+      'accepted',
+      'adjusted_quote_sent',
+      'adjusted_quote_declined',
+      'deposit_paid',
+    ])
     .select('id');
 
   if (!lockRows || lockRows.length === 0) {
@@ -504,7 +539,12 @@ export async function cancelBooking(
   }
 
   // Pre-deposit: no money to move.
-  const preDepositStatuses = ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined'];
+  const preDepositStatuses = [
+    'pending',
+    'accepted',
+    'adjusted_quote_sent',
+    'adjusted_quote_declined',
+  ];
   if (preDepositStatuses.includes(booking.status)) {
     return { data: { refund_amount_cents: 0, new_status: newStatus }, status: 200 };
   }
@@ -616,17 +656,33 @@ async function notifyCancellation(
   // In-app notification — notify the other party about the cancellation.
   if (cancellerRole === 'couple' && vp.user_id) {
     // Vendor is the other party.
-    void notifyBookingCancelled(supabase, vp.user_id, { bookingId, cancellerRole });
+    await deliver(
+      'notify',
+      () => notifyBookingCancelled(supabase, vp.user_id, { bookingId, cancellerRole }),
+      { booking_id: bookingId }
+    );
   } else if (cancellerRole === 'vendor' && ctx.couple_user_id) {
     // Couple is the other party.
-    void notifyBookingCancelled(supabase, ctx.couple_user_id, { bookingId, cancellerRole });
+    await deliver(
+      'notify',
+      () => notifyBookingCancelled(supabase, ctx.couple_user_id, { bookingId, cancellerRole }),
+      { booking_id: bookingId }
+    );
   } else if (cancellerRole === 'mutual') {
     // Notify both parties (each is the "other party").
     if (ctx.couple_user_id) {
-      void notifyBookingCancelled(supabase, ctx.couple_user_id, { bookingId, cancellerRole });
+      await deliver(
+        'notify',
+        () => notifyBookingCancelled(supabase, ctx.couple_user_id, { bookingId, cancellerRole }),
+        { booking_id: bookingId }
+      );
     }
     if (vp.user_id) {
-      void notifyBookingCancelled(supabase, vp.user_id, { bookingId, cancellerRole });
+      await deliver(
+        'notify',
+        () => notifyBookingCancelled(supabase, vp.user_id, { bookingId, cancellerRole }),
+        { booking_id: bookingId }
+      );
     }
   }
 }
@@ -818,10 +874,18 @@ async function sendCompletionEmails(
     ) ?? 0;
 
   if (vendorUser?.email) {
-    await sendCompletionEmailToVendor(vendorUser.email, vp.business_name, vendorPayout);
+    await deliver(
+      'email',
+      () => sendCompletionEmailToVendor(vendorUser!.email, vp.business_name, vendorPayout),
+      { booking_id: bookingId }
+    );
   }
   if (coupleEmail) {
-    await sendReviewRequestEmail(coupleEmail, vp.business_name, bookingId);
+    await deliver(
+      'email',
+      () => sendReviewRequestEmail(coupleEmail!, vp.business_name, bookingId),
+      { booking_id: bookingId }
+    );
   }
 }
 
@@ -857,7 +921,7 @@ export async function autoCompleteBookings(
   const { data: bookings } = await supabase
     .from('bookings')
     .select(
-      'id, couple_user_id, booking_events(id, event_end_time, event_type_label, sequence, completed_at), vendor_profiles!inner(user_id)'
+      'id, couple_user_id, couple_email, couple_full_name, booking_events(id, event_end_time, event_type_label, sequence, completed_at), vendor_profiles!inner(user_id, business_name)'
     )
     .eq('status', 'deposit_paid');
 
@@ -865,14 +929,15 @@ export async function autoCompleteBookings(
   let bookingsCompleted = 0;
 
   for (const b of bookings ?? []) {
-    const events = (b.booking_events as {
-      id: string;
-      event_end_time: string;
-      event_type_label: string;
-      sequence: number;
-      completed_at: string | null;
-    }[]) ?? [];
-    const bvp = b.vendor_profiles as unknown as { user_id: string };
+    const events =
+      (b.booking_events as {
+        id: string;
+        event_end_time: string;
+        event_type_label: string;
+        sequence: number;
+        completed_at: string | null;
+      }[]) ?? [];
+    const bvp = b.vendor_profiles as unknown as { user_id: string; business_name: string };
     const incomplete = events.filter((e) => !e.completed_at);
     const dueNow = incomplete.filter((e) => e.event_end_time < cutoff);
     if (dueNow.length === 0) continue;
@@ -880,8 +945,25 @@ export async function autoCompleteBookings(
     await supabase
       .from('booking_events')
       .update({ completed_at: now })
-      .in('id', dueNow.map((e) => e.id));
+      .in(
+        'id',
+        dueNow.map((e) => e.id)
+      );
     eventsCompleted += dueNow.length;
+
+    // Fetch emails for couple + vendor (needed for email sends below).
+    const sbAdmin = createServiceRoleClient();
+    const coupleEmail =
+      (b as unknown as { couple_email: string | null }).couple_email ??
+      (b.couple_user_id
+        ? (await sbAdmin.auth.admin.getUserById(b.couple_user_id)).data.user?.email
+        : undefined);
+    const vendorEmailResult = bvp.user_id
+      ? (await sbAdmin.auth.admin.getUserById(bvp.user_id)).data.user?.email
+      : undefined;
+    const vendorDisplayName = bvp.business_name;
+    const coupleDisplayName =
+      (b as unknown as { couple_full_name: string | null }).couple_full_name ?? 'your couple';
 
     // Notify both parties for each newly completed event.
     for (const ev of dueNow) {
@@ -892,10 +974,54 @@ export async function autoCompleteBookings(
         eventsCount: events.length,
       };
       if (b.couple_user_id) {
-        void notifyEventCompleted(supabase, b.couple_user_id, evPayload);
+        const coupleNotify = await deliver(
+          'notify',
+          () => notifyEventCompleted(supabase, b.couple_user_id, evPayload),
+          { booking_id: b.id }
+        );
+        if (coupleEmail && coupleNotify?.id) {
+          await deliver(
+            'email',
+            () =>
+              sendEventCompletedEmail({
+                to: coupleEmail,
+                recipientRole: 'couple',
+                vendorName: vendorDisplayName,
+                coupleName: coupleDisplayName,
+                eventTypeLabel: ev.event_type_label,
+                sequence: ev.sequence,
+                eventsCount: events.length,
+                bookingId: b.id,
+                notificationId: coupleNotify.id,
+              }),
+            { booking_id: b.id }
+          );
+        }
       }
       if (bvp.user_id) {
-        void notifyEventCompleted(supabase, bvp.user_id, evPayload);
+        const vendorNotify = await deliver(
+          'notify',
+          () => notifyEventCompleted(supabase, bvp.user_id, evPayload),
+          { booking_id: b.id }
+        );
+        if (vendorEmailResult && vendorNotify?.id) {
+          await deliver(
+            'email',
+            () =>
+              sendEventCompletedEmail({
+                to: vendorEmailResult,
+                recipientRole: 'vendor',
+                vendorName: vendorDisplayName,
+                coupleName: coupleDisplayName,
+                eventTypeLabel: ev.event_type_label,
+                sequence: ev.sequence,
+                eventsCount: events.length,
+                bookingId: b.id,
+                notificationId: vendorNotify.id,
+              }),
+            { booking_id: b.id }
+          );
+        }
       }
     }
 
@@ -909,16 +1035,26 @@ export async function autoCompleteBookings(
 
       // Notify both parties that the entire booking is now complete.
       if (b.couple_user_id) {
-        void notifyBookingCompleted(supabase, b.couple_user_id, {
-          bookingId: b.id,
-          recipientRole: 'couple',
-        });
+        await deliver(
+          'notify',
+          () =>
+            notifyBookingCompleted(supabase, b.couple_user_id, {
+              bookingId: b.id,
+              recipientRole: 'couple',
+            }),
+          { booking_id: b.id }
+        );
       }
       if (bvp.user_id) {
-        void notifyBookingCompleted(supabase, bvp.user_id, {
-          bookingId: b.id,
-          recipientRole: 'vendor',
-        });
+        await deliver(
+          'notify',
+          () =>
+            notifyBookingCompleted(supabase, bvp.user_id, {
+              bookingId: b.id,
+              recipientRole: 'vendor',
+            }),
+          { booking_id: b.id }
+        );
       }
     }
   }
@@ -1177,12 +1313,13 @@ async function autoTransferEarnedFunds(
 import type Stripe from 'stripe';
 import { CASH_DEPOSIT_RATE } from '@/lib/utils';
 
-const PAYOUT_STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'> = {
-  'payout.created': 'pending',
-  'payout.paid': 'paid',
-  'payout.failed': 'failed',
-  'payout.canceled': 'canceled',
-};
+const PAYOUT_STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'> =
+  {
+    'payout.created': 'pending',
+    'payout.paid': 'paid',
+    'payout.failed': 'failed',
+    'payout.canceled': 'canceled',
+  };
 
 /**
  * Persist a Stripe payout event into the payouts ledger and (on payout.paid)
@@ -1240,21 +1377,19 @@ export async function handlePayoutEvent(
     ? new Date(payout.arrival_date * 1000).toISOString().slice(0, 10)
     : null;
 
-  await supabase
-    .from('payouts')
-    .upsert(
-      {
-        vendor_profile_id: primaryVendorProfileId,
-        stripe_payout_id: payout.id,
-        amount_cents: payout.amount,
-        currency: payout.currency,
-        status,
-        arrival_date: arrivalDate,
-        failure_message: payout.failure_message ?? null,
-        updated_at: new Date().toISOString(),
-      },
-      { onConflict: 'stripe_payout_id' }
-    );
+  await supabase.from('payouts').upsert(
+    {
+      vendor_profile_id: primaryVendorProfileId,
+      stripe_payout_id: payout.id,
+      amount_cents: payout.amount,
+      currency: payout.currency,
+      status,
+      arrival_date: arrivalDate,
+      failure_message: payout.failure_message ?? null,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'stripe_payout_id' }
+  );
 
   // On payout.paid, attribute the payout to the bookings whose transferred_at
   // falls inside the payout window (created → arrival_date). Bookings can
@@ -1333,9 +1468,7 @@ export async function getPayoutHistory(
 
   const hasMore = rows.length > limit;
   const trimmed = hasMore ? rows.slice(0, limit) : rows;
-  const nextCursor = hasMore
-    ? trimmed[trimmed.length - 1].arrival_date ?? undefined
-    : undefined;
+  const nextCursor = hasMore ? (trimmed[trimmed.length - 1].arrival_date ?? undefined) : undefined;
   return { data: trimmed, error: null, nextCursor };
 }
 

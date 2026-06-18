@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { customRequestSchema } from '@/lib/booking/custom-request-validation';
 import { notifyCustomRequestReceived } from '@/services/notifications.service';
+import { deliver } from '@/lib/notifications/deliver';
+import { sendCustomRequestEmail } from '@/lib/email/custom-request';
 
 export const dynamic = 'force-dynamic';
 
@@ -64,12 +66,49 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false }, { status: 500 });
   }
 
-  // Fire-and-forget notification — never block the response.
-  notifyCustomRequestReceived(supabase, vendor.user_id, {
-    bookingId: inserted.id,
-    coupleName: user.email ?? 'A couple', // refined when we wire user.full_name lookup
-    eventDate: event_date,
-  }).catch(() => {});
+  // Derive couple display info from auth user metadata (privacy: first name + city only).
+  const rawFullName = (user.user_metadata?.full_name as string | undefined) ?? '';
+  const coupleFirstName = rawFullName.split(' ')[0] || user.email?.split('@')[0] || 'Someone';
+  const coupleName = rawFullName || user.email || 'A couple';
+
+  // Fire-and-forget notification + email — never block the response.
+  void (async () => {
+    const notifyResult = await deliver(
+      'notify',
+      () =>
+        notifyCustomRequestReceived(supabase, vendor.user_id, {
+          bookingId: inserted.id,
+          coupleName,
+          eventDate: event_date,
+        }),
+      { booking_id: inserted.id }
+    );
+
+    // Fetch vendor email via admin client (sync — no await on createServiceRoleClient).
+    const sbAdmin = createServiceRoleClient();
+    const vendorEmailResult = await sbAdmin.auth.admin.getUserById(vendor.user_id);
+    const vendorEmail = vendorEmailResult.data.user?.email;
+
+    if (notifyResult?.id && vendorEmail) {
+      await deliver(
+        'email',
+        () =>
+          sendCustomRequestEmail({
+            to: vendorEmail,
+            coupleFirstName,
+            coupleCity: 'not specified',
+            eventType: event_type,
+            eventDate: event_date,
+            headcount: guest_count,
+            location: 'TBD',
+            description,
+            bookingId: inserted.id,
+            notificationId: notifyResult.id,
+          }),
+        { booking_id: inserted.id }
+      );
+    }
+  })();
 
   logger.info('custom_request_submitted', { vendor_slug, booking_id: inserted.id });
 

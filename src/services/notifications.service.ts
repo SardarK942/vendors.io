@@ -12,6 +12,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, NotificationType } from '@/types/database.types';
 import { logger } from '@/lib/logger';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 type Sb = SupabaseClient<Database>;
 
@@ -43,10 +44,17 @@ const REASON_LABEL: Record<string, string> = {
 };
 
 export async function createNotification(
-  supabase: Sb,
+  _supabase: Sb,
   input: CreateNotificationInput
 ): Promise<{ id: string } | null> {
-  const { data, error } = await supabase
+  // notifications has SELECT + UPDATE RLS policies but no INSERT policy.
+  // The session-auth'd client (which is what the 13 helpers' callers pass in)
+  // cannot insert — Postgres returns 42501 (insufficient privilege). Use a
+  // service-role client which bypasses RLS entirely. The migration comment
+  // (00030_create_notifications.sql) explicitly designates INSERT as
+  // service-role only.
+  const sb = createServiceRoleClient();
+  const { data, error } = await sb
     .from('notifications')
     .insert({
       user_id: input.user_id,
@@ -299,6 +307,31 @@ export function notifyCustomRequestReceived(
     metadata: {
       booking_id: ctx.bookingId,
       event_date: ctx.eventDate,
+    },
+  });
+}
+
+export function notifyCoupleCountered(
+  sb: Sb,
+  vendorUserId: string,
+  ctx: {
+    bookingId: string;
+    coupleName: string;
+    proposedTotalCents: number;
+    note?: string;
+    vendorAdjustmentsRemaining: 0 | 1 | 2;
+  }
+): Promise<{ id: string } | null> {
+  return createNotification(sb, {
+    user_id: vendorUserId,
+    type: 'couple_countered',
+    title: 'Counter-offer received',
+    body: `${ctx.coupleName} sent a counter-offer.`,
+    link: `/dashboard/bookings/${ctx.bookingId}`,
+    metadata: {
+      booking_id: ctx.bookingId,
+      proposed_total_cents: ctx.proposedTotalCents,
+      vendor_adjustments_remaining: ctx.vendorAdjustmentsRemaining,
     },
   });
 }

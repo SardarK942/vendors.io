@@ -18,6 +18,9 @@ import Link from 'next/link';
 interface BookingDetailProps {
   bookingId: string;
   mode: 'panel' | 'page';
+  /** Value of ?action= query param. Passed down to client action components so they
+   *  can auto-open the matching modal on first render, then strip the query. */
+  initialAction?: string;
 }
 
 function statusBadgeStyle(status: string) {
@@ -30,7 +33,7 @@ function statusBadgeStyle(status: string) {
   return '';
 }
 
-export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
+export async function BookingDetail({ bookingId, mode, initialAction }: BookingDetailProps) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -193,6 +196,9 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
           adjustmentCents={adjustmentAmount}
           reason={adjustmentReason}
           explanation={adjustmentExplanation}
+          totalPriceCents={(bookingAsAny.total_price_cents as number) ?? 0}
+          coupleCounterCount={(bookingAsAny.couple_counter_count as number) ?? 0}
+          initialAction={initialAction}
         />
       )}
 
@@ -236,6 +242,12 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
           <strong>Action needed:</strong> The couple declined your last quote. You have 72 hours to
           send a revised quote — otherwise the booking will auto-cancel.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'couple_countered' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <strong>Action needed:</strong> The couple sent a counter-offer. You can adjust the quote
+          or accept their counter directly. You have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'deposit_paid' && (
@@ -384,7 +396,8 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
             {role === 'vendor' &&
               (booking.status === 'pending' ||
                 booking.status === 'pending_quote' ||
-                booking.status === 'adjusted_quote_declined') && (
+                booking.status === 'adjusted_quote_declined' ||
+                booking.status === 'couple_countered') && (
                 <VendorBookingActions
                   bookingId={booking.id}
                   status={booking.status}
@@ -393,6 +406,10 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
                   }
                   bookingBusinessId={booking.vendor_profile_id}
                   bookingBusinessName={vendorProfile?.business_name ?? undefined}
+                  initialAction={initialAction}
+                  vendorAdjustmentCount={
+                    (booking as Record<string, unknown>).vendor_adjustment_count as number
+                  }
                 />
               )}
 
@@ -401,6 +418,7 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
               role={role}
               hasReview={!!existingReview}
               vendorName={vendorProfile?.business_name ?? ''}
+              initialAction={initialAction}
             />
 
             {role === 'couple' && vendorProfile && (

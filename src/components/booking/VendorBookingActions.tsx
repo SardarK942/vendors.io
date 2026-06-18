@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,11 @@ interface Props {
   // a toast anyway since active business === booking business).
   bookingBusinessId?: string;
   bookingBusinessName?: string;
+  /** Value of ?action= query param. Auto-expands the adjust/send-quote form on
+   *  mount and strips the query from history so refresh does not re-trigger. */
+  initialAction?: string;
+  /** T12: Remaining adjustments count for the vendor. Capped at 2. */
+  vendorAdjustmentCount?: number;
 }
 
 export function VendorBookingActions({
@@ -27,17 +32,38 @@ export function VendorBookingActions({
   totalPriceCents,
   bookingBusinessId,
   bookingBusinessName,
+  initialAction,
+  vendorAdjustmentCount,
 }: Props) {
   const router = useRouter();
   const [showAdjustForm, setShowAdjustForm] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const triggerCrossBusinessToast = useCrossBusinessActionToast();
 
+  // T17: Compute remaining adjustments (cap is 2)
+  const adjustsLeft = Math.max(0, 2 - (vendorAdjustmentCount ?? 0));
+
+  // ── ?action= deep-link handler ──────────────────────────────────────────────
+  // 'adjust' and 'send-quote' both expand the inline quote form on this component.
+  // Strips the query param via router.replace so a refresh does not re-expand.
+  useEffect(() => {
+    if (!initialAction) return;
+    if (initialAction === 'adjust' || initialAction === 'send-quote') {
+      setShowAdjustForm(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('action');
+      router.replace(url.pathname + (url.search || ''), { scroll: false });
+    }
+    // All other actions are handled by BookingActions — no-op here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount — initialAction is stable (server-rendered prop)
+
   const isPending = status === 'pending';
   const isPendingQuote = status === 'pending_quote';
   const isDeclined = status === 'adjusted_quote_declined';
+  const isCoupleCountered = status === 'couple_countered';
 
-  if (!isPending && !isPendingQuote && !isDeclined) return null;
+  if (!isPending && !isPendingQuote && !isDeclined && !isCoupleCountered) return null;
 
   async function handleAccept() {
     setAccepting(true);
@@ -82,7 +108,9 @@ export function VendorBookingActions({
             ? 'Respond to this booking'
             : isPendingQuote
               ? 'Send a custom quote'
-              : 'Send revised quote'}
+              : isCoupleCountered
+                ? 'Respond to counter-offer'
+                : 'Send revised quote'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -98,13 +126,21 @@ export function VendorBookingActions({
                 ? 'Accepting...'
                 : `Accept at $${(totalPriceCents / 100).toLocaleString()}`}
             </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setShowAdjustForm((s) => !s)}
-            >
-              {showAdjustForm ? 'Cancel' : 'Adjust quote'}
-            </Button>
+            <div className="flex flex-1 flex-col gap-1">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowAdjustForm((s) => !s)}
+                disabled={adjustsLeft === 0 && !showAdjustForm}
+              >
+                {showAdjustForm ? 'Cancel' : 'Adjust quote'}
+              </Button>
+              <span className="text-xs text-ink/60">
+                {adjustsLeft === 0
+                  ? 'No more adjustments available'
+                  : `${adjustsLeft} adjustment${adjustsLeft === 1 ? '' : 's'} remaining`}
+              </span>
+            </div>
           </div>
         )}
 
@@ -118,6 +154,24 @@ export function VendorBookingActions({
           <Button variant="default" className="w-full" onClick={() => setShowAdjustForm((s) => !s)}>
             {showAdjustForm ? 'Cancel' : 'Send revised quote'}
           </Button>
+        )}
+
+        {isCoupleCountered && (
+          <div className="flex flex-col gap-1">
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={() => setShowAdjustForm((s) => !s)}
+              disabled={adjustsLeft === 0 && !showAdjustForm}
+            >
+              {showAdjustForm ? 'Cancel' : 'Adjust quote'}
+            </Button>
+            <span className="text-xs text-ink/60">
+              {adjustsLeft === 0
+                ? 'No more adjustments available'
+                : `${adjustsLeft} adjustment${adjustsLeft === 1 ? '' : 's'} remaining`}
+            </span>
+          </div>
         )}
 
         {showAdjustForm && (

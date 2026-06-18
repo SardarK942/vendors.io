@@ -12,25 +12,32 @@ export const POST = withErrorBoundary(
     const parsed = adjustQuoteSchema.parse(await request.json());
 
     const result = await adjustBookingQuote(supabase, params.id, user.id, parsed);
-    if (result.error) {
+    if ('code' in result && result.code === 'adjust_cap_reached') {
+      return NextResponse.json({ error: { code: 'adjust_cap_reached' } }, { status: 409 });
+    }
+    if ('error' in result && result.error) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
+    if (!('data' in result) || !result.data) {
+      // Defensive: every non-error path of adjustBookingQuote returns data,
+      // but TypeScript can't narrow the discriminated union further. Treat
+      // missing data as a 500 — should never happen at runtime.
+      return NextResponse.json({ error: 'Booking adjustment returned no data' }, { status: 500 });
+    }
 
-    const booking = result.data!;
+    const booking = result.data;
 
     // Fire email to couple — fire-and-forget
     void (async () => {
       const { data: ctx } = await supabase
         .from('bookings')
-        .select(
-          'couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name)'
-        )
+        .select('couple_user_id, users!couple_user_id(email), vendor_profiles!inner(business_name)')
         .eq('id', params.id)
         .single();
 
       if (!ctx) return;
 
-      const coupleEmail = (ctx.users as { email: string } | { email: string }[] | null);
+      const coupleEmail = ctx.users as { email: string } | { email: string }[] | null;
       const email = Array.isArray(coupleEmail)
         ? coupleEmail[0]?.email
         : (coupleEmail as { email: string } | null)?.email;

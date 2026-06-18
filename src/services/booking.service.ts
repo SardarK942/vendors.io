@@ -9,8 +9,11 @@ import {
   notifyCoupleAcceptedAdjusted,
   notifyCoupleDeclinedAdjusted,
   notifyBookingAutoCancelled,
+  notifyCoupleCountered,
 } from '@/services/notifications.service';
+import { sendCoupleCounteredEmail } from '@/lib/email/couple-countered';
 import { wouldExceedCapacity } from '@/services/availability.service';
+import { deliver } from '@/lib/notifications/deliver';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -31,6 +34,13 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   ],
   adjusted_quote_declined: [
     'adjusted_quote_sent',
+    'couple_cancelled',
+    'vendor_cancelled',
+    'expired',
+  ],
+  couple_countered: [
+    'adjusted_quote_sent', // vendor adjust response
+    'accepted', // vendor accepts couple's counter directly
     'couple_cancelled',
     'vendor_cancelled',
     'expired',
@@ -329,24 +339,40 @@ export async function autoCancelExpiredBookings(
 
     // Fire-and-forget — email failure must not block the sweep.
     if (coupleEmail) {
-      void sendBookingAutoCancelEmail(coupleEmail, 'couple', row.id);
+      await deliver('email', () => sendBookingAutoCancelEmail(coupleEmail, 'couple', row.id), {
+        booking_id: row.id,
+      });
     }
     if (vendorUser?.email) {
-      void sendBookingAutoCancelEmail(vendorUser.email, 'vendor', row.id);
+      await deliver(
+        'email',
+        () => sendBookingAutoCancelEmail(vendorUser!.email, 'vendor', row.id),
+        { booking_id: row.id }
+      );
     }
 
     // In-app notifications — fire-and-forget alongside emails.
     if (row.couple_user_id) {
-      void notifyBookingAutoCancelled(supabase, row.couple_user_id, {
-        bookingId: row.id,
-        recipientRole: 'couple',
-      });
+      await deliver(
+        'notify',
+        () =>
+          notifyBookingAutoCancelled(supabase, row.couple_user_id!, {
+            bookingId: row.id,
+            recipientRole: 'couple',
+          }),
+        { booking_id: row.id }
+      );
     }
     if (vp.user_id) {
-      void notifyBookingAutoCancelled(supabase, vp.user_id, {
-        bookingId: row.id,
-        recipientRole: 'vendor',
-      });
+      await deliver(
+        'notify',
+        () =>
+          notifyBookingAutoCancelled(supabase, vp.user_id, {
+            bookingId: row.id,
+            recipientRole: 'vendor',
+          }),
+        { booking_id: row.id }
+      );
     }
   }
 
@@ -452,11 +478,14 @@ export async function adjustBookingQuote(
   bookingId: string,
   vendorUserId: string,
   input: AdjustQuoteInput
-): Promise<{ data?: BookingRow; error?: { code: string; message: string }; status: number }> {
+): Promise<
+  | { data?: BookingRow; error?: { code: string; message: string }; status: number }
+  | { ok: false; code: string }
+> {
   const { data: booking } = await supabase
     .from('bookings')
     .select(
-      'id, vendor_profile_id, status, negotiation_round_count, package_id, vendor_profiles!inner(user_id)'
+      'id, vendor_profile_id, status, negotiation_round_count, package_id, vendor_adjustment_count, vendor_profiles!inner(user_id)'
     )
     .eq('id', bookingId)
     .single();
@@ -468,7 +497,16 @@ export async function adjustBookingQuote(
     return { error: { code: 'FORBIDDEN', message: 'Not your booking' }, status: 403 };
   }
 
-  if (!['pending', 'pending_quote', 'adjusted_quote_declined'].includes(booking.status)) {
+  const currentAdjustCount = (booking.vendor_adjustment_count as number) ?? 0;
+  if (currentAdjustCount >= 2) {
+    return { ok: false, code: 'adjust_cap_reached' };
+  }
+
+  if (
+    !['pending', 'pending_quote', 'adjusted_quote_declined', 'couple_countered'].includes(
+      booking.status
+    )
+  ) {
     return {
       error: {
         code: 'INVALID_STATE',
@@ -501,6 +539,7 @@ export async function adjustBookingQuote(
       adjustment_reason: input.reason,
       adjustment_explanation: input.explanation ?? null,
       negotiation_round_count: currentRound + 1,
+      vendor_adjustment_count: currentAdjustCount + 1,
       vendor_notes: vendorNotesTemplate,
       expires_at: expiresAt,
     })
@@ -762,4 +801,162 @@ export async function coupleDeclineAdjusted(
   })();
 
   return { data: data as unknown as Record<string, unknown>, status: 200 };
+}
+
+// ─── D.1: Couple counter-offer ────────────────────────────────────────────────
+
+/**
+ * coupleCounterBooking — the couple proposes a new total for a booking.
+ *
+ * Valid source statuses: 'accepted' | 'adjusted_quote_sent'
+ *
+ * Cap: couple may counter at most 2 times per booking (couple_counter_count must be < 2 on entry).
+ * No notification is fired here — that is wired in T16.
+ */
+export async function coupleCounterBooking(args: {
+  supabase: SupabaseClient<Database>;
+  bookingId: string;
+  actorUserId: string;
+  proposedTotalCents: number;
+  note?: string;
+}): Promise<
+  | { ok: true; booking: BookingRow }
+  | {
+      ok: false;
+      code: 'forbidden' | 'counter_cap_reached' | 'invalid_state' | 'not_found';
+      message: string;
+    }
+> {
+  const { supabase, bookingId, actorUserId, proposedTotalCents, note } = args;
+
+  // 1. Fetch the booking row.
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, couple_user_id, status, couple_counter_count')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) {
+    return { ok: false, code: 'not_found', message: 'Booking not found.' };
+  }
+
+  // 2. Auth guard — only the booking's couple may counter.
+  if (booking.couple_user_id !== actorUserId) {
+    return { ok: false, code: 'forbidden', message: 'You are not the couple on this booking.' };
+  }
+
+  // 3. Cap guard — primary check (DB constraint is backstop for concurrent races).
+  const currentCount = (booking.couple_counter_count as number) ?? 0;
+  if (currentCount >= 2) {
+    return {
+      ok: false,
+      code: 'counter_cap_reached',
+      message: 'You have used both counter-offers for this booking.',
+    };
+  }
+
+  // 4. State guard — only allow counter from post-acceptance / post-vendor-adjustment states.
+  //    Real DB statuses per BookingStatus union: 'accepted' and 'adjusted_quote_sent'.
+  const VALID_COUNTER_STATUSES = ['accepted', 'adjusted_quote_sent'] as const;
+  if (!VALID_COUNTER_STATUSES.includes(booking.status as 'accepted' | 'adjusted_quote_sent')) {
+    return {
+      ok: false,
+      code: 'invalid_state',
+      message: `Cannot counter from status '${booking.status}'. Booking must be in accepted or adjusted-quote-sent state.`,
+    };
+  }
+
+  // 5. Persist the counter-offer atomically.
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({
+      couple_counter_count: currentCount + 1,
+      status: 'couple_countered',
+      couple_counter_amount: proposedTotalCents,
+      couple_counter_note: note ?? null,
+    })
+    .eq('id', bookingId)
+    .select('*')
+    .single();
+
+  // DB CHECK constraint (couple_counter_count BETWEEN 0 AND 2) is the backstop for races.
+  if (error) {
+    if (
+      error.message?.includes('couple_counter_count') ||
+      error.message?.includes('check constraint')
+    ) {
+      return {
+        ok: false,
+        code: 'counter_cap_reached',
+        message: 'Counter-offer cap reached (concurrent update).',
+      };
+    }
+    return {
+      ok: false,
+      code: 'invalid_state',
+      message: error.message ?? 'Update failed.',
+    };
+  }
+
+  const successBooking = data as BookingRow;
+  const vendorAdjustmentsRemaining = Math.max(
+    0,
+    2 - ((successBooking.vendor_adjustment_count as number) ?? 0)
+  ) as 0 | 1 | 2;
+
+  // Fire-and-forget: notify vendor + send email. Must not delay the API response.
+  void (async () => {
+    // Fetch vendor user_id + email via the vendor_profile join.
+    const { data: ctx } = await supabase
+      .from('bookings')
+      .select(
+        'vendor_profiles!inner(user_id, users!user_id(email)), users!couple_user_id(full_name)'
+      )
+      .eq('id', bookingId)
+      .single();
+    if (!ctx) return;
+
+    const vp = ctx.vendor_profiles as unknown as {
+      user_id: string;
+      users: { email: string } | { email: string }[] | null;
+    } | null;
+    if (!vp?.user_id) return;
+
+    const vendorUser = Array.isArray(vp.users) ? vp.users[0] : vp.users;
+    const vendorEmail = (vendorUser as { email: string } | null)?.email ?? null;
+    const cu = ctx.users as unknown as { full_name: string | null } | null;
+    const coupleName = cu?.full_name ?? 'The couple';
+
+    const notifyResult = await deliver(
+      'notify',
+      () =>
+        notifyCoupleCountered(supabase, vp.user_id, {
+          bookingId,
+          coupleName,
+          proposedTotalCents,
+          note,
+          vendorAdjustmentsRemaining,
+        }),
+      { booking_id: bookingId }
+    );
+
+    if (notifyResult?.id && vendorEmail) {
+      await deliver(
+        'email',
+        () =>
+          sendCoupleCounteredEmail({
+            to: vendorEmail,
+            coupleName,
+            proposedTotalCents,
+            note,
+            vendorAdjustmentsRemaining,
+            bookingId,
+            notificationId: notifyResult.id,
+          }),
+        { booking_id: bookingId }
+      );
+    }
+  })();
+
+  return { ok: true, booking: successBooking };
 }

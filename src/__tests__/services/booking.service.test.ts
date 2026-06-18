@@ -107,4 +107,33 @@ describe('Booking State Machine', () => {
   it('rejects retired declined state', () => {
     expect(validateStateTransition('pending', 'declined')).toBe(false);
   });
+
+  // D.1: couple_countered state machine
+  it('allows couple_countered -> adjusted_quote_sent (vendor adjusts in response)', () => {
+    expect(validateStateTransition('couple_countered', 'adjusted_quote_sent')).toBe(true);
+  });
+
+  it('allows couple_countered -> accepted (vendor accepts counter directly)', () => {
+    expect(validateStateTransition('couple_countered', 'accepted')).toBe(true);
+  });
+
+  it('allows couple_countered -> couple_cancelled', () => {
+    expect(validateStateTransition('couple_countered', 'couple_cancelled')).toBe(true);
+  });
+
+  it('allows couple_countered -> vendor_cancelled', () => {
+    expect(validateStateTransition('couple_countered', 'vendor_cancelled')).toBe(true);
+  });
+
+  it('allows couple_countered -> expired', () => {
+    expect(validateStateTransition('couple_countered', 'expired')).toBe(true);
+  });
+
+  it('rejects couple_countered -> deposit_paid (must go through accepted first)', () => {
+    expect(validateStateTransition('couple_countered', 'deposit_paid')).toBe(false);
+  });
+
+  it('rejects couple_countered -> pending (no backward transition)', () => {
+    expect(validateStateTransition('couple_countered', 'pending')).toBe(false);
+  });
 });
