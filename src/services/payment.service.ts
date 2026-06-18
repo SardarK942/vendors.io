@@ -215,43 +215,46 @@ export async function handlePaymentSuccess(
       );
     }
 
-    // In-app notifications — fetch additional context then notify.
-    const { data: notifyCtx } = await supabase
-      .from('bookings')
-      .select(
-        'couple_user_id, package_name_snapshot, users!couple_user_id(full_name), vendor_profiles!inner(user_id, business_name)'
-      )
-      .eq('id', bookingId)
-      .single();
-    if (notifyCtx) {
-      const nvp = notifyCtx.vendor_profiles as unknown as {
-        user_id: string;
-        business_name: string;
-      };
-      const ncu = notifyCtx.users as unknown as { full_name: string | null } | null;
-      const coupleName = ncu?.full_name ?? 'The couple';
-      const packageName = notifyCtx.package_name_snapshot ?? 'Package';
-      await deliver(
-        'notify',
-        () =>
-          notifyDepositPaid(supabase, nvp.user_id, {
-            bookingId,
-            coupleName,
-            depositCents: amount,
-            packageName,
-          }),
-        { booking_id: bookingId }
-      );
-      await deliver(
-        'notify',
-        () =>
-          notifyBookingConfirmed(supabase, notifyCtx.couple_user_id, {
-            bookingId,
-            vendorName: nvp.business_name,
-          }),
-        { booking_id: bookingId }
-      );
-    }
+    // In-app notifications — detached from webhook critical path so Stripe isn't
+    // blocked on DB latency. deliver() still catches and logs failures internally.
+    void (async () => {
+      const { data: notifyCtx } = await supabase
+        .from('bookings')
+        .select(
+          'couple_user_id, package_name_snapshot, users!couple_user_id(full_name), vendor_profiles!inner(user_id, business_name)'
+        )
+        .eq('id', bookingId)
+        .single();
+      if (notifyCtx) {
+        const nvp = notifyCtx.vendor_profiles as unknown as {
+          user_id: string;
+          business_name: string;
+        };
+        const ncu = notifyCtx.users as unknown as { full_name: string | null } | null;
+        const coupleName = ncu?.full_name ?? 'The couple';
+        const packageName = notifyCtx.package_name_snapshot ?? 'Package';
+        await deliver(
+          'notify',
+          () =>
+            notifyDepositPaid(supabase, nvp.user_id, {
+              bookingId,
+              coupleName,
+              depositCents: amount,
+              packageName,
+            }),
+          { booking_id: bookingId }
+        );
+        await deliver(
+          'notify',
+          () =>
+            notifyBookingConfirmed(supabase, notifyCtx.couple_user_id, {
+              bookingId,
+              vendorName: nvp.business_name,
+            }),
+          { booking_id: bookingId }
+        );
+      }
+    })();
   }
 }
 
