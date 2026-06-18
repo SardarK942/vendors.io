@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Wallet } from 'lucide-react';
+import { paymentModeSchema } from '@/lib/onboarding/validation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Props {
   initial: 'stripe' | 'cash';
@@ -18,15 +20,20 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
   // default to reuse. 'new' triggers a fresh Stripe Connect onboarding flow on
   // publish.
   const [stripeMode, setStripeMode] = useState<'reuse' | 'new'>('reuse');
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const showStripeOverride =
     mode === 'next' && paymentMode === 'stripe' && primaryStripeAccountId !== null;
 
   async function onNext() {
+    const parsed = paymentModeSchema.safeParse({ paymentMode });
+    if (!parsed.success) {
+      applyZodErrors(parsed.error);
+      return;
+    }
     setSubmitting(true);
-    setError(null);
     const res = await fetch('/api/vendor-profile/setup/payment-mode', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -35,7 +42,7 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
     setSubmitting(false);
     if (!res.ok) {
       const e = await res.json().catch(() => ({ error: 'Save failed' }));
-      setError(e.error);
+      setServerError(e.error);
       return;
     }
     // Persist stripeMode in sessionStorage so the review/publish step can read it.
@@ -53,10 +60,17 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
         <p className="text-sm text-muted-foreground">Step 6 of 7</p>
       </div>
 
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => setPaymentMode('stripe')}
+          onClick={() => {
+            setPaymentMode('stripe');
+            clearField('paymentMode');
+          }}
           className={`rounded-lg border-2 p-6 text-left transition-colors ${
             paymentMode === 'stripe'
               ? 'border-primary bg-primary/5'
@@ -73,7 +87,10 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
 
         <button
           type="button"
-          onClick={() => setPaymentMode('cash')}
+          onClick={() => {
+            setPaymentMode('cash');
+            clearField('paymentMode');
+          }}
           className={`rounded-lg border-2 p-6 text-left transition-colors ${
             paymentMode === 'cash'
               ? 'border-primary bg-primary/5'
@@ -88,6 +105,10 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
           </p>
         </button>
       </div>
+
+      {getError('paymentMode') && (
+        <p className="mt-1 text-xs text-hot-pink">{getError('paymentMode')}</p>
+      )}
 
       {showStripeOverride && (
         <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
@@ -122,7 +143,7 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
         </div>
       )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

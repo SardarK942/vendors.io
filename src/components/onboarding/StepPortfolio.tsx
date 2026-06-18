@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import Image from 'next/image';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -16,7 +17,8 @@ interface Props {
 export function StepPortfolio({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [images, setImages] = useState<string[]>(initial.portfolioImages);
-  const [error, setError] = useState<string | null>(null);
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function removeImage(url: string) {
@@ -26,7 +28,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
   async function onNext() {
     const parsed = portfolioSchema.safeParse({ portfolioImages: images });
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      applyZodErrors(parsed.error);
       return;
     }
     setSubmitting(true);
@@ -38,7 +40,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
     setSubmitting(false);
     if (!res.ok) {
       const json = await res.json().catch(() => ({ error: 'Save failed' }));
-      setError(json.error ?? 'Save failed');
+      setServerError(json.error ?? 'Save failed');
       return;
     }
     const nextParam = mode === 'next' ? '?next=true' : '';
@@ -51,6 +53,14 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
         <h1 className="text-2xl font-bold">Show your work</h1>
         <p className="text-sm text-muted-foreground">Step 5 of 7</p>
       </div>
+
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
+      {getError('portfolioImages') && (
+        <p className="mt-1 text-xs text-hot-pink">{getError('portfolioImages')}</p>
+      )}
 
       {images.length > 0 && images.length < 3 && (
         <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
@@ -90,11 +100,11 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
             if (res && res.length > 0) {
               const newUrls = res.map((r) => r.url);
               setImages((prev) => [...prev, ...newUrls]);
-              setError(null);
+              clearField('portfolioImages');
             }
           }}
           onUploadError={(err) => {
-            setError(err.message ?? 'Upload failed');
+            setServerError(err.message ?? 'Upload failed');
           }}
         />
         <p className="mt-1 text-xs text-muted-foreground">
@@ -102,7 +112,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
         </p>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting || images.length === 0}>

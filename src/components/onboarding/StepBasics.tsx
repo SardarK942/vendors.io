@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +28,8 @@ interface Props {
 export function StepBasics({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [data, setData] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pendingMatches, setPendingMatches] = useState<ScrapedVendorMatch[] | null>(null);
 
@@ -36,7 +38,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
   async function saveAndAdvance() {
     const parsed = basicsSchema.safeParse(data);
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      applyZodErrors(parsed.error);
       return;
     }
     const res = await fetch('/api/vendor-profile/setup/basics', {
@@ -46,7 +48,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => ({ error: 'Save failed' }));
-      setError(json.error ?? 'Save failed');
+      setServerError(json.error ?? 'Save failed');
       return;
     }
     router.push(`/dashboard/profile/setup/location${nextParam}`);
@@ -55,7 +57,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
   async function onNext() {
     const parsed = basicsSchema.safeParse(data);
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      applyZodErrors(parsed.error);
       return;
     }
     setSubmitting(true);
@@ -96,19 +98,35 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         <p className="text-sm text-muted-foreground">Step 1 of 7</p>
       </div>
 
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="businessName">Business name</Label>
         <Input
           id="businessName"
           value={data.businessName}
-          onChange={(e) => setData({ ...data, businessName: e.target.value })}
+          onChange={(e) => {
+            setData({ ...data, businessName: e.target.value });
+            clearField('businessName');
+          }}
           placeholder="Mehndi by Priya"
         />
+        {getError('businessName') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('businessName')}</p>
+        )}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <Select value={data.category} onValueChange={(v) => setData({ ...data, category: v })}>
+        <Select
+          value={data.category}
+          onValueChange={(v) => {
+            setData({ ...data, category: v });
+            clearField('category');
+          }}
+        >
           <SelectTrigger id="category">
             <SelectValue placeholder="Choose a category">
               {/* Radix's auto-render of the trigger text reads SelectItem
@@ -127,6 +145,9 @@ export function StepBasics({ initial, profileId, mode }: Props) {
             ))}
           </SelectContent>
         </Select>
+        {getError('category') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('category')}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -143,13 +164,17 @@ export function StepBasics({ initial, profileId, mode }: Props) {
           id="bio"
           rows={5}
           value={data.bio}
-          onChange={(e) => setData({ ...data, bio: e.target.value })}
+          onChange={(e) => {
+            setData({ ...data, bio: e.target.value });
+            clearField('bio');
+          }}
           placeholder="What do you do, who do you serve, and what makes you different? (50–500 characters)"
         />
         <p className="mt-1 text-xs text-muted-foreground">{data.bio.length} / 500</p>
+        {getError('bio') && <p className="mt-1 text-xs text-hot-pink">{getError('bio')}</p>}
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting || !!pendingMatches}>

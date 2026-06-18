@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -15,7 +16,8 @@ interface Props {
 export function StepOnline({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [data, setData] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function handleInstagramBlur() {
@@ -26,7 +28,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
   async function onNext() {
     const parsed = onlineSchema.safeParse(data);
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      applyZodErrors(parsed.error);
       return;
     }
     setSubmitting(true);
@@ -38,7 +40,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
     setSubmitting(false);
     if (!res.ok) {
       const json = await res.json().catch(() => ({ error: 'Save failed' }));
-      setError(json.error ?? 'Save failed');
+      setServerError(json.error ?? 'Save failed');
       return;
     }
     const nextParam = mode === 'next' ? '?next=true' : '';
@@ -52,6 +54,10 @@ export function StepOnline({ initial, profileId, mode }: Props) {
         <p className="text-sm text-muted-foreground">Step 3 of 7</p>
       </div>
 
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="instagramHandle">
           Instagram handle <span className="text-destructive">*</span>
@@ -61,7 +67,10 @@ export function StepOnline({ initial, profileId, mode }: Props) {
           <Input
             id="instagramHandle"
             value={data.instagramHandle}
-            onChange={(e) => setData({ ...data, instagramHandle: e.target.value })}
+            onChange={(e) => {
+              setData({ ...data, instagramHandle: e.target.value });
+              clearField('instagramHandle');
+            }}
             onBlur={handleInstagramBlur}
             placeholder="yourhandle"
           />
@@ -69,6 +78,9 @@ export function StepOnline({ initial, profileId, mode }: Props) {
         <p className="text-xs text-muted-foreground">
           Instagram is how couples discover Desi wedding vendors. This field is required.
         </p>
+        {getError('instagramHandle') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('instagramHandle')}</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -77,12 +89,18 @@ export function StepOnline({ initial, profileId, mode }: Props) {
           id="websiteUrl"
           type="url"
           value={data.websiteUrl}
-          onChange={(e) => setData({ ...data, websiteUrl: e.target.value })}
+          onChange={(e) => {
+            setData({ ...data, websiteUrl: e.target.value });
+            clearField('websiteUrl');
+          }}
           placeholder="https://yourwebsite.com"
         />
+        {getError('websiteUrl') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('websiteUrl')}</p>
+        )}
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

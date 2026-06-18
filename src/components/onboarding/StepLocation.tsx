@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -35,7 +36,8 @@ export function StepLocation({ initial, profileId, mode }: Props) {
     google_place_id: initial.baseGooglePlaceId,
   });
   const [addressPublic, setAddressPublic] = useState(initial.baseAddressPublic);
-  const [error, setError] = useState<string | null>(null);
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   async function onNext() {
@@ -48,7 +50,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
       baseAddressPublic: addressPublic,
     });
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      applyZodErrors(parsed.error);
       return;
     }
     setSubmitting(true);
@@ -60,7 +62,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
     setSubmitting(false);
     if (!res.ok) {
       const json = await res.json().catch(() => ({ error: 'Save failed' }));
-      setError(json.error ?? 'Save failed');
+      setServerError(json.error ?? 'Save failed');
       return;
     }
     const nextParam = mode === 'next' ? '?next=true' : '';
@@ -74,11 +76,22 @@ export function StepLocation({ initial, profileId, mode }: Props) {
         <p className="text-sm text-muted-foreground">Step 2 of 7</p>
       </div>
 
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       <div className="space-y-2">
         <Label>Base address</Label>
         <GooglePlacesAutocomplete
           value={place}
-          onChange={(p) => setPlace(p)}
+          onChange={(p) => {
+            setPlace(p);
+            clearField('baseAddressLine1');
+            clearField('baseCity');
+            clearField('baseState');
+            clearField('basePostalCode');
+            clearField('baseGooglePlaceId');
+          }}
           placeholder="Start typing your address..."
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         />
@@ -86,6 +99,9 @@ export function StepLocation({ initial, profileId, mode }: Props) {
           <p className="text-xs text-muted-foreground">
             {place.city}, {place.state} {place.postal_code}
           </p>
+        )}
+        {getError('baseAddressLine1') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('baseAddressLine1')}</p>
         )}
       </div>
 
@@ -102,7 +118,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
         </p>
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

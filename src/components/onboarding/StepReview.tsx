@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -18,6 +19,7 @@ interface Props {
 
 export function StepReview({ profile, profileId, mode }: Props) {
   const router = useRouter();
+  const { total } = useFormErrors();
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishErrorStep, setPublishErrorStep] = useState<string | null>(null);
@@ -236,6 +238,10 @@ export function StepReview({ profile, profileId, mode }: Props) {
       </div>
 
       {/* Publish error */}
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       {publishError && (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           <p>{publishError}</p>
@@ -244,7 +250,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
               href={`/dashboard/profile/setup/${publishErrorStep}`}
               className="mt-1 block underline"
             >
-              Go to {publishErrorStep} step to fix this
+              Edit step {publishErrorStep} to fix this
             </Link>
           )}
         </div>
