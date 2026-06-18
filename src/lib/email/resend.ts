@@ -522,21 +522,13 @@ export async function sendRemovalConfirmationVendorEmail(
  * updates that notification row's `email_status` column to 'sent' or 'failed'
  * after the Resend call resolves.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function makeResendClient(): Resend {
-  // Called without `new` so that test mocks using vi.fn(() => ...) work.
-  // In production the Resend constructor returns the instance either way.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (Resend as any)(process.env.RESEND_API_KEY) as Resend;
-}
-
 export async function sendWithRecord(args: {
   to: string;
   subject: string;
   html: string;
   notificationId?: string;
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const resend = makeResendClient();
+  const resend = client();
   const { data, error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: args.to,

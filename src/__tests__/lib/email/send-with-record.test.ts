@@ -6,7 +6,9 @@ const mockSend = vi.fn();
 const mockFrom = vi.fn(() => ({ update: vi.fn(() => ({ eq: vi.fn() })) }));
 
 vi.mock('resend', () => ({
-  Resend: vi.fn(() => ({ emails: { send: mockSend } })),
+  Resend: vi.fn(function (this: { emails: { send: typeof mockSend } }, _key: string) {
+    this.emails = { send: mockSend };
+  }),
 }));
 vi.mock('@/lib/supabase/server', () => ({
   createServiceRoleClient: vi.fn(async () => ({ from: mockFrom })),
