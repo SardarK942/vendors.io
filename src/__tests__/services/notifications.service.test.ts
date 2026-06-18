@@ -13,6 +13,7 @@ import {
   notifyEventCompleted,
   notifyBookingCompleted,
   notifyReviewReceived,
+  notifyCoupleCountered,
 } from '@/services/notifications.service';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
@@ -240,5 +241,26 @@ describe('typed helpers compose correctly', () => {
     expect(arg.type).toBe('review_received');
     expect(arg.body).toContain('Jane');
     expect(arg.body).toContain('5');
+  });
+
+  it('notifyCoupleCountered: body contains couple name, type=couple_countered, no remaining count in body', async () => {
+    await notifyCoupleCountered(sb, 'vendor-1', {
+      bookingId: 'b-1',
+      coupleName: 'Priya & Rohan',
+      proposedTotalCents: 95_000,
+      vendorAdjustmentsRemaining: 2,
+    });
+    const arg = sb._insertSpy.mock.calls[0][0];
+    expect(arg.user_id).toBe('vendor-1');
+    expect(arg.type).toBe('couple_countered');
+    expect(arg.title).toBe('Counter-offer received');
+    expect(arg.body).toContain('Priya & Rohan');
+    expect(arg.body).not.toContain('remaining'); // spec § 6 — no remaining count in body
+    expect(arg.link).toBe('/dashboard/bookings/b-1');
+    expect(arg.metadata).toMatchObject({
+      booking_id: 'b-1',
+      proposed_total_cents: 95_000,
+      vendor_adjustments_remaining: 2,
+    });
   });
 });

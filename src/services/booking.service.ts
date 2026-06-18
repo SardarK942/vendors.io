@@ -9,7 +9,9 @@ import {
   notifyCoupleAcceptedAdjusted,
   notifyCoupleDeclinedAdjusted,
   notifyBookingAutoCancelled,
+  notifyCoupleCountered,
 } from '@/services/notifications.service';
+import { sendCoupleCounteredEmail } from '@/lib/email/couple-countered';
 import { wouldExceedCapacity } from '@/services/availability.service';
 import { deliver } from '@/lib/notifications/deliver';
 
@@ -885,5 +887,65 @@ export async function coupleCounterBooking(args: {
     };
   }
 
-  return { ok: true, booking: data as BookingRow };
+  const successBooking = data as BookingRow;
+  const vendorAdjustmentsRemaining = Math.max(
+    0,
+    2 - ((successBooking.vendor_adjustment_count as number) ?? 0)
+  ) as 0 | 1 | 2;
+
+  // Fire-and-forget: notify vendor + send email. Must not delay the API response.
+  void (async () => {
+    // Fetch vendor user_id + email via the vendor_profile join.
+    const { data: ctx } = await supabase
+      .from('bookings')
+      .select(
+        'vendor_profiles!inner(user_id, users!user_id(email)), users!couple_user_id(full_name)'
+      )
+      .eq('id', bookingId)
+      .single();
+    if (!ctx) return;
+
+    const vp = ctx.vendor_profiles as unknown as {
+      user_id: string;
+      users: { email: string } | { email: string }[] | null;
+    } | null;
+    if (!vp?.user_id) return;
+
+    const vendorUser = Array.isArray(vp.users) ? vp.users[0] : vp.users;
+    const vendorEmail = (vendorUser as { email: string } | null)?.email ?? null;
+    const cu = ctx.users as unknown as { full_name: string | null } | null;
+    const coupleName = cu?.full_name ?? 'The couple';
+
+    const notifyResult = await deliver(
+      'notify',
+      () =>
+        notifyCoupleCountered(supabase, vp.user_id, {
+          bookingId,
+          coupleName,
+          proposedTotalCents,
+          note,
+          vendorAdjustmentsRemaining,
+        }),
+      { booking_id: bookingId }
+    );
+
+    if (notifyResult?.id && vendorEmail) {
+      await deliver(
+        'email',
+        () =>
+          sendCoupleCounteredEmail({
+            to: vendorEmail,
+            coupleName,
+            proposedTotalCents,
+            note,
+            vendorAdjustmentsRemaining,
+            bookingId,
+            notificationId: notifyResult.id,
+          }),
+        { booking_id: bookingId }
+      );
+    }
+  })();
+
+  return { ok: true, booking: successBooking };
 }

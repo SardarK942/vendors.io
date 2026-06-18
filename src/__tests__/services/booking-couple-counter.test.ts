@@ -20,6 +20,17 @@ vi.mock('@/services/notifications.service', () => ({
   notifyEventCompleted: vi.fn(),
   notifyBookingCompleted: vi.fn(),
   notifyReviewReceived: vi.fn(),
+  notifyCoupleCountered: vi.fn(),
+}));
+
+// Mock email so fire-and-forget email calls don't fail.
+vi.mock('@/lib/email/couple-countered', () => ({
+  sendCoupleCounteredEmail: vi.fn().mockResolvedValue({ ok: true, id: 'mock_email_1' }),
+}));
+
+// Mock deliver so fire-and-forget deliver() calls resolve cleanly.
+vi.mock('@/lib/notifications/deliver', () => ({
+  deliver: vi.fn().mockResolvedValue({ id: 'mock_notif_1' }),
 }));
 
 // ─── mockSb factory ───────────────────────────────────────────────────────────

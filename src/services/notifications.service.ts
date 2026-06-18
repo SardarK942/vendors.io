@@ -302,3 +302,28 @@ export function notifyCustomRequestReceived(
     },
   });
 }
+
+export function notifyCoupleCountered(
+  sb: Sb,
+  vendorUserId: string,
+  ctx: {
+    bookingId: string;
+    coupleName: string;
+    proposedTotalCents: number;
+    note?: string;
+    vendorAdjustmentsRemaining: 0 | 1 | 2;
+  }
+): Promise<{ id: string } | null> {
+  return createNotification(sb, {
+    user_id: vendorUserId,
+    type: 'couple_countered',
+    title: 'Counter-offer received',
+    body: `${ctx.coupleName} sent a counter-offer.`,
+    link: `/dashboard/bookings/${ctx.bookingId}`,
+    metadata: {
+      booking_id: ctx.bookingId,
+      proposed_total_cents: ctx.proposedTotalCents,
+      vendor_adjustments_remaining: ctx.vendorAdjustmentsRemaining,
+    },
+  });
+}
