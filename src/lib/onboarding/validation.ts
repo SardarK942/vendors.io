@@ -13,10 +13,7 @@ const instagramHandle = z
 export const basicsSchema = z.object({
   businessName: z.string().min(1).max(120),
   category: z.string().min(1),
-  bio: z
-    .string()
-    .min(50, 'Bio must be at least 50 characters')
-    .max(500, 'Bio must be at most 500 characters'),
+  bio: z.string().max(500, 'Bio must be 500 characters or fewer'),
 });
 
 export const locationSchema = z.object({
@@ -60,7 +57,7 @@ export type PaymentModeInput = z.infer<typeof paymentModeSchema>;
 export const publishGateSchema = z.object({
   business_name: z.string().min(1),
   category: z.string().min(1),
-  bio: z.string().min(50).max(500),
+  bio: z.string().max(500),
   base_address_line_1: z.string().optional(),
   base_city: z.string().optional(),
   base_state: z.string().optional(),

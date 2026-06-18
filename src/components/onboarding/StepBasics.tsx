@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
 import { useFormErrors } from '@/hooks/useFormErrors';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -14,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { basicsSchema } from '@/lib/onboarding/validation';
-import { BioAssistButton } from './BioAssistButton';
+import { BioAssistCard } from './BioAssistCard';
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { ScrapedVendorMatchPrompt } from './ScrapedVendorMatchPrompt';
 import type { ScrapedVendorMatch } from '@/lib/scraped-vendor/match';
@@ -32,6 +33,10 @@ export function StepBasics({ initial, profileId, mode }: Props) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pendingMatches, setPendingMatches] = useState<ScrapedVendorMatch[] | null>(null);
+  // Show pre-fill banner when the bio loaded from DB is non-empty on first render
+  // (simplified heuristic — covers claimed vendors whose bio was pulled from IG;
+  // false positive for vendors who previously wrote their own bio is low-risk since it's dismissible)
+  const [showPrefillBanner, setShowPrefillBanner] = useState(() => Boolean(initial.bio));
 
   const nextParam = mode === 'next' ? '?next=true' : '';
 
@@ -151,15 +156,22 @@ export function StepBasics({ initial, profileId, mode }: Props) {
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="bio">Bio</Label>
-          <BioAssistButton
-            businessName={data.businessName}
-            category={data.category}
-            currentBio={data.bio}
-            onAccept={(polished) => setData({ ...data, bio: polished })}
-          />
-        </div>
+        <Label htmlFor="bio">Bio</Label>
+        {showPrefillBanner && (
+          <div className="mb-2 flex items-start justify-between gap-2 rounded-md border border-ink/15 bg-cream/60 px-3 py-2">
+            <p className="text-xs text-ink">
+              Pulled from your Instagram bio — edit or polish below.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowPrefillBanner(false)}
+              aria-label="Dismiss notice"
+              className="text-ink/40 hover:text-ink"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        )}
         <Textarea
           id="bio"
           rows={5}
@@ -168,10 +180,21 @@ export function StepBasics({ initial, profileId, mode }: Props) {
             setData({ ...data, bio: e.target.value });
             clearField('bio');
           }}
-          placeholder="What do you do, who do you serve, and what makes you different? (50–500 characters)"
+          placeholder="What do you do, who do you serve, and what makes you different?"
         />
         <p className="mt-1 text-xs text-muted-foreground">{data.bio.length} / 500</p>
         {getError('bio') && <p className="mt-1 text-xs text-hot-pink">{getError('bio')}</p>}
+        {data.bio.length > 0 && data.bio.length < 50 && (
+          <p className="mt-1 text-xs text-ink/60">
+            Bios under 50 chars usually feel rushed. Two or three sentences works well.
+          </p>
+        )}
+        <BioAssistCard
+          currentBio={data.bio}
+          businessName={data.businessName}
+          category={data.category}
+          onAccept={(newBio) => setData({ ...data, bio: newBio })}
+        />
       </div>
 
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}

@@ -125,7 +125,7 @@ describe('PATCH /api/vendor-profile/setup/[step] — basics', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 400 when bio is too short', async () => {
+  it('accepts bio < 50 chars (min constraint removed in T5)', async () => {
     const sb = buildSupabaseForBasics({ existingRow: null });
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
 
@@ -135,7 +135,7 @@ describe('PATCH /api/vendor-profile/setup/[step] — basics', () => {
       bio: 'short',
     });
     const res = await PATCH(req, ctx);
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
   });
 
   it('returns 200 and INSERTs when no existing row', async () => {

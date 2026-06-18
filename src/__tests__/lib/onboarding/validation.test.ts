@@ -18,9 +18,9 @@ describe('basicsSchema', () => {
     expect(r.success).toBe(true);
   });
 
-  it('rejects bio < 50 chars', () => {
+  it('accepts bio < 50 chars (min constraint removed in T5)', () => {
     const r = basicsSchema.safeParse({ businessName: 'X', category: 'mehndi', bio: 'short' });
-    expect(r.success).toBe(false);
+    expect(r.success).toBe(true);
   });
 
   it('rejects bio > 500 chars', () => {
