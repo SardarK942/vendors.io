@@ -7,10 +7,25 @@ vi.mock('@/lib/logger', () => ({
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(),
+  createServiceRoleClient: vi.fn(() => ({
+    auth: {
+      admin: {
+        getUserById: vi.fn().mockResolvedValue({ data: { user: { email: 'vendor@test.com' } } }),
+      },
+    },
+  })),
 }));
 
 vi.mock('@/services/notifications.service', () => ({
   notifyCustomRequestReceived: vi.fn().mockResolvedValue({ id: 'notif-1' }),
+}));
+
+vi.mock('@/lib/notifications/deliver', () => ({
+  deliver: vi.fn((_, fn) => fn()),
+}));
+
+vi.mock('@/lib/email/custom-request', () => ({
+  sendCustomRequestEmail: vi.fn().mockResolvedValue({ ok: true, id: 'email-1' }),
 }));
 
 import { createServerSupabaseClient } from '@/lib/supabase/server';
