@@ -57,10 +57,11 @@ export function AdjustmentReview({
     if (initialAction !== 'counter') return;
     if (countersLeft > 0 && canCounter) {
       setCounterOpen(true);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('action');
-      router.replace(url.pathname + (url.search || ''), { scroll: false });
     }
+    // Always strip the query param when counter case is hit, regardless of whether modal opened
+    const url = new URL(window.location.href);
+    url.searchParams.delete('action');
+    router.replace(url.pathname + (url.search || ''), { scroll: false });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Run once on mount — initialAction is stable (server-rendered prop)
 

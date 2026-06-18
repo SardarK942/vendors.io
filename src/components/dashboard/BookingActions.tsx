@@ -38,38 +38,41 @@ export function BookingActions({
   const [depositOpen, setDepositOpen] = useState(false);
   const [counterOpen, setCounterOpen] = useState(false);
 
+  // Hoist counter computation to avoid duplicate type casts
+  const coupleCounterCount = booking.couple_counter_count ?? 0;
+  const countersLeft = Math.max(0, 2 - coupleCounterCount);
+
   // ── ?action= deep-link handler ──────────────────────────────────────────────
   // Opens the matching modal when the user arrives via a notification action link.
   // Strips the query param via router.replace so a refresh does not re-open.
   // Unknown action values are silently ignored (no crash, query left intact).
   useEffect(() => {
     if (!initialAction) return;
-    let opened = true;
+    let opened = false;
     switch (initialAction) {
       // Couple: pay deposit after vendor accepted
       case 'pay-deposit':
         setDepositOpen(true);
+        opened = true;
         break;
       // Couple: leave a review after booking completed
       case 'leave-review':
         setReviewOpen(true);
+        opened = true;
         break;
       // Vendor or couple: decline / cancel
       case 'decline':
         setCancelOpen(true);
+        opened = true;
         break;
       // Couple: counter-offer on an `accepted` booking (adjusted_quote_sent is
       // handled by AdjustmentReview which owns its own ?action=counter handler).
       case 'counter': {
-        const coupleCounterCount =
-          ((booking as unknown as Record<string, unknown>).couple_counter_count as number) ?? 0;
-        const countersLeft = Math.max(0, 2 - coupleCounterCount);
         const isCounterable = ['accepted'].includes(booking.status);
         if (isCounterable && countersLeft > 0) {
           setCounterOpen(true);
-        } else {
-          opened = false;
         }
+        opened = true; // Mark as handled regardless of whether modal opened
         break;
       }
       // 'accept'     → vendor accept is a direct button (no modal); couple accept
@@ -131,34 +134,23 @@ export function BookingActions({
       )}
 
       {/* Counter-offer when vendor has accepted — couple may propose a different total */}
-      {role === 'couple' &&
-        booking.status === 'accepted' &&
-        (() => {
-          const coupleCounterCount =
-            ((booking as unknown as Record<string, unknown>).couple_counter_count as number) ?? 0;
-          const countersLeft = Math.max(0, 2 - coupleCounterCount);
-          return (
-            <>
-              {countersLeft > 0 && (
-                <div className="flex flex-col gap-1">
-                  <Button
-                    variant="secondary"
-                    onClick={() => setCounterOpen(true)}
-                    disabled={loading}
-                  >
-                    Counter
-                  </Button>
-                  <span className="text-xs text-ink/60">
-                    {countersLeft} counter-offer{countersLeft === 1 ? '' : 's'} remaining
-                  </span>
-                </div>
-              )}
-              {countersLeft === 0 && (
-                <span className="self-center text-xs text-ink/60">No counter-offers remaining</span>
-              )}
-            </>
-          );
-        })()}
+      {role === 'couple' && booking.status === 'accepted' && (
+        <>
+          {countersLeft > 0 && (
+            <div className="flex flex-col gap-1">
+              <Button variant="secondary" onClick={() => setCounterOpen(true)} disabled={loading}>
+                Counter
+              </Button>
+              <span className="text-xs text-ink/60">
+                {countersLeft} counter-offer{countersLeft === 1 ? '' : 's'} remaining
+              </span>
+            </div>
+          )}
+          {countersLeft === 0 && (
+            <span className="self-center text-xs text-ink/60">No counter-offers remaining</span>
+          )}
+        </>
+      )}
 
       {role === 'couple' && booking.status === 'deposit_paid' && (
         <>

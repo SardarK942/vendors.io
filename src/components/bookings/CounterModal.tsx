@@ -124,7 +124,13 @@ export function CounterModal({ open, onClose, bookingId, currentTotalCents, onSu
           )}
 
           <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading}>
+            <Button
+              type="button"
+              variant="outline"
+              className="bg-cream"
+              onClick={onClose}
+              disabled={loading}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
