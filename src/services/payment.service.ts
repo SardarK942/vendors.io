@@ -952,7 +952,7 @@ export async function autoCompleteBookings(
     eventsCompleted += dueNow.length;
 
     // Fetch emails for couple + vendor (needed for email sends below).
-    const sbAdmin = await createServiceRoleClient();
+    const sbAdmin = createServiceRoleClient();
     const coupleEmail =
       (b as unknown as { couple_email: string | null }).couple_email ??
       (b.couple_user_id

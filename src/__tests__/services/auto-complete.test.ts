@@ -26,7 +26,7 @@ vi.mock('@/lib/stripe/connect', () => ({
 
 // Mock Supabase server helpers
 vi.mock('@/lib/supabase/server', () => ({
-  createServiceRoleClient: vi.fn(async () => ({
+  createServiceRoleClient: vi.fn(() => ({
     auth: {
       admin: {
         getUserById: vi.fn(async (_id: string) => ({
