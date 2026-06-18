@@ -71,3 +71,12 @@ scripts/scraper/python/.venv/
 # Hand-curation batch queues (input + review CSVs are local working files)
 data/curate/
 scripts/scraper/python/__pycache__/
+
+# local-only skill/agent caches + scratch artifacts (not part of the repo)
+.agents/
+.claude/skills/impeccable
+.claude/prod-migration-batch-*.sql
+.shot.mjs
+
+# local prod-walkthrough playwright spec scratch (not run in CI)
+tests/e2e/walkthrough-prod*.spec.ts

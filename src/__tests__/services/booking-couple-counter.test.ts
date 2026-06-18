@@ -71,7 +71,7 @@ describe('coupleCounterBooking()', () => {
         id: 'b_1',
         couple_user_id: 'u_couple',
         couple_counter_count: 2,
-        status: 'vendor_adjusted_quote',
+        status: 'adjusted_quote_sent',
       },
     });
     const out = await coupleCounterBooking({
@@ -89,7 +89,7 @@ describe('coupleCounterBooking()', () => {
         id: 'b_1',
         couple_user_id: 'u_couple',
         couple_counter_count: 0,
-        status: 'vendor_accepted',
+        status: 'accepted',
       },
     });
     const out = await coupleCounterBooking({
@@ -101,7 +101,7 @@ describe('coupleCounterBooking()', () => {
     expect(out).toMatchObject({ ok: false, code: 'forbidden' });
   });
 
-  it('rejects with invalid_state when status is not vendor_accepted or vendor_adjusted_quote', async () => {
+  it('rejects with invalid_state when status is not accepted or adjusted_quote_sent', async () => {
     const supabase = mockSb({
       booking: {
         id: 'b_1',
@@ -125,7 +125,7 @@ describe('coupleCounterBooking()', () => {
         id: 'b_1',
         couple_user_id: 'u_couple',
         couple_counter_count: 0,
-        status: 'vendor_accepted',
+        status: 'accepted',
       },
     });
     const out = await coupleCounterBooking({

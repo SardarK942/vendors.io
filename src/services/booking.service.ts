@@ -836,19 +836,13 @@ export async function coupleCounterBooking(args: {
   }
 
   // 4. State guard — only allow counter from post-acceptance / post-vendor-adjustment states.
-  //    'vendor_accepted' and 'vendor_adjusted_quote' are D.1 spec aliases for the existing
-  //    'accepted' and 'adjusted_quote_sent' DB values; accept both for compatibility.
-  const VALID_COUNTER_STATUSES = [
-    'vendor_accepted',
-    'accepted',
-    'vendor_adjusted_quote',
-    'adjusted_quote_sent',
-  ];
-  if (!VALID_COUNTER_STATUSES.includes(booking.status as string)) {
+  //    Real DB statuses per BookingStatus union: 'accepted' and 'adjusted_quote_sent'.
+  const VALID_COUNTER_STATUSES = ['accepted', 'adjusted_quote_sent'] as const;
+  if (!VALID_COUNTER_STATUSES.includes(booking.status as 'accepted' | 'adjusted_quote_sent')) {
     return {
       ok: false,
       code: 'invalid_state',
-      message: `Cannot counter from status '${booking.status}'. Booking must be in accepted or vendor-adjusted state.`,
+      message: `Cannot counter from status '${booking.status}'. Booking must be in accepted or adjusted-quote-sent state.`,
     };
   }
 
