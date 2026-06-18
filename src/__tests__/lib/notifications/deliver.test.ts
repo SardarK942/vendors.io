@@ -15,7 +15,7 @@ describe('deliver()', () => {
     expect(logger.error).not.toHaveBeenCalled();
   });
 
-  it('returns null on error and logs structured failure', async () => {
+  it('returns null on Error and logs with flat context fields', async () => {
     const err = new Error('rls denied');
     const result = await deliver(
       'email',
@@ -27,24 +27,26 @@ describe('deliver()', () => {
     expect(result).toBeNull();
     expect(logger.error).toHaveBeenCalledWith(
       'delivery_failure',
+      err,
       expect.objectContaining({
         kind: 'email',
-        error: 'rls denied',
-        context: { booking_id: 'b_1' },
+        error_message: 'rls denied',
+        booking_id: 'b_1',
       })
     );
   });
 
-  it('handles non-Error throws without crashing', async () => {
+  it('handles non-Error throws by passing undefined as error arg', async () => {
     const result = await deliver('notify', async () => {
       throw 'string-error';
     });
     expect(result).toBeNull();
     expect(logger.error).toHaveBeenCalledWith(
       'delivery_failure',
+      undefined,
       expect.objectContaining({
         kind: 'notify',
-        error: 'string-error',
+        error_message: 'string-error',
       })
     );
   });
