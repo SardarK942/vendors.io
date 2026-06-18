@@ -30,7 +30,8 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
 
   function handlePriceChange(i: number, raw: string) {
     const dollars = parseFloat(raw || '0');
-    const cents = Math.round(isNaN(dollars) ? 0 : dollars * 100);
+    const safeDollars = isNaN(dollars) || dollars < 0 ? 0 : dollars;
+    const cents = Math.round(safeDollars * 100);
     update(addons.map((a, j) => (j === i ? { ...a, price_delta_cents: cents } : a)));
   }
 
@@ -48,7 +49,7 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
       {addons.length > 0 && (
         <div className="space-y-2">
           {addons.map((a, i) => (
-            <div key={i} className="flex gap-2 items-center">
+            <div key={i} className="flex items-center gap-2">
               <Input
                 type="text"
                 placeholder="Add-on name (e.g. Drone footage)"
@@ -56,13 +57,16 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
                 onChange={(e) => handleNameChange(i, e.target.value)}
                 className="flex-1"
               />
-              <div className="flex items-center gap-1 shrink-0">
+              <div className="flex shrink-0 items-center gap-1">
                 <span className="text-sm text-muted-foreground">$</span>
                 <Input
                   type="number"
-                  step="0.01"
+                  inputMode="numeric"
+                  step="1"
+                  min="0"
                   className="w-24"
-                  value={a.price_delta_cents / 100}
+                  value={a.price_delta_cents === 0 ? '' : a.price_delta_cents / 100}
+                  placeholder="0"
                   onChange={(e) => handlePriceChange(i, e.target.value)}
                 />
               </div>
