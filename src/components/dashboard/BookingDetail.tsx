@@ -244,6 +244,12 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
           send a revised quote — otherwise the booking will auto-cancel.
         </div>
       )}
+      {role === 'vendor' && booking.status === 'couple_countered' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <strong>Action needed:</strong> The couple sent a counter-offer. You can adjust the quote
+          or accept their counter directly. You have 72 hours.
+        </div>
+      )}
       {role === 'vendor' && booking.status === 'deposit_paid' && (
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">
           <strong>Booking confirmed.</strong> Deposit paid. Deliver the service on the event
@@ -390,7 +396,8 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
             {role === 'vendor' &&
               (booking.status === 'pending' ||
                 booking.status === 'pending_quote' ||
-                booking.status === 'adjusted_quote_declined') && (
+                booking.status === 'adjusted_quote_declined' ||
+                booking.status === 'couple_countered') && (
                 <VendorBookingActions
                   bookingId={booking.id}
                   status={booking.status}

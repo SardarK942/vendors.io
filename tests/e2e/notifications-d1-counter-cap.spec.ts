@@ -10,16 +10,15 @@
  *      → status='couple_countered', couple_counter_count=1
  *      Side-blind check: vendor notification body does NOT contain 'remaining'
  *   3. Vendor adjust #1  (via POST /api/bookings/:id/adjust)
- *      NOTE: adjustBookingQuote only accepts pending|pending_quote|adjusted_quote_declined.
- *      We set the booking to 'adjusted_quote_declined' via service-role before the API call
- *      (documents the current gap between couple_countered and the adjust valid-state list).
+ *      adjustBookingQuote now accepts 'couple_countered' (D.1 state machine fix).
+ *      No DB pre-step needed — the service handles the transition directly.
  *      → status='adjusted_quote_sent', vendor_adjustment_count=1
  *      Side-blind check: couple notification body does NOT contain 'remaining'
  *   4. Couple counter #2  (via POST /api/bookings/:id/counter)
  *      → status='couple_countered', couple_counter_count=2
  *      Cap check: direct POST /counter now returns 409 { error: string }
  *   5. Vendor adjust #2  (via POST /api/bookings/:id/adjust)
- *      Same DB pre-step as step 3.
+ *      No DB pre-step needed — service accepts 'couple_countered' directly (D.1 fix).
  *      → status='adjusted_quote_sent', vendor_adjustment_count=2
  *      Cap check: direct POST /adjust now returns 409 { error: { code: 'adjust_cap_reached' } }
  *   6. UI assertions:
@@ -223,12 +222,8 @@ test.describe('D.1 — counter-offer cap enforcement', () => {
     ).not.toContain('remaining');
 
     // ── Step 3: Vendor adjust #1 ───────────────────────────────────────────
-    // adjustBookingQuote only accepts pending|pending_quote|adjusted_quote_declined.
-    // The current service does not allow adjust from 'couple_countered'.
-    // Pre-step: advance booking to 'adjusted_quote_declined' so the API call succeeds.
-    // (This documents the gap in the state machine — T20 notes it explicitly.)
-    await sb.from('bookings').update({ status: 'adjusted_quote_declined' }).eq('id', bookingId);
-
+    // D.1 state machine fix: adjustBookingQuote now accepts 'couple_countered' directly.
+    // No DB pre-step needed.
     const adjust1Res = await vendorPage.request.post(`/api/bookings/${bookingId}/adjust`, {
       data: {
         adjustment_amount_cents: 5_000,
@@ -284,9 +279,7 @@ test.describe('D.1 — counter-offer cap enforcement', () => {
     expect(counter3Body.error, 'counter cap error should mention counter').toMatch(/counter/i);
 
     // ── Step 5: Vendor adjust #2 (final) ──────────────────────────────────
-    // Same DB pre-step: advance to 'adjusted_quote_declined' so adjust is valid.
-    await sb.from('bookings').update({ status: 'adjusted_quote_declined' }).eq('id', bookingId);
-
+    // D.1 fix: no DB pre-step needed — 'couple_countered' is now a valid adjust source.
     const adjust2Res = await vendorPage.request.post(`/api/bookings/${bookingId}/adjust`, {
       data: {
         adjustment_amount_cents: 3_000,
@@ -318,32 +311,31 @@ test.describe('D.1 — counter-offer cap enforcement', () => {
     ).toMatchObject({ code: 'adjust_cap_reached' });
 
     // ── Step 6a: UI — vendor sees disabled Adjust button ──────────────────
-    // VendorBookingActions renders the "Adjust quote" button with disabled state + helper text
-    // ONLY when booking.status === 'pending' (the initial accept flow).
-    // For adjusted_quote_declined, the component shows "Send revised quote" with no cap UI.
-    // Pre-step: set status to 'pending' so the disabled Adjust button renders.
-    await sb.from('bookings').update({ status: 'pending' }).eq('id', bookingId);
+    // D.1 fix: VendorBookingActions now renders when status='couple_countered'.
+    // The booking is already in 'adjusted_quote_sent' after step 5.
+    // Pre-step: set status to 'couple_countered' so the Adjust button (with cap UI) renders.
+    await sb.from('bookings').update({ status: 'couple_countered' }).eq('id', bookingId);
 
     await vendorPage.goto(`/dashboard/bookings/${bookingId}`);
     await dismissWelcomeModal(vendorPage);
 
     // Wait for "No more adjustments available" helper text to appear.
-    // This is rendered in VendorBookingActions when status='pending' AND adjustsLeft=0.
+    // This is rendered in VendorBookingActions when status='couple_countered' AND adjustsLeft=0.
     const noMoreAdjText = vendorPage.getByText(/no more adjustments available/i);
     await expect(
       noMoreAdjText,
-      'Step 6 — "No more adjustments available" helper text must be visible when vendor_adjustment_count=2'
+      'Step 6 — "No more adjustments available" helper text must be visible when vendor_adjustment_count=2 and status=couple_countered'
     ).toBeVisible({ timeout: 15_000 });
 
     // Adjust button must be visible but DISABLED
     const adjustBtnInPage = vendorPage.getByRole('button', { name: /adjust quote/i }).first();
     await expect(
       adjustBtnInPage,
-      'Step 6 — Adjust button must be visible (but disabled) when vendor_adjustment_count=2'
+      'Step 6 — Adjust button must be visible (but disabled) when vendor_adjustment_count=2 and status=couple_countered'
     ).toBeVisible({ timeout: 5_000 });
     await expect(
       adjustBtnInPage,
-      'Step 6 — Adjust button must be disabled when vendor_adjustment_count=2'
+      'Step 6 — Adjust button must be disabled when vendor_adjustment_count=2 and status=couple_countered'
     ).toBeDisabled();
 
     // ── Step 6b: UI — couple sees NO Counter button, only "No counter-offers remaining" ──

@@ -38,6 +38,13 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
     'vendor_cancelled',
     'expired',
   ],
+  couple_countered: [
+    'adjusted_quote_sent', // vendor adjust response
+    'accepted', // vendor accepts couple's counter directly
+    'couple_cancelled',
+    'vendor_cancelled',
+    'expired',
+  ],
   deposit_paid: [
     'completed',
     'couple_cancelled',
@@ -495,7 +502,11 @@ export async function adjustBookingQuote(
     return { ok: false, code: 'adjust_cap_reached' };
   }
 
-  if (!['pending', 'pending_quote', 'adjusted_quote_declined'].includes(booking.status)) {
+  if (
+    !['pending', 'pending_quote', 'adjusted_quote_declined', 'couple_countered'].includes(
+      booking.status
+    )
+  ) {
     return {
       error: {
         code: 'INVALID_STATE',

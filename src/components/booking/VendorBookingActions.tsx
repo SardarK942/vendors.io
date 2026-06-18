@@ -61,8 +61,9 @@ export function VendorBookingActions({
   const isPending = status === 'pending';
   const isPendingQuote = status === 'pending_quote';
   const isDeclined = status === 'adjusted_quote_declined';
+  const isCoupleCountered = status === 'couple_countered';
 
-  if (!isPending && !isPendingQuote && !isDeclined) return null;
+  if (!isPending && !isPendingQuote && !isDeclined && !isCoupleCountered) return null;
 
   async function handleAccept() {
     setAccepting(true);
@@ -107,7 +108,9 @@ export function VendorBookingActions({
             ? 'Respond to this booking'
             : isPendingQuote
               ? 'Send a custom quote'
-              : 'Send revised quote'}
+              : isCoupleCountered
+                ? 'Respond to counter-offer'
+                : 'Send revised quote'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -151,6 +154,24 @@ export function VendorBookingActions({
           <Button variant="default" className="w-full" onClick={() => setShowAdjustForm((s) => !s)}>
             {showAdjustForm ? 'Cancel' : 'Send revised quote'}
           </Button>
+        )}
+
+        {isCoupleCountered && (
+          <div className="flex flex-col gap-1">
+            <Button
+              variant="default"
+              className="w-full"
+              onClick={() => setShowAdjustForm((s) => !s)}
+              disabled={adjustsLeft === 0 && !showAdjustForm}
+            >
+              {showAdjustForm ? 'Cancel' : 'Adjust quote'}
+            </Button>
+            <span className="text-xs text-ink/60">
+              {adjustsLeft === 0
+                ? 'No more adjustments available'
+                : `${adjustsLeft} adjustment${adjustsLeft === 1 ? '' : 's'} remaining`}
+            </span>
+          </div>
         )}
 
         {showAdjustForm && (
