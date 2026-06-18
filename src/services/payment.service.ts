@@ -17,6 +17,7 @@ import {
   sendReviewRequestEmail,
   sendCancellationEmail,
 } from '@/lib/email/resend';
+import { sendEventCompletedEmail } from '@/lib/email/event-completed';
 import { logger } from '@/lib/logger';
 import { deliver } from '@/lib/notifications/deliver';
 import {
@@ -920,7 +921,7 @@ export async function autoCompleteBookings(
   const { data: bookings } = await supabase
     .from('bookings')
     .select(
-      'id, couple_user_id, booking_events(id, event_end_time, event_type_label, sequence, completed_at), vendor_profiles!inner(user_id)'
+      'id, couple_user_id, couple_email, couple_full_name, booking_events(id, event_end_time, event_type_label, sequence, completed_at), vendor_profiles!inner(user_id, business_name)'
     )
     .eq('status', 'deposit_paid');
 
@@ -936,7 +937,7 @@ export async function autoCompleteBookings(
         sequence: number;
         completed_at: string | null;
       }[]) ?? [];
-    const bvp = b.vendor_profiles as unknown as { user_id: string };
+    const bvp = b.vendor_profiles as unknown as { user_id: string; business_name: string };
     const incomplete = events.filter((e) => !e.completed_at);
     const dueNow = incomplete.filter((e) => e.event_end_time < cutoff);
     if (dueNow.length === 0) continue;
@@ -950,6 +951,20 @@ export async function autoCompleteBookings(
       );
     eventsCompleted += dueNow.length;
 
+    // Fetch emails for couple + vendor (needed for email sends below).
+    const sbAdmin = await createServiceRoleClient();
+    const coupleEmail =
+      (b as unknown as { couple_email: string | null }).couple_email ??
+      (b.couple_user_id
+        ? (await sbAdmin.auth.admin.getUserById(b.couple_user_id)).data.user?.email
+        : undefined);
+    const vendorEmailResult = bvp.user_id
+      ? (await sbAdmin.auth.admin.getUserById(bvp.user_id)).data.user?.email
+      : undefined;
+    const vendorDisplayName = bvp.business_name;
+    const coupleDisplayName =
+      (b as unknown as { couple_full_name: string | null }).couple_full_name ?? 'your couple';
+
     // Notify both parties for each newly completed event.
     for (const ev of dueNow) {
       const evPayload = {
@@ -959,14 +974,54 @@ export async function autoCompleteBookings(
         eventsCount: events.length,
       };
       if (b.couple_user_id) {
-        await deliver('notify', () => notifyEventCompleted(supabase, b.couple_user_id, evPayload), {
-          booking_id: b.id,
-        });
+        const coupleNotify = await deliver(
+          'notify',
+          () => notifyEventCompleted(supabase, b.couple_user_id, evPayload),
+          { booking_id: b.id }
+        );
+        if (coupleEmail && coupleNotify?.id) {
+          await deliver(
+            'email',
+            () =>
+              sendEventCompletedEmail({
+                to: coupleEmail,
+                recipientRole: 'couple',
+                vendorName: vendorDisplayName,
+                coupleName: coupleDisplayName,
+                eventTypeLabel: ev.event_type_label,
+                sequence: ev.sequence,
+                eventsCount: events.length,
+                bookingId: b.id,
+                notificationId: coupleNotify.id,
+              }),
+            { booking_id: b.id }
+          );
+        }
       }
       if (bvp.user_id) {
-        await deliver('notify', () => notifyEventCompleted(supabase, bvp.user_id, evPayload), {
-          booking_id: b.id,
-        });
+        const vendorNotify = await deliver(
+          'notify',
+          () => notifyEventCompleted(supabase, bvp.user_id, evPayload),
+          { booking_id: b.id }
+        );
+        if (vendorEmailResult && vendorNotify?.id) {
+          await deliver(
+            'email',
+            () =>
+              sendEventCompletedEmail({
+                to: vendorEmailResult,
+                recipientRole: 'vendor',
+                vendorName: vendorDisplayName,
+                coupleName: coupleDisplayName,
+                eventTypeLabel: ev.event_type_label,
+                sequence: ev.sequence,
+                eventsCount: events.length,
+                bookingId: b.id,
+                notificationId: vendorNotify.id,
+              }),
+            { booking_id: b.id }
+          );
+        }
       }
     }
 

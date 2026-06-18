@@ -26,7 +26,21 @@ vi.mock('@/lib/stripe/connect', () => ({
 
 // Mock Supabase server helpers
 vi.mock('@/lib/supabase/server', () => ({
-  createServiceRoleClient: vi.fn(() => ({})),
+  createServiceRoleClient: vi.fn(async () => ({
+    auth: {
+      admin: {
+        getUserById: vi.fn(async (_id: string) => ({
+          data: { user: { email: 'mock@example.com' } },
+          error: null,
+        })),
+      },
+    },
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      update: vi.fn().mockReturnThis(),
+    })),
+  })),
   createServerSupabaseClient: vi.fn(() => ({})),
 }));
 
@@ -36,6 +50,11 @@ vi.mock('@/lib/email/resend', () => ({
   sendCompletionEmailToVendor: vi.fn(),
   sendReviewRequestEmail: vi.fn(),
   sendCancellationEmail: vi.fn(),
+}));
+
+// Mock event-completed email template
+vi.mock('@/lib/email/event-completed', () => ({
+  sendEventCompletedEmail: vi.fn(async () => ({ ok: true, id: 'mock_email_id' })),
 }));
 
 // Mock notifications service to avoid Supabase insert calls in tests
@@ -50,30 +69,34 @@ vi.mock('@/services/notifications.service', () => ({
 import { autoCompleteBookings } from '@/services/payment.service';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
-const PAST = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString();   // 72h ago — past cutoff
+const PAST = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(); // 72h ago — past cutoff
 const FUTURE = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(); // 24h from now
 
 // Build a minimal Supabase mock for autoCompleteBookings' query patterns.
 // bookings now include couple_user_id + vendor_profiles for notification calls.
-function makeMockSupabase(bookings: Array<{
-  id: string;
-  couple_user_id?: string;
-  vendor_profiles?: { user_id: string };
-  booking_events: Array<{
+function makeMockSupabase(
+  bookings: Array<{
     id: string;
-    event_end_time: string;
-    event_type_label?: string;
-    sequence?: number;
-    completed_at: string | null;
-  }>;
-}>) {
+    couple_user_id?: string;
+    vendor_profiles?: { user_id: string };
+    booking_events: Array<{
+      id: string;
+      event_end_time: string;
+      event_type_label?: string;
+      sequence?: number;
+      completed_at: string | null;
+    }>;
+  }>
+) {
   const updatedEventIds: string[] = [];
   const updatedBookingIds: string[] = [];
 
   // Enrich bookings with defaults for the new fields.
   const enriched = bookings.map((b) => ({
     couple_user_id: 'couple-user-id',
-    vendor_profiles: { user_id: 'vendor-user-id' },
+    couple_email: 'couple@example.com',
+    couple_full_name: 'Test Couple',
+    vendor_profiles: { user_id: 'vendor-user-id', business_name: 'Test Vendor' },
     ...b,
     booking_events: b.booking_events.map((e) => ({
       event_type_label: 'Wedding',
@@ -136,7 +159,7 @@ describe('autoCompleteBookings (per-event)', () => {
       {
         id: 'booking-2',
         booking_events: [
-          { id: 'ev-3', event_end_time: PAST, completed_at: null },   // due
+          { id: 'ev-3', event_end_time: PAST, completed_at: null }, // due
           { id: 'ev-4', event_end_time: FUTURE, completed_at: null }, // not yet due
         ],
       },
@@ -152,9 +175,7 @@ describe('autoCompleteBookings (per-event)', () => {
     const mockSb = makeMockSupabase([
       {
         id: 'booking-3',
-        booking_events: [
-          { id: 'ev-5', event_end_time: FUTURE, completed_at: null },
-        ],
+        booking_events: [{ id: 'ev-5', event_end_time: FUTURE, completed_at: null }],
       },
     ]);
 
