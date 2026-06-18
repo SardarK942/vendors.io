@@ -89,11 +89,7 @@ export const NOTIFICATION_ACTIONS: ActionMap = {
 
   event_completed: [{ label: 'View booking', variant: 'primary', href: (n) => bookingHref(n) }],
 
-  // NOTE: booking_completed is used for both couples and vendors.
-  // Couples should see "Leave Review"; vendors should see "View booking".
-  // Role discrimination is NOT implemented here — T10 ships Leave Review for
-  // all recipients. A follow-up task should add getActionsFor(n, role) or
-  // split into separate notification types. Flagged as concern.
+  // Role-discriminated in getActionsFor (vendor sees View booking, couple sees Leave Review).
   booking_completed: [
     { label: 'Leave Review', variant: 'primary', href: (n) => bookingHref(n, 'leave-review') },
   ],
