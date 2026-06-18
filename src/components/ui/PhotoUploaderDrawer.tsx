@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useRef, useState } from 'react';
+import { createContext, useContext, useRef, useState, useEffect } from 'react';
 import { Upload, Plus } from 'lucide-react';
 import {
   FamilyDrawerRoot,
@@ -50,11 +50,16 @@ function DefaultView() {
   const { value, onChange, endpoint, maxFiles, maxSizeMb } = useUploader();
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const { startUpload, isUploading } = useUploadThing(endpoint, {
     onClientUploadComplete: (res) => {
       const newUrls = res.map((r) => r.url);
-      onChange([...value, ...newUrls].slice(0, maxFiles));
+      onChange([...valueRef.current, ...newUrls].slice(0, maxFiles));
       setView('manage');
     },
     onUploadError: (err) => {
@@ -97,7 +102,7 @@ function DefaultView() {
           className={`mx-auto mb-3 size-10 ${isDragging ? 'text-hot-pink' : 'text-ink/60'}`}
         />
         <p className="mb-1 text-sm font-medium text-ink">
-          {isUploading ? 'Uploading…' : isDragging ? 'Drop photos here' : 'Drop photos here'}
+          {isUploading ? 'Uploading…' : isDragging ? 'Drop photos here' : 'Drag photos here'}
         </p>
         <p className="text-xs text-ink/60">or click to browse</p>
         <p className="mt-4 text-xs text-ink/50">JPG, PNG, or WebP · max {maxSizeMb} MB</p>
@@ -118,11 +123,16 @@ function ManageView() {
   const { setView } = useFamilyDrawer();
   const { value, onChange, endpoint, maxFiles, showPrimarySelector } = useUploader();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const valueRef = useRef(value);
+
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   const { startUpload, isUploading } = useUploadThing(endpoint, {
     onClientUploadComplete: (res) => {
       const newUrls = res.map((r) => r.url);
-      onChange([...value, ...newUrls].slice(0, maxFiles));
+      onChange([...valueRef.current, ...newUrls].slice(0, maxFiles));
     },
   });
 
