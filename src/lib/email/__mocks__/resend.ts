@@ -1,3 +1,13 @@
+export function escapeHtml(s: string | null | undefined): string {
+  if (s === null || s === undefined) return '';
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 export interface RecordedSend {
   to: string;
   subject: string;

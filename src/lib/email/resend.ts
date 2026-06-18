@@ -4,7 +4,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
-function escapeHtml(s: string | null | undefined): string {
+export function escapeHtml(s: string | null | undefined): string {
   if (s === null || s === undefined) return '';
   return s
     .replace(/&/g, '&amp;')

@@ -7,6 +7,25 @@ import { getRecordedSends, clearRecordedSends } from '@/lib/email/__mocks__/rese
 describe('sendCustomRequestEmail()', () => {
   beforeEach(() => clearRecordedSends());
 
+  it('escapes HTML in interpolated values', async () => {
+    await sendCustomRequestEmail({
+      to: 'v@x.com',
+      coupleFirstName: '<script>alert(1)</script>',
+      coupleCity: 'Chicago',
+      eventType: 'sangeet',
+      eventDate: '2026-07-15',
+      headcount: 100,
+      location: 'TBD',
+      description: '<img src=x onerror=alert(1)>',
+      bookingId: 'b_1',
+    });
+    const [send] = getRecordedSends();
+    expect(send.html).not.toContain('<script>alert(1)</script>');
+    expect(send.html).toContain('&lt;script&gt;');
+    expect(send.html).not.toContain('<img src=x onerror=alert(1)>');
+    expect(send.html).toContain('&lt;img src=x onerror=alert(1)&gt;');
+  });
+
   it('subject contains first name only + truncates description to 200', async () => {
     const longDesc = 'a'.repeat(500);
     await sendCustomRequestEmail({
