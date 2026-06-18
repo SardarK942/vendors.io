@@ -67,7 +67,9 @@ export function NotificationsPageClient({ initial }: Props) {
   }
 
   async function markAllRead() {
-    setNotifications((prev) => prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() })));
+    setNotifications((prev) =>
+      prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() }))
+    );
     await fetch('/api/notifications/mark-all-read', { method: 'POST' });
   }
 
@@ -102,7 +104,9 @@ export function NotificationsPageClient({ initial }: Props) {
               }`}
             >
               {t === 'action' ? 'Action needed' : t === 'updates' ? 'Updates' : 'Archived'}
-              {tabCounts[t] > 0 && <span className="ml-1.5 text-xs opacity-80">({tabCounts[t]})</span>}
+              {tabCounts[t] > 0 && (
+                <span className="ml-1.5 text-xs opacity-80">({tabCounts[t]})</span>
+              )}
             </button>
           ))}
         </div>
@@ -139,14 +143,24 @@ export function NotificationsPageClient({ initial }: Props) {
                   className="flex w-full items-center justify-between border-b bg-muted/30 px-4 py-2 text-left text-sm font-medium hover:bg-muted/50"
                 >
                   <span>
-                    {headerLabel} <span className="text-xs text-muted-foreground">({items.length})</span>
+                    {headerLabel}{' '}
+                    <span className="text-xs text-muted-foreground">({items.length})</span>
                   </span>
-                  {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  {collapsed ? (
+                    <ChevronRight className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
                 </button>
                 {!collapsed && (
                   <div className="divide-y">
                     {items.map((n) => (
-                      <NotificationCard key={n.id} notification={n} onClick={() => markRead(n.id)} />
+                      <NotificationCard
+                        key={n.id}
+                        notification={n}
+                        onClick={() => markRead(n.id)}
+                        showAllActions
+                      />
                     ))}
                   </div>
                 )}
