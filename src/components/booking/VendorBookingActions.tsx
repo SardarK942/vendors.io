@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -19,6 +19,9 @@ interface Props {
   // a toast anyway since active business === booking business).
   bookingBusinessId?: string;
   bookingBusinessName?: string;
+  /** Value of ?action= query param. Auto-expands the adjust/send-quote form on
+   *  mount and strips the query from history so refresh does not re-trigger. */
+  initialAction?: string;
 }
 
 export function VendorBookingActions({
@@ -27,11 +30,27 @@ export function VendorBookingActions({
   totalPriceCents,
   bookingBusinessId,
   bookingBusinessName,
+  initialAction,
 }: Props) {
   const router = useRouter();
   const [showAdjustForm, setShowAdjustForm] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const triggerCrossBusinessToast = useCrossBusinessActionToast();
+
+  // ── ?action= deep-link handler ──────────────────────────────────────────────
+  // 'adjust' and 'send-quote' both expand the inline quote form on this component.
+  // Strips the query param via router.replace so a refresh does not re-expand.
+  useEffect(() => {
+    if (!initialAction) return;
+    if (initialAction === 'adjust' || initialAction === 'send-quote') {
+      setShowAdjustForm(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete('action');
+      router.replace(url.pathname + (url.search || ''), { scroll: false });
+    }
+    // All other actions are handled by BookingActions — no-op here.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount — initialAction is stable (server-rendered prop)
 
   const isPending = status === 'pending';
   const isPendingQuote = status === 'pending_quote';

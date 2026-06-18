@@ -18,6 +18,9 @@ import Link from 'next/link';
 interface BookingDetailProps {
   bookingId: string;
   mode: 'panel' | 'page';
+  /** Value of ?action= query param. Passed down to client action components so they
+   *  can auto-open the matching modal on first render, then strip the query. */
+  initialAction?: string;
 }
 
 function statusBadgeStyle(status: string) {
@@ -30,7 +33,7 @@ function statusBadgeStyle(status: string) {
   return '';
 }
 
-export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
+export async function BookingDetail({ bookingId, mode, initialAction }: BookingDetailProps) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -393,6 +396,7 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
                   }
                   bookingBusinessId={booking.vendor_profile_id}
                   bookingBusinessName={vendorProfile?.business_name ?? undefined}
+                  initialAction={initialAction}
                 />
               )}
 
@@ -401,6 +405,7 @@ export async function BookingDetail({ bookingId, mode }: BookingDetailProps) {
               role={role}
               hasReview={!!existingReview}
               vendorName={vendorProfile?.business_name ?? ''}
+              initialAction={initialAction}
             />
 
             {role === 'couple' && vendorProfile && (

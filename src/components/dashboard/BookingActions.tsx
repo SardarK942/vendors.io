@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -17,6 +17,9 @@ interface BookingActionsProps {
   role: 'couple' | 'vendor';
   hasReview?: boolean;
   vendorName?: string;
+  /** Value of ?action= query param. Auto-opens the matching modal on mount
+   *  and strips the query from history so refresh does not re-trigger. */
+  initialAction?: string;
 }
 
 export function BookingActions({
@@ -24,6 +27,7 @@ export function BookingActions({
   role,
   hasReview = false,
   vendorName = '',
+  initialAction,
 }: BookingActionsProps) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -32,7 +36,53 @@ export function BookingActions({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
 
-  const cancellable = ['pending', 'accepted', 'adjusted_quote_sent', 'adjusted_quote_declined', 'deposit_paid'].includes(booking.status);
+  // ── ?action= deep-link handler ──────────────────────────────────────────────
+  // Opens the matching modal when the user arrives via a notification action link.
+  // Strips the query param via router.replace so a refresh does not re-open.
+  // Unknown action values are silently ignored (no crash, query left intact).
+  useEffect(() => {
+    if (!initialAction) return;
+    let opened = true;
+    switch (initialAction) {
+      // Couple: pay deposit after vendor accepted
+      case 'pay-deposit':
+        setDepositOpen(true);
+        break;
+      // Couple: leave a review after booking completed
+      case 'leave-review':
+        setReviewOpen(true);
+        break;
+      // Vendor or couple: decline / cancel
+      case 'decline':
+        setCancelOpen(true);
+        break;
+      // 'accept'     → vendor accept is a direct button (no modal); couple accept
+      //                shows AdjustmentReview inline — both are already visible on
+      //                page load, no modal to open. No-op here.
+      // 'view-review' → no modal exists yet. No-op (degraded but not crashed).
+      // 'counter'     → modal ships in T18. No-op stub.
+      // 'adjust'      → handled by VendorBookingActions (owns the adjust form).
+      // 'send-quote'  → handled by VendorBookingActions (owns the send-quote form).
+      default:
+        opened = false;
+        break;
+    }
+    if (opened) {
+      // Strip the ?action= query so refresh doesn't reopen the modal.
+      const url = new URL(window.location.href);
+      url.searchParams.delete('action');
+      router.replace(url.pathname + (url.search || ''), { scroll: false });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run once on mount — initialAction is stable (server-rendered prop)
+
+  const cancellable = [
+    'pending',
+    'accepted',
+    'adjusted_quote_sent',
+    'adjusted_quote_declined',
+    'deposit_paid',
+  ].includes(booking.status);
 
   const handleComplete = async () => {
     if (
@@ -52,7 +102,9 @@ export function BookingActions({
     router.refresh();
   };
 
-  const totalPriceCents = (booking as unknown as Record<string, unknown>).total_price_cents as number | undefined;
+  const totalPriceCents = (booking as unknown as Record<string, unknown>).total_price_cents as
+    | number
+    | undefined;
 
   return (
     <div className="flex flex-wrap gap-2 pt-2">
