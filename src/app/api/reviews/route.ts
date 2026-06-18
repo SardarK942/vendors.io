@@ -3,6 +3,9 @@ import { reviewSchema } from '@/types';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireBookingAccess, requireUser } from '@/lib/api/auth';
 import { notifyReviewReceived } from '@/services/notifications.service';
+import { deliver } from '@/lib/notifications/deliver';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+import { sendReviewReceivedEmail } from '@/lib/email/review-received';
 
 export const POST = withErrorBoundary(async (request: NextRequest) => {
   const { user, supabase } = await requireUser();
@@ -43,7 +46,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
   void (async () => {
     const { data: ctx } = await supabase
       .from('vendor_profiles')
-      .select('user_id')
+      .select('user_id, slug')
       .eq('id', booking.vendor_profile_id)
       .single();
     if (!ctx) return;
@@ -52,11 +55,39 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
       .select('full_name')
       .eq('id', user.id)
       .single();
-    notifyReviewReceived(supabase, ctx.user_id, {
-      bookingId: booking.id,
-      coupleName: coupleCtx?.full_name ?? 'A couple',
-      ratingOverall: parsed.ratingOverall,
-    });
+    const coupleName = coupleCtx?.full_name ?? 'A couple';
+
+    const notifyResult = await deliver(
+      'notify',
+      () =>
+        notifyReviewReceived(supabase, ctx.user_id, {
+          bookingId: booking.id,
+          coupleName,
+          ratingOverall: parsed.ratingOverall,
+        }),
+      { booking_id: booking.id }
+    );
+
+    // Fetch vendor email via admin client (sync — no await on createServiceRoleClient).
+    const sbAdmin = createServiceRoleClient();
+    const vendorEmailResult = await sbAdmin.auth.admin.getUserById(ctx.user_id);
+    const vendorEmail = vendorEmailResult.data.user?.email;
+
+    if (notifyResult?.id && vendorEmail) {
+      await deliver(
+        'email',
+        () =>
+          sendReviewReceivedEmail({
+            to: vendorEmail,
+            coupleName,
+            rating: parsed.ratingOverall,
+            body: parsed.comment ?? '',
+            vendorSlug: ctx.slug,
+            notificationId: notifyResult.id,
+          }),
+        { booking_id: booking.id }
+      );
+    }
   })();
 
   return NextResponse.json({ data }, { status: 201 });
