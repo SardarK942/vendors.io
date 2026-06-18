@@ -18,8 +18,14 @@ export const POST = withErrorBoundary(
     if ('error' in result && result.error) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
+    if (!('data' in result) || !result.data) {
+      // Defensive: every non-error path of adjustBookingQuote returns data,
+      // but TypeScript can't narrow the discriminated union further. Treat
+      // missing data as a 500 — should never happen at runtime.
+      return NextResponse.json({ error: 'Booking adjustment returned no data' }, { status: 500 });
+    }
 
-    const booking = result.data!;
+    const booking = result.data;
 
     // Fire email to couple — fire-and-forget
     void (async () => {
