@@ -1,4 +1,4 @@
-export * from './useFamilyDrawer';
+export { useFamilyDrawer } from './useFamilyDrawer';
 export * from './FamilyDrawerRoot';
 export * from './FamilyDrawerTrigger';
 export * from './FamilyDrawerPortal';
