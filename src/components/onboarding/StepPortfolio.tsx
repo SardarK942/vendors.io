@@ -2,10 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
-import Image from 'next/image';
-import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { UploadButton } from '@/lib/uploadthing';
+import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 import { portfolioSchema } from '@/lib/onboarding/validation';
 
 interface Props {
@@ -20,10 +18,6 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-
-  function removeImage(url: string) {
-    setImages((prev) => prev.filter((u) => u !== url));
-  }
 
   async function onNext() {
     const parsed = portfolioSchema.safeParse({ portfolioImages: images });
@@ -68,49 +62,18 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
         </div>
       )}
 
-      {/* Image grid */}
-      {images.length > 0 && (
-        <div className="grid grid-cols-3 gap-3">
-          {images.map((url) => (
-            <div key={url} className="relative">
-              <Image
-                src={url}
-                alt="Portfolio image"
-                width={96}
-                height={96}
-                className="h-24 w-24 rounded-md object-cover"
-              />
-              <button
-                type="button"
-                onClick={() => removeImage(url)}
-                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow hover:bg-destructive/90"
-                aria-label="Remove image"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div>
-        <UploadButton
-          endpoint="portfolioImage"
-          onClientUploadComplete={(res) => {
-            if (res && res.length > 0) {
-              const newUrls = res.map((r) => r.url);
-              setImages((prev) => [...prev, ...newUrls]);
-              clearField('portfolioImages');
-            }
-          }}
-          onUploadError={(err) => {
-            setServerError(err.message ?? 'Upload failed');
-          }}
-        />
-        <p className="mt-1 text-xs text-muted-foreground">
-          Upload up to 10 images (max 4 MB each). At least 1 required.
-        </p>
-      </div>
+      <PhotoUploaderDrawer
+        value={images}
+        onChange={(urls) => {
+          setImages(urls);
+          if (urls.length > 0) clearField('portfolioImages');
+        }}
+        endpoint="portfolioImage"
+        maxFiles={10}
+        maxSizeMb={4}
+        showPrimarySelector
+        triggerLabel={{ empty: 'Upload portfolio photos', manage: 'Manage photos' }}
+      />
 
       {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 

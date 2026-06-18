@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PackageAddonsEditor, type AddonDraft } from '@/components/forms/PackageAddonsEditor';
-import { UploadButton } from '@/lib/uploadthing';
+import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -200,50 +200,17 @@ export function PackageEditorForm({ mode, initial }: Props) {
             </div>
           </div>
 
-          {/* Featured Image — UploadThing button + URL fallback */}
+          {/* Featured Image */}
           <div className="space-y-2">
             <Label>Featured Image *</Label>
-            {featuredImageUrl ? (
-              <div className="space-y-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={featuredImageUrl}
-                  alt="Featured"
-                  className="h-40 w-full rounded object-cover"
-                  onError={(e) => ((e.target as HTMLImageElement).style.display = 'none')}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setFeaturedImageUrl('')}
-                >
-                  Remove
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-2 rounded border-2 border-dashed border-muted-foreground/30 p-4">
-                <UploadButton
-                  endpoint="portfolioImage"
-                  onClientUploadComplete={(res) => {
-                    if (res?.[0]?.url) {
-                      setFeaturedImageUrl(res[0].url);
-                      toast.success('Image uploaded');
-                    }
-                  }}
-                  onUploadError={(err) => {
-                    toast.error(`Upload failed: ${err.message}`);
-                  }}
-                />
-                <p className="text-xs text-muted-foreground">Or paste a URL:</p>
-                <Input
-                  type="url"
-                  value={featuredImageUrl}
-                  onChange={(e) => setFeaturedImageUrl(e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
-            )}
+            <PhotoUploaderDrawer
+              value={featuredImageUrl ? [featuredImageUrl] : []}
+              onChange={(urls) => setFeaturedImageUrl(urls[0] ?? '')}
+              endpoint="packageFeatureImage"
+              maxFiles={1}
+              maxSizeMb={4}
+              triggerLabel={{ empty: 'Upload feature image', manage: 'Change feature image' }}
+            />
           </div>
 
           {/* Location Mode */}
