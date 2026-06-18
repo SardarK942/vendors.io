@@ -196,6 +196,9 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
           adjustmentCents={adjustmentAmount}
           reason={adjustmentReason}
           explanation={adjustmentExplanation}
+          totalPriceCents={(bookingAsAny.total_price_cents as number) ?? 0}
+          coupleCounterCount={(bookingAsAny.couple_counter_count as number) ?? 0}
+          initialAction={initialAction}
         />
       )}
 

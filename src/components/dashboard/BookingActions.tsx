@@ -9,6 +9,7 @@ import { ReviewForm } from '@/components/dashboard/ReviewForm';
 import { DisputeDialog } from '@/components/dashboard/DisputeDialog';
 import { CancelDialog } from '@/components/dashboard/CancelDialog';
 import { DepositDialog } from '@/components/dashboard/DepositDialog';
+import { CounterModal } from '@/components/bookings/CounterModal';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -35,6 +36,7 @@ export function BookingActions({
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
+  const [counterOpen, setCounterOpen] = useState(false);
 
   // ── ?action= deep-link handler ──────────────────────────────────────────────
   // Opens the matching modal when the user arrives via a notification action link.
@@ -56,11 +58,24 @@ export function BookingActions({
       case 'decline':
         setCancelOpen(true);
         break;
+      // Couple: counter-offer on an `accepted` booking (adjusted_quote_sent is
+      // handled by AdjustmentReview which owns its own ?action=counter handler).
+      case 'counter': {
+        const coupleCounterCount =
+          ((booking as unknown as Record<string, unknown>).couple_counter_count as number) ?? 0;
+        const countersLeft = Math.max(0, 2 - coupleCounterCount);
+        const isCounterable = ['accepted'].includes(booking.status);
+        if (isCounterable && countersLeft > 0) {
+          setCounterOpen(true);
+        } else {
+          opened = false;
+        }
+        break;
+      }
       // 'accept'     → vendor accept is a direct button (no modal); couple accept
       //                shows AdjustmentReview inline — both are already visible on
       //                page load, no modal to open. No-op here.
       // 'view-review' → no modal exists yet. No-op (degraded but not crashed).
-      // 'counter'     → modal ships in T18. No-op stub.
       // 'adjust'      → handled by VendorBookingActions (owns the adjust form).
       // 'send-quote'  → handled by VendorBookingActions (owns the send-quote form).
       default:
@@ -114,6 +129,36 @@ export function BookingActions({
           Pay Deposit
         </Button>
       )}
+
+      {/* Counter-offer when vendor has accepted — couple may propose a different total */}
+      {role === 'couple' &&
+        booking.status === 'accepted' &&
+        (() => {
+          const coupleCounterCount =
+            ((booking as unknown as Record<string, unknown>).couple_counter_count as number) ?? 0;
+          const countersLeft = Math.max(0, 2 - coupleCounterCount);
+          return (
+            <>
+              {countersLeft > 0 && (
+                <div className="flex flex-col gap-1">
+                  <Button
+                    variant="secondary"
+                    onClick={() => setCounterOpen(true)}
+                    disabled={loading}
+                  >
+                    Counter
+                  </Button>
+                  <span className="text-xs text-ink/60">
+                    {countersLeft} counter-offer{countersLeft === 1 ? '' : 's'} remaining
+                  </span>
+                </div>
+              )}
+              {countersLeft === 0 && (
+                <span className="self-center text-xs text-ink/60">No counter-offers remaining</span>
+              )}
+            </>
+          );
+        })()}
 
       {role === 'couple' && booking.status === 'deposit_paid' && (
         <>
@@ -171,6 +216,18 @@ export function BookingActions({
           vendorName={vendorName}
           open={depositOpen}
           onOpenChange={setDepositOpen}
+        />
+      )}
+
+      {/* CounterModal — used for `accepted` status. `adjusted_quote_sent` status
+          counter is owned by AdjustmentReview which renders its own CounterModal. */}
+      {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
+        <CounterModal
+          open={counterOpen}
+          onClose={() => setCounterOpen(false)}
+          bookingId={booking.id}
+          currentTotalCents={totalPriceCents}
+          onSuccess={() => router.refresh()}
         />
       )}
     </div>
