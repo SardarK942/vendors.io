@@ -11,6 +11,7 @@ import {
   notifyBookingAutoCancelled,
 } from '@/services/notifications.service';
 import { wouldExceedCapacity } from '@/services/availability.service';
+import { deliver } from '@/lib/notifications/deliver';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -329,24 +330,40 @@ export async function autoCancelExpiredBookings(
 
     // Fire-and-forget — email failure must not block the sweep.
     if (coupleEmail) {
-      void sendBookingAutoCancelEmail(coupleEmail, 'couple', row.id);
+      await deliver('email', () => sendBookingAutoCancelEmail(coupleEmail, 'couple', row.id), {
+        booking_id: row.id,
+      });
     }
     if (vendorUser?.email) {
-      void sendBookingAutoCancelEmail(vendorUser.email, 'vendor', row.id);
+      await deliver(
+        'email',
+        () => sendBookingAutoCancelEmail(vendorUser!.email, 'vendor', row.id),
+        { booking_id: row.id }
+      );
     }
 
     // In-app notifications — fire-and-forget alongside emails.
     if (row.couple_user_id) {
-      void notifyBookingAutoCancelled(supabase, row.couple_user_id, {
-        bookingId: row.id,
-        recipientRole: 'couple',
-      });
+      await deliver(
+        'notify',
+        () =>
+          notifyBookingAutoCancelled(supabase, row.couple_user_id!, {
+            bookingId: row.id,
+            recipientRole: 'couple',
+          }),
+        { booking_id: row.id }
+      );
     }
     if (vp.user_id) {
-      void notifyBookingAutoCancelled(supabase, vp.user_id, {
-        bookingId: row.id,
-        recipientRole: 'vendor',
-      });
+      await deliver(
+        'notify',
+        () =>
+          notifyBookingAutoCancelled(supabase, vp.user_id, {
+            bookingId: row.id,
+            recipientRole: 'vendor',
+          }),
+        { booking_id: row.id }
+      );
     }
   }
 
