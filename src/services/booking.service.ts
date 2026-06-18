@@ -780,3 +780,109 @@ export async function coupleDeclineAdjusted(
 
   return { data: data as unknown as Record<string, unknown>, status: 200 };
 }
+
+// ─── D.1: Couple counter-offer ────────────────────────────────────────────────
+
+/**
+ * coupleCounterBooking — the couple proposes a new total for a booking.
+ *
+ * Valid source statuses: 'vendor_accepted' | 'accepted' | 'vendor_adjusted_quote' | 'adjusted_quote_sent'
+ * ('vendor_accepted' / 'vendor_adjusted_quote' are the D.1 spec aliases used in tests;
+ *  'accepted' / 'adjusted_quote_sent' are the existing DB status values.)
+ *
+ * Cap: couple may counter at most 2 times per booking (couple_counter_count must be < 2 on entry).
+ * No notification is fired here — that is wired in T16.
+ */
+export async function coupleCounterBooking(args: {
+  supabase: SupabaseClient<Database>;
+  bookingId: string;
+  actorUserId: string;
+  proposedTotalCents: number;
+  note?: string;
+}): Promise<
+  | { ok: true; booking: BookingRow }
+  | {
+      ok: false;
+      code: 'forbidden' | 'counter_cap_reached' | 'invalid_state' | 'not_found';
+      message: string;
+    }
+> {
+  const { supabase, bookingId, actorUserId, proposedTotalCents, note } = args;
+
+  // 1. Fetch the booking row.
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('id, couple_user_id, status, couple_counter_count')
+    .eq('id', bookingId)
+    .single();
+
+  if (!booking) {
+    return { ok: false, code: 'not_found', message: 'Booking not found.' };
+  }
+
+  // 2. Auth guard — only the booking's couple may counter.
+  if (booking.couple_user_id !== actorUserId) {
+    return { ok: false, code: 'forbidden', message: 'You are not the couple on this booking.' };
+  }
+
+  // 3. Cap guard — primary check (DB constraint is backstop for concurrent races).
+  const currentCount = (booking.couple_counter_count as number) ?? 0;
+  if (currentCount >= 2) {
+    return {
+      ok: false,
+      code: 'counter_cap_reached',
+      message: 'You have used both counter-offers for this booking.',
+    };
+  }
+
+  // 4. State guard — only allow counter from post-acceptance / post-vendor-adjustment states.
+  //    'vendor_accepted' and 'vendor_adjusted_quote' are D.1 spec aliases for the existing
+  //    'accepted' and 'adjusted_quote_sent' DB values; accept both for compatibility.
+  const VALID_COUNTER_STATUSES = [
+    'vendor_accepted',
+    'accepted',
+    'vendor_adjusted_quote',
+    'adjusted_quote_sent',
+  ];
+  if (!VALID_COUNTER_STATUSES.includes(booking.status as string)) {
+    return {
+      ok: false,
+      code: 'invalid_state',
+      message: `Cannot counter from status '${booking.status}'. Booking must be in accepted or vendor-adjusted state.`,
+    };
+  }
+
+  // 5. Persist the counter-offer atomically.
+  const { data, error } = await supabase
+    .from('bookings')
+    .update({
+      couple_counter_count: currentCount + 1,
+      status: 'couple_countered',
+      couple_counter_amount: proposedTotalCents,
+      couple_counter_note: note ?? null,
+    })
+    .eq('id', bookingId)
+    .select('*')
+    .single();
+
+  // DB CHECK constraint (couple_counter_count BETWEEN 0 AND 2) is the backstop for races.
+  if (error) {
+    if (
+      error.message?.includes('couple_counter_count') ||
+      error.message?.includes('check constraint')
+    ) {
+      return {
+        ok: false,
+        code: 'counter_cap_reached',
+        message: 'Counter-offer cap reached (concurrent update).',
+      };
+    }
+    return {
+      ok: false,
+      code: 'invalid_state',
+      message: error.message ?? 'Update failed.',
+    };
+  }
+
+  return { ok: true, booking: data as BookingRow };
+}
