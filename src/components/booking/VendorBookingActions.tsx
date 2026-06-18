@@ -22,6 +22,8 @@ interface Props {
   /** Value of ?action= query param. Auto-expands the adjust/send-quote form on
    *  mount and strips the query from history so refresh does not re-trigger. */
   initialAction?: string;
+  /** T12: Remaining adjustments count for the vendor. Capped at 2. */
+  vendorAdjustmentCount?: number;
 }
 
 export function VendorBookingActions({
@@ -31,11 +33,15 @@ export function VendorBookingActions({
   bookingBusinessId,
   bookingBusinessName,
   initialAction,
+  vendorAdjustmentCount,
 }: Props) {
   const router = useRouter();
   const [showAdjustForm, setShowAdjustForm] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const triggerCrossBusinessToast = useCrossBusinessActionToast();
+
+  // T17: Compute remaining adjustments (cap is 2)
+  const adjustsLeft = Math.max(0, 2 - (vendorAdjustmentCount ?? 0));
 
   // ── ?action= deep-link handler ──────────────────────────────────────────────
   // 'adjust' and 'send-quote' both expand the inline quote form on this component.
@@ -117,13 +123,21 @@ export function VendorBookingActions({
                 ? 'Accepting...'
                 : `Accept at $${(totalPriceCents / 100).toLocaleString()}`}
             </Button>
-            <Button
-              variant="outline"
-              className="flex-1"
-              onClick={() => setShowAdjustForm((s) => !s)}
-            >
-              {showAdjustForm ? 'Cancel' : 'Adjust quote'}
-            </Button>
+            <div className="flex flex-1 flex-col gap-1">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setShowAdjustForm((s) => !s)}
+                disabled={adjustsLeft === 0 && !showAdjustForm}
+              >
+                {showAdjustForm ? 'Cancel' : 'Adjust quote'}
+              </Button>
+              <span className="text-xs text-ink/60">
+                {adjustsLeft === 0
+                  ? 'No more adjustments available'
+                  : `${adjustsLeft} adjustment${adjustsLeft === 1 ? '' : 's'} remaining`}
+              </span>
+            </div>
           </div>
         )}
 

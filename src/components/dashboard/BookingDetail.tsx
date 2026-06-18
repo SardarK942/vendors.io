@@ -397,6 +397,9 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
                   bookingBusinessId={booking.vendor_profile_id}
                   bookingBusinessName={vendorProfile?.business_name ?? undefined}
                   initialAction={initialAction}
+                  vendorAdjustmentCount={
+                    (booking as Record<string, unknown>).vendor_adjustment_count as number
+                  }
                 />
               )}
 
