@@ -882,6 +882,9 @@ export interface Database {
           metadata: Record<string, unknown>;
           read_at: string | null;
           created_at: string;
+          email_status: 'pending' | 'sent' | 'failed' | 'skipped';
+          email_error: string | null;
+          email_attempted_at: string | null;
         };
         Insert: {
           id?: string;
@@ -893,9 +896,15 @@ export interface Database {
           metadata?: Record<string, unknown>;
           read_at?: string | null;
           created_at?: string;
+          email_status?: 'pending' | 'sent' | 'failed' | 'skipped';
+          email_error?: string | null;
+          email_attempted_at?: string | null;
         };
         Update: {
           read_at?: string | null;
+          email_status?: 'pending' | 'sent' | 'failed' | 'skipped';
+          email_error?: string | null;
+          email_attempted_at?: string | null;
         };
         Relationships: [
           {
