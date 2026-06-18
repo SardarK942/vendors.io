@@ -187,6 +187,7 @@ function ManageView() {
         showPrimarySelector={showPrimarySelector}
         onRemove={removeAt}
         onSetPrimary={setPrimary}
+        onReorder={onChange}
       />
 
       <button
