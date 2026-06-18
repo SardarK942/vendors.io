@@ -28,7 +28,10 @@ import { HttpError } from '@/lib/api/error-boundary';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function makeRequest(step: string, body: unknown): [NextRequest, { params: Promise<{ step: string }> }] {
+function makeRequest(
+  step: string,
+  body: unknown
+): [NextRequest, { params: Promise<{ step: string }> }] {
   const req = new NextRequest(`http://localhost/api/vendor-profile/setup/${step}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -54,11 +57,9 @@ function buildSupabaseForBasics({
         }),
       }),
       update: (_payload: unknown) => ({
-        eq: (_col: string, _val: string) =>
-          Promise.resolve({ data: null, error: updateError }),
+        eq: (_col: string, _val: string) => Promise.resolve({ data: null, error: updateError }),
       }),
-      insert: (_payload: unknown) =>
-        Promise.resolve({ data: null, error: insertError }),
+      insert: (_payload: unknown) => Promise.resolve({ data: null, error: insertError }),
     }),
   };
 }
@@ -80,14 +81,15 @@ function buildSupabaseForUpdate({
         eq: (_col: string, _val: string) => ({
           maybeSingle: () =>
             Promise.resolve({
-              data: existingProfileId ? { id: existingProfileId, slug: 'test-slug', user_id: 'u-1' } : null,
+              data: existingProfileId
+                ? { id: existingProfileId, slug: 'test-slug', user_id: 'u-1' }
+                : null,
               error: null,
             }),
         }),
       }),
       update: (_payload: unknown) => ({
-        eq: (_col: string, _val: string) =>
-          Promise.resolve({ data: null, error: updateError }),
+        eq: (_col: string, _val: string) => Promise.resolve({ data: null, error: updateError }),
       }),
     }),
   };
@@ -104,7 +106,11 @@ describe('PATCH /api/vendor-profile/setup/[step] — 401', () => {
 
   it('returns 401 when unauthenticated', async () => {
     mockRequireUser.mockRejectedValueOnce(new HttpError(401, 'Unauthorized'));
-    const [req, ctx] = makeRequest('basics', { businessName: 'X', category: 'mehndi', bio: 'a'.repeat(50) });
+    const [req, ctx] = makeRequest('basics', {
+      businessName: 'X',
+      category: 'mehndi',
+      bio: 'a'.repeat(50),
+    });
     const res = await PATCH(req, ctx);
     expect(res.status).toBe(401);
   });
@@ -148,7 +154,9 @@ describe('PATCH /api/vendor-profile/setup/[step] — basics', () => {
   });
 
   it('returns 200 and UPDATEs when existing row present', async () => {
-    const sb = buildSupabaseForBasics({ existingRow: { id: 'vp-1', slug: 'existing-slug-abc123' } });
+    const sb = buildSupabaseForBasics({
+      existingRow: { id: 'vp-1', slug: 'existing-slug-abc123' },
+    });
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
 
     const [req, ctx] = makeRequest('basics', {
@@ -172,7 +180,7 @@ describe('PATCH /api/vendor-profile/setup/[step] — location', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 400 when baseAddressLine1 is missing', async () => {
+  it('returns 200 when baseAddressLine1 is missing (optional)', async () => {
     const sb = buildSupabaseForUpdate();
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
 
@@ -185,7 +193,9 @@ describe('PATCH /api/vendor-profile/setup/[step] — location', () => {
       baseAddressPublic: false,
     });
     const res = await PATCH(req, ctx);
-    expect(res.status).toBe(400);
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json.ok).toBe(true);
   });
 
   it('returns 200 with valid location data', async () => {

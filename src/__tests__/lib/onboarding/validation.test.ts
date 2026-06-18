@@ -46,7 +46,7 @@ describe('locationSchema', () => {
       }).success
     ).toBe(true);
   });
-  it('rejects missing line_1', () => {
+  it('accepts missing line_1 (optional)', () => {
     expect(
       locationSchema.safeParse({
         baseAddressLine1: '',
@@ -56,7 +56,7 @@ describe('locationSchema', () => {
         baseGooglePlaceId: 'ChIJxxx',
         baseAddressPublic: false,
       }).success
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

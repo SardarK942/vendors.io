@@ -36,6 +36,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
     google_place_id: initial.baseGooglePlaceId,
   });
   const [addressPublic, setAddressPublic] = useState(initial.baseAddressPublic);
+  const [skipAddress, setSkipAddress] = useState(!initial.baseAddressLine1);
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -92,8 +93,9 @@ export function StepLocation({ initial, profileId, mode }: Props) {
             clearField('basePostalCode');
             clearField('baseGooglePlaceId');
           }}
-          placeholder="Start typing your address..."
-          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          placeholder={skipAddress ? 'Skipped' : 'Start typing your address...'}
+          disabled={skipAddress}
+          className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         />
         {place.city && (
           <p className="text-xs text-muted-foreground">
@@ -102,6 +104,35 @@ export function StepLocation({ initial, profileId, mode }: Props) {
         )}
         {getError('baseAddressLine1') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('baseAddressLine1')}</p>
+        )}
+        <label className="mt-2 flex items-center gap-2 text-sm text-ink/80">
+          <input
+            type="checkbox"
+            checked={skipAddress}
+            onChange={(e) => {
+              setSkipAddress(e.target.checked);
+              if (e.target.checked) {
+                setPlace({
+                  address_line_1: '',
+                  city: '',
+                  state: '',
+                  postal_code: '',
+                  google_place_id: '',
+                });
+                clearField('baseAddressLine1');
+                clearField('baseCity');
+                clearField('baseState');
+                clearField('basePostalCode');
+                clearField('baseGooglePlaceId');
+              }
+            }}
+          />
+          I don&apos;t have a fixed address (I travel to clients)
+        </label>
+        {!skipAddress && !place.address_line_1 && (
+          <p className="mt-1 text-xs text-ink/60">
+            Adding an address helps couples find you in local searches.
+          </p>
         )}
       </div>
 
