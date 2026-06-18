@@ -223,6 +223,9 @@ export function StepReview({ profile, profileId, mode }: Props) {
               ? 'Direct payments — coordinate with each couple yourself.'
               : 'Through Baazar — couples pay deposit via the platform.'}
           </p>
+          <p className="mt-2 text-xs text-ink/60">
+            Baazar takes 3% (Stripe mode) or 5% (cash mode). Everything else is yours.
+          </p>
         </div>
       </div>
 

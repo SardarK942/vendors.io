@@ -80,9 +80,18 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
           <CreditCard className="mb-3 h-8 w-8 text-primary" />
           <h3 className="mb-1 font-semibold">Through Baazar (recommended)</h3>
           <p className="text-sm text-muted-foreground">
-            Couples pay a 10% deposit. We hold your portion until you set up Stripe Connect later.
-            Best for tracking and dispute protection.
+            Couples pay a 10% deposit through Baazar at booking. We keep{' '}
+            <strong>3% of the booking total</strong> as our platform fee; you receive the rest. You
+            handle the remaining 90% directly with the couple per your payment terms.
           </p>
+          <details className="mt-2 text-xs text-ink/70">
+            <summary className="cursor-pointer">How does this work?</summary>
+            <p className="mt-1">
+              The deposit confirms the booking. The balance is what the couple pays the vendor
+              directly &mdash; Baazar doesn&apos;t process it. We keep our platform fee from the
+              deposit; you receive everything else.
+            </p>
+          </details>
         </button>
 
         <button
@@ -100,9 +109,18 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
           <Wallet className="mb-3 h-8 w-8 text-primary" />
           <h3 className="mb-1 font-semibold">Direct payments</h3>
           <p className="text-sm text-muted-foreground">
-            Coordinate with each couple yourself (cash, Zelle, check, etc.). Baazar handles a small
-            platform fee at booking — you handle the rest.
+            Couples pay a 5% deposit through Baazar at booking. We keep that 5% as our platform fee
+            (slightly higher because we&apos;re carrying the booking risk). You handle the remaining
+            95% directly with the couple.
           </p>
+          <details className="mt-2 text-xs text-ink/70">
+            <summary className="cursor-pointer">How does this work?</summary>
+            <p className="mt-1">
+              The deposit confirms the booking. The balance is what the couple pays the vendor
+              directly &mdash; Baazar doesn&apos;t process it. We keep our platform fee from the
+              deposit; you receive everything else.
+            </p>
+          </details>
         </button>
       </div>
 
