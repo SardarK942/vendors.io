@@ -1,72 +1,51 @@
-import { NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { requireUser } from '@/lib/api/auth';
 import { coupleCounterBooking } from '@/services/booking.service';
 
-export async function POST(req: Request, { params }: { params: { id: string } }) {
-  // Auth check first — leaks no error to unauthenticated callers.
-  const supabase = await createServerSupabaseClient();
-  const {
-    data: { user },
-    error: authError,
-  } = await supabase.auth.getUser();
+export const POST = withErrorBoundary(
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
+    const { user, supabase } = await requireUser();
 
-  if (authError || !user) {
-    return NextResponse.json({ code: 'unauthorized' }, { status: 401 });
+    let body: { totalCents?: unknown; note?: unknown };
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json({ error: 'Body must be JSON' }, { status: 400 });
+    }
+
+    if (
+      typeof body.totalCents !== 'number' ||
+      !Number.isFinite(body.totalCents) ||
+      !Number.isInteger(body.totalCents) ||
+      body.totalCents <= 0
+    ) {
+      return NextResponse.json({ error: 'totalCents must be a positive integer' }, { status: 400 });
+    }
+
+    if (body.note !== undefined && body.note !== null && typeof body.note !== 'string') {
+      return NextResponse.json({ error: 'note must be a string when provided' }, { status: 400 });
+    }
+
+    const result = await coupleCounterBooking({
+      supabase,
+      bookingId: params.id,
+      actorUserId: user.id,
+      proposedTotalCents: body.totalCents,
+      note: typeof body.note === 'string' ? body.note : undefined,
+    });
+
+    if (result.ok) {
+      return NextResponse.json({ data: result.booking }, { status: 200 });
+    }
+
+    const statusByCode = {
+      counter_cap_reached: 409,
+      forbidden: 403,
+      invalid_state: 400,
+      not_found: 404,
+    } as const;
+
+    return NextResponse.json({ error: result.message }, { status: statusByCode[result.code] });
   }
-
-  // Parse body.
-  let body: { totalCents?: unknown; note?: unknown };
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json(
-      { code: 'invalid_input', message: 'Body must be JSON' },
-      { status: 400 }
-    );
-  }
-
-  // Validate totalCents: must be a positive integer.
-  if (
-    typeof body.totalCents !== 'number' ||
-    !Number.isFinite(body.totalCents) ||
-    !Number.isInteger(body.totalCents) ||
-    body.totalCents <= 0
-  ) {
-    return NextResponse.json(
-      { code: 'invalid_input', message: 'totalCents must be a positive integer' },
-      { status: 400 }
-    );
-  }
-
-  // Validate note: string or absent.
-  if (body.note !== undefined && body.note !== null && typeof body.note !== 'string') {
-    return NextResponse.json(
-      { code: 'invalid_input', message: 'note must be a string when provided' },
-      { status: 400 }
-    );
-  }
-
-  const result = await coupleCounterBooking({
-    supabase,
-    bookingId: params.id,
-    actorUserId: user.id,
-    proposedTotalCents: body.totalCents,
-    note: body.note as string | undefined,
-  });
-
-  if (result.ok) {
-    return NextResponse.json({ booking: result.booking });
-  }
-
-  const statusByCode: Record<typeof result.code, number> = {
-    counter_cap_reached: 409,
-    forbidden: 403,
-    invalid_state: 400,
-    not_found: 404,
-  };
-
-  return NextResponse.json(
-    { code: result.code, message: result.message },
-    { status: statusByCode[result.code] }
-  );
-}
+);

@@ -63,7 +63,7 @@ describe('POST /api/bookings/[id]/counter', () => {
     const json = await res.json();
 
     expect(res.status).toBe(200);
-    expect(json).toEqual({ booking: fakeBooking });
+    expect(json).toEqual({ data: fakeBooking });
     expect(mockCounter).toHaveBeenCalledWith(
       expect.objectContaining({
         bookingId: BOOKING_ID,
@@ -74,36 +74,47 @@ describe('POST /api/bookings/[id]/counter', () => {
     );
   });
 
-  it('400 — missing totalCents returns invalid_input before calling service', async () => {
+  it('400 — missing totalCents returns error before calling service', async () => {
     const res = await POST(makeRequest({ note: 'no amount here' }), {
       params: { id: BOOKING_ID },
     });
     const json = await res.json();
 
     expect(res.status).toBe(400);
-    expect(json.code).toBe('invalid_input');
+    expect(json.error).toContain('totalCents must be');
     expect(mockCounter).not.toHaveBeenCalled();
   });
 
-  it('400 — negative totalCents returns invalid_input before calling service', async () => {
+  it('400 — totalCents of zero returns error before calling service', async () => {
+    const res = await POST(makeRequest({ totalCents: 0 }), {
+      params: { id: BOOKING_ID },
+    });
+    const json = await res.json();
+
+    expect(res.status).toBe(400);
+    expect(json.error).toContain('totalCents must be');
+    expect(mockCounter).not.toHaveBeenCalled();
+  });
+
+  it('400 — negative totalCents returns error before calling service', async () => {
     const res = await POST(makeRequest({ totalCents: -100 }), {
       params: { id: BOOKING_ID },
     });
     const json = await res.json();
 
     expect(res.status).toBe(400);
-    expect(json.code).toBe('invalid_input');
+    expect(json.error).toContain('totalCents must be');
     expect(mockCounter).not.toHaveBeenCalled();
   });
 
-  it('400 — float totalCents returns invalid_input before calling service', async () => {
+  it('400 — float totalCents returns error before calling service', async () => {
     const res = await POST(makeRequest({ totalCents: 99.99 }), {
       params: { id: BOOKING_ID },
     });
     const json = await res.json();
 
     expect(res.status).toBe(400);
-    expect(json.code).toBe('invalid_input');
+    expect(json.error).toContain('totalCents must be');
     expect(mockCounter).not.toHaveBeenCalled();
   });
 
@@ -120,7 +131,7 @@ describe('POST /api/bookings/[id]/counter', () => {
     const json = await res.json();
 
     expect(res.status).toBe(401);
-    expect(json.code).toBe('unauthorized');
+    expect(json.error).toBeDefined();
     expect(mockCounter).not.toHaveBeenCalled();
   });
 
@@ -137,7 +148,7 @@ describe('POST /api/bookings/[id]/counter', () => {
     const json = await res.json();
 
     expect(res.status).toBe(403);
-    expect(json.code).toBe('forbidden');
+    expect(json.error).toBe('You are not the couple on this booking.');
   });
 
   it('409 — service returns counter_cap_reached', async () => {
@@ -153,7 +164,7 @@ describe('POST /api/bookings/[id]/counter', () => {
     const json = await res.json();
 
     expect(res.status).toBe(409);
-    expect(json.code).toBe('counter_cap_reached');
+    expect(json.error).toBe('You have used both counter-offers for this booking.');
   });
 
   it('400 — service returns invalid_state', async () => {
@@ -169,7 +180,7 @@ describe('POST /api/bookings/[id]/counter', () => {
     const json = await res.json();
 
     expect(res.status).toBe(400);
-    expect(json.code).toBe('invalid_state');
+    expect(json.error).toBe("Cannot counter from status 'pending_quote'.");
   });
 
   it('404 — service returns not_found', async () => {
@@ -185,6 +196,6 @@ describe('POST /api/bookings/[id]/counter', () => {
     const json = await res.json();
 
     expect(res.status).toBe(404);
-    expect(json.code).toBe('not_found');
+    expect(json.error).toBe('Booking not found.');
   });
 });
