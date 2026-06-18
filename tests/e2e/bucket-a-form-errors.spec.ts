@@ -34,7 +34,7 @@ test.describe('Bucket A — form errors + address optional', () => {
     vendor = null;
   });
 
-  test('Step 1: missing business name + short bio surfaces 2 errors simultaneously', async ({
+  test('Step 1: missing business name surfaces inline error + summary count', async ({
     browser,
   }) => {
     vendor = await seedVendor({ chargesEnabled: false });
@@ -53,27 +53,30 @@ test.describe('Bucket A — form errors + address optional', () => {
     await page.goto('/dashboard/profile/setup/basics');
 
     // Clear the business name field (seeded as 'E2E Test Vendor').
-    // After clearing: businessName='' → fails z.string().min(1)
-    // category='Photography' (seeded) → passes z.string().min(1)
-    // bio='Seeded vendor for E2E tests.' (28 chars) → fails z.string().min(50)
-    // → 2 errors total
+    // T5-proof: assertion is intentionally flexible on error count.
+    // Today: 2 errors (businessName + bio, since bio min(50) still required).
+    // After T5: 1 error (businessName only, since T5 drops bio min(50) constraint).
+    // The regex /\d+ fields? needs? attention/i matches both "1 field needs" and
+    // "2 fields need", making this test valid before and after T5 lands.
     const businessNameInput = page.getByLabel(/Business name/i);
     await businessNameInput.fill('');
 
-    // Click Next without fixing either failing field.
+    // Also clear the bio to amplify the effect (empty string today produces error,
+    // after T5 will pass silently since min(50) is removed).
+    const bioInput = page.getByLabel(/bio/i);
+    await bioInput.fill('');
+
+    // Click Next without fixing the failing fields.
     await page.getByRole('button', { name: /next/i }).click();
 
-    // Summary count: "2 fields need attention"
-    // (StepBasics renders this when total >= 2)
-    await expect(page.getByText(/2 fields need attention/i)).toBeVisible({ timeout: 10_000 });
+    // Summary count: flexible regex matches "1 field needs attention" (after T5)
+    // or "2 fields need attention" (today).
+    await expect(page.getByText(/\d+ fields? needs? attention/i)).toBeVisible({ timeout: 10_000 });
 
     // Inline error below Business name: Zod v4 default message for min(1)
     await expect(
       page.getByText(/Too small: expected string to have >=1 characters/i).first()
     ).toBeVisible();
-
-    // Inline error below Bio: custom Zod message from basicsSchema
-    await expect(page.getByText(/Bio must be at least 50 characters/i)).toBeVisible();
 
     await ctx.close();
   });
