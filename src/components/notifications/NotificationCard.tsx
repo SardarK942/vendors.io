@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import type { Database, NotificationType } from '@/types/database.types';
-import { NOTIFICATION_ACTIONS, type ActionMap } from './actions';
+import { getActionsFor } from './actions';
 
 type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
@@ -43,7 +43,7 @@ interface Props {
 export function NotificationCard({ notification, onClick, showAllActions = false }: Props) {
   const isUnread = !notification.read_at;
 
-  const allActions = NOTIFICATION_ACTIONS[notification.type as keyof ActionMap] ?? [];
+  const allActions = getActionsFor(notification);
   const visibleActions = showAllActions ? allActions : allActions.slice(0, 1);
 
   const inner = (

@@ -24,6 +24,25 @@ function bookingHref(n: NotificationRow, action?: string): string {
   return action ? `/dashboard/bookings/${id}?action=${action}` : `/dashboard/bookings/${id}`;
 }
 
+// ─── Action helper with role discrimination ────────────────────────────────────
+
+export function getActionsFor(n: NotificationRow): ActionConfig[] {
+  if (n.type === 'booking_completed') {
+    const meta = n.metadata as { booking_id?: string; recipient_role?: string } | null;
+    const recipientRole = meta?.recipient_role;
+
+    if (recipientRole === 'vendor') {
+      return [{ label: 'View booking', variant: 'secondary', href: (n) => bookingHref(n) }];
+    }
+    // Couple (default): Leave Review
+    return [
+      { label: 'Leave Review', variant: 'primary', href: (n) => bookingHref(n, 'leave-review') },
+    ];
+  }
+
+  return NOTIFICATION_ACTIONS[n.type as keyof ActionMap] ?? [];
+}
+
 // ─── Action map ───────────────────────────────────────────────────────────────
 
 export const NOTIFICATION_ACTIONS: ActionMap = {
