@@ -20,6 +20,7 @@ const TYPE_ICON: Record<NotificationType, string> = {
   booking_completed: '🎉',
   review_received: '⭐',
   custom_request_received: '📋',
+  couple_countered: '↩️',
 };
 
 function timeAgo(iso: string): string {
