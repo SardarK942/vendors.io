@@ -4,7 +4,6 @@ import type { CancellerRole, ServiceResult } from '@/types';
 import { getBookingDateRange } from '@/services/booking.service';
 import { stripe } from '@/lib/stripe/client';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { createMinimalAccount, createFullOnboardingLink } from '@/lib/stripe/connect';
 import { DEPOSIT_RATE, calculatePlatformCut, calculateVendorPending } from '@/lib/utils';
 import {
   sendDepositConfirmationEmail,
@@ -25,37 +24,6 @@ import {
 
 type TransactionRow = Database['public']['Tables']['transactions']['Row'];
 
-// ─── Minimal Stripe Account (deferred onboarding) ─────────────────────────────
-// Called lazily — typically when vendor submits their first quote. Idempotent.
-
-export async function setupMinimalStripeAccount(
-  supabase: SupabaseClient<Database>,
-  vendorProfileId: string,
-  vendorEmail: string,
-  country: string = 'US'
-): Promise<ServiceResult<{ stripeAccountId: string }>> {
-  const { data: existing } = await supabase
-    .from('stripe_accounts')
-    .select('stripe_account_id')
-    .eq('vendor_profile_id', vendorProfileId)
-    .single();
-
-  if (existing) {
-    return { data: { stripeAccountId: existing.stripe_account_id }, status: 200 };
-  }
-
-  const { accountId } = await createMinimalAccount(vendorProfileId, vendorEmail, country);
-
-  const { error } = await supabase.from('stripe_accounts').insert({
-    vendor_profile_id: vendorProfileId,
-    stripe_account_id: accountId,
-    minimal_created_at: new Date().toISOString(),
-  });
-
-  if (error) return { error: 'Failed to save Stripe account', status: 500 };
-  return { data: { stripeAccountId: accountId }, status: 200 };
-}
-
 // ─── Deposit Checkout ─────────────────────────────────────────────────────────
 // Plain platform charge (no destination, no app fee, immediate capture).
 // Baazar retains 100% of the 5% deposit; no Connect transfer to vendor.
@@ -65,10 +33,6 @@ export async function createDepositCheckout(
   bookingId: string,
   coupleUserId: string
 ): Promise<ServiceResult<{ checkoutUrl: string }>> {
-  // RLS on stripe_accounts only allows the vendor to read their own row, so the
-  // couple can't fetch it through the user-scoped client. Read the booking +
-  // vendor_profile under RLS (enforces couple ownership), then read the
-  // vendor's stripe_account through a service-role client.
   const { data: booking } = await supabase
     .from('bookings')
     .select('*, vendor_profiles!inner(id, business_name)')
@@ -86,17 +50,6 @@ export async function createDepositCheckout(
     id: string;
     business_name: string;
   };
-
-  const admin = createServiceRoleClient();
-  const { data: stripeAccount } = await admin
-    .from('stripe_accounts')
-    .select('frozen_reason')
-    .eq('vendor_profile_id', vp.id)
-    .maybeSingle();
-
-  if (stripeAccount?.frozen_reason) {
-    return { error: 'This vendor is temporarily unable to accept new bookings.', status: 400 };
-  }
 
   // Compute the deposit amount — uniform 5% of the booking total.
   // Baazar retains 100% of the deposit; no Connect transfer to vendor.
@@ -258,41 +211,6 @@ export async function handlePaymentFailure(
     vendor_payout: 0,
     status: 'failed',
   });
-}
-
-export async function handleAccountUpdated(
-  supabase: SupabaseClient<Database>,
-  stripeAccountId: string,
-  chargesEnabled: boolean,
-  payoutsEnabled: boolean,
-  detailsSubmitted: boolean
-): Promise<void> {
-  // First-time details_submitted → record timestamp for onboarding-pending UI.
-  const { data: existing } = await supabase
-    .from('stripe_accounts')
-    .select('details_submitted_at')
-    .eq('stripe_account_id', stripeAccountId)
-    .maybeSingle();
-
-  const updatePayload: Record<string, unknown> = {
-    onboarding_complete: detailsSubmitted,
-    charges_enabled: chargesEnabled,
-    payouts_enabled: payoutsEnabled,
-  };
-
-  if (detailsSubmitted && !existing?.details_submitted_at) {
-    updatePayload.details_submitted_at = new Date().toISOString();
-  }
-
-  await supabase
-    .from('stripe_accounts')
-    .update(updatePayload)
-    .eq('stripe_account_id', stripeAccountId);
-
-  // If vendor just became fully onboarded, auto-transfer any earned funds.
-  if (chargesEnabled && payoutsEnabled) {
-    await autoTransferEarnedFunds(supabase, stripeAccountId);
-  }
 }
 
 export async function handleChargeRefunded(
@@ -520,10 +438,6 @@ export async function cancelBooking(
     if (policy.clawVendorOtherPending) {
       await clawVendorPending(supabase, vp.id, activeTx.vendor_payout);
     }
-
-    if (cancellerRole === 'vendor' && effectiveFault === 'vendor_fault') {
-      await recordVendorNoShowOrCancel(supabase, vp.id);
-    }
   }
 
   await notifyCancellation(supabase, bookingId, cancellerRole, refundAmount, reason);
@@ -653,38 +567,6 @@ export async function clawVendorPending(
       shortfall: remaining,
     });
   }
-}
-
-/**
- * Record a vendor no-show/cancellation strike. Freezes the account on 2nd strike
- * in the same calendar year. Annual reset is handled by the daily cron.
- */
-export async function recordVendorNoShowOrCancel(
-  supabase: SupabaseClient<Database>,
-  vendorProfileId: string
-): Promise<void> {
-  const currentYear = new Date().getUTCFullYear();
-  const { data: account } = await supabase
-    .from('stripe_accounts')
-    .select('no_show_count_year, no_show_year')
-    .eq('vendor_profile_id', vendorProfileId)
-    .single();
-
-  if (!account) return;
-
-  const count = account.no_show_year === currentYear ? (account.no_show_count_year ?? 0) + 1 : 1;
-
-  const updates: Database['public']['Tables']['stripe_accounts']['Update'] = {
-    no_show_count_year: count,
-    no_show_year: currentYear,
-  };
-
-  if (count >= 2) {
-    updates.frozen_reason = 'no_show_strikes';
-    updates.frozen_at = new Date().toISOString();
-  }
-
-  await supabase.from('stripe_accounts').update(updates).eq('vendor_profile_id', vendorProfileId);
 }
 
 // ─── Completion ───────────────────────────────────────────────────────────────
@@ -1023,27 +905,11 @@ export async function getVendorEarnings(
 ): Promise<ServiceResult<VendorEarnings>> {
   const { data: vp } = await supabase
     .from('vendor_profiles')
-    .select(
-      'id, stripe_accounts(stripe_account_id, charges_enabled, payouts_enabled, frozen_reason, details_submitted_at)'
-    )
+    .select('id')
     .eq('user_id', vendorUserId)
     .single();
 
   if (!vp) return { error: 'Vendor profile not found', status: 404 };
-
-  type StripeAccountRow = {
-    stripe_account_id: string;
-    charges_enabled: boolean;
-    payouts_enabled: boolean;
-    frozen_reason: 'no_show_strikes' | 'admin_freeze' | null;
-    details_submitted_at: string | null;
-  };
-  const stripeAccountsList = Array.isArray(vp.stripe_accounts)
-    ? vp.stripe_accounts
-    : vp.stripe_accounts
-      ? [vp.stripe_accounts]
-      : [];
-  const stripeAccount = (stripeAccountsList as StripeAccountRow[])?.[0];
 
   const { data: bookings } = await supabase
     .from('bookings')
@@ -1067,287 +933,43 @@ export async function getVendorEarnings(
     }
   }
 
-  const fullyOnboarded = stripeAccount?.charges_enabled && stripeAccount?.payouts_enabled;
-  const verificationPending = !fullyOnboarded && !!stripeAccount?.details_submitted_at;
-  const requiresOnboarding = !fullyOnboarded && !verificationPending;
-
   return {
     data: {
       pending_escrow_cents: pendingEscrow,
       available_cents: available,
       transferred_cents: transferred,
-      requires_onboarding: requiresOnboarding,
-      verification_pending: verificationPending,
-      stripe_account_id: stripeAccount?.stripe_account_id ?? null,
-      frozen_reason: stripeAccount?.frozen_reason ?? null,
+      requires_onboarding: false,
+      verification_pending: false,
+      stripe_account_id: null,
+      frozen_reason: null,
     },
     status: 200,
   };
 }
 
+// Bucket F: Stripe Connect transfer flow removed — stripe_accounts table dropped.
+// initiatePayout is a stub until a replacement withdrawal strategy is defined.
 export async function initiatePayout(
-  supabase: SupabaseClient<Database>,
-  vendorUserId: string
+  _supabase: SupabaseClient<Database>,
+  _vendorUserId: string
 ): Promise<ServiceResult<{ transferred_cents: number; onboarding_url?: string }>> {
-  const earnings = await getVendorEarnings(supabase, vendorUserId);
-  if (earnings.error || !earnings.data) {
-    return { error: earnings.error ?? 'unknown', status: earnings.status };
-  }
-
-  if (earnings.data.frozen_reason) {
-    return { error: 'Your account is temporarily frozen. Contact support.', status: 403 };
-  }
-
-  if (earnings.data.available_cents === 0) {
-    return { error: 'No earned funds available to withdraw', status: 400 };
-  }
-
-  if (!earnings.data.stripe_account_id) {
-    return { error: 'Stripe account not initialized', status: 400 };
-  }
-
-  if (earnings.data.requires_onboarding) {
-    const url = await createFullOnboardingLink(earnings.data.stripe_account_id);
-    return { data: { transferred_cents: 0, onboarding_url: url }, status: 200 };
-  }
-
-  const { data: vp } = await supabase
-    .from('vendor_profiles')
-    .select('id')
-    .eq('user_id', vendorUserId)
-    .single();
-
-  if (!vp) return { error: 'Vendor profile not found', status: 404 };
-
-  const { data: bookings } = await supabase
-    .from('bookings')
-    .select('id')
-    .eq('vendor_profile_id', vp.id);
-  const bookingIds = (bookings ?? []).map((b) => b.id);
-
-  if (bookingIds.length === 0) {
-    return { error: 'No earned funds available to withdraw', status: 400 };
-  }
-
-  const { data: earnedTxs } = await supabase
-    .from('transactions')
-    .select('id, stripe_payment_intent_id, vendor_payout')
-    .eq('status', 'earned')
-    .is('transferred_at', null)
-    .in('booking_request_id', bookingIds);
-
-  let totalTransferred = 0;
-
-  for (const tx of earnedTxs ?? []) {
-    try {
-      const pi = await stripe.paymentIntents.retrieve(tx.stripe_payment_intent_id);
-      const chargeId =
-        typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id;
-
-      if (!chargeId) {
-        logger.warn('no charge on PI, skipping transfer', {
-          site: 'initiatePayout',
-          paymentIntentId: tx.stripe_payment_intent_id,
-          txId: tx.id,
-        });
-        continue;
-      }
-
-      const transfer = await stripe.transfers.create(
-        {
-          amount: tx.vendor_payout,
-          currency: 'usd',
-          destination: earnings.data.stripe_account_id,
-          source_transaction: chargeId,
-          metadata: { vendor_user_id: vendorUserId, transaction_id: tx.id },
-        },
-        { idempotencyKey: `tx:${tx.id}:transfer` }
-      );
-
-      await supabase
-        .from('transactions')
-        .update({
-          transferred_at: new Date().toISOString(),
-          stripe_transfer_id: transfer.id,
-        })
-        .eq('id', tx.id);
-
-      totalTransferred += tx.vendor_payout;
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Transfer failed';
-      logger.error('transfer failed', err, { site: 'initiatePayout', txId: tx.id });
-      if (totalTransferred > 0) {
-        return { data: { transferred_cents: totalTransferred }, status: 200 };
-      }
-      return { error: `Transfer failed: ${message}`, status: 502 };
-    }
-  }
-
-  if (totalTransferred === 0) {
-    return { error: 'No transferable funds found', status: 400 };
-  }
-
-  return { data: { transferred_cents: totalTransferred }, status: 200 };
-}
-
-/**
- * Called from handleAccountUpdated when a vendor's onboarding completes. Finds
- * the vendor(s) by stripe_account_id and triggers payout of any earned funds
- * in one shot for each owning user.
- *
- * Sub-project I §5: the FK direction is now vendor_profiles.stripe_account_id.
- * Multiple vendor_profiles can share one stripe_account under the hybrid model.
- * We trigger a payout for each distinct owning user (in practice, all linked
- * vendor_profiles belong to the same user — the hybrid model is one-user-many-
- * businesses, not many-users-one-stripe — but the loop is defensive).
- */
-async function autoTransferEarnedFunds(
-  supabase: SupabaseClient<Database>,
-  stripeAccountId: string
-): Promise<void> {
-  // Look up the stripe_account by its Stripe ID, then find all vendor_profiles
-  // pointing at it (new FK direction).
-  const { data: account } = await supabase
-    .from('stripe_accounts')
-    .select('id')
-    .eq('stripe_account_id', stripeAccountId)
-    .maybeSingle();
-  if (!account) return;
-
-  const { data: linkedProfiles } = await supabase
-    .from('vendor_profiles')
-    .select('user_id')
-    .eq('stripe_account_id', account.id);
-
-  const seenUserIds = new Set<string>();
-  for (const vp of linkedProfiles ?? []) {
-    if (seenUserIds.has(vp.user_id)) continue;
-    seenUserIds.add(vp.user_id);
-    const result = await initiatePayout(supabase, vp.user_id);
-    if (result.error) {
-      logger.warn('auto transfer skipped', {
-        site: 'autoTransferEarnedFunds',
-        stripeAccountId,
-        userId: vp.user_id,
-        reason: result.error,
-      });
-    }
-  }
+  return { error: 'Withdrawals are not yet available in this version.', status: 503 };
 }
 
 // ─── Sub-project E: Payouts ledger ──────────────────────────────────
 
 import type Stripe from 'stripe';
 
-const PAYOUT_STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'> =
-  {
-    'payout.created': 'pending',
-    'payout.paid': 'paid',
-    'payout.failed': 'failed',
-    'payout.canceled': 'canceled',
-  };
-
 /**
- * Persist a Stripe payout event into the payouts ledger and (on payout.paid)
- * derive contributing bookings from transactions transferred during the payout
- * window. Idempotent via UNIQUE(stripe_payout_id).
+ * Bucket F: Stripe Connect payout attribution removed — stripe_accounts table dropped.
+ * Payout events are no-ops until a replacement payout-ledger strategy is defined.
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function handlePayoutEvent(
-  supabase: SupabaseClient<Database>,
-  event: Stripe.Event
+  _supabase: SupabaseClient<Database>,
+  _event: Stripe.Event
 ): Promise<void> {
-  const status = PAYOUT_STATUS_MAP[event.type];
-  if (!status) return;
-
-  const payout = event.data.object as Stripe.Payout;
-  const stripeAccount = event.account;
-  if (!stripeAccount) {
-    console.warn('[payouts] event without account field, skipping', event.id);
-    return;
-  }
-
-  // Sub-project I §5: look up stripe_account by Stripe ID, then find linked
-  // vendor_profile(s) via the reversed FK direction. Under the hybrid model,
-  // one stripe_account may serve multiple vendor_profiles for the same user;
-  // pick the oldest (created_at ASC, by id ordering since vendor_profiles.id is
-  // not date-ordered we use the order index) as the canonical attribution for
-  // the payouts ledger. The full payout_bookings join attributes individual
-  // bookings regardless of which vendor_profile owns the stripe_account.
-  const { data: acc } = await supabase
-    .from('stripe_accounts')
-    .select('id')
-    .eq('stripe_account_id', stripeAccount)
-    .maybeSingle();
-  if (!acc) {
-    console.warn('[payouts] no stripe_account row for', stripeAccount);
-    return;
-  }
-
-  // Find vendor_profile(s) linked to this stripe_account; use the oldest
-  // (created_at ASC) as the canonical "primary" attribution.
-  const { data: linkedProfiles } = await supabase
-    .from('vendor_profiles')
-    .select('id, created_at')
-    .eq('stripe_account_id', acc.id)
-    .order('created_at', { ascending: true });
-
-  const primaryVendorProfileId = linkedProfiles?.[0]?.id ?? null;
-  if (!primaryVendorProfileId) {
-    console.warn('[payouts] no vendor_profile linked to stripe_account', acc.id);
-    return;
-  }
-
-  const linkedProfileIds = (linkedProfiles ?? []).map((p) => p.id);
-
-  const arrivalDate = payout.arrival_date
-    ? new Date(payout.arrival_date * 1000).toISOString().slice(0, 10)
-    : null;
-
-  await supabase.from('payouts').upsert(
-    {
-      vendor_profile_id: primaryVendorProfileId,
-      stripe_payout_id: payout.id,
-      amount_cents: payout.amount,
-      currency: payout.currency,
-      status,
-      arrival_date: arrivalDate,
-      failure_message: payout.failure_message ?? null,
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: 'stripe_payout_id' }
-  );
-
-  // On payout.paid, attribute the payout to the bookings whose transferred_at
-  // falls inside the payout window (created → arrival_date). Bookings can
-  // belong to ANY of the vendor_profiles linked to this stripe_account.
-  if (event.type === 'payout.paid' && payout.arrival_date) {
-    const createdAt = new Date(payout.created * 1000).toISOString();
-    const arrivalISO = new Date(payout.arrival_date * 1000).toISOString();
-
-    const { data: txs } = await supabase
-      .from('transactions')
-      .select('booking_request_id, bookings!inner(vendor_profile_id)')
-      .in('bookings.vendor_profile_id', linkedProfileIds)
-      .gte('transferred_at', createdAt)
-      .lte('transferred_at', arrivalISO);
-
-    if (txs && txs.length > 0) {
-      const { data: po } = await supabase
-        .from('payouts')
-        .select('id')
-        .eq('stripe_payout_id', payout.id)
-        .single();
-      if (po) {
-        await supabase.from('payout_bookings').upsert(
-          txs.map((t) => ({
-            payout_id: po.id,
-            booking_id: t.booking_request_id as string,
-          })),
-          { onConflict: 'payout_id,booking_id', ignoreDuplicates: true }
-        );
-      }
-    }
-  }
+  // No-op: stripe_accounts table dropped in migration 00058.
 }
 
 export interface PayoutHistoryRow {

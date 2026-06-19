@@ -15,11 +15,10 @@
  *   - 00030 notifications table + RLS + realtime publication (Sub-project F)
  *   - 00031 ai_bio_assist_calls (Sub-project B)
  *   - 00032 vendor_calendar_holds (Sub-project G)
- *   - 00033 vendor_profiles.payment_mode nullable text ('stripe' | 'cash') (Sub-project C)
+ *   - 00033 vendor_profiles.payment_mode (dropped in 00058, Bucket F)
  *   - 00034 booking_events.vendor_notes + booking_events_public view + vendor_profile_views
  *           + payouts + payout_bookings (Sub-project E)
- *   - 00035 vendor_profiles.stripe_account_id (FK flipped from stripe_accounts.vendor_profile_id)
- *           + users.active_vendor_profile_id nullable FK (Sub-project I)
+ *   - 00035 users.active_vendor_profile_id nullable FK (Sub-project I)
  *   - 00043 users.onboarding_completed_at + users.onboarding_data (onboarding welcome)
  *   - 00044 vendor_profiles.is_active + onboarding_complete (PR #29 schema drift)
  *   - 00045 added 'content_creation' to vendor_profiles_category_check (Sub-project K)
@@ -303,13 +302,6 @@ export interface Database {
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
-            referencedColumns: ['id'];
-          },
-          {
-            foreignKeyName: 'vendor_profiles_stripe_account_id_fkey';
-            columns: ['stripe_account_id'];
-            isOneToOne: false;
-            referencedRelation: 'stripe_accounts';
             referencedColumns: ['id'];
           },
         ];
@@ -622,52 +614,6 @@ export interface Database {
             referencedColumns: ['id'];
           },
         ];
-      };
-      stripe_accounts: {
-        Row: {
-          id: string;
-          stripe_account_id: string;
-          onboarding_complete: boolean;
-          payouts_enabled: boolean;
-          charges_enabled: boolean;
-          minimal_created_at: string | null;
-          frozen_reason: 'no_show_strikes' | 'admin_freeze' | null;
-          frozen_at: string | null;
-          no_show_count_year: number;
-          no_show_year: number | null;
-          details_submitted_at: string | null;
-          created_at: string;
-          updated_at: string;
-        };
-        Insert: {
-          id?: string;
-          stripe_account_id: string;
-          onboarding_complete?: boolean;
-          payouts_enabled?: boolean;
-          charges_enabled?: boolean;
-          minimal_created_at?: string | null;
-          frozen_reason?: 'no_show_strikes' | 'admin_freeze' | null;
-          frozen_at?: string | null;
-          no_show_count_year?: number;
-          no_show_year?: number | null;
-          details_submitted_at?: string | null;
-          created_at?: string;
-          updated_at?: string;
-        };
-        Update: {
-          stripe_account_id?: string;
-          onboarding_complete?: boolean;
-          payouts_enabled?: boolean;
-          charges_enabled?: boolean;
-          minimal_created_at?: string | null;
-          frozen_reason?: 'no_show_strikes' | 'admin_freeze' | null;
-          frozen_at?: string | null;
-          no_show_count_year?: number;
-          no_show_year?: number | null;
-          details_submitted_at?: string | null;
-          updated_at?: string;
-        };
-        Relationships: [];
       };
       transactions: {
         Row: {

@@ -5,7 +5,6 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import {
   handlePaymentSuccess,
   handlePaymentFailure,
-  handleAccountUpdated,
   handleChargeRefunded,
   handlePayoutEvent,
 } from '@/services/payment.service';
@@ -90,18 +89,6 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
         const charge = event.data.object as Stripe.Charge;
         const piId = typeof charge.payment_intent === 'string' ? charge.payment_intent : null;
         if (piId) await handleChargeRefunded(supabase, piId, charge.amount_refunded, charge.amount);
-        break;
-      }
-
-      case 'account.updated': {
-        const account = event.data.object as Stripe.Account;
-        await handleAccountUpdated(
-          supabase,
-          account.id,
-          account.charges_enabled ?? false,
-          account.payouts_enabled ?? false,
-          account.details_submitted ?? false
-        );
         break;
       }
 

@@ -6,5 +6,6 @@
 --
 -- All statements single-line for Supabase web editor compatibility.
 
+DROP TABLE IF EXISTS stripe_accounts CASCADE;
 ALTER TABLE vendor_profiles DROP COLUMN IF EXISTS payment_mode;
 ALTER TABLE vendor_profiles DROP COLUMN IF EXISTS stripe_account_id;
