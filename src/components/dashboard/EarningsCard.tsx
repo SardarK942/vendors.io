@@ -6,7 +6,7 @@ import {
   getVendorAttribution,
   type Attribution,
   type AttributionRange,
-} from '@/services/payment.service';
+} from '@/services/payment.attribution';
 
 interface EarningsCardProps {
   vendorProfileId: string;
