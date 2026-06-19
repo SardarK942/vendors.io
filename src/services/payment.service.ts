@@ -6,7 +6,7 @@ import { stripe } from '@/lib/stripe/client';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { createMinimalAccount, createFullOnboardingLink } from '@/lib/stripe/connect';
 import {
-  getDepositRate,
+  DEPOSIT_RATE,
   calculatePlatformCut,
   calculateVendorPending,
   type PaymentMode,
@@ -76,7 +76,7 @@ export async function createDepositCheckout(
   // vendor's stripe_account through a service-role client.
   const { data: booking } = await supabase
     .from('bookings')
-    .select('*, vendor_profiles!inner(id, business_name, payment_mode)')
+    .select('*, vendor_profiles!inner(id, business_name)')
     .eq('id', bookingId)
     .eq('couple_user_id', coupleUserId)
     .single();
@@ -90,33 +90,24 @@ export async function createDepositCheckout(
   const vp = booking.vendor_profiles as unknown as {
     id: string;
     business_name: string;
-    payment_mode: string | null;
   };
 
   const admin = createServiceRoleClient();
   const { data: stripeAccount } = await admin
     .from('stripe_accounts')
-    .select('stripe_account_id, frozen_reason')
+    .select('frozen_reason')
     .eq('vendor_profile_id', vp.id)
     .maybeSingle();
 
-  if (!stripeAccount) {
-    return {
-      error: "Vendor hasn't set up payments yet. They'll be notified.",
-      status: 400,
-    };
-  }
-  if (stripeAccount.frozen_reason) {
+  if (stripeAccount?.frozen_reason) {
     return { error: 'This vendor is temporarily unable to accept new bookings.', status: 400 };
   }
 
-  // Deposit rate and split both depend on vendor's payment mode.
-  // Cash vendors: 5% deposit, 100% to platform, 0% to vendor.
-  // Stripe vendors: 10% deposit, 30% to platform, 70% to vendor.
-  const paymentMode = (vp.payment_mode ?? 'stripe') as PaymentMode;
-  const depositAmount = Math.floor(booking.total_price_cents * getDepositRate(paymentMode));
-  const platformCut = calculatePlatformCut(depositAmount, paymentMode);
-  const vendorPending = calculateVendorPending(depositAmount, paymentMode);
+  // Compute the deposit amount — uniform 5% of the booking total.
+  // Baazar retains 100% of the deposit; no Connect transfer to vendor.
+  const depositAmount = Math.round(booking.total_price_cents * DEPOSIT_RATE);
+  const platformCut = calculatePlatformCut(depositAmount, 'cash');
+  const vendorPending = calculateVendorPending(depositAmount, 'cash');
 
   const session = await stripe.checkout.sessions.create(
     {
@@ -1311,7 +1302,6 @@ async function autoTransferEarnedFunds(
 // ─── Sub-project E: Payouts ledger ──────────────────────────────────
 
 import type Stripe from 'stripe';
-import { CASH_DEPOSIT_RATE } from '@/lib/utils';
 
 const PAYOUT_STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 'canceled'> =
   {
@@ -1514,7 +1504,7 @@ export async function getCashToCollect(
       eventDate: r.event_date as string,
       coupleName: b.couple_full_name ?? 'Couple',
       packageLabel: b.package_name_snapshot ?? 'Booking',
-      amountCents: Math.round(b.total_price_cents * (1 - CASH_DEPOSIT_RATE)),
+      amountCents: Math.round(b.total_price_cents * (1 - DEPOSIT_RATE)),
     };
   });
 
