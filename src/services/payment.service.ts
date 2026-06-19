@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database.types';
+import type { Database, BookingStatus } from '@/types/database.types';
 import type { CancellerRole, ServiceResult } from '@/types';
 import { getBookingDateRange } from '@/services/booking.service';
 import { stripe } from '@/lib/stripe/client';
@@ -1396,6 +1396,71 @@ export async function getPayoutHistory(
   const trimmed = hasMore ? rows.slice(0, limit) : rows;
   const nextCursor = hasMore ? (trimmed[trimmed.length - 1].arrival_date ?? undefined) : undefined;
   return { data: trimmed, error: null, nextCursor };
+}
+
+// ─── Vendor Attribution (Baazar attribution dashboard) ───────────────────────
+
+export type AttributionRange = 'month' | 'quarter' | 'year' | 'all';
+
+export interface Attribution {
+  totalCents: number;
+  bookingCount: number;
+  platformFeeCents: number;
+  netCents: number;
+  roiMultiple: number;
+}
+
+const QUALIFYING_STATUSES = [
+  'accepted',
+  'adjusted_quote_sent',
+  'couple_countered',
+  'deposit_paid',
+  'completed',
+] as const;
+
+function rangeStartDate(range: AttributionRange): Date | null {
+  if (range === 'all') return null;
+  const now = new Date();
+  if (range === 'month') {
+    return new Date(now.getFullYear(), now.getMonth(), 1);
+  }
+  if (range === 'quarter') {
+    const q = Math.floor(now.getMonth() / 3);
+    return new Date(now.getFullYear(), q * 3, 1);
+  }
+  // year
+  return new Date(now.getFullYear(), 0, 1);
+}
+
+export async function getVendorAttribution(
+  supabase: SupabaseClient<Database>,
+  vendorProfileId: string,
+  range: AttributionRange
+): Promise<Attribution> {
+  let query = supabase
+    .from('bookings')
+    .select('total_price_cents, status, created_at')
+    .eq('vendor_profile_id', vendorProfileId)
+    .in('status', QUALIFYING_STATUSES as unknown as BookingStatus[]);
+
+  const start = rangeStartDate(range);
+  if (start) {
+    query = query.gte('created_at', start.toISOString());
+  }
+
+  const { data, error } = await query;
+  if (error) {
+    throw new Error(`getVendorAttribution failed: ${error.message}`);
+  }
+
+  const rows = data ?? [];
+  const totalCents = rows.reduce((sum, r) => sum + (r.total_price_cents ?? 0), 0);
+  const bookingCount = rows.length;
+  const platformFeeCents = Math.round(totalCents * DEPOSIT_RATE);
+  const netCents = totalCents - platformFeeCents;
+  const roiMultiple = platformFeeCents > 0 ? Math.round(totalCents / platformFeeCents) : 0;
+
+  return { totalCents, bookingCount, platformFeeCents, netCents, roiMultiple };
 }
 
 export interface CashToCollectRow {
