@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { X } from 'lucide-react';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { basicsSchema } from '@/lib/onboarding/validation';
-import { BioAssistButton } from './BioAssistButton';
+import { BioAssistCard } from './BioAssistCard';
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { ScrapedVendorMatchPrompt } from './ScrapedVendorMatchPrompt';
 import type { ScrapedVendorMatch } from '@/lib/scraped-vendor/match';
@@ -27,16 +29,21 @@ interface Props {
 export function StepBasics({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [data, setData] = useState(initial);
-  const [error, setError] = useState<string | null>(null);
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [pendingMatches, setPendingMatches] = useState<ScrapedVendorMatch[] | null>(null);
+  // Show pre-fill banner when the bio loaded from DB is non-empty on first render
+  // (simplified heuristic — covers claimed vendors whose bio was pulled from IG;
+  // false positive for vendors who previously wrote their own bio is low-risk since it's dismissible)
+  const [showPrefillBanner, setShowPrefillBanner] = useState(() => Boolean(initial.bio));
 
   const nextParam = mode === 'next' ? '?next=true' : '';
 
   async function saveAndAdvance() {
     const parsed = basicsSchema.safeParse(data);
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      applyZodErrors(parsed.error);
       return;
     }
     const res = await fetch('/api/vendor-profile/setup/basics', {
@@ -46,7 +53,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
     });
     if (!res.ok) {
       const json = await res.json().catch(() => ({ error: 'Save failed' }));
-      setError(json.error ?? 'Save failed');
+      setServerError(json.error ?? 'Save failed');
       return;
     }
     router.push(`/dashboard/profile/setup/location${nextParam}`);
@@ -55,7 +62,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
   async function onNext() {
     const parsed = basicsSchema.safeParse(data);
     if (!parsed.success) {
-      setError(parsed.error.issues[0].message);
+      applyZodErrors(parsed.error);
       return;
     }
     setSubmitting(true);
@@ -96,19 +103,35 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         <p className="text-sm text-muted-foreground">Step 1 of 7</p>
       </div>
 
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="businessName">Business name</Label>
         <Input
           id="businessName"
           value={data.businessName}
-          onChange={(e) => setData({ ...data, businessName: e.target.value })}
+          onChange={(e) => {
+            setData({ ...data, businessName: e.target.value });
+            clearField('businessName');
+          }}
           placeholder="Mehndi by Priya"
         />
+        {getError('businessName') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('businessName')}</p>
+        )}
       </div>
 
       <div className="space-y-2">
         <Label htmlFor="category">Category</Label>
-        <Select value={data.category} onValueChange={(v) => setData({ ...data, category: v })}>
+        <Select
+          value={data.category}
+          onValueChange={(v) => {
+            setData({ ...data, category: v });
+            clearField('category');
+          }}
+        >
           <SelectTrigger id="category">
             <SelectValue placeholder="Choose a category">
               {/* Radix's auto-render of the trigger text reads SelectItem
@@ -127,29 +150,54 @@ export function StepBasics({ initial, profileId, mode }: Props) {
             ))}
           </SelectContent>
         </Select>
+        {getError('category') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('category')}</p>
+        )}
       </div>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <Label htmlFor="bio">Bio</Label>
-          <BioAssistButton
-            businessName={data.businessName}
-            category={data.category}
-            currentBio={data.bio}
-            onAccept={(polished) => setData({ ...data, bio: polished })}
-          />
-        </div>
+        <Label htmlFor="bio">Bio</Label>
+        {showPrefillBanner && (
+          <div className="mb-2 flex items-start justify-between gap-2 rounded-md border border-ink/15 bg-cream/60 px-3 py-2">
+            <p className="text-xs text-ink">
+              Pulled from your Instagram bio — edit or polish below.
+            </p>
+            <button
+              type="button"
+              onClick={() => setShowPrefillBanner(false)}
+              aria-label="Dismiss notice"
+              className="text-ink/40 hover:text-ink"
+            >
+              <X className="size-3" />
+            </button>
+          </div>
+        )}
         <Textarea
           id="bio"
           rows={5}
           value={data.bio}
-          onChange={(e) => setData({ ...data, bio: e.target.value })}
-          placeholder="What do you do, who do you serve, and what makes you different? (50–500 characters)"
+          onChange={(e) => {
+            setData({ ...data, bio: e.target.value });
+            clearField('bio');
+          }}
+          placeholder="What do you do, who do you serve, and what makes you different?"
         />
         <p className="mt-1 text-xs text-muted-foreground">{data.bio.length} / 500</p>
+        {getError('bio') && <p className="mt-1 text-xs text-hot-pink">{getError('bio')}</p>}
+        {data.bio.length > 0 && data.bio.length < 50 && (
+          <p className="mt-1 text-xs text-ink/60">
+            Bios under 50 chars usually feel rushed. Two or three sentences works well.
+          </p>
+        )}
+        <BioAssistCard
+          currentBio={data.bio}
+          businessName={data.businessName}
+          category={data.category}
+          onAccept={(newBio) => setData({ ...data, bio: newBio })}
+        />
       </div>
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting || !!pendingMatches}>

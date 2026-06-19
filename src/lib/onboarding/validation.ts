@@ -13,18 +13,15 @@ const instagramHandle = z
 export const basicsSchema = z.object({
   businessName: z.string().min(1).max(120),
   category: z.string().min(1),
-  bio: z
-    .string()
-    .min(50, 'Bio must be at least 50 characters')
-    .max(500, 'Bio must be at most 500 characters'),
+  bio: z.string().max(500, 'Bio must be 500 characters or fewer'),
 });
 
 export const locationSchema = z.object({
-  baseAddressLine1: z.string().min(1, 'Address required'),
-  baseCity: z.string().min(1),
-  baseState: z.string().min(1),
-  basePostalCode: z.string().min(1),
-  baseGooglePlaceId: z.string().min(1),
+  baseAddressLine1: z.string().optional(),
+  baseCity: z.string().optional(),
+  baseState: z.string().optional(),
+  basePostalCode: z.string().optional(),
+  baseGooglePlaceId: z.string().optional(),
   baseAddressPublic: z.boolean(),
 });
 
@@ -60,12 +57,12 @@ export type PaymentModeInput = z.infer<typeof paymentModeSchema>;
 export const publishGateSchema = z.object({
   business_name: z.string().min(1),
   category: z.string().min(1),
-  bio: z.string().min(50).max(500),
-  base_address_line_1: z.string().min(1),
-  base_city: z.string().min(1),
-  base_state: z.string().min(1),
-  base_postal_code: z.string().min(1),
-  base_google_place_id: z.string().min(1),
+  bio: z.string().max(500),
+  base_address_line_1: z.string().optional(),
+  base_city: z.string().optional(),
+  base_state: z.string().optional(),
+  base_postal_code: z.string().optional(),
+  base_google_place_id: z.string().optional(),
   base_address_public: z.boolean(),
   instagram_handle: z.string().regex(/^[A-Za-z0-9._]{1,30}$/),
   website_url: z.string().nullable(),

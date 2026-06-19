@@ -4,7 +4,7 @@
  * Tests:
  * 1. 401 when unauthenticated
  * 2. 404 when no vendor_profile row
- * 3. 400 when bio is missing / too short
+ * 3. 400 when bio is missing (short bio now accepted — T5 relaxed min constraint)
  * 4. 400 when address missing
  * 5. 400 when instagram_handle missing
  * 6. 400 when portfolio_images empty
@@ -128,15 +128,12 @@ describe('POST /api/vendor-profile/publish', () => {
     expect(json.field).toBe('bio');
   });
 
-  it('returns 400 with field=bio when bio is too short', async () => {
+  it('accepts bio < 50 chars at publish gate (min constraint removed in T5)', async () => {
     const profile = { ...COMPLETE_PROFILE, bio: 'short' };
     const sb = buildSupabase({ profile });
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
     const res = await POST(makePostRequest());
-    expect(res.status).toBe(400);
-    const json = await res.json();
-    expect(json.error).toBe('Profile incomplete');
-    expect(json.field).toBe('bio');
+    expect(res.status).toBe(200);
   });
 
   it('returns 400 with field=base_address_line_1 when address is missing', async () => {

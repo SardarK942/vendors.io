@@ -18,9 +18,9 @@ describe('basicsSchema', () => {
     expect(r.success).toBe(true);
   });
 
-  it('rejects bio < 50 chars', () => {
+  it('accepts bio < 50 chars (min constraint removed in T5)', () => {
     const r = basicsSchema.safeParse({ businessName: 'X', category: 'mehndi', bio: 'short' });
-    expect(r.success).toBe(false);
+    expect(r.success).toBe(true);
   });
 
   it('rejects bio > 500 chars', () => {
@@ -46,7 +46,7 @@ describe('locationSchema', () => {
       }).success
     ).toBe(true);
   });
-  it('rejects missing line_1', () => {
+  it('accepts missing line_1 (optional)', () => {
     expect(
       locationSchema.safeParse({
         baseAddressLine1: '',
@@ -56,7 +56,7 @@ describe('locationSchema', () => {
         baseGooglePlaceId: 'ChIJxxx',
         baseAddressPublic: false,
       }).success
-    ).toBe(false);
+    ).toBe(true);
   });
 });
 

@@ -25,9 +25,16 @@ interface Props {
   onChange: (place: PlaceData) => void;
   placeholder?: string;
   className?: string;
+  disabled?: boolean;
 }
 
-export function GooglePlacesAutocomplete({ value, onChange, placeholder, className }: Props) {
+export function GooglePlacesAutocomplete({
+  value,
+  onChange,
+  placeholder,
+  className,
+  disabled,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -80,6 +87,7 @@ export function GooglePlacesAutocomplete({ value, onChange, placeholder, classNa
       className={className ?? 'w-full rounded border p-2 text-sm'}
       placeholder={placeholder ?? 'Where will this event take place?'}
       defaultValue={value?.address_line_1 ?? ''}
+      disabled={disabled}
     />
   );
 }

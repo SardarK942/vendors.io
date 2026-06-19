@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { LANGUAGES, RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
+import { detailsSchema } from '@/lib/onboarding/validation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface ProfileShape {
   languages: string[] | null;
@@ -25,31 +27,43 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
   const [languages, setLanguages] = React.useState<string[]>(profile.languages ?? []);
   const [years, setYears] = React.useState<number | ''>(profile.years_in_business ?? '');
   const [sla, setSla] = React.useState<number | null>(profile.response_sla_hours ?? null);
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
-  const [error, setError] = React.useState<string | null>(null);
 
   const toggleLang = (slug: string) => {
-    setLanguages((prev) =>
-      prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug].sort()
-    );
+    setLanguages((prev) => {
+      const next = prev.includes(slug) ? prev.filter((s) => s !== slug) : [...prev, slug].sort();
+      clearField('languages');
+      return next;
+    });
   };
 
   const isValid = languages.length > 0 && typeof years === 'number' && years >= 0 && sla !== null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isValid || submitting) return;
+    if (submitting) return;
+    const parsed = detailsSchema.safeParse({
+      languages,
+      years_in_business: years === '' ? undefined : years,
+      response_sla_hours: sla ?? undefined,
+    });
+    if (!parsed.success) {
+      applyZodErrors(parsed.error);
+      return;
+    }
     setSubmitting(true);
-    setError(null);
+    setServerError(null);
     try {
       const res = await fetch('/api/vendor-profile/setup/details', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           profile_id: profileId,
-          languages,
-          years_in_business: years,
-          response_sla_hours: sla,
+          languages: parsed.data.languages,
+          years_in_business: parsed.data.years_in_business,
+          response_sla_hours: parsed.data.response_sla_hours,
         }),
       });
       if (!res.ok) {
@@ -63,7 +77,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         router.push(`/dashboard/profile/setup/portfolio${nextParam}`);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error');
+      setServerError(err instanceof Error ? err.message : 'Unknown error');
     } finally {
       setSubmitting(false);
     }
@@ -78,6 +92,10 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         </p>
         <p className="text-sm text-muted-foreground">Step 4 of 7</p>
       </header>
+
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
 
       {/* Languages */}
       <div className="space-y-3">
@@ -102,6 +120,9 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
             );
           })}
         </div>
+        {getError('languages') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('languages')}</p>
+        )}
       </div>
 
       {/* Years in business */}
@@ -118,9 +139,15 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
           min={0}
           max={99}
           value={years}
-          onChange={(e) => setYears(e.target.value === '' ? '' : Number(e.target.value))}
+          onChange={(e) => {
+            setYears(e.target.value === '' ? '' : Number(e.target.value));
+            clearField('years_in_business');
+          }}
           className="w-32 rounded-md border border-hairline bg-cream px-3 py-2 font-mono text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
         />
+        {getError('years_in_business') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('years_in_business')}</p>
+        )}
       </div>
 
       {/* Response SLA */}
@@ -137,16 +164,22 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
                 name="response-sla"
                 value={opt.value}
                 checked={sla === opt.value}
-                onChange={() => setSla(opt.value)}
+                onChange={() => {
+                  setSla(opt.value);
+                  clearField('response_sla_hours');
+                }}
                 className="size-4 accent-ink"
               />
               <span className="text-sm text-ink">{opt.label}</span>
             </label>
           ))}
         </div>
+        {getError('response_sla_hours') && (
+          <p className="mt-1 text-xs text-hot-pink">{getError('response_sla_hours')}</p>
+        )}
       </div>
 
-      {error && <p className="text-sm text-error">{error}</p>}
+      {serverError && <p className="text-sm text-error">{serverError}</p>}
 
       <div className="flex items-center justify-end gap-3 border-t border-hairline pt-4">
         <Button type="submit" disabled={!isValid} isLoading={submitting}>

@@ -3,6 +3,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CreditCard, Wallet } from 'lucide-react';
+import { paymentModeSchema } from '@/lib/onboarding/validation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 
 interface Props {
   initial: 'stripe' | 'cash';
@@ -18,15 +20,20 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
   // default to reuse. 'new' triggers a fresh Stripe Connect onboarding flow on
   // publish.
   const [stripeMode, setStripeMode] = useState<'reuse' | 'new'>('reuse');
+  const { applyZodErrors, clearField, getError, total } = useFormErrors();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const showStripeOverride =
     mode === 'next' && paymentMode === 'stripe' && primaryStripeAccountId !== null;
 
   async function onNext() {
+    const parsed = paymentModeSchema.safeParse({ paymentMode });
+    if (!parsed.success) {
+      applyZodErrors(parsed.error);
+      return;
+    }
     setSubmitting(true);
-    setError(null);
     const res = await fetch('/api/vendor-profile/setup/payment-mode', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -35,7 +42,7 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
     setSubmitting(false);
     if (!res.ok) {
       const e = await res.json().catch(() => ({ error: 'Save failed' }));
-      setError(e.error);
+      setServerError(e.error);
       return;
     }
     // Persist stripeMode in sessionStorage so the review/publish step can read it.
@@ -53,10 +60,17 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
         <p className="text-sm text-muted-foreground">Step 6 of 7</p>
       </div>
 
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2">
         <button
           type="button"
-          onClick={() => setPaymentMode('stripe')}
+          onClick={() => {
+            setPaymentMode('stripe');
+            clearField('paymentMode');
+          }}
           className={`rounded-lg border-2 p-6 text-left transition-colors ${
             paymentMode === 'stripe'
               ? 'border-primary bg-primary/5'
@@ -66,14 +80,26 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
           <CreditCard className="mb-3 h-8 w-8 text-primary" />
           <h3 className="mb-1 font-semibold">Through Baazar (recommended)</h3>
           <p className="text-sm text-muted-foreground">
-            Couples pay a 10% deposit. We hold your portion until you set up Stripe Connect later.
-            Best for tracking and dispute protection.
+            Couples pay a 10% deposit through Baazar at booking. We keep{' '}
+            <strong>3% of the booking total</strong> as our platform fee; you receive the rest. You
+            handle the remaining 90% directly with the couple per your payment terms.
           </p>
+          <details className="mt-2 text-xs text-ink/70">
+            <summary className="cursor-pointer">How does this work?</summary>
+            <p className="mt-1">
+              The deposit confirms the booking. The balance is what the couple pays the vendor
+              directly &mdash; Baazar doesn&apos;t process it. We keep our platform fee from the
+              deposit; you receive everything else.
+            </p>
+          </details>
         </button>
 
         <button
           type="button"
-          onClick={() => setPaymentMode('cash')}
+          onClick={() => {
+            setPaymentMode('cash');
+            clearField('paymentMode');
+          }}
           className={`rounded-lg border-2 p-6 text-left transition-colors ${
             paymentMode === 'cash'
               ? 'border-primary bg-primary/5'
@@ -83,11 +109,24 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
           <Wallet className="mb-3 h-8 w-8 text-primary" />
           <h3 className="mb-1 font-semibold">Direct payments</h3>
           <p className="text-sm text-muted-foreground">
-            Coordinate with each couple yourself (cash, Zelle, check, etc.). Baazar handles a small
-            platform fee at booking — you handle the rest.
+            Couples pay a 5% deposit through Baazar at booking. We keep that 5% as our platform fee
+            (slightly higher because we&apos;re carrying the booking risk). You handle the remaining
+            95% directly with the couple.
           </p>
+          <details className="mt-2 text-xs text-ink/70">
+            <summary className="cursor-pointer">How does this work?</summary>
+            <p className="mt-1">
+              The deposit confirms the booking. The balance is what the couple pays the vendor
+              directly &mdash; Baazar doesn&apos;t process it. We keep our platform fee from the
+              deposit; you receive everything else.
+            </p>
+          </details>
         </button>
       </div>
+
+      {getError('paymentMode') && (
+        <p className="mt-1 text-xs text-hot-pink">{getError('paymentMode')}</p>
+      )}
 
       {showStripeOverride && (
         <div className="space-y-3 rounded-lg border bg-muted/30 p-4">
@@ -122,7 +161,7 @@ export function StepPaymentMode({ initial, profileId, mode, primaryStripeAccount
         </div>
       )}
 
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

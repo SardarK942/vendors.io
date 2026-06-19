@@ -1,10 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useFormErrors } from '@/hooks/useFormErrors';
 import Link from 'next/link';
 import Image from 'next/image';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog';
 import { VendorCard } from '@/components/marketplace/VendorCard';
+import { VendorProfile } from '@/components/marketplace/VendorProfile';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import type { Database } from '@/types/database.types';
 
@@ -18,9 +22,11 @@ interface Props {
 
 export function StepReview({ profile, profileId, mode }: Props) {
   const router = useRouter();
+  const { total } = useFormErrors();
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishErrorStep, setPublishErrorStep] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   async function onPublish() {
     setPublishing(true);
@@ -221,6 +227,9 @@ export function StepReview({ profile, profileId, mode }: Props) {
               ? 'Direct payments — coordinate with each couple yourself.'
               : 'Through Baazar — couples pay deposit via the platform.'}
           </p>
+          <p className="mt-2 text-xs text-ink/60">
+            Baazar takes 3% (Stripe mode) or 5% (cash mode). Everything else is yours.
+          </p>
         </div>
       </div>
 
@@ -228,14 +237,46 @@ export function StepReview({ profile, profileId, mode }: Props) {
       <div className="space-y-2">
         <h2 className="font-semibold">Preview</h2>
         <p className="text-xs text-muted-foreground">
-          This is how your listing will appear in the marketplace.
+          This is how your listing will appear in the marketplace. Click to see the full profile.
         </p>
-        <div className="max-w-xs">
-          <VendorCard vendor={previewVendor} />
-        </div>
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogTrigger asChild>
+            <button
+              type="button"
+              className="block w-full max-w-xs overflow-hidden rounded-lg text-left ring-1 ring-ink/10 transition hover:ring-ink/30"
+            >
+              <VendorCard vendor={previewVendor} />
+            </button>
+          </DialogTrigger>
+          <DialogContent className="m-0 h-screen w-screen max-w-none rounded-none border-0 p-0">
+            {/* Top banner */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink/15 bg-cream px-4 py-3">
+              <p className="flex items-center gap-2 text-sm text-ink">
+                <span className="size-2 rounded-full bg-hot-pink" />
+                Preview — not yet published
+              </p>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(false)}
+                aria-label="Close preview"
+                className="flex size-10 items-center justify-center rounded-md text-ink hover:bg-ink/5"
+              >
+                <X className="size-5" />
+              </button>
+            </div>
+            {/* The actual preview */}
+            <div className="h-[calc(100vh-49px)] overflow-y-auto">
+              <VendorProfile vendor={previewVendor} showBookingButton={false} />
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Publish error */}
+      {total >= 2 && (
+        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+      )}
+
       {publishError && (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
           <p>{publishError}</p>
@@ -244,7 +285,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
               href={`/dashboard/profile/setup/${publishErrorStep}`}
               className="mt-1 block underline"
             >
-              Go to {publishErrorStep} step to fix this
+              Edit step {publishErrorStep} to fix this
             </Link>
           )}
         </div>
