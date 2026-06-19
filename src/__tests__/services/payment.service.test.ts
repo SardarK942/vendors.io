@@ -68,22 +68,13 @@ describe('Deposit rate — uniform 5% (single-mode)', () => {
   });
 });
 
-describe('Cash vendor — cancellation policy (computeRefundPolicy)', () => {
+describe('Single-mode cancellation policy (computeRefundPolicy)', () => {
   const now = new Date('2026-06-01T12:00:00Z');
 
   // <24h cooling off: couple refund 100%, platform 0%, vendor 0%
   it('<24h cooling off: couple gets full refund, platform keeps 0', () => {
     const depositPaidAt = new Date(now.getTime() - 2 * 60 * 60 * 1000).toISOString(); // 2h ago
-    const firstEventDate = '2026-09-15'; // >30d out
-    const policy = computeRefundPolicy(
-      'couple',
-      'deposit_paid',
-      firstEventDate,
-      depositPaidAt,
-      'none',
-      now,
-      'cash'
-    );
+    const policy = computeRefundPolicy('couple', 'deposit_paid', depositPaidAt, now);
 
     expect(policy.coupleRefundPct).toBe(1);
     expect(policy.vendorKeepPct).toBe(0);
@@ -91,39 +82,10 @@ describe('Cash vendor — cancellation policy (computeRefundPolicy)', () => {
     expect(policy.clawVendorOtherPending).toBe(false);
   });
 
-  // >30d: couple refund 50%, platform 50%, vendor 0%
-  it('>30d couple cancel: 50% refund, platform keeps 50%, vendor keeps 0', () => {
+  // After 24h: deposit non-refundable, platform keeps 100%
+  it('after 24h couple cancel: deposit non-refundable, platform keeps 100%', () => {
     const depositPaidAt = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(); // 2d ago
-    const firstEventDate = '2026-09-15'; // >30d out
-    const policy = computeRefundPolicy(
-      'couple',
-      'deposit_paid',
-      firstEventDate,
-      depositPaidAt,
-      'none',
-      now,
-      'cash'
-    );
-
-    expect(policy.coupleRefundPct).toBe(0.5);
-    expect(policy.vendorKeepPct).toBe(0);
-    expect(policy.platformKeepPct).toBe(0.5);
-    expect(policy.clawVendorOtherPending).toBe(false);
-  });
-
-  // ≤30d: couple refund 0%, platform 100%, vendor 0%
-  it('≤30d couple cancel: 0% refund, platform keeps 100%, vendor keeps 0', () => {
-    const depositPaidAt = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString(); // 2d ago
-    const firstEventDate = '2026-06-20'; // ≤30d out
-    const policy = computeRefundPolicy(
-      'couple',
-      'deposit_paid',
-      firstEventDate,
-      depositPaidAt,
-      'none',
-      now,
-      'cash'
-    );
+    const policy = computeRefundPolicy('couple', 'deposit_paid', depositPaidAt, now);
 
     expect(policy.coupleRefundPct).toBe(0);
     expect(policy.vendorKeepPct).toBe(0);
@@ -131,23 +93,35 @@ describe('Cash vendor — cancellation policy (computeRefundPolicy)', () => {
     expect(policy.clawVendorOtherPending).toBe(false);
   });
 
-  // Vendor cancel: couple refund 100%, platform 0%, vendor 0%
+  // Vendor cancel: couple refund 100%, platform 0%, no claw
   it('vendor cancel: couple gets full refund, platform keeps 0, no claw', () => {
     const depositPaidAt = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
-    const firstEventDate = '2026-09-15';
-    const policy = computeRefundPolicy(
-      'vendor',
-      'deposit_paid',
-      firstEventDate,
-      depositPaidAt,
-      'none',
-      now,
-      'cash'
-    );
+    const policy = computeRefundPolicy('vendor', 'deposit_paid', depositPaidAt, now);
 
     expect(policy.coupleRefundPct).toBe(1);
     expect(policy.vendorKeepPct).toBe(0);
     expect(policy.platformKeepPct).toBe(0);
-    expect(policy.clawVendorOtherPending).toBe(false); // cash vendors have no pending to claw
+    expect(policy.clawVendorOtherPending).toBe(false);
+  });
+
+  // Mutual cancel: couple refund 100%, platform 0%
+  it('mutual cancel: couple gets full refund, platform keeps 0', () => {
+    const depositPaidAt = new Date(now.getTime() - 48 * 60 * 60 * 1000).toISOString();
+    const policy = computeRefundPolicy('mutual', 'deposit_paid', depositPaidAt, now);
+
+    expect(policy.coupleRefundPct).toBe(1);
+    expect(policy.vendorKeepPct).toBe(0);
+    expect(policy.platformKeepPct).toBe(0);
+    expect(policy.clawVendorOtherPending).toBe(false);
+  });
+
+  // Pre-deposit: no money to move
+  it('pre-deposit status: all pcts are 0', () => {
+    const policy = computeRefundPolicy('couple', 'accepted', null, now);
+
+    expect(policy.coupleRefundPct).toBe(0);
+    expect(policy.vendorKeepPct).toBe(0);
+    expect(policy.platformKeepPct).toBe(0);
+    expect(policy.clawVendorOtherPending).toBe(false);
   });
 });

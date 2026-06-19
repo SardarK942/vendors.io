@@ -5,12 +5,7 @@ import { getBookingDateRange } from '@/services/booking.service';
 import { stripe } from '@/lib/stripe/client';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { createMinimalAccount, createFullOnboardingLink } from '@/lib/stripe/connect';
-import {
-  DEPOSIT_RATE,
-  calculatePlatformCut,
-  calculateVendorPending,
-  type PaymentMode,
-} from '@/lib/utils';
+import { DEPOSIT_RATE, calculatePlatformCut, calculateVendorPending } from '@/lib/utils';
 import {
   sendDepositConfirmationEmail,
   sendCompletionEmailToVendor,
@@ -62,8 +57,8 @@ export async function setupMinimalStripeAccount(
 }
 
 // ─── Deposit Checkout ─────────────────────────────────────────────────────────
-// Plain platform charge (no destination, no app fee, immediate capture). Internal
-// 30/70 ledger split is recorded in metadata for webhook to pick up.
+// Plain platform charge (no destination, no app fee, immediate capture).
+// Baazar retains 100% of the 5% deposit; no Connect transfer to vendor.
 
 export async function createDepositCheckout(
   supabase: SupabaseClient<Database>,
@@ -349,24 +344,22 @@ export async function handleChargeRefunded(
 }
 
 // ─── Refund Policy ────────────────────────────────────────────────────────────
-// Single source of truth for the locked cancellation table. Takes who + when,
-// returns what fraction of each party's share survives.
+// Single source of truth for the Bucket F single-mode cancellation policy.
+// Under the 5%-deposit-only model the vendor never holds platform funds, so
+// vendorKeepPct is always 0 and clawVendorOtherPending is always false.
 
 interface RefundPolicy {
-  coupleRefundPct: number; // 0..1 of total deposit
-  vendorKeepPct: number; // 0..1 of vendor's 70% portion
-  platformKeepPct: number; // 0..1 of platform's 30% portion
-  clawVendorOtherPending: boolean; // true for vendor-fault events
+  coupleRefundPct: number; // 0 or 1 fraction of deposit returned to couple
+  vendorKeepPct: number; // always 0 — vendor has no deposit share
+  platformKeepPct: number; // 0 or 1 fraction of deposit retained by platform
+  clawVendorOtherPending: boolean; // always false — no vendor pending under single-mode
 }
 
 export function computeRefundPolicy(
   cancellerRole: CancellerRole,
   bookingStatus: string,
-  firstEventDate: string | null,
   depositPaidAt: string | null,
-  fault: 'none' | 'vendor_fault' | 'force_majeure' = 'none',
-  now: Date = new Date(),
-  paymentMode: PaymentMode = 'stripe'
+  now: Date = new Date()
 ): RefundPolicy {
   if (bookingStatus !== 'deposit_paid') {
     return {
@@ -377,88 +370,38 @@ export function computeRefundPolicy(
     };
   }
 
-  if (cancellerRole === 'vendor') {
-    // vendor_fault: 100% refund + claw + strike counted by caller.
-    // force_majeure: 100% refund but no claw, no strike.
-    // none: 100% refund, no claw, no strike (scheduling conflict >14d out, etc.).
-    const policy: RefundPolicy = {
+  // Vendor cancellation OR mutual cancellation → full refund to couple.
+  if (cancellerRole === 'vendor' || cancellerRole === 'mutual') {
+    return {
       coupleRefundPct: 1.0,
       vendorKeepPct: 0,
       platformKeepPct: 0,
-      clawVendorOtherPending: fault === 'vendor_fault',
-    };
-    if (paymentMode === 'cash') {
-      return {
-        ...policy,
-        vendorKeepPct: 0,
-        platformKeepPct: 1 - policy.coupleRefundPct,
-        clawVendorOtherPending: false,
-      };
-    }
-    return policy;
-  }
-
-  if (cancellerRole === 'couple') {
-    const hoursSinceDeposit = depositPaidAt
-      ? (now.getTime() - new Date(depositPaidAt).getTime()) / 36e5
-      : Infinity;
-    // If no events exist yet (edge case), default to most-conservative tier (no refund)
-    const daysToEvent = firstEventDate
-      ? (new Date(firstEventDate).getTime() - now.getTime()) / (36e5 * 24)
-      : -1;
-
-    let policy: RefundPolicy;
-
-    if (hoursSinceDeposit < 24) {
-      policy = {
-        coupleRefundPct: 1.0,
-        vendorKeepPct: 0,
-        platformKeepPct: 0,
-        clawVendorOtherPending: false,
-      };
-    } else if (daysToEvent > 30) {
-      policy = {
-        coupleRefundPct: 0.5,
-        vendorKeepPct: 0.5,
-        platformKeepPct: 1.0,
-        clawVendorOtherPending: false,
-      };
-    } else {
-      policy = {
-        coupleRefundPct: 0,
-        vendorKeepPct: 1.0,
-        platformKeepPct: 1.0,
-        clawVendorOtherPending: false,
-      };
-    }
-
-    if (paymentMode === 'cash') {
-      return {
-        ...policy,
-        vendorKeepPct: 0,
-        platformKeepPct: 1 - policy.coupleRefundPct,
-        clawVendorOtherPending: false,
-      };
-    }
-    return policy;
-  }
-
-  // Mutual: default to 50/50. Admin can adjust manually.
-  const mutualPolicy: RefundPolicy = {
-    coupleRefundPct: 0.5,
-    vendorKeepPct: 0.5,
-    platformKeepPct: 1.0,
-    clawVendorOtherPending: false,
-  };
-  if (paymentMode === 'cash') {
-    return {
-      ...mutualPolicy,
-      vendorKeepPct: 0,
-      platformKeepPct: 1 - mutualPolicy.coupleRefundPct,
       clawVendorOtherPending: false,
     };
   }
-  return mutualPolicy;
+
+  // Customer cancellation — 24h cooling-off window measured from deposit payment.
+  const hoursSinceDeposit = depositPaidAt
+    ? (now.getTime() - new Date(depositPaidAt).getTime()) / 36e5
+    : Infinity;
+
+  if (hoursSinceDeposit < 24) {
+    // Within 24h: full refund.
+    return {
+      coupleRefundPct: 1.0,
+      vendorKeepPct: 0,
+      platformKeepPct: 0,
+      clawVendorOtherPending: false,
+    };
+  }
+
+  // After 24h: deposit is non-refundable; platform retains 100%.
+  return {
+    coupleRefundPct: 0,
+    vendorKeepPct: 0,
+    platformKeepPct: 1.0,
+    clawVendorOtherPending: false,
+  };
 }
 
 // ─── Cancellation ─────────────────────────────────────────────────────────────
@@ -473,7 +416,7 @@ export async function cancelBooking(
 ): Promise<ServiceResult<{ refund_amount_cents: number; new_status: string }>> {
   const { data: booking } = await supabase
     .from('bookings')
-    .select('*, vendor_profiles!inner(id, user_id, payment_mode), transactions(*)')
+    .select('*, vendor_profiles!inner(id, user_id), transactions(*)')
     .eq('id', bookingId)
     .single();
 
@@ -482,7 +425,6 @@ export async function cancelBooking(
   const vp = booking.vendor_profiles as unknown as {
     id: string;
     user_id: string;
-    payment_mode: string | null;
   };
   const isCouple = booking.couple_user_id === cancellerUserId;
   const isVendor = vp.user_id === cancellerUserId;
@@ -540,19 +482,11 @@ export async function cancelBooking(
     return { data: { refund_amount_cents: 0, new_status: newStatus }, status: 200 };
   }
 
-  // Derive first event date from booking_events for refund tier calculation.
-  const { firstEventDate } = await getBookingDateRange(supabase, bookingId);
-
-  const bookingPaymentMode = (vp.payment_mode ?? 'stripe') as PaymentMode;
-
   const policy = computeRefundPolicy(
     cancellerRole,
     booking.status,
-    firstEventDate,
     booking.deposit_paid_at,
-    effectiveFault,
-    new Date(),
-    bookingPaymentMode
+    new Date()
   );
 
   const transactions = (booking.transactions as TransactionRow[]) ?? [];
