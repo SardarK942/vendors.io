@@ -26,9 +26,7 @@ export const POST = withErrorBoundary(async (req: Request) => {
     // No body — single-business legacy publish; proceed.
   }
 
-  let profileRow:
-    | { id: string; user_id: string; payment_mode: 'stripe' | 'cash' | null }
-    | null = null;
+  let profileRow: { id: string; user_id: string } | null = null;
 
   if (bodyProfileId) {
     const { data: target } = await supabase
@@ -82,29 +80,6 @@ export const POST = withErrorBoundary(async (req: Request) => {
       .from('users')
       .update({ active_vendor_profile_id: profileRow.id })
       .eq('id', user.id);
-
-    // Sub-project I §6: 'reuse' stripe_mode → link the new vendor_profile to
-    // the user's existing (primary) Stripe account so they share it.
-    if (stripeMode === 'reuse' && profileRow.payment_mode === 'stripe') {
-      const { data: primary } = await supabase
-        .from('vendor_profiles')
-        .select('stripe_account_id')
-        .eq('user_id', user.id)
-        .neq('id', profileRow.id)
-        .not('stripe_account_id', 'is', null)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle();
-      if (primary?.stripe_account_id) {
-        await supabase
-          .from('vendor_profiles')
-          .update({ stripe_account_id: primary.stripe_account_id })
-          .eq('id', profileRow.id);
-      }
-    }
-    // If stripe_mode === 'new' or null: do nothing here. The Stripe Connect
-    // onboarding link the vendor clicks later will create a new stripe_account
-    // row and link it to this vendor_profile via the existing flow.
   }
 
   return NextResponse.json({ ok: true });

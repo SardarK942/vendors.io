@@ -208,8 +208,6 @@ export interface Database {
           is_active: boolean;
           onboarding_complete: boolean;
           concurrent_capacity: number;
-          payment_mode: 'stripe' | 'cash' | null;
-          stripe_account_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -254,8 +252,6 @@ export interface Database {
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
-          payment_mode?: 'stripe' | 'cash' | null;
-          stripe_account_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -299,8 +295,6 @@ export interface Database {
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
-          payment_mode?: 'stripe' | 'cash' | null;
-          stripe_account_id?: string | null;
           updated_at?: string;
         };
         Relationships: [

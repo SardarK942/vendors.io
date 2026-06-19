@@ -212,25 +212,6 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
 
         {/* Payment mode */}
-        <div className="rounded-md border p-4">
-          <div className="flex items-center justify-between">
-            <h3 className="font-semibold">Payment mode</h3>
-            <Link
-              href="/dashboard/profile/setup/payment-mode"
-              className="text-sm text-primary underline"
-            >
-              Edit
-            </Link>
-          </div>
-          <p className="mt-2 text-sm text-muted-foreground">
-            {profile.payment_mode === 'cash'
-              ? 'Direct payments — coordinate with each couple yourself.'
-              : 'Through Baazar — couples pay deposit via the platform.'}
-          </p>
-          <p className="mt-2 text-xs text-ink/60">
-            Baazar takes 3% (Stripe mode) or 5% (cash mode). Everything else is yours.
-          </p>
-        </div>
       </div>
 
       {/* Live preview */}

@@ -50,104 +50,14 @@ const STATUS_MAP: Record<string, 'pending' | 'in_transit' | 'paid' | 'failed' | 
 };
 
 async function main() {
-  // Sub-project I §5: the FK direction flipped. Join from vendor_profiles
-  // (which now owns stripe_account_id) to the stripe_accounts row.
-  const { data: accountsRaw, error: accErr } = await supabase
-    .from('vendor_profiles')
-    .select('id, stripe_account_id, stripe_accounts!inner(id, stripe_account_id)')
-    .not('stripe_account_id', 'is', null);
-
-  if (accErr) {
-    console.error('[backfill] failed to read vendor_profiles → stripe_accounts:', accErr.message);
-    process.exit(1);
-  }
-
-  // Normalize: one row per vendor_profile linked to a stripe_account. Multiple
-  // vendor_profiles may share one stripe_account under the hybrid model — we
-  // attribute payouts to the canonical (oldest) vendor_profile per stripe_account.
-  // For backfill purposes, attribute to whichever vendor_profile we encounter
-  // first for that stripe_account; the payouts table's UNIQUE on stripe_payout_id
-  // prevents duplicate rows even if multiple vendor_profiles map to the same one.
-  const seenStripeAccountIds = new Set<string>();
-  type Account = { vendor_profile_id: string; stripe_account_id: string };
-  const accounts: Account[] = (accountsRaw ?? []).flatMap((row) => {
-    const sa = (row.stripe_accounts as unknown as { id: string; stripe_account_id: string }) || null;
-    if (!sa || !sa.stripe_account_id) return [];
-    if (seenStripeAccountIds.has(sa.stripe_account_id)) return [];
-    seenStripeAccountIds.add(sa.stripe_account_id);
-    return [{ vendor_profile_id: row.id, stripe_account_id: sa.stripe_account_id }];
-  });
-
-  let totalSeen = 0;
-  let totalUpserted = 0;
-  let totalSkipped = 0;
-
-  for (const acc of accounts) {
-    const accountId = acc.stripe_account_id;
-    if (!accountId) continue;
-
-    let cursor: string | undefined;
-    let accountFailed = false;
-    while (!accountFailed) {
-      let payouts: Stripe.ApiList<Stripe.Payout>;
-      try {
-        payouts = await stripe.payouts.list(
-          { limit: 100, starting_after: cursor },
-          { stripeAccount: accountId }
-        );
-      } catch (err) {
-        // Common reasons: test-mode Connect account hit with a live key (leftover
-        // smoke-test data), Connect account deleted on the Stripe side, account
-        // restricted. Log and move to the next account — don't fail the whole run.
-        console.warn(
-          `[backfill] skip ${accountId}: ${err instanceof Error ? err.message : String(err)}`
-        );
-        accountFailed = true;
-        break;
-      }
-
-      for (const payout of payouts.data) {
-        totalSeen++;
-        const status = STATUS_MAP[payout.status];
-        if (!status) {
-          totalSkipped++;
-          continue;
-        }
-
-        const arrivalDate = payout.arrival_date
-          ? new Date(payout.arrival_date * 1000).toISOString().slice(0, 10)
-          : null;
-
-        const { error: upErr } = await supabase.from('payouts').upsert(
-          {
-            vendor_profile_id: acc.vendor_profile_id,
-            stripe_payout_id: payout.id,
-            amount_cents: payout.amount,
-            currency: payout.currency,
-            status,
-            arrival_date: arrivalDate,
-            failure_message: payout.failure_message ?? null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'stripe_payout_id' }
-        );
-
-        if (upErr) {
-          console.error(`[backfill] upsert failed for ${payout.id}:`, upErr.message);
-        } else {
-          totalUpserted++;
-        }
-      }
-
-      if (!payouts.has_more) break;
-      cursor = payouts.data[payouts.data.length - 1]?.id;
-      if (!cursor) break;
-    }
-  }
-
-  console.log(
-    `[backfill] complete. accounts=${accounts?.length ?? 0} seen=${totalSeen} upserted=${totalUpserted} skipped=${totalSkipped}`
+  // DEPRECATED: Bucket F T4 removed stripe_account_id from vendor_profiles.
+  // This script is legacy and no longer functional. The schema migration that
+  // removed this column also means vendor_profiles no longer owns stripe account
+  // references. Use the stripe_accounts table directly instead.
+  console.error(
+    '[backfill] This script is DEPRECATED. Bucket F T4 removed stripe_account_id from vendor_profiles.'
   );
+  process.exit(1);
 }
 
 main().catch((err) => {

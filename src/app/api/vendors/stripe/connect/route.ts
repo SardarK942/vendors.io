@@ -14,7 +14,10 @@ export const POST = withErrorBoundary(async () => {
 
   if (!vp) throw new HttpError(404, 'No vendor profile found');
 
-  const stripeAccount = (vp.stripe_accounts as { stripe_account_id: string }[] | null)?.[0];
+  const stripeAccounts = Array.isArray(vp.stripe_accounts)
+    ? vp.stripe_accounts
+    : [vp.stripe_accounts];
+  const stripeAccount = stripeAccounts?.[0] as { stripe_account_id: string } | undefined;
   if (!stripeAccount) {
     throw new HttpError(400, 'Stripe account not initialized. Submit a booking quote first.');
   }

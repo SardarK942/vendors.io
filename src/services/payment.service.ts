@@ -1031,17 +1031,19 @@ export async function getVendorEarnings(
 
   if (!vp) return { error: 'Vendor profile not found', status: 404 };
 
-  const stripeAccount = (
-    vp.stripe_accounts as
-      | {
-          stripe_account_id: string;
-          charges_enabled: boolean;
-          payouts_enabled: boolean;
-          frozen_reason: string | null;
-          details_submitted_at: string | null;
-        }[]
-      | null
-  )?.[0];
+  type StripeAccountRow = {
+    stripe_account_id: string;
+    charges_enabled: boolean;
+    payouts_enabled: boolean;
+    frozen_reason: 'no_show_strikes' | 'admin_freeze' | null;
+    details_submitted_at: string | null;
+  };
+  const stripeAccountsList = Array.isArray(vp.stripe_accounts)
+    ? vp.stripe_accounts
+    : vp.stripe_accounts
+      ? [vp.stripe_accounts]
+      : [];
+  const stripeAccount = (stripeAccountsList as StripeAccountRow[])?.[0];
 
   const { data: bookings } = await supabase
     .from('bookings')
