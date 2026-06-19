@@ -22,40 +22,29 @@ export default function TermsPage() {
         vendor ourselves; we facilitate introductions, quotes, and hold deposits.
       </p>
 
-      <h2>2. Hold deposits and cancellation</h2>
-      <p>
-        When a couple accepts a vendor&apos;s quote, they pay a small hold deposit through the
-        Platform. The exact amount depends on the vendor&apos;s payment model:
+      <h2>2. Platform fee</h2>
+      <p className="mt-2 text-sm">
+        Baazar charges a 5% deposit at booking. We keep that 5% as our platform fee. You pay the
+        remaining 95% directly to the vendor per their payment terms.
       </p>
-      <ul>
-        <li>
-          <strong>Standard vendors:</strong> couples pay a 10% deposit. The Platform retains 30% of
-          the deposit as its service fee. The remaining 70% is released to the vendor after the
-          event completes (manually or automatically 48 hours after the event date).
-        </li>
-        <li>
-          <strong>Direct-payment vendors:</strong> couples pay a 5% deposit, which the Platform
-          retains in full as its service fee. The vendor coordinates the remaining balance directly
-          with the couple (cash, Zelle, bank transfer, etc.).
-        </li>
-      </ul>
-      <p>The following cancellation tiers apply to both vendor types:</p>
-      <ul>
-        <li>
-          <strong>Full refund</strong> if the couple cancels within 24 hours of payment.
-        </li>
-        <li>
-          <strong>50% refund</strong> if the couple cancels more than 30 days before the event.
-        </li>
-        <li>
-          <strong>No refund</strong> if the couple cancels within 30 days of the event.
-        </li>
-        <li>
-          <strong>Full refund</strong> if the vendor cancels, regardless of timing.
-        </li>
-      </ul>
 
-      <h2>3. Disputes</h2>
+      <h2>3. Cancellations</h2>
+      <div className="mt-2 space-y-3 text-sm">
+        <p>
+          <strong>Customer cancellation.</strong> Your 5% deposit is fully refundable within 24
+          hours of booking. After that, the deposit confirms your reservation and is non-refundable.
+        </p>
+        <p>
+          <strong>Vendor cancellation.</strong> If the vendor cancels at any time, you receive a
+          full refund of your 5% deposit.
+        </p>
+        <p>
+          The 95% balance you pay directly to the vendor is between you and them; Baazar
+          doesn&apos;t process or hold those funds.
+        </p>
+      </div>
+
+      <h2>4. Disputes</h2>
       <p>
         Either party may dispute an event outcome within 48 hours of the event date. Filing a
         dispute pauses automatic completion. Our team reviews each dispute within 3 business days.
@@ -63,7 +52,7 @@ export default function TermsPage() {
         either party&apos;s account.
       </p>
 
-      <h2>4. Vendor obligations</h2>
+      <h2>5. Vendor obligations</h2>
       <p>
         Vendors are independent contractors, not employees or agents of the Platform. Vendors are
         solely responsible for the quality, timing, and legality of the services they deliver.
@@ -73,14 +62,14 @@ export default function TermsPage() {
         calendar year result in a temporary freeze of the vendor&apos;s account.
       </p>
 
-      <h2>5. Couple obligations</h2>
+      <h2>6. Couple obligations</h2>
       <p>
         By paying a deposit, couples agree to pay the remaining balance directly to the vendor
         before or after the event per the vendor&apos;s terms. Remaining balance is not collected or
         held by the Platform.
       </p>
 
-      <h2>6. Platform liability</h2>
+      <h2>7. Platform liability</h2>
       <p>
         The Platform is not liable for the quality, conduct, timing, or legality of services
         delivered by vendors. Our role is limited to introduction, payment processing, and dispute
@@ -88,28 +77,28 @@ export default function TermsPage() {
         held by the Platform for that specific booking.
       </p>
 
-      <h2>7. Prohibited uses</h2>
+      <h2>8. Prohibited uses</h2>
       <p>
         You may not use the Platform to (a) circumvent the deposit flow by contacting vendors
         off-platform before the deposit is paid, (b) misrepresent your identity or the services
         offered, (c) attempt to defraud other users or the Platform.
       </p>
 
-      <h2>8. Arbitration</h2>
+      <h2>9. Arbitration</h2>
       <p>
         [LAWYER REVIEW] Any dispute between you and the Platform shall be resolved by binding
         arbitration in Cook County, Illinois, under the rules of the American Arbitration
         Association. You waive the right to participate in a class action.
       </p>
 
-      <h2>9. Changes</h2>
+      <h2>10. Changes</h2>
       <p>
         We may update these terms. Continued use of the Platform after an update constitutes
         acceptance. Material changes will be emailed to registered users at least 14 days in
         advance.
       </p>
 
-      <h2>10. Contact</h2>
+      <h2>11. Contact</h2>
       <p>Questions about these terms: contact support at sardarm.khan942@gmail.com.</p>
     </article>
   );

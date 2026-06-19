@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -74,15 +73,29 @@ export function DepositDialog({
             </div>
           </div>
 
-          <div className="space-y-1 text-xs text-muted-foreground">
-            <p className="font-medium text-foreground">Cancellation policy:</p>
-            <ul className="ml-4 list-disc space-y-0.5">
-              <li>100% refund if you cancel within 24 hours of paying.</li>
-              <li>50% refund if you cancel more than 30 days before the event.</li>
-              <li>No refund if you cancel within 30 days of the event.</li>
-              <li>100% refund if the vendor cancels.</li>
-            </ul>
-          </div>
+          <p className="mb-3 text-xs text-ink/70">
+            Baazar charges a 5% deposit at booking. We keep that 5% as our platform fee. You pay the
+            remaining 95% directly to the vendor per their payment terms.
+          </p>
+
+          <details className="mb-3 text-xs text-ink/70">
+            <summary className="cursor-pointer font-medium text-ink">Cancellation policy</summary>
+            <div className="mt-2 space-y-2">
+              <p>
+                <strong>Customer cancellation.</strong> Your 5% deposit is fully refundable within
+                24 hours of booking. After that, the deposit confirms your reservation and is
+                non-refundable.
+              </p>
+              <p>
+                <strong>Vendor cancellation.</strong> If the vendor cancels at any time, you receive
+                a full refund of your 5% deposit.
+              </p>
+              <p>
+                The 95% balance you pay directly to the vendor is between you and them; Baazar
+                doesn&apos;t process or hold those funds.
+              </p>
+            </div>
+          </details>
 
           <div className="flex items-start gap-2">
             <input
@@ -93,11 +106,7 @@ export function DepositDialog({
               className="mt-1 h-4 w-4 rounded border-input"
             />
             <label htmlFor="agree-deposit" className="text-xs text-muted-foreground">
-              I understand the cancellation policy and agree to the{' '}
-              <Link href="/terms" target="_blank" className="underline">
-                Terms
-              </Link>
-              .
+              I understand the cancellation policy and agree to the Terms.
             </label>
           </div>
         </div>

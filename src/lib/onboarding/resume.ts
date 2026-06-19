@@ -1,14 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 
-export type WizardStep =
-  | 'basics'
-  | 'location'
-  | 'online'
-  | 'details'
-  | 'portfolio'
-  | 'payment-mode'
-  | 'review';
+export type WizardStep = 'basics' | 'location' | 'online' | 'details' | 'portfolio' | 'review';
 
 export type WizardMode = 'first' | 'next';
 
@@ -26,7 +19,6 @@ export interface ProfileRowShape {
   years_in_business?: number | null;
   response_sla_hours?: number | null;
   portfolio_images: string[] | null;
-  payment_mode: 'stripe' | 'cash' | null;
 }
 
 /**
@@ -160,6 +152,5 @@ export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep 
     return 'details';
   }
   if (!profile.portfolio_images || profile.portfolio_images.length < 1) return 'portfolio';
-  if (!profile.payment_mode) return 'payment-mode';
   return 'review';
 }

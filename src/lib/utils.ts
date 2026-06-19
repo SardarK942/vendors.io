@@ -13,21 +13,10 @@ export function formatPrice(cents: number): string {
   }).format(cents / 100);
 }
 
-/** Deposit rate for Stripe vendors (10% of total). */
-export const STRIPE_DEPOSIT_RATE = 0.1;
-
-/** Deposit rate for cash vendors (5% of total). */
-export const CASH_DEPOSIT_RATE = 0.05;
-
-/** Legacy alias — kept for backward compat until C2 migrates all callers. */
-export const DEPOSIT_RATE = STRIPE_DEPOSIT_RATE;
+/** Unified deposit rate for all vendors (5% of total). */
+export const DEPOSIT_RATE = 0.05;
 
 export type PaymentMode = 'stripe' | 'cash';
-
-/** Returns the deposit rate fraction for the given payment mode. */
-export function getDepositRate(mode: PaymentMode): number {
-  return mode === 'cash' ? CASH_DEPOSIT_RATE : STRIPE_DEPOSIT_RATE;
-}
 
 /**
  * Returns the fraction of the deposit the platform retains.

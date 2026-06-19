@@ -45,7 +45,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
     <div className="max-w-2xl space-y-6">
       <div>
         <h1 className="text-2xl font-bold">Show your work</h1>
-        <p className="text-sm text-muted-foreground">Step 5 of 7</p>
+        <p className="text-sm text-muted-foreground">Step 5 of 6</p>
       </div>
 
       {total >= 2 && (

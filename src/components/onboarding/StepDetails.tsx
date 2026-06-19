@@ -90,7 +90,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         <p className="mt-2 text-sm text-ink-muted">
           Three quick questions to help couples find you.
         </p>
-        <p className="text-sm text-muted-foreground">Step 4 of 7</p>
+        <p className="text-sm text-muted-foreground">Step 4 of 6</p>
       </header>
 
       {total >= 2 && (

@@ -6,7 +6,6 @@ import {
   locationSchema,
   onlineSchema,
   portfolioSchema,
-  paymentModeSchema,
   detailsSchema,
 } from '@/lib/onboarding/validation';
 import { generateSlug } from '@/lib/utils';
@@ -169,24 +168,6 @@ export const PATCH = withErrorBoundary(
         .update({
           portfolio_images: data.portfolioImages,
         })
-        .eq('id', profileId);
-
-      if (error) throw new HttpError(500, error.message);
-      return NextResponse.json({ ok: true });
-    }
-
-    if (step === 'payment-mode') {
-      let data;
-      try {
-        data = paymentModeSchema.parse(body);
-      } catch (err: unknown) {
-        const zodErr = err as { issues?: { message: string }[] };
-        throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');
-      }
-
-      const { error } = await supabase
-        .from('vendor_profiles')
-        .update({ payment_mode: data.paymentMode })
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);

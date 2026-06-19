@@ -114,7 +114,6 @@ describe('publishGateSchema (server-side guard)', () => {
     instagram_handle: 'x',
     website_url: null,
     portfolio_images: ['x.jpg'],
-    payment_mode: 'stripe' as const,
     languages: ['english'],
     years_in_business: 3,
     response_sla_hours: 24,
@@ -130,12 +129,5 @@ describe('publishGateSchema (server-side guard)', () => {
   it('accepts a complete profile', () => {
     const r = publishGateSchema.safeParse(completeProfile);
     expect(r.success).toBe(true);
-  });
-  it('rejects a complete profile with payment_mode null', () => {
-    const r = publishGateSchema.safeParse({
-      ...completeProfile,
-      payment_mode: null,
-    });
-    expect(r.success).toBe(false);
   });
 });

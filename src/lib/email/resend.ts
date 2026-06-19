@@ -145,7 +145,7 @@ export async function sendVendorAcceptedEmail(
     html: `
       <h2>${safeName} accepted your booking</h2>
       <p>Total: <strong>${fmtUsd(totalCents)}</strong></p>
-      <p>Pay your hold deposit (30%) to confirm. The vendor's full address and instructions will appear in your dashboard once the deposit is processed.</p>
+      <p>Pay your 5% deposit to confirm your booking. The vendor's full address and instructions will appear in your dashboard once the deposit is processed.</p>
       <p><a href="${depositCheckoutUrl}">Pay deposit</a></p>
       ${FOOTER}
     `,
@@ -250,7 +250,7 @@ export async function sendDepositConfirmationEmail(
   const safeName = escapeHtml(vendorName);
   const body = isVendor
     ? `<p>A hold deposit of <strong>${fmtUsd(amount)}</strong> has been placed. The couple's contact details are now visible in your dashboard.</p>
-       <p>Your 70% share is held in escrow and released when you mark the booking complete after the event.</p>`
+       <p>The customer paid their 5% deposit. Coordinate the balance with them directly per your payment terms.</p>`
     : `<p>Your hold deposit of <strong>${fmtUsd(amount)}</strong> for ${safeName} has been processed. Your booking is confirmed.</p>`;
 
   return sendEmail({

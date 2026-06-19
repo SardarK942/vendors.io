@@ -4,12 +4,10 @@ import {
   calculatePlatformFee,
   calculateDepositAmount,
   generateSlug,
-  getDepositRate,
   getPlatformCutRate,
   calculatePlatformCut,
   calculateVendorPending,
-  STRIPE_DEPOSIT_RATE,
-  CASH_DEPOSIT_RATE,
+  DEPOSIT_RATE,
 } from '@/lib/utils';
 
 describe('formatPrice', () => {
@@ -75,22 +73,6 @@ describe('generateSlug', () => {
 });
 
 describe('payment-mode helpers', () => {
-  it('STRIPE_DEPOSIT_RATE = 0.10', () => {
-    expect(STRIPE_DEPOSIT_RATE).toBe(0.1);
-  });
-
-  it('CASH_DEPOSIT_RATE = 0.05', () => {
-    expect(CASH_DEPOSIT_RATE).toBe(0.05);
-  });
-
-  it('getDepositRate returns 0.10 for stripe', () => {
-    expect(getDepositRate('stripe')).toBe(0.1);
-  });
-
-  it('getDepositRate returns 0.05 for cash', () => {
-    expect(getDepositRate('cash')).toBe(0.05);
-  });
-
   it('getPlatformCutRate returns 0.30 for stripe', () => {
     expect(getPlatformCutRate('stripe')).toBe(0.3);
   });
@@ -122,24 +104,16 @@ describe('payment-mode helpers', () => {
       expect(calculateVendorPending(15000, 'cash')).toBe(0);
     });
   });
+});
 
-  describe('end-to-end on $3000 booking', () => {
-    it('stripe vendor: $300 deposit → $90 platform / $210 vendor pending', () => {
-      const totalCents = 300_000;
-      const depositRate = getDepositRate('stripe');
-      const deposit = Math.floor(totalCents * depositRate); // 30000
-      expect(deposit).toBe(30000);
-      expect(calculatePlatformCut(deposit, 'stripe')).toBe(9000);
-      expect(calculateVendorPending(deposit, 'stripe')).toBe(21000);
-    });
+describe('DEPOSIT_RATE', () => {
+  it('is exactly 0.05', () => {
+    expect(DEPOSIT_RATE).toBe(0.05);
+  });
 
-    it('cash vendor: $150 deposit → $150 platform / $0 vendor', () => {
-      const totalCents = 300_000;
-      const depositRate = getDepositRate('cash');
-      const deposit = Math.floor(totalCents * depositRate); // 15000
-      expect(deposit).toBe(15000);
-      expect(calculatePlatformCut(deposit, 'cash')).toBe(15000);
-      expect(calculateVendorPending(deposit, 'cash')).toBe(0);
-    });
+  it('computes correct deposit amount for $5000 booking', () => {
+    const totalCents = 500_000; // $5000
+    const depositCents = Math.round(totalCents * DEPOSIT_RATE);
+    expect(depositCents).toBe(25_000); // $250
   });
 });
