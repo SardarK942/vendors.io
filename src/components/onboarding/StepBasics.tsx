@@ -100,7 +100,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
       {pendingMatches && <ScrapedVendorMatchPrompt matches={pendingMatches} />}
       <div>
         <h1 className="text-2xl font-bold">Tell us about your business</h1>
-        <p className="text-sm text-muted-foreground">Step 1 of 7</p>
+        <p className="text-sm text-muted-foreground">Step 1 of 6</p>
       </div>
 
       {total >= 2 && (

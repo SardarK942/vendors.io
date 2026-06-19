@@ -33,7 +33,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
     setPublishError(null);
 
     // Sub-project I §6: in 'next' mode, also send the Stripe override choice
-    // (stashed in sessionStorage by StepPaymentMode).
+    // (stashed in sessionStorage by a prior wizard step).
     let stripeMode: 'reuse' | 'new' | null = null;
     if (mode === 'next' && typeof window !== 'undefined') {
       const stored = sessionStorage.getItem(`wizard:stripe_mode:${profileId}`);
@@ -66,8 +66,6 @@ export function StepReview({ profile, profileId, mode }: Props) {
       setPublishErrorStep('online');
     } else if (field === 'portfolio_images') {
       setPublishErrorStep('portfolio');
-    } else if (field === 'payment_mode') {
-      setPublishErrorStep('payment-mode');
     } else {
       setPublishErrorStep(null);
     }
@@ -84,7 +82,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       <div>
         <h1 className="text-2xl font-bold">Review your profile</h1>
         <p className="text-sm text-muted-foreground">
-          Step 7 of 7 — check everything looks right before publishing.
+          Step 6 of 6 — check everything looks right before publishing.
         </p>
       </div>
 
@@ -210,9 +208,13 @@ export function StepReview({ profile, profileId, mode }: Props) {
             <p className="text-sm text-destructive">No images uploaded</p>
           )}
         </div>
-
-        {/* Payment mode */}
       </div>
+
+      {/* Fee disclosure */}
+      <p className="text-sm text-muted-foreground">
+        Baazar takes a 5% deposit at booking. Everything else you collect directly from the
+        customer.
+      </p>
 
       {/* Live preview */}
       <div className="space-y-2">
@@ -271,6 +273,15 @@ export function StepReview({ profile, profileId, mode }: Props) {
           )}
         </div>
       )}
+
+      <div className="rounded-md border border-ink/15 bg-cream/60 p-3">
+        <p className="text-xs text-ink/80">
+          By publishing your profile, you agree to Baazar&apos;s terms. Customers pay a 5% deposit
+          through Baazar at booking — that&apos;s our platform fee. You collect the 95% balance
+          directly from them. If you cancel a confirmed booking, the customer&apos;s deposit is
+          refunded in full.
+        </p>
+      </div>
 
       <div className="flex justify-end">
         <Button onClick={onPublish} disabled={publishing} size="lg">
