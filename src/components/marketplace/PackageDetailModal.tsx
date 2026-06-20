@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -12,6 +13,7 @@ interface Props {
   pkg: PackageWithAddons;
   vendorSlug: string;
   onClose: () => void;
+  interactive?: boolean;
 }
 
 /**
@@ -22,7 +24,7 @@ interface Props {
  * - vendor_notes_template preview
  * - "Continue to booking" CTA → writes signed cookie + navigates to /book
  */
-export function PackageDetailModal({ pkg, vendorSlug, onClose }: Props) {
+export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = true }: Props) {
   const router = useRouter();
   const [toggled, setToggled] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -42,6 +44,10 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose }: Props) {
   }
 
   async function handleContinue() {
+    if (!interactive) {
+      toast('Preview mode — bookings disabled.');
+      return;
+    }
     setLoading(true);
     const selectedAddons = pkg.addons
       .filter((a) => toggled.has(a.id))

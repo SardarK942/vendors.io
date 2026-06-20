@@ -9,10 +9,13 @@ import { Separator } from '@/components/ui/separator';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { CheckCircle, Clock, ExternalLink, Instagram, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import type { Database } from '@/types/database.types';
+import { toast } from 'sonner';
 import { PackageGrid } from './PackageGrid';
 import type { PackageWithAddons } from './PackageGrid';
 import { OwnerBanner } from './OwnerBanner';
+import { ExitPreviewPill } from './ExitPreviewPill';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -67,6 +70,15 @@ export function VendorProfile({
   const [previewMode, setPreviewMode] = useState(false);
   const interactive = interactiveProp ?? (!isOwner || previewMode);
   const showBanner = isOwner && !previewMode;
+  const router = useRouter();
+
+  function handleRequestBooking() {
+    if (!interactive) {
+      toast('Preview mode — bookings disabled.');
+      return;
+    }
+    router.push(`/vendors/${vendor.slug}/book`);
+  }
   const hasReviews = vendor.review_count > 0 && vendor.average_rating != null;
 
   return (
@@ -100,7 +112,7 @@ export function VendorProfile({
         {packages.length > 0 && (
           <div>
             <h2 className="mb-3 text-xl font-semibold">Packages</h2>
-            <PackageGrid packages={packages} vendorSlug={vendor.slug} />
+            <PackageGrid packages={packages} vendorSlug={vendor.slug} interactive={interactive} />
           </div>
         )}
 
@@ -194,8 +206,8 @@ export function VendorProfile({
                   No packages listed yet. Contact the vendor directly or request a booking.
                 </p>
                 {showBookingButton && (
-                  <Button className="w-full" size="lg" asChild disabled={!interactive}>
-                    <Link href={`/vendors/${vendor.slug}/book`}>Request Booking</Link>
+                  <Button className="w-full" size="lg" onClick={handleRequestBooking}>
+                    Request Booking
                   </Button>
                 )}
               </>
@@ -232,7 +244,7 @@ export function VendorProfile({
           </div>
         </div>
       </div>
-      {/* ExitPreviewPill added in T14 */}
+      {isOwner && previewMode && <ExitPreviewPill onExit={() => setPreviewMode(false)} />}
     </>
   );
 }
