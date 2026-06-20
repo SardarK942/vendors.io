@@ -66,7 +66,7 @@ export function NotificationCard({ notification, onClick, showAllActions = false
           {timeAgo(notification.created_at)}
         </p>
         {visibleActions.length > 0 && (
-          <div className="mt-2 flex flex-wrap gap-2">
+          <div data-testid="notification-actions" className="mt-2 flex flex-wrap gap-2">
             {visibleActions.map((action) => (
               <Link
                 key={action.label}
