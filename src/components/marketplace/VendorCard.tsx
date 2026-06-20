@@ -49,11 +49,7 @@ export function VendorCard({ vendor, searchDate, isSaved = false, onSaveToggle }
       href={`/vendors/${vendor.slug}`}
       className={cn(
         'group relative block overflow-hidden rounded-lg border border-hairline bg-cream',
-        'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] transition-all',
-        // HV-B hover (md+ only — touch devices skip)
-        'md:hover:-translate-y-[3px] md:hover:border-transparent',
-        'md:hover:shadow-[rgba(27,20,20,0.02)_0_0_0_1px,rgba(27,20,20,0.04)_0_2px_6px_0,rgba(27,20,20,0.10)_0_4px_8px_0]',
-        'motion-reduce:md:hover:transform-none'
+        'hover-lift-card'
       )}
     >
       {/* Photo */}

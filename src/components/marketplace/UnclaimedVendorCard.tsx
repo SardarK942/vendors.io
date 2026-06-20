@@ -27,7 +27,7 @@ export function UnclaimedVendorCard({ vendor }: Props) {
   return (
     <Link
       href={`/vendors/${vendor.slug}`}
-      className="group block overflow-hidden rounded-lg border bg-card transition hover:shadow-md"
+      className="group block overflow-hidden rounded-lg border bg-card hover-lift-card"
     >
       <div className="relative aspect-[4/5] bg-muted">
         {heroPhoto ? (
