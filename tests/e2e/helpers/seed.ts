@@ -443,7 +443,6 @@ export async function seedPendingBooking(
     .from('booking_events')
     .insert({
       booking_id: booking.id,
-      vendor_profile_id: vendor.vendorProfileId,
       sequence: 1,
       event_date: opts.eventDate,
       event_start_time: opts.startTime,
@@ -493,7 +492,6 @@ export async function seedCashVendor(opts?: { businessName?: string }): Promise<
       is_active: true,
       onboarding_complete: true,
       concurrent_capacity: 1,
-      payment_mode: 'cash',
     })
     .select('id')
     .single();
