@@ -50,14 +50,14 @@ Canonical list grows from 6 to **20 categories** in two groups:
 1. engagement (existing)
 2. roka
 3. tilak
-4. mehndi (existing)
+4. mehndi / henna (existing — relabeled)
 5. sangeet (existing)
 6. nikah
 7. baraat
-8. wedding (existing)
+8. wedding / shaadi (existing — relabeled)
 9. reception (existing)
-10. walima
-11. aqiqah
+10. walima / wedding feast
+11. aqiqah / baby naming
 12. multiple (existing — "multi-event booking")
 
 **General celebration (new):** 13. birthday party 14. anniversary 15. corporate event 16. baby shower 17. bridal shower 18. graduation 19. quinceañera 20. sweet 16
@@ -165,14 +165,14 @@ export const EVENT_TYPES = [
   { id: 'engagement', label: 'Engagement', group: 'cultural' },
   { id: 'roka', label: 'Roka', group: 'cultural' },
   { id: 'tilak', label: 'Tilak', group: 'cultural' },
-  { id: 'mehndi', label: 'Mehndi', group: 'cultural' },
+  { id: 'mehndi', label: 'Mehndi / Henna', group: 'cultural' },
   { id: 'sangeet', label: 'Sangeet', group: 'cultural' },
   { id: 'nikah', label: 'Nikah', group: 'cultural' },
   { id: 'baraat', label: 'Baraat', group: 'cultural' },
-  { id: 'wedding', label: 'Wedding', group: 'cultural' },
+  { id: 'wedding', label: 'Wedding / Shaadi', group: 'cultural' },
   { id: 'reception', label: 'Reception', group: 'cultural' },
-  { id: 'walima', label: 'Walima', group: 'cultural' },
-  { id: 'aqiqah', label: 'Aqiqah', group: 'cultural' },
+  { id: 'walima', label: 'Walima / Wedding Feast', group: 'cultural' },
+  { id: 'aqiqah', label: 'Aqiqah / Baby Naming', group: 'cultural' },
   { id: 'multiple', label: 'Multi-event booking', group: 'cultural' },
   // General celebration
   { id: 'birthday_party', label: 'Birthday party', group: 'general' },
