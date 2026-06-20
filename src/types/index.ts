@@ -280,3 +280,21 @@ export const notificationTypeSchema = z.enum([
   'review_received',
 ]);
 export type NotificationTypeInput = z.infer<typeof notificationTypeSchema>;
+
+// ─── Sub-project B: Spoken Languages ────────────────────────────
+
+export const SPOKEN_LANGUAGES = [
+  'Arabic',
+  'Bengali',
+  'English',
+  'Gujarati',
+  'Hindi',
+  'Marathi',
+  'Punjabi',
+  'Spanish',
+  'Tamil',
+  'Telugu',
+  'Urdu',
+] as const;
+
+export type SpokenLanguage = (typeof SPOKEN_LANGUAGES)[number];

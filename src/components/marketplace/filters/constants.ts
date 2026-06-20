@@ -1,26 +1,20 @@
 /**
  * Shared constants for the filter chip system + onboarding wizard.
- * Sourced of truth: this file. Both the chip UI and the onboarding wizard's
+ * Sourced of truth: SPOKEN_LANGUAGES in @/types. Both the chip UI and the onboarding wizard's
  * Languages/Years/Response-SLA inputs reference the same lists.
  */
+
+import { SPOKEN_LANGUAGES } from '@/types';
 
 export interface LanguageOption {
   slug: string;
   label: string;
 }
 
-export const LANGUAGES: LanguageOption[] = [
-  { slug: 'hindi', label: 'Hindi' },
-  { slug: 'urdu', label: 'Urdu' },
-  { slug: 'punjabi', label: 'Punjabi' },
-  { slug: 'bengali', label: 'Bengali' },
-  { slug: 'gujarati', label: 'Gujarati' },
-  { slug: 'tamil', label: 'Tamil' },
-  { slug: 'telugu', label: 'Telugu' },
-  { slug: 'marathi', label: 'Marathi' },
-  { slug: 'arabic', label: 'Arabic' },
-  { slug: 'english', label: 'English' },
-];
+export const LANGUAGES: LanguageOption[] = SPOKEN_LANGUAGES.map((label) => ({
+  slug: label.toLowerCase(),
+  label,
+}));
 
 export type PriceBand = 'budget' | 'mid' | 'premium' | 'luxury';
 
