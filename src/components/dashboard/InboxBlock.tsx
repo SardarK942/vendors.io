@@ -118,7 +118,7 @@ export async function InboxBlock({ vendorProfileId }: InboxBlockProps) {
       {waitingRows.length > 0 && (
         <div className="space-y-2">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            Waiting on couple · {waitingRows.length}
+            Waiting on customer · {waitingRows.length}
           </h3>
           {waitingRows.map((r) => (
             <InboxRow key={r.bookingId} data={r} />

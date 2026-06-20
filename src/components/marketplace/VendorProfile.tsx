@@ -47,7 +47,7 @@ function Stars({ value, size = 'sm' }: { value: number; size?: 'sm' | 'md' }) {
 
 function reviewerName(users: ReviewItem['users']): string {
   const row = Array.isArray(users) ? users[0] : users;
-  return row?.full_name?.split(' ')[0] || 'A couple';
+  return row?.full_name?.split(' ')[0] || 'A customer';
 }
 
 export function VendorProfile({

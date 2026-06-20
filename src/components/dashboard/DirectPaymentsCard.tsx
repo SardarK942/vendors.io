@@ -21,8 +21,8 @@ export function DirectPaymentsCard({ confirmedBookings, upcomingEvents }: Props)
           <span className="text-muted-foreground">Upcoming events</span>
           <span className="font-semibold">{upcomingEvents}</span>
         </div>
-        <p className="text-xs text-muted-foreground pt-3 mt-3 border-t">
-          Payments tracked outside Baazar. Coordinate directly with each couple.
+        <p className="mt-3 border-t pt-3 text-xs text-muted-foreground">
+          Payments tracked outside Baazar. Coordinate directly with each customer.
         </p>
       </CardContent>
     </Card>

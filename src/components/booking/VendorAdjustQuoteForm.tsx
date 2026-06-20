@@ -70,7 +70,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
         return;
       }
 
-      toast.success('Adjusted quote sent to couple');
+      toast.success('Adjusted quote sent to customer');
       onSuccess?.();
       router.refresh();
     } catch {
@@ -131,7 +131,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
 
       {reason && reason !== 'other' && (
         <div className="space-y-2">
-          <Label htmlFor="explanation">Optional note to couple</Label>
+          <Label htmlFor="explanation">Optional note to customer</Label>
           <Textarea
             id="explanation"
             value={explanation}

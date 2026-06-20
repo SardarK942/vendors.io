@@ -80,7 +80,7 @@ export function VendorBookingActions({
         return;
       }
 
-      toast.success('Booking accepted. Couple has been notified to pay the deposit.');
+      toast.success('Booking accepted. Customer has been notified to pay the deposit.');
 
       // Sub-project I §8: cross-business toast if the booking is for a non-
       // active business.

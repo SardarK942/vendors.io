@@ -76,7 +76,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Instagram is how couples discover Desi wedding vendors. This field is required.
+          Instagram is how customers discover Desi wedding vendors. This field is required.
         </p>
         {getError('instagramHandle') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('instagramHandle')}</p>

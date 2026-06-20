@@ -30,7 +30,7 @@ import { ArrowLeft } from 'lucide-react';
 const STEP_CONFIG = [
   {
     title: 'Welcome to Baazar for vendors',
-    description: "Get discovered by Chicago couples. Here's how it works.",
+    description: "Get discovered by Chicago customers. Here's how it works.",
   },
   {
     title: 'Tell us about your business',

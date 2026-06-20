@@ -859,7 +859,7 @@ export async function coupleCounterBooking(args: {
 
   // 2. Auth guard — only the booking's couple may counter.
   if (booking.couple_user_id !== actorUserId) {
-    return { ok: false, code: 'forbidden', message: 'You are not the couple on this booking.' };
+    return { ok: false, code: 'forbidden', message: 'You are not the customer on this booking.' };
   }
 
   // 3. Cap guard — primary check (DB constraint is backstop for concurrent races).

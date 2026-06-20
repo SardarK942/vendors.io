@@ -164,7 +164,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               name="bio"
               rows={4}
               defaultValue={vendorProfile?.bio || ''}
-              placeholder="Tell couples about your services, style, and experience..."
+              placeholder="Tell customers about your services, style, and experience..."
             />
           </div>
 
@@ -236,7 +236,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 Make my full address publicly visible
                 <span className="block text-xs text-muted-foreground">
                   Most home-studio vendors keep this off — your full address is then only shared
-                  with couples who pay the deposit. Your city and state are always public.
+                  with customers who pay the deposit. Your city and state are always public.
                 </span>
               </span>
             </label>

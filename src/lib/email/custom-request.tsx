@@ -47,7 +47,7 @@ export function renderCustomRequestHtml(args: CustomRequestArgs): string {
       </table>
       <p style="margin:0 0 8px;"><strong>Their message:</strong></p>
       <p style="background:#F0EAD8; border-left:3px solid #1B1414; padding:12px 16px; margin:0 0 16px; border-radius:0 4px 4px 0;">${safeDescription}</p>
-      <p style="color:#555; font-size:14px;">Couples expect a quote within 48 hours. Send yours now to lock in the date.</p>
+      <p style="color:#555; font-size:14px;">Customers expect a quote within 48 hours. Send yours now to lock in the date.</p>
       <p style="margin-top:24px;">
         <a href="https://www.baazar.io/dashboard/bookings/${safeBookingId}"
            style="background:#1B1414; color:#FBF6EC; padding:12px 20px; text-decoration:none; border-radius:6px;">

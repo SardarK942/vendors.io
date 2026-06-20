@@ -102,7 +102,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
         ? 'Accept the Terms to continue'
         : claimContext
           ? `Sign Up and Claim ${claimContext.businessName}`
-          : `Sign Up as ${role === 'couple' ? 'Couple' : 'Vendor'}`;
+          : `Sign Up as ${role === 'couple' ? 'Customer' : 'Vendor'}`;
 
   return (
     <Card>

@@ -155,7 +155,7 @@ export default async function DashboardPage() {
         <Card className="border-yellow-200 bg-yellow-50 p-6">
           <h2 className="font-semibold text-yellow-900">Add a package to go live</h2>
           <p className="mt-1 text-sm text-yellow-800">
-            Couples can only book vendors with at least one active package.
+            Customers can only book vendors with at least one active package.
           </p>
           <Button asChild className="mt-4" size="sm">
             <Link href="/dashboard/profile/packages/new">Add Package</Link>

@@ -18,7 +18,7 @@ export default function PrivacyPage() {
       <h2>1. What we collect</h2>
       <ul>
         <li>
-          <strong>Account</strong>: email, name, phone (optional), role (couple / vendor).
+          <strong>Account</strong>: email, name, phone (optional), role (customer / vendor).
         </li>
         <li>
           <strong>Booking</strong>: event date, event type, guest count, budget, special requests,

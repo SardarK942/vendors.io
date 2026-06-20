@@ -48,7 +48,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
         <div>
           <h1 className="text-2xl font-bold">Your Packages</h1>
           <p className="text-muted-foreground">
-            Couples can only book vendors with at least one active package.
+            Customers can only book vendors with at least one active package.
           </p>
         </div>
         <Button asChild>
@@ -59,9 +59,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
       {packages.length === 0 ? (
         <Card className="p-12 text-center">
           <h2 className="text-lg font-semibold">No packages yet</h2>
-          <p className="mt-2 text-muted-foreground">
-            Add your first package to go live in search.
-          </p>
+          <p className="mt-2 text-muted-foreground">Add your first package to go live in search.</p>
           <Button className="mt-6" asChild>
             <Link href="/dashboard/profile/packages/new">Add your first package</Link>
           </Button>
@@ -99,7 +97,7 @@ function PackageCard({ pkg }: { pkg: PackageItem }) {
           unoptimized
         />
       </div>
-      <CardContent className="p-4 space-y-2">
+      <CardContent className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <h3 className="font-semibold leading-tight">{pkg.name}</h3>
           {!pkg.is_active && (
@@ -112,7 +110,7 @@ function PackageCard({ pkg }: { pkg: PackageItem }) {
         <p className="text-xs text-muted-foreground">
           {pkg.duration_hours}h &middot; up to {pkg.max_guests} guests
         </p>
-        <div className="pt-2 flex gap-2 items-center">
+        <div className="flex items-center gap-2 pt-2">
           <Button size="sm" variant="outline" asChild>
             <Link href={`/dashboard/profile/packages/${pkg.id}`}>Edit</Link>
           </Button>
