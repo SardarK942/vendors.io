@@ -76,10 +76,15 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
   const [events, setEvents] = useState<EventRowData[]>([makeBlankEvent(1)]);
   const [coupleFullName, setCoupleFullName] = useState('');
   const [couplePhone, setCouplePhone] = useState('');
-  const [guestCount, setGuestCount] = useState(50);
+  // Bucket B T6: per-event guest counts keyed by event sequence (1-indexed)
+  const [guestCounts, setGuestCounts] = useState<Record<number, number>>(() =>
+    Object.fromEntries(Array.from({ length: pkg.events_count }, (_, i) => [i + 1, 50]))
+  );
   const [specialRequests, setSpecialRequests] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const isSingleEvent = pkg.events_count === 1;
 
   // Live price computation
   const addonsTotal = selectedAddons.reduce((sum, a) => sum + a.price_delta_cents, 0);
@@ -104,15 +109,23 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
     setSubmitting(true);
 
     try {
+      // Bucket B T6: aggregate per-event counts for bookings.guest_count (sum).
+      // Each event's guest_count_override is populated from the per-event input.
+      const totalGuestCount = Object.values(guestCounts).reduce((sum, n) => sum + n, 0);
       const payload = {
         vendor_profile_id: vendor.id,
         package_id: pkg.id,
         selected_addons: selectedAddons,
-        guest_count: guestCount,
+        guest_count: totalGuestCount,
         special_requests: specialRequests || undefined,
         couple_full_name: coupleFullName,
         couple_contact_phone: couplePhone,
-        events: events.map((ev, i) => ({ ...ev, sequence: i + 1 })),
+        events: events.map((ev, i) => ({
+          ...ev,
+          sequence: i + 1,
+          // Per-event guest count stored in guest_count_override on booking_events.
+          guest_count_override: isSingleEvent ? null : (guestCounts[i + 1] ?? 50),
+        })),
       };
 
       const res = await fetch('/api/bookings', {
@@ -243,17 +256,51 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 onChange={(e) => setCouplePhone(e.target.value)}
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium">Total Guest Count</label>
-              <input
-                type="number"
-                required
-                min={1}
-                className="w-full rounded border p-2 text-sm"
-                value={guestCount}
-                onChange={(e) => setGuestCount(parseInt(e.target.value, 10))}
-              />
-            </div>
+            {/* Bucket B T6: per-event guest count inputs */}
+            {isSingleEvent ? (
+              <div>
+                <label htmlFor="guest-count-1" className="mb-1 block text-sm font-medium">
+                  How many guests?
+                </label>
+                <input
+                  id="guest-count-1"
+                  type="number"
+                  required
+                  min={1}
+                  className="w-full rounded border p-2 text-sm"
+                  value={guestCounts[1]}
+                  onChange={(e) =>
+                    setGuestCounts({ ...guestCounts, 1: parseInt(e.target.value, 10) || 1 })
+                  }
+                />
+              </div>
+            ) : (
+              Array.from({ length: pkg.events_count }, (_, i) => {
+                const seq = i + 1;
+                const inputId = `guest-count-${seq}`;
+                return (
+                  <div key={seq}>
+                    <label htmlFor={inputId} className="mb-1 block text-sm font-medium">
+                      Guests for Event {seq}
+                    </label>
+                    <input
+                      id={inputId}
+                      type="number"
+                      required
+                      min={1}
+                      className="w-full rounded border p-2 text-sm"
+                      value={guestCounts[seq]}
+                      onChange={(e) =>
+                        setGuestCounts({
+                          ...guestCounts,
+                          [seq]: parseInt(e.target.value, 10) || 1,
+                        })
+                      }
+                    />
+                  </div>
+                );
+              })
+            )}
             <div>
               <label className="mb-1 block text-sm font-medium">Special Requests (optional)</label>
               <textarea

@@ -221,24 +221,7 @@ export function EventRow({
         </div>
       )}
 
-      {/* Optional guest count override */}
-      <div>
-        <label className="mb-1 block text-xs text-muted-foreground">
-          Guest Count Override (optional)
-        </label>
-        <input
-          type="number"
-          min={1}
-          className="w-full rounded border p-2 text-sm"
-          placeholder="Leave blank to use total guest count"
-          value={data.guest_count_override ?? ''}
-          onChange={(e) =>
-            onChange(index, {
-              guest_count_override: e.target.value ? parseInt(e.target.value, 10) : null,
-            })
-          }
-        />
-      </div>
+      {/* Bucket B T6: guest_count_override is now set by BookingForm, not an end-user override */}
     </div>
   );
 }
