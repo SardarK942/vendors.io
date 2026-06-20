@@ -29,7 +29,7 @@ export const CATEGORIES_FEATURED: readonly FeaturedCategory[] = [
     label: 'Photography',
     kicker: 'Visual',
     photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPLCV4vLdDbtXRVd6vxSYNQeCuh5kyUAJHr10w',
-    alt: 'South Asian wedding couple in a ceremony',
+    alt: 'South Asian wedding ceremony',
     comingSoon: false,
   },
   {

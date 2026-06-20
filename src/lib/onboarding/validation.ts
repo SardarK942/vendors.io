@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { LANGUAGES, RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
+import { SPOKEN_LANGUAGES } from '@/types';
+import { RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
 
-const VALID_LANGUAGE_SLUGS = LANGUAGES.map((l) => l.slug);
+const VALID_LANGUAGE_SLUGS = SPOKEN_LANGUAGES.map((lang) => lang.toLowerCase());
 const VALID_SLA_VALUES = RESPONSE_SLA_OPTIONS.map((o) => o.value);
 
 const instagramHandle = z

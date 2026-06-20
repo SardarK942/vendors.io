@@ -62,18 +62,14 @@ export function VendorNotesEditor({
           if (debounceRef.current) clearTimeout(debounceRef.current);
           save();
         }}
-        placeholder="e.g. couple is vegetarian, prefers minimal posing"
+        placeholder="e.g. customer is vegetarian, prefers minimal posing"
         rows={3}
         className={tooLong ? 'border-red-500' : ''}
       />
       <div className="flex items-center justify-between text-xs">
         <span
           className={
-            tooLong
-              ? 'text-red-600'
-              : warning
-                ? 'text-yellow-600'
-                : 'text-muted-foreground'
+            tooLong ? 'text-red-600' : warning ? 'text-yellow-600' : 'text-muted-foreground'
           }
         >
           {notes.length} / {MAX}

@@ -88,7 +88,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
       <header>
         <h1 className="font-display text-3xl font-bold tracking-tight text-ink">Profile details</h1>
         <p className="mt-2 text-sm text-ink-muted">
-          Three quick questions to help couples find you.
+          Three quick questions to help customers find you.
         </p>
         <p className="text-sm text-muted-foreground">Step 4 of 6</p>
       </header>
@@ -154,7 +154,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
       <div className="space-y-3">
         <Label className="font-display text-base font-semibold">How quickly do you respond?</Label>
         <p className="text-xs text-ink-soft">
-          Couples filter for fast-responding vendors — pick what you can honestly commit to.
+          Customers filter for fast-responding vendors — pick what you can honestly commit to.
         </p>
         <div className="flex flex-col gap-2">
           {RESPONSE_SLA_OPTIONS.map((opt) => (

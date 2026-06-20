@@ -326,6 +326,39 @@ The vendor dashboard (`/vendors/*`) keeps the same tokens but **quiets the chrom
 
 **Italic accents.** Only one italic moment per display headline (e.g., "All your vendors. _One bazaar_."). Italic body is reserved for vendor quote callouts. Both render in the display family's italic cut, not the body family's.
 
+## Hover System
+
+Every interactive element transitions to a hot-pink treatment on hover. Transition: 180ms ease-out. Pink color: `#D1006C` (hot-pink token).
+
+### Element mapping
+
+| Element                   | Idle                     | Hover treatment                                                      |
+| ------------------------- | ------------------------ | -------------------------------------------------------------------- |
+| Primary button (ink fill) | `bg-ink text-cream`      | `hover:bg-hot-pink hover:-translate-y-px hover:shadow-pink`          |
+| Outline button            | `border-ink text-ink`    | `hover:border-hot-pink hover:text-hot-pink hover:bg-hot-pink/[0.04]` |
+| Text link                 | `text-ink`               | `hover-pink-text` + underline                                        |
+| Vendor card (interactive) | `border-ink/12`          | `hover-lift-card`                                                    |
+| Filter chip               | `border-ink/20 bg-cream` | `hover-pink-border`                                                  |
+| Nav item                  | `text-ink`               | `hover-pink-text` + underline animation                              |
+| Icon button (circular)    | `border-ink/20 text-ink` | `hover-pink-border`                                                  |
+
+### Utility classes
+
+Defined in `tailwind.config.ts`:
+
+- `hover-pink-text` — color shifts to hot-pink in 180ms
+- `hover-pink-border` — border + text shift to hot-pink in 180ms
+- `hover-pink-fill` — background shifts to hot-pink in 180ms
+- `hover-lift` — translateY(-1px) + shadow-pink; respects prefers-reduced-motion
+- `hover-lift-card` — translateY(-2px) + shadow-pink-card + border-hot-pink; respects prefers-reduced-motion
+
+### Rules
+
+- Inputs and badges stay static — they use focus or count states, not hover
+- Static cards (non-clickable) stay static
+- Touch devices: Tailwind gates `:hover` behind `@media (hover: hover)` so touch users see resting states
+- prefers-reduced-motion: transforms disabled; color transitions remain
+
 ### Wordmark spec — the pan-cultural cycle
 
 The mark is **the word "baazar" in cycling scripts** + Latin anchor. The cycle is the brand's signature motion. "Baazar" / "بازار" / "बाज़ार" is the same word across Hindi, Urdu, Persian, Arabic, Turkish, Pashto — a pan-cultural reality, not just a Hindi reference. The mark phases through four script settings to make that explicit.

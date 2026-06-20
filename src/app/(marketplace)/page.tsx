@@ -68,7 +68,7 @@ export default async function HomePage() {
 
       {/* Trust Signals — pre-M+, deferred refresh per spec */}
       <section className="mx-auto max-w-[1280px] rounded-xl bg-muted/50 px-6 py-12 lg:px-14">
-        <h2 className="mb-8 text-center text-2xl font-bold">Why Couples Trust Us</h2>
+        <h2 className="mb-8 text-center text-2xl font-bold">Why Customers Trust Us</h2>
         <div className="grid gap-8 sm:grid-cols-3">
           <div className="text-center">
             <CheckCircle className="mx-auto h-10 w-10 text-primary" />

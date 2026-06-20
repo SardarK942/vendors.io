@@ -52,15 +52,15 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
       // Variant-specific
       variant === 'toggle' && [
         'border bg-cream text-ink',
-        isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover:border-ink',
+        isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover-pink-border',
       ],
       variant === 'dropdown' && [
         'border bg-cream text-ink',
-        isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover:border-ink',
+        isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover-pink-border',
       ],
       variant === 'applied' && ['border border-ink bg-cream-soft text-ink pr-1'],
       variant === 'all-filters' && [
-        'border border-ink bg-cream text-ink font-semibold hover:bg-cream-soft',
+        'border border-ink bg-cream text-ink font-semibold hover-pink-border',
       ],
       className
     );

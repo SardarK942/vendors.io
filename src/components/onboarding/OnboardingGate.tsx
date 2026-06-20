@@ -11,16 +11,22 @@ export interface OnboardingGateProps {
 }
 
 /**
- * Auto-fires the appropriate onboarding modal on first dashboard visit.
- * Receives role + completion state from the dashboard layout's server-side fetch
- * so the modal renders without a client-side flash.
- *
- * Once dismissed (via Skip, Esc, complete, or backdrop click), the API marks
- * users.onboarding_completed_at, so subsequent dashboard renders pass
- * onboardingCompleted=true and this component is a no-op.
+ * Renders the appropriate onboarding modal on signup-success.
+ * Fires POST /api/users/onboarding-complete immediately on open (mark-on-show),
+ * so even if the user closes the browser the modal won't reappear.
  */
 export function OnboardingGate({ role, onboardingCompleted }: OnboardingGateProps) {
   const [open, setOpen] = React.useState(!onboardingCompleted);
+  const markedRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (open && !markedRef.current) {
+      markedRef.current = true;
+      fetch('/api/users/onboarding-complete', { method: 'POST' }).catch((err) => {
+        console.error('Failed to mark onboarding complete:', err);
+      });
+    }
+  }, [open]);
 
   if (onboardingCompleted) return null;
 

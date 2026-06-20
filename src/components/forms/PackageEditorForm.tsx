@@ -225,7 +225,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                   checked={locationMode === 'couple_provides'}
                   onChange={() => setLocationMode('couple_provides')}
                 />
-                <span className="text-sm">Couple specifies location</span>
+                <span className="text-sm">Customer specifies location</span>
               </label>
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -265,7 +265,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               placeholder="I'll arrive 30 min early to set up. Please have..."
             />
             <p className="text-xs text-muted-foreground">
-              Sent to couples automatically when you accept a booking.
+              Sent to customers automatically when you accept a booking.
             </p>
           </div>
 

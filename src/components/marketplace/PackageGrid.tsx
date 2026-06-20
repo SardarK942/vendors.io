@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
 
@@ -31,6 +32,7 @@ type PackageItem = PackageWithAddons | CustomRequestPackage;
 interface Props {
   packages: PackageItem[];
   vendorSlug: string;
+  interactive?: boolean;
 }
 
 function isCustom(p: PackageItem): p is CustomRequestPackage {
@@ -43,7 +45,7 @@ function isCustom(p: PackageItem): p is CustomRequestPackage {
  * Real packages open PackageDetailModal. Custom Request (virtual, always last)
  * navigates directly to /vendors/{slug}/request (no intermediate modal).
  */
-export function PackageGrid({ packages, vendorSlug }: Props) {
+export function PackageGrid({ packages, vendorSlug, interactive = true }: Props) {
   const [selected, setSelected] = useState<PackageWithAddons | null>(null);
 
   if (packages.length === 0) return null;
@@ -56,6 +58,14 @@ export function PackageGrid({ packages, vendorSlug }: Props) {
             <Link
               key={p.id}
               href={`/vendors/${vendorSlug}/request`}
+              onClick={
+                !interactive
+                  ? (e) => {
+                      e.preventDefault();
+                      toast('Preview mode — bookings disabled.');
+                    }
+                  : undefined
+              }
               className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft bg-cream-soft text-left transition-shadow hover:shadow-md"
             >
               <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft">
@@ -86,7 +96,13 @@ export function PackageGrid({ packages, vendorSlug }: Props) {
             <button
               key={p.id}
               type="button"
-              onClick={() => setSelected(p)}
+              onClick={() => {
+                if (!interactive) {
+                  toast('Preview mode — bookings disabled.');
+                  return;
+                }
+                setSelected(p);
+              }}
               className="group overflow-hidden rounded-xl border border-border text-left transition-shadow hover:shadow-lg"
             >
               <div className="relative aspect-[4/3] bg-muted">
@@ -121,6 +137,7 @@ export function PackageGrid({ packages, vendorSlug }: Props) {
           pkg={selected}
           vendorSlug={vendorSlug}
           onClose={() => setSelected(null)}
+          interactive={interactive}
         />
       )}
     </>

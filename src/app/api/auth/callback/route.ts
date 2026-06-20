@@ -74,7 +74,12 @@ export async function GET(request: Request) {
       if (cookieRole) {
         cookieStore.set('signup_role', '', { path: '/', maxAge: 0 });
       }
-      return NextResponse.redirect(`${origin}${redirect}`);
+      // Fresh signups (Google OAuth) that are NOT in a claim flow land on the
+      // signup-success page so the OnboardingGate can fire there.
+      // Claim flows preserve their returnTo redirect (e.g. /claim/<token>).
+      const isClaimFlow = redirect.startsWith('/claim/');
+      const finalRedirect = signupRole && !isClaimFlow ? '/signup/success' : redirect;
+      return NextResponse.redirect(`${origin}${finalRedirect}`);
     }
   }
 

@@ -37,7 +37,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">Complete your profile</p>
           <p className="text-xs text-ink-muted">
-            Add languages, years in business, and response time so couples can find you.
+            Add languages, years in business, and response time so customers can find you.
           </p>
         </div>
       </div>

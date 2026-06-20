@@ -139,7 +139,7 @@ describe('POST /api/bookings/[id]/counter', () => {
     mockCounter.mockResolvedValueOnce({
       ok: false,
       code: 'forbidden',
-      message: 'You are not the couple on this booking.',
+      message: 'You are not the customer on this booking.',
     });
 
     const res = await POST(makeRequest({ totalCents: 90000 }), {
@@ -148,7 +148,7 @@ describe('POST /api/bookings/[id]/counter', () => {
     const json = await res.json();
 
     expect(res.status).toBe(403);
-    expect(json.error).toBe('You are not the couple on this booking.');
+    expect(json.error).toBe('You are not the customer on this booking.');
   });
 
   it('409 — service returns counter_cap_reached', async () => {

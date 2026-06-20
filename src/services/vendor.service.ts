@@ -7,7 +7,10 @@ type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 // Price-band filtering uses the vendor_packages_price_band view which is a
 // LEFT JOIN in the query to avoid excluding vendors with no packages yet.
 type VendorWithPriceBand = VendorRow & {
-  vendor_packages_price_band?: { min_price_cents: number | null; max_price_cents: number | null } | null;
+  vendor_packages_price_band?: {
+    min_price_cents: number | null;
+    max_price_cents: number | null;
+  } | null;
 };
 
 export async function getVendorBySlug(
@@ -42,7 +45,10 @@ export async function getVendors(
   // Left-join the price band view so vendors with no active packages still appear.
   let query = supabase
     .from('vendor_profiles')
-    .select('*, vendor_packages_price_band!vendor_packages_price_band_vendor_profile_id_fkey(min_price_cents, max_price_cents)', { count: 'exact' });
+    .select(
+      '*, vendor_packages_price_band!vendor_packages_price_band_vendor_profile_id_fkey(min_price_cents, max_price_cents)',
+      { count: 'exact' }
+    );
 
   if (category) {
     query = query.eq('category', category);
@@ -66,13 +72,15 @@ export async function getVendors(
   let vendors = (data ?? []) as unknown as VendorWithPriceBand[];
   if (priceMin !== undefined) {
     vendors = vendors.filter((v) => {
-      const min = (v.vendor_packages_price_band as { min_price_cents: number | null } | null)?.min_price_cents;
+      const min = (v.vendor_packages_price_band as { min_price_cents: number | null } | null)
+        ?.min_price_cents;
       return min != null && min >= priceMin;
     });
   }
   if (priceMax !== undefined) {
     vendors = vendors.filter((v) => {
-      const max = (v.vendor_packages_price_band as { max_price_cents: number | null } | null)?.max_price_cents;
+      const max = (v.vendor_packages_price_band as { max_price_cents: number | null } | null)
+        ?.max_price_cents;
       return max != null && max <= priceMax;
     });
   }
@@ -122,6 +130,13 @@ export async function claimVendorProfile(
   if (error) {
     return { error: 'Failed to claim profile', status: 500 };
   }
+
+  // Mark onboarding complete so claim-flow vendors skip the welcome modal.
+  // They go through the vendor setup wizard instead — that is their onboarding.
+  await supabase
+    .from('users')
+    .update({ onboarding_completed_at: new Date().toISOString() })
+    .eq('id', userId);
 
   return { data, status: 200 };
 }

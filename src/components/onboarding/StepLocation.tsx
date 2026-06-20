@@ -131,7 +131,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
         </label>
         {!skipAddress && !place.address_line_1 && (
           <p className="mt-1 text-xs text-ink/60">
-            Adding an address helps couples find you in local searches.
+            Adding an address helps customers find you in local searches.
           </p>
         )}
       </div>
@@ -144,8 +144,8 @@ export function StepLocation({ initial, profileId, mode }: Props) {
           </Label>
         </div>
         <p className="pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
-          Couples see your city + state always. Full address shown only after they pay the deposit,
-          unless you make it public here.
+          Customers see your city + state always. Full address shown only after they pay the
+          deposit, unless you make it public here.
         </p>
       </div>
 

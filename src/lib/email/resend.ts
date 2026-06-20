@@ -225,10 +225,10 @@ export async function sendCoupleDeclinedEmail(
 ): Promise<boolean> {
   return sendEmail({
     to: vendorEmail,
-    subject: 'Couple declined your adjusted quote',
+    subject: 'Customer declined your adjusted quote',
     html: `
       <h2>Adjusted quote declined</h2>
-      <p>The couple declined your adjusted quote. You have <strong>72 hours</strong> to send a revised quote, or the booking will auto-cancel.</p>
+      <p>The customer declined your adjusted quote. You have <strong>72 hours</strong> to send a revised quote, or the booking will auto-cancel.</p>
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Send revised quote</a></p>
       ${FOOTER}
     `,
@@ -249,7 +249,7 @@ export async function sendDepositConfirmationEmail(
 ): Promise<boolean> {
   const safeName = escapeHtml(vendorName);
   const body = isVendor
-    ? `<p>A hold deposit of <strong>${fmtUsd(amount)}</strong> has been placed. The couple's contact details are now visible in your dashboard.</p>
+    ? `<p>A hold deposit of <strong>${fmtUsd(amount)}</strong> has been placed. The customer's contact details are now visible in your dashboard.</p>
        <p>The customer paid their 5% deposit. Coordinate the balance with them directly per your payment terms.</p>`
     : `<p>Your hold deposit of <strong>${fmtUsd(amount)}</strong> for ${safeName} has been processed. Your booking is confirmed.</p>`;
 
@@ -375,7 +375,7 @@ export async function sendReviewRequestEmail(
     subject: `How was ${safeName}?`,
     html: `
       <h2>Leave a review</h2>
-      <p>Thanks for using Baazar.io! Your feedback helps other couples find great vendors.</p>
+      <p>Thanks for using Baazar.io! Your feedback helps other customers find great vendors.</p>
       <p><a href="${appUrl()}/dashboard/bookings/${bookingId}">Leave a review for ${safeName}</a></p>
       ${FOOTER}
     `,
@@ -402,7 +402,7 @@ export async function sendCancellationEmail(
 
   const refundLine =
     refundCents > 0
-      ? `<p>A refund of <strong>${fmtUsd(refundCents)}</strong> has been issued to the couple.</p>`
+      ? `<p>A refund of <strong>${fmtUsd(refundCents)}</strong> has been issued to the customer.</p>`
       : '<p>No refund was issued under our cancellation policy.</p>';
 
   return sendEmail({

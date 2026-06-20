@@ -26,7 +26,7 @@ export function renderEventCompletedHtml(args: EventCompletedArgs): string {
   const balanceLine =
     args.recipientRole === 'couple'
       ? `The remaining balance is owed directly to ${safeVendorName} per their payment terms — Baazar collected your deposit; the rest is between you two.`
-      : `Collect the balance per your payment terms. Once all events for this booking finish, platform funds release and the couple receives a review request.`;
+      : `Collect the balance per your payment terms. Once all events for this booking finish, platform funds release and the customer receives a review request.`;
   const reviewLine =
     args.recipientRole === 'couple'
       ? `Once all your booked events finish, we'll ask you to leave a review.`

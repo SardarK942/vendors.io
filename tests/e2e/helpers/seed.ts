@@ -85,7 +85,9 @@ export async function seedCouple(): Promise<TestUser> {
   return { id: data.user.id, email, password: PASSWORD, role: 'couple' };
 }
 
-export async function seedVendor(options: { chargesEnabled?: boolean } = {}): Promise<TestVendor> {
+export async function seedVendor(
+  options: { chargesEnabled?: boolean; publish?: boolean } = {}
+): Promise<TestVendor> {
   const supabase = getServiceClient();
   const email = testEmail('vendor');
   const { data, error } = await supabase.auth.admin.createUser({
@@ -107,6 +109,10 @@ export async function seedVendor(options: { chargesEnabled?: boolean } = {}): Pr
       category: 'photography',
       bio: 'Seeded vendor for E2E tests.',
       service_area: ['Chicago'],
+      // publish: true sets is_active + onboarding_complete so the public /vendors/[slug]
+      // route resolves for non-owners (the page returns 404 for unpublished profiles
+      // unless the viewer is the owner).
+      ...(options.publish ? { is_active: true, onboarding_complete: true } : {}),
     })
     .select('id')
     .single();
@@ -122,6 +128,15 @@ export async function seedVendor(options: { chargesEnabled?: boolean } = {}): Pr
       details_submitted_at: new Date().toISOString(),
       minimal_created_at: new Date().toISOString(),
     });
+  }
+
+  // When publish:true, also set users.onboarding_completed_at so the dashboard
+  // OnboardingGate modal doesn't block the session if the vendor logs in.
+  if (options.publish) {
+    await supabase
+      .from('users')
+      .update({ onboarding_completed_at: new Date().toISOString() })
+      .eq('id', data.user.id);
   }
 
   return {
@@ -185,19 +200,17 @@ export async function seedVendorWithPartialProfile(
   const businessName = options.businessName ?? 'E2E Partial Vendor';
   const category = options.category ?? 'mehndi';
 
-  const { error: vpError } = await supabase
-    .from('vendor_profiles')
-    .insert({
-      user_id: data.user.id,
-      business_name: businessName,
-      slug,
-      category,
-      bio: 'We bring intricate, story-rich henna to weddings across the Midwest. Two artists, ten years of bridal experience.',
-      instagram_handle: 'e2e_partial_henna',
-      portfolio_images: ['https://utfs.io/f/e2e-fake-img.jpg'],
-      onboarding_complete: false,
-      is_active: false,
-    });
+  const { error: vpError } = await supabase.from('vendor_profiles').insert({
+    user_id: data.user.id,
+    business_name: businessName,
+    slug,
+    category,
+    bio: 'We bring intricate, story-rich henna to weddings across the Midwest. Two artists, ten years of bridal experience.',
+    instagram_handle: 'e2e_partial_henna',
+    portfolio_images: ['https://utfs.io/f/e2e-fake-img.jpg'],
+    onboarding_complete: false,
+    is_active: false,
+  });
   if (vpError) throw new Error(`seedVendorWithPartialProfile profile: ${vpError.message}`);
 
   return {
@@ -232,25 +245,23 @@ export async function seedVendorUnpublished(): Promise<TestVendorUnpublished> {
 
   const slug = `e2e-unpublished-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
 
-  const { error: vpError } = await supabase
-    .from('vendor_profiles')
-    .insert({
-      user_id: data.user.id,
-      business_name: 'E2E Unpublished Vendor Biz',
-      slug,
-      category: 'mehndi',
-      bio: 'We bring intricate, story-rich henna to weddings across the Midwest. Two artists, ten years of bridal experience.',
-      base_address_line_1: '123 Test St',
-      base_city: 'Chicago',
-      base_state: 'IL',
-      base_postal_code: '60601',
-      base_google_place_id: 'ChIJe2eTestPlaceId',
-      base_address_public: false,
-      instagram_handle: 'e2e_unpublished_henna',
-      portfolio_images: ['https://utfs.io/f/e2e-fake-img.jpg'],
-      onboarding_complete: false,
-      is_active: false,
-    });
+  const { error: vpError } = await supabase.from('vendor_profiles').insert({
+    user_id: data.user.id,
+    business_name: 'E2E Unpublished Vendor Biz',
+    slug,
+    category: 'mehndi',
+    bio: 'We bring intricate, story-rich henna to weddings across the Midwest. Two artists, ten years of bridal experience.',
+    base_address_line_1: '123 Test St',
+    base_city: 'Chicago',
+    base_state: 'IL',
+    base_postal_code: '60601',
+    base_google_place_id: 'ChIJe2eTestPlaceId',
+    base_address_public: false,
+    instagram_handle: 'e2e_unpublished_henna',
+    portfolio_images: ['https://utfs.io/f/e2e-fake-img.jpg'],
+    onboarding_complete: false,
+    is_active: false,
+  });
   if (vpError) throw new Error(`seedVendorUnpublished profile: ${vpError.message}`);
 
   return {
@@ -398,9 +409,9 @@ export async function seedPendingBooking(
   couple: TestUser,
   pkg: SeededPackage,
   opts: {
-    eventDate: string;    // 'YYYY-MM-DD'
-    startTime: string;    // full ISO datetime, e.g. '2026-08-15T10:00:00Z'
-    endTime: string;      // full ISO datetime
+    eventDate: string; // 'YYYY-MM-DD'
+    startTime: string; // full ISO datetime, e.g. '2026-08-15T10:00:00Z'
+    endTime: string; // full ISO datetime
     eventTypeLabel?: string;
   }
 ): Promise<{ bookingId: string; bookingEventId: string }> {

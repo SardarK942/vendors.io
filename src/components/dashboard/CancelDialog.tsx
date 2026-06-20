@@ -35,17 +35,17 @@ const VENDOR_FAULT_OPTIONS: { value: Fault; label: string; explain: string }[] =
   {
     value: 'none',
     label: 'Scheduling conflict / unavailable',
-    explain: 'No strike. Couple gets 100% refund.',
+    explain: 'No strike. Customer gets 100% refund.',
   },
   {
     value: 'force_majeure',
     label: 'Medical / emergency',
-    explain: 'No strike. Couple gets 100% refund.',
+    explain: 'No strike. Customer gets 100% refund.',
   },
   {
     value: 'vendor_fault',
     label: 'Overbooked / same-day cancel',
-    explain: 'Counts toward 2-strike freeze. Couple gets 100% refund.',
+    explain: 'Counts toward 2-strike freeze. Customer gets 100% refund.',
   },
 ];
 

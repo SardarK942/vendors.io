@@ -104,11 +104,12 @@ export function Navbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`text-sm font-medium transition-colors hover:text-primary ${
-                pathname === link.href ? 'text-primary' : 'text-muted-foreground'
+              className={`group relative text-sm font-medium hover-pink-text ${
+                pathname === link.href ? 'text-ink' : 'text-ink-muted'
               }`}
             >
               {link.label}
+              <span className="duration-[180ms] absolute bottom-0 left-0 right-0 h-0.5 origin-center scale-x-0 bg-hot-pink transition-transform group-hover:scale-x-100" />
             </Link>
           ))}
 
@@ -170,9 +171,10 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   onClick={() => setMobileOpen(false)}
-                  className="text-lg font-medium"
+                  className="group relative text-lg font-medium hover-pink-text"
                 >
                   {link.label}
+                  <span className="duration-[180ms] absolute bottom-0 left-0 right-0 h-0.5 origin-center scale-x-0 bg-hot-pink transition-transform group-hover:scale-x-100" />
                 </Link>
               ))}
               {user ? (

@@ -49,16 +49,37 @@ export type VendorSearchInput = z.infer<typeof vendorSearchSchema>;
 
 // ─── Booking Schemas ────────────────────────────────────────────
 
-export const eventTypeSchema = z.enum([
-  'engagement',
-  'mehndi',
-  'sangeet',
-  'wedding',
-  'reception',
-  'multiple',
-]);
+// ─── EVENT_TYPES: canonical 20-entry constant (Bucket B) ────────
 
-export type EventType = z.infer<typeof eventTypeSchema>;
+export const EVENT_TYPES = [
+  // Cultural / wedding-adjacent
+  { id: 'engagement', label: 'Engagement', group: 'cultural' as const },
+  { id: 'roka', label: 'Roka', group: 'cultural' as const },
+  { id: 'tilak', label: 'Tilak', group: 'cultural' as const },
+  { id: 'mehndi', label: 'Mehndi / Henna', group: 'cultural' as const },
+  { id: 'sangeet', label: 'Sangeet', group: 'cultural' as const },
+  { id: 'nikah', label: 'Nikah', group: 'cultural' as const },
+  { id: 'baraat', label: 'Baraat', group: 'cultural' as const },
+  { id: 'wedding', label: 'Wedding / Shaadi', group: 'cultural' as const },
+  { id: 'reception', label: 'Reception', group: 'cultural' as const },
+  { id: 'walima', label: 'Walima / Wedding Feast', group: 'cultural' as const },
+  { id: 'aqiqah', label: 'Aqiqah / Baby Naming', group: 'cultural' as const },
+  { id: 'multiple', label: 'Multi-event booking', group: 'cultural' as const },
+  // General celebration
+  { id: 'birthday_party', label: 'Birthday party', group: 'general' as const },
+  { id: 'anniversary', label: 'Anniversary', group: 'general' as const },
+  { id: 'corporate_event', label: 'Corporate event', group: 'general' as const },
+  { id: 'baby_shower', label: 'Baby shower', group: 'general' as const },
+  { id: 'bridal_shower', label: 'Bridal shower', group: 'general' as const },
+  { id: 'graduation', label: 'Graduation', group: 'general' as const },
+  { id: 'quinceanera', label: 'Quinceañera', group: 'general' as const },
+  { id: 'sweet_16', label: 'Sweet 16', group: 'general' as const },
+] as const;
+
+export type EventTypeId = (typeof EVENT_TYPES)[number]['id'];
+
+export const CULTURAL_EVENT_TYPES = EVENT_TYPES.filter((e) => e.group === 'cultural');
+export const GENERAL_EVENT_TYPES = EVENT_TYPES.filter((e) => e.group === 'general');
 
 export const bookingStatusSchema = z.enum([
   'pending',
@@ -259,3 +280,21 @@ export const notificationTypeSchema = z.enum([
   'review_received',
 ]);
 export type NotificationTypeInput = z.infer<typeof notificationTypeSchema>;
+
+// ─── Sub-project B: Spoken Languages ────────────────────────────
+
+export const SPOKEN_LANGUAGES = [
+  'Arabic',
+  'Bengali',
+  'English',
+  'Gujarati',
+  'Hindi',
+  'Marathi',
+  'Punjabi',
+  'Spanish',
+  'Tamil',
+  'Telugu',
+  'Urdu',
+] as const;
+
+export type SpokenLanguage = (typeof SPOKEN_LANGUAGES)[number];

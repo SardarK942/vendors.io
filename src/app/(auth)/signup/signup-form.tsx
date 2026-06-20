@@ -29,9 +29,17 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
   // 'vendor' (they're claiming a business) and the role picker is hidden.
   const roleLocked = prefilledRole !== null;
 
-  const callbackUrl = `${typeof window !== 'undefined' ? window.location.origin : ''}/api/auth/callback${
-    returnTo ? `?redirect=${encodeURIComponent(returnTo)}` : ''
-  }`;
+  // callbackUrl is the email-confirmation link destination.
+  // We include signup_role so the auth callback can redirect to /signup/success
+  // for fresh email signups (same logic as the Google OAuth cookie path).
+  const buildCallbackUrl = (resolvedRole: UserRole | null) => {
+    const params = new URLSearchParams();
+    if (returnTo) params.set('redirect', returnTo);
+    if (resolvedRole) params.set('signup_role', resolvedRole);
+    const qs = params.toString();
+    const origin = typeof window !== 'undefined' ? window.location.origin : '';
+    return `${origin}/api/auth/callback${qs ? `?${qs}` : ''}`;
+  };
 
   const handleSignup = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -54,7 +62,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
       password,
       options: {
         data: { full_name: fullName, role },
-        emailRedirectTo: callbackUrl,
+        emailRedirectTo: buildCallbackUrl(role),
       },
     });
 
@@ -102,7 +110,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
         ? 'Accept the Terms to continue'
         : claimContext
           ? `Sign Up and Claim ${claimContext.businessName}`
-          : `Sign Up as ${role === 'couple' ? 'Couple' : 'Vendor'}`;
+          : `Sign Up as ${role === 'couple' ? 'Customer' : 'Vendor'}`;
 
   return (
     <Card>

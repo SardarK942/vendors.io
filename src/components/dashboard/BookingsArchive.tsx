@@ -70,7 +70,7 @@ export function BookingsArchive({
       <div className="py-16 text-center">
         <p className="text-lg font-medium text-muted-foreground">No bookings yet</p>
         <p className="mt-1 text-sm text-muted-foreground">
-          Booking requests from couples will appear here.
+          Booking requests from customers will appear here.
         </p>
       </div>
     );
@@ -80,7 +80,7 @@ export function BookingsArchive({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Input
-          placeholder="Search couple name…"
+          placeholder="Search customer name…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
           className="max-w-xs"

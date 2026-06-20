@@ -71,7 +71,7 @@ export const VENDOR_FEATURES: readonly OnboardingFeature[] = [
     icon: Eye,
     title: 'Get discovered',
     description:
-      "Chicago couples search verified vendors in your category. Show up where they're already looking.",
+      "Chicago customers search verified vendors in your category. Show up where they're already looking.",
     image: '',
   },
   {
@@ -87,7 +87,7 @@ export const VENDOR_FEATURES: readonly OnboardingFeature[] = [
     icon: CreditCard,
     title: 'Get paid securely',
     description:
-      "Stripe holds the deposit when a couple books. You're paid out after the event completes. No chasing invoices.",
+      "Stripe holds the deposit when a customer books. You're paid out after the event completes. No chasing invoices.",
     image: '',
   },
 ];
@@ -95,11 +95,11 @@ export const VENDOR_FEATURES: readonly OnboardingFeature[] = [
 export const VENDOR_TIPS: readonly OnboardingTip[] = [
   {
     number: 1,
-    text: "Complete your profile (basics, photos, packages) to publish to the marketplace. Couples can't book you until you publish.",
+    text: "Complete your profile (basics, photos, packages) to publish to the marketplace. Customers can't book you until you publish.",
   },
   {
     number: 2,
-    text: 'Set your response SLA under Profile → Settings. Couples see this on your card — fast responders book more.',
+    text: 'Set your response SLA under Profile → Settings. Customers see this on your card — fast responders book more.',
   },
   {
     number: 3,

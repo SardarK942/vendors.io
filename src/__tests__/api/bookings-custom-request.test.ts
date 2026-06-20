@@ -130,7 +130,6 @@ describe('POST /api/bookings/custom-request', () => {
         vendor_profile_id: 'vp-1',
         couple_user_id: 'u-1',
         package_id: null,
-        event_date: '2026-10-17',
         guest_count: 150,
         event_type: 'mehndi',
         special_requests: VALID_BODY.description,

@@ -15,6 +15,34 @@ import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import Link from 'next/link';
 
+function GuestCountSection({
+  events,
+}: {
+  events: { event_type_label: string; guest_count_override: number | null }[];
+}) {
+  if (events.length === 1) {
+    return (
+      <div>
+        <div className="text-xs uppercase text-ink/50">Guests</div>
+        <div className="text-base text-ink">{events[0].guest_count_override ?? 0}</div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="text-xs uppercase text-ink/50">Guests by event</div>
+      <ul className="mt-2 space-y-1">
+        {events.map((e, i) => (
+          <li key={i} className="text-sm text-ink">
+            <span className="font-medium">{e.event_type_label}</span>
+            <span className="text-ink/60"> · {e.guest_count_override ?? 0} guests</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 interface BookingDetailProps {
   bookingId: string;
   mode: 'panel' | 'page';
@@ -108,6 +136,7 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
     state: string;
     postal_code: string;
     completed_at: string | null;
+    guest_count_override: number | null;
     vendor_notes?: string | null;
   }>;
   const totalEvents = events.length;
@@ -229,25 +258,25 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
       )}
       {role === 'vendor' && booking.status === 'accepted' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Waiting for the couple to pay the deposit. They have 72 hours; you&apos;ll get an email
+          Waiting for the customer to pay the deposit. They have 72 hours; you&apos;ll get an email
           when they pay.
         </div>
       )}
       {role === 'vendor' && booking.status === 'adjusted_quote_sent' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Waiting for the couple to accept or decline your adjusted quote. They have 72 hours.
+          Waiting for the customer to accept or decline your adjusted quote. They have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'adjusted_quote_declined' && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
-          <strong>Action needed:</strong> The couple declined your last quote. You have 72 hours to
-          send a revised quote — otherwise the booking will auto-cancel.
+          <strong>Action needed:</strong> The customer declined your last quote. You have 72 hours
+          to send a revised quote — otherwise the booking will auto-cancel.
         </div>
       )}
       {role === 'vendor' && booking.status === 'couple_countered' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          <strong>Action needed:</strong> The couple sent a counter-offer. You can adjust the quote
-          or accept their counter directly. You have 72 hours.
+          <strong>Action needed:</strong> The customer sent a counter-offer. You can adjust the
+          quote or accept their counter directly. You have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'deposit_paid' && (
@@ -298,12 +327,17 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
                 </div>
               </>
             )}
-            {(bookingAsAny.guest_count as number) && (
+            {events.length > 0 ? (
+              <>
+                <Separator />
+                <GuestCountSection events={events} />
+              </>
+            ) : (bookingAsAny.guest_count as number) ? (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Guests</span>
                 <span>{bookingAsAny.guest_count as number}</span>
               </div>
-            )}
+            ) : null}
             {(bookingAsAny.special_requests as string | null) && (
               <>
                 <Separator />

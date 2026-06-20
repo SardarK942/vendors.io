@@ -1,52 +1,37 @@
 'use client';
 
+import { EVENT_TYPES } from '@/types';
+
 /**
- * EventTypeAutocomplete — cultural seed list with free-text fallback.
+ * EventTypeAutocomplete — canonical 20-entry seed list with free-text fallback.
  * Uses HTML5 <datalist> so any typed value is also accepted.
+ * Seed values are the human labels from the canonical EVENT_TYPES constant,
+ * supplemented by cultural aliases so vendors can type familiar names.
  */
 
-const EVENT_TYPE_SEED = [
-  // South Asian / Muslim
-  'Nikah',
-  'Mehndi',
+// Canonical labels from the 20-entry constant (cultural + general).
+const CANONICAL_SEED = EVENT_TYPES.map((e) => e.label);
+
+// Cultural aliases not captured in canonical labels (free-text typing helpers).
+const ALIAS_SEED = [
   'Henna',
   'Mayoon',
   'Dholki',
-  'Walima',
-  'Engagement',
   'Rukhsati',
-  // South Asian / Hindu
-  'Sangeet',
   'Haldi',
-  'Baraat',
-  'Wedding Ceremony',
-  'Reception',
-  'Roka',
   'Garba',
   'Dandiya',
-  // Arab
   'Katb el-Kitab',
   'Zaffa',
   'Henna Night',
-  // Western generic
-  'Bridal Shower',
   'Bachelorette',
   'Rehearsal Dinner',
-  // Life events
-  'Birthday',
-  'Sweet 16',
-  'Quinceañera',
   'Bar Mitzvah',
   'Bat Mitzvah',
-  'Graduation',
-  'Anniversary',
-  'Baby Shower',
-  'Aqiqah',
-  // Other
-  'Corporate Event',
   'Religious Ceremony',
-  'Other',
 ];
+
+const EVENT_TYPE_SEED = [...CANONICAL_SEED, ...ALIAS_SEED];
 
 interface Props {
   value: string;

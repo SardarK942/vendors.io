@@ -1,5 +1,6 @@
 import type { Config } from 'tailwindcss';
 import tailwindcssAnimate from 'tailwindcss-animate';
+import plugin from 'tailwindcss/plugin';
 
 const config: Config = {
   content: [
@@ -97,8 +98,64 @@ const config: Config = {
         'wordmark-naskh': ['var(--font-wordmark-naskh)', 'serif'],
         'wordmark-persian': ['var(--font-wordmark-persian)', 'serif'],
       },
+      boxShadow: {
+        // Bucket B hover shadows — hot-pink (#D1006C)
+        pink: '0 4px 10px rgba(209, 0, 108, 0.25)',
+        'pink-card': '0 8px 20px rgba(209, 0, 108, 0.15)',
+      },
     },
   },
-  plugins: [tailwindcssAnimate],
+  plugins: [
+    tailwindcssAnimate,
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        '.hover-pink-text': {
+          transition: 'color 180ms ease-out',
+          '&:hover': {
+            color: '#D1006C',
+          },
+        },
+        '.hover-pink-border': {
+          transition: 'border-color 180ms ease-out, color 180ms ease-out',
+          '&:hover': {
+            'border-color': '#D1006C',
+            color: '#D1006C',
+          },
+        },
+        '.hover-pink-fill': {
+          transition: 'background-color 180ms ease-out',
+          '&:hover': {
+            'background-color': '#D1006C',
+          },
+        },
+        '.hover-lift': {
+          transition: 'transform 180ms ease-out, box-shadow 180ms ease-out',
+          '&:hover': {
+            transform: 'translateY(-1px)',
+            'box-shadow': '0 4px 10px rgba(209, 0, 108, 0.25)',
+          },
+          '@media (prefers-reduced-motion: reduce)': {
+            '&:hover': {
+              transform: 'none',
+            },
+          },
+        },
+        '.hover-lift-card': {
+          transition:
+            'transform 180ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            'box-shadow': '0 8px 20px rgba(209, 0, 108, 0.15)',
+            'border-color': '#D1006C',
+          },
+          '@media (prefers-reduced-motion: reduce)': {
+            '&:hover': {
+              transform: 'none',
+            },
+          },
+        },
+      });
+    }),
+  ],
 };
 export default config;

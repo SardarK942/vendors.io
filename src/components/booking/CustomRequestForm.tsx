@@ -2,7 +2,16 @@
 
 import * as React from 'react';
 import { DatePicker } from '@/components/ui/date-picker';
-import { customRequestSchema, EVENT_TYPES } from '@/lib/booking/custom-request-validation';
+import { EventTypePicker } from '@/components/ui/EventTypePicker';
+import type { EventTypeId } from '@/types';
+
+type CustomEvent = {
+  id: string;
+  date: string;
+  startTime: string;
+  guestCount: number;
+  eventTypeId: EventTypeId;
+};
 
 type FormState =
   | { kind: 'default' }
@@ -16,44 +25,49 @@ export interface CustomRequestFormProps {
   vendorResponseSlaHours: number | null;
 }
 
-const EVENT_TYPE_LABELS: Record<(typeof EVENT_TYPES)[number], string> = {
-  mehndi: 'Mehndi',
-  sangeet: 'Sangeet',
-  ceremony: 'Ceremony',
-  reception: 'Reception',
-  'welcome-dinner': 'Welcome dinner',
-  'farewell-brunch': 'Farewell brunch',
-  other: 'Other',
-};
+function makeBlankEvent(): CustomEvent {
+  return {
+    id: crypto.randomUUID(),
+    date: '',
+    startTime: '',
+    guestCount: 50,
+    eventTypeId: 'wedding',
+  };
+}
 
 export function CustomRequestForm({
   vendorSlug,
   vendorBusinessName,
   vendorResponseSlaHours,
 }: CustomRequestFormProps) {
-  const [eventDate, setEventDate] = React.useState('');
-  const [guestCount, setGuestCount] = React.useState<number | ''>('');
-  const [eventType, setEventType] = React.useState<(typeof EVENT_TYPES)[number]>('mehndi');
+  const [events, setEvents] = React.useState<CustomEvent[]>([makeBlankEvent()]);
   const [description, setDescription] = React.useState('');
   const [state, setState] = React.useState<FormState>({ kind: 'default' });
+
+  function updateEvent(id: string, patch: Partial<CustomEvent>) {
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+  }
+
+  function addEvent() {
+    setEvents((prev) => [...prev, makeBlankEvent()]);
+  }
+
+  function removeEvent(id: string) {
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+  }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (state.kind === 'submitting' || state.kind === 'success') return;
 
-    const parsed = customRequestSchema.safeParse({
-      vendor_slug: vendorSlug,
-      event_date: eventDate,
-      guest_count: typeof guestCount === 'number' ? guestCount : Number(guestCount),
-      event_type: eventType,
-      description,
-    });
+    if (description.trim().length < 50) {
+      setState({ kind: 'error', message: 'Please describe your event (at least 50 characters).' });
+      return;
+    }
 
-    if (!parsed.success) {
-      setState({
-        kind: 'error',
-        message: parsed.error.issues[0]?.message ?? 'Please complete every field.',
-      });
+    const primaryEvent = events[0];
+    if (!primaryEvent?.date) {
+      setState({ kind: 'error', message: 'Please select a date for your event.' });
       return;
     }
 
@@ -62,7 +76,16 @@ export function CustomRequestForm({
       const res = await fetch('/api/bookings/custom-request', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify(parsed.data),
+        body: JSON.stringify({
+          vendor_slug: vendorSlug,
+          events: events.map(({ date, startTime, guestCount, eventTypeId }) => ({
+            date,
+            startTime,
+            guestCount,
+            eventTypeId,
+          })),
+          description,
+        }),
       });
       const json = await res.json();
       if (!res.ok || !json.ok) {
@@ -115,55 +138,97 @@ export function CustomRequestForm({
         </div>
       )}
 
-      <div>
-        <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-          Event date
+      <section>
+        <label className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+          Events
         </label>
-        <DatePicker selected={eventDate} onSelect={setEventDate} />
-      </div>
 
-      <div>
-        <label
-          htmlFor="custom-request-guest-count"
-          className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
-        >
-          Guest count
-        </label>
-        <input
-          id="custom-request-guest-count"
-          type="number"
-          inputMode="numeric"
-          min={1}
-          max={2000}
-          value={guestCount}
-          onChange={(e) => setGuestCount(e.target.value === '' ? '' : Number(e.target.value))}
-          disabled={submitting}
-          required
-          className="w-40 rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
-        />
-      </div>
+        {events.map((event) => (
+          <div key={event.id} className="mb-3 rounded-md border border-ink/15 p-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+                  Date
+                </label>
+                <DatePicker
+                  selected={event.date}
+                  onSelect={(v) => updateEvent(event.id, { date: v })}
+                />
+              </div>
 
-      <div>
-        <label
-          htmlFor="custom-request-event-type"
-          className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
-        >
-          Event type
-        </label>
-        <select
-          id="custom-request-event-type"
-          value={eventType}
-          onChange={(e) => setEventType(e.target.value as (typeof EVENT_TYPES)[number])}
+              <div>
+                <label
+                  htmlFor={`time-${event.id}`}
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                >
+                  Start time
+                </label>
+                <input
+                  id={`time-${event.id}`}
+                  type="time"
+                  value={event.startTime}
+                  onChange={(e) => updateEvent(event.id, { startTime: e.target.value })}
+                  disabled={submitting}
+                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor={`guests-${event.id}`}
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                >
+                  Guests
+                </label>
+                <input
+                  id={`guests-${event.id}`}
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={2000}
+                  value={event.guestCount}
+                  onChange={(e) =>
+                    updateEvent(event.id, { guestCount: Number(e.target.value) || 1 })
+                  }
+                  disabled={submitting}
+                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+                  Event type
+                </label>
+                <EventTypePicker
+                  value={event.eventTypeId}
+                  onValueChange={(v) => updateEvent(event.id, { eventTypeId: v })}
+                  disabled={submitting}
+                />
+              </div>
+            </div>
+
+            {events.length > 1 && (
+              <button
+                type="button"
+                onClick={() => removeEvent(event.id)}
+                disabled={submitting}
+                className="mt-2 text-xs text-hot-pink hover:underline disabled:opacity-50"
+              >
+                Remove this event
+              </button>
+            )}
+          </div>
+        ))}
+
+        <button
+          type="button"
+          onClick={addEvent}
           disabled={submitting}
-          className="w-60 rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+          className="text-sm font-medium text-ink hover:text-hot-pink disabled:opacity-50"
         >
-          {EVENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {EVENT_TYPE_LABELS[t]}
-            </option>
-          ))}
-        </select>
-      </div>
+          + Add another event
+        </button>
+      </section>
 
       <div>
         <label

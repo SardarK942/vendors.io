@@ -17,9 +17,9 @@ export default function TermsPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        Baazar.io (&quot;the Platform&quot;, &quot;we&quot;) is a marketplace that connects couples
-        planning Desi weddings with independent service vendors in the Chicago area. We are not a
-        vendor ourselves; we facilitate introductions, quotes, and hold deposits.
+        Baazar.io (&quot;the Platform&quot;, &quot;we&quot;) is a marketplace that connects
+        customers planning Desi weddings with independent service vendors in the Chicago area. We
+        are not a vendor ourselves; we facilitate introductions, quotes, and hold deposits.
       </p>
 
       <h2>2. Platform fee</h2>
@@ -62,9 +62,9 @@ export default function TermsPage() {
         calendar year result in a temporary freeze of the vendor&apos;s account.
       </p>
 
-      <h2>6. Couple obligations</h2>
+      <h2>6. Customer obligations</h2>
       <p>
-        By paying a deposit, couples agree to pay the remaining balance directly to the vendor
+        By paying a deposit, customers agree to pay the remaining balance directly to the vendor
         before or after the event per the vendor&apos;s terms. Remaining balance is not collected or
         held by the Platform.
       </p>

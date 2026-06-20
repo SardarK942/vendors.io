@@ -118,7 +118,7 @@ export function ReviewForm({ bookingId, open, onOpenChange, onSuccess }: ReviewF
               id="comment"
               value={comment}
               onChange={(e) => setComment(e.target.value)}
-              placeholder="What stood out? Any details for other couples?"
+              placeholder="What stood out? Any details for other customers?"
               rows={4}
               maxLength={4000}
             />
