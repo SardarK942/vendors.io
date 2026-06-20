@@ -48,14 +48,17 @@ export default async function VendorPage({ params }: VendorPageProps) {
     notFound();
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   if (!vendor.onboarding_complete || !vendor.is_active) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
     if (!user || user.id !== vendor.user_id) {
       notFound();
     }
   }
+
+  const isOwner = !!user && user.id === vendor.user_id;
 
   const { data: reviews } = await supabase
     .from('reviews')
@@ -96,6 +99,7 @@ export default async function VendorPage({ params }: VendorPageProps) {
         vendor={vendor}
         reviews={reviews ?? []}
         packages={packages as unknown as Parameters<typeof VendorProfile>[0]['packages']}
+        isOwner={isOwner}
       />
     </div>
   );
