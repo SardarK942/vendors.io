@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
-import { customRequestSchema } from '@/lib/booking/custom-request-validation';
+import {
+  customRequestSchema,
+  customRequestSchemaV2,
+} from '@/lib/booking/custom-request-validation';
 import { notifyCustomRequestReceived } from '@/services/notifications.service';
 import { deliver } from '@/lib/notifications/deliver';
 import { sendCustomRequestEmail } from '@/lib/email/custom-request';
@@ -25,12 +28,42 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'auth required' }, { status: 401 });
   }
 
-  const parsed = customRequestSchema.safeParse(body);
-  if (!parsed.success) {
+  // Try V2 (events array) first; fall back to V1 (single-event) for backwards-compat.
+  const parsedV2 = customRequestSchemaV2.safeParse(body);
+  const parsedV1 = parsedV2.success ? null : customRequestSchema.safeParse(body);
+
+  if (!parsedV2.success && !parsedV1?.success) {
     return NextResponse.json({ ok: false, error: 'invalid payload' }, { status: 400 });
   }
 
-  const { vendor_slug, event_date, guest_count, event_type, description } = parsed.data;
+  // Normalise to a canonical shape the rest of the handler uses.
+  let vendor_slug: string;
+  let event_date: string;
+  let guest_count: number;
+  let event_type: string;
+  let description: string;
+  let extra_events_json: string | null = null;
+
+  if (parsedV2.success) {
+    const { vendor_slug: vs, events, description: desc } = parsedV2.data;
+    const primary = events[0];
+    vendor_slug = vs;
+    event_date = primary.date;
+    guest_count = primary.guestCount;
+    event_type = primary.eventTypeId;
+    description = desc;
+    if (events.length > 1) {
+      extra_events_json = JSON.stringify(events);
+    }
+  } else {
+    // V1 payload
+    const v1 = parsedV1!.data!;
+    vendor_slug = v1.vendor_slug;
+    event_date = v1.event_date;
+    guest_count = v1.guest_count;
+    event_type = v1.event_type;
+    description = v1.description;
+  }
 
   // Resolve vendor by slug. Must be active + onboarding_complete for couples
   // to be able to send requests (mirrors /book page gate).
@@ -45,16 +78,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'vendor not found' }, { status: 404 });
   }
 
+  // Compose special_requests: human description + (for multi-event) a JSON block
+  // listing all events so the vendor can see the full picture.
+  const special_requests = extra_events_json
+    ? `${description}\n\n[events_json]:${extra_events_json}`
+    : description;
+
   const { data: inserted, error } = await supabase
     .from('bookings')
     .insert({
       vendor_profile_id: vendor.id,
       couple_user_id: user.id,
       package_id: null,
-      event_date,
       guest_count,
       event_type,
-      special_requests: description,
+      special_requests,
       status: 'pending_quote',
       total_price_cents: 0,
     })
