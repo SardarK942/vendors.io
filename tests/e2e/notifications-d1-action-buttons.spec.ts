@@ -323,9 +323,9 @@ test.describe('D.1 — action buttons render correctly per notification type', (
         // NotificationCard renders action buttons as <Link> elements inside an
         // outer <Link> card wrapper. Because the outer card's accessible name
         // includes the inner action text, getByRole('link',{name}) can match the
-        // outer card first. We scope to the action-button div (class="mt-2 flex
-        // flex-wrap gap-2") so we only match the actual action buttons.
-        const actionButtonsContainer = page.locator('.mt-2.flex.flex-wrap.gap-2').first();
+        // outer card first. We scope to the action-button div (data-testid="notification-actions")
+        // so we only match the actual action buttons.
+        const actionButtonsContainer = page.getByTestId('notification-actions').first();
         const actionLink = actionButtonsContainer.getByRole('link', {
           name: c.primaryLabel,
         });
