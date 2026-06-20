@@ -1,12 +1,9 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
-import { Card } from '@/components/ui/card';
 import { EarningsCard } from '@/components/dashboard/EarningsCard';
 import { RecentUnlocks } from '@/components/dashboard/RecentUnlocks';
 import { PayoutHistory } from '@/components/dashboard/PayoutHistory';
-import { CashToCollect } from '@/components/dashboard/CashToCollect';
-import { getPayoutHistory, getCashToCollect } from '@/services/payment.service';
-import type { PaymentMode } from '@/lib/utils';
+import { getPayoutHistory } from '@/services/payment.service';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
@@ -33,61 +30,11 @@ export default async function MoneyPage() {
   const { profile: vendorProfileRaw } = await getActiveVendorProfile(supabase, user.id);
   if (!vendorProfileRaw) redirect('/dashboard/profile/setup');
 
-  const paymentMode = ((vendorProfileRaw as unknown as { payment_mode?: string }).payment_mode ??
-    'stripe') as PaymentMode;
-
-  // ── Cash variant ────────────────────────────────────────────────
-  if (paymentMode === 'cash') {
-    const { data: cashRows } = await getCashToCollect(supabase, vendorProfileRaw.id);
-
-    const { count: confirmedCount } = await supabase
-      .from('bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('vendor_profile_id', vendorProfileRaw.id)
-      .in('status', ['deposit_paid', 'completed']);
-
-    const today = new Date().toISOString().slice(0, 10);
-    const { count: upcomingCount } = await supabase
-      .from('booking_events')
-      .select('id, bookings!inner(vendor_profile_id, status)', {
-        count: 'exact',
-        head: true,
-      })
-      .eq('bookings.vendor_profile_id', vendorProfileRaw.id)
-      .eq('bookings.status', 'deposit_paid')
-      .gte('event_date', today);
-
-    return (
-      <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Money</h1>
-
-        <Card className="p-6">
-          <h2 className="font-semibold">💵 You and your client handle the 95%</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Baazar holds a 5% deposit to lock in the booking; everything else is yours to arrange.
-          </p>
-        </Card>
-
-        <div className="grid grid-cols-2 gap-4">
-          <Card className="p-4">
-            <div className="text-xs uppercase text-muted-foreground">Confirmed bookings</div>
-            <div className="mt-1 text-2xl font-semibold">{confirmedCount ?? 0}</div>
-          </Card>
-          <Card className="p-4">
-            <div className="text-xs uppercase text-muted-foreground">Upcoming events</div>
-            <div className="mt-1 text-2xl font-semibold">{upcomingCount ?? 0}</div>
-          </Card>
-        </div>
-
-        <section className="space-y-2">
-          <h2 className="text-lg font-semibold">Cash to collect at upcoming events</h2>
-          <CashToCollect rows={cashRows ?? []} />
-        </section>
-      </div>
-    );
-  }
-
-  // ── Stripe variant ──────────────────────────────────────────────
+  // Bucket F: single-mode payment model — no more cash/stripe branching. All
+  // vendors see the attribution dashboard (EarningsCard) + recent-completion
+  // history. The legacy payouts table is queried for historical Stripe-Connect
+  // transfers (if any); under single mode no new rows are written but the
+  // history surface is preserved for vendors who pre-date the migration.
   const payouts = await getPayoutHistory(supabase, vendorProfileRaw.id, { limit: 25 });
 
   const sevenDaysAgo = new Date(Date.now() - 7 * 86_400_000).toISOString();
