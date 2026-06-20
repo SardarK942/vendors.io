@@ -107,28 +107,6 @@ export const VENDOR_CATEGORY_LABELS: Record<string, string> = {
   carts: 'Carts',
 };
 
-/**
- * @deprecated Use EVENT_TYPES from '@/types' instead.
- * This legacy 6-entry list will be removed in T3 once all consumers migrate.
- */
-export const EVENT_TYPES_LEGACY = [
-  'engagement',
-  'mehndi',
-  'sangeet',
-  'wedding',
-  'reception',
-  'multiple',
-] as const;
-
-export const EVENT_TYPE_LABELS: Record<string, string> = {
-  engagement: 'Engagement',
-  mehndi: 'Mehndi',
-  sangeet: 'Sangeet',
-  wedding: 'Wedding Ceremony',
-  reception: 'Reception',
-  multiple: 'Multiple Events',
-};
-
 export const BOOKING_STATUSES = [
   'pending',
   'quoted',

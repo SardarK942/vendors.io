@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { DatePicker } from '@/components/ui/date-picker';
-import { customRequestSchema, EVENT_TYPES } from '@/lib/booking/custom-request-validation';
+import { EventTypePicker } from '@/components/ui/EventTypePicker';
+import { customRequestSchema } from '@/lib/booking/custom-request-validation';
+import type { EventTypeId } from '@/types';
 
 type FormState =
   | { kind: 'default' }
@@ -16,16 +18,6 @@ export interface CustomRequestFormProps {
   vendorResponseSlaHours: number | null;
 }
 
-const EVENT_TYPE_LABELS: Record<(typeof EVENT_TYPES)[number], string> = {
-  mehndi: 'Mehndi',
-  sangeet: 'Sangeet',
-  ceremony: 'Ceremony',
-  reception: 'Reception',
-  'welcome-dinner': 'Welcome dinner',
-  'farewell-brunch': 'Farewell brunch',
-  other: 'Other',
-};
-
 export function CustomRequestForm({
   vendorSlug,
   vendorBusinessName,
@@ -33,7 +25,7 @@ export function CustomRequestForm({
 }: CustomRequestFormProps) {
   const [eventDate, setEventDate] = React.useState('');
   const [guestCount, setGuestCount] = React.useState<number | ''>('');
-  const [eventType, setEventType] = React.useState<(typeof EVENT_TYPES)[number]>('mehndi');
+  const [eventType, setEventType] = React.useState<EventTypeId>('mehndi');
   const [description, setDescription] = React.useState('');
   const [state, setState] = React.useState<FormState>({ kind: 'default' });
 
@@ -144,25 +136,12 @@ export function CustomRequestForm({
       </div>
 
       <div>
-        <label
-          htmlFor="custom-request-event-type"
-          className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
-        >
+        <label className="mb-2 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
           Event type
         </label>
-        <select
-          id="custom-request-event-type"
-          value={eventType}
-          onChange={(e) => setEventType(e.target.value as (typeof EVENT_TYPES)[number])}
-          disabled={submitting}
-          className="w-60 rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
-        >
-          {EVENT_TYPES.map((t) => (
-            <option key={t} value={t}>
-              {EVENT_TYPE_LABELS[t]}
-            </option>
-          ))}
-        </select>
+        <div className="w-60">
+          <EventTypePicker value={eventType} onValueChange={setEventType} disabled={submitting} />
+        </div>
       </div>
 
       <div>

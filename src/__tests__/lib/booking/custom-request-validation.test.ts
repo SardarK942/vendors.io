@@ -2,14 +2,14 @@ import { describe, it, expect } from 'vitest';
 import {
   customRequestSchema,
   EVENT_TYPES,
-  type EventType,
+  type EventTypeId,
 } from '@/lib/booking/custom-request-validation';
 
 const VALID_INPUT = {
   vendor_slug: 'henna-by-anya',
   event_date: '2026-10-17',
   guest_count: 150,
-  event_type: 'mehndi' as EventType,
+  event_type: 'mehndi' as EventTypeId,
   description: 'a'.repeat(120),
 };
 
@@ -59,9 +59,14 @@ describe('customRequestSchema', () => {
     expect(r.success).toBe(false);
   });
 
-  it('exports EVENT_TYPES as a 7-entry tuple', () => {
-    expect(EVENT_TYPES).toHaveLength(7);
-    expect(EVENT_TYPES).toContain('mehndi');
-    expect(EVENT_TYPES).toContain('other');
+  it('exports EVENT_TYPES as the canonical 20-entry array', () => {
+    expect(EVENT_TYPES).toHaveLength(20);
+    // Cultural entries
+    const ids = EVENT_TYPES.map((e) => e.id);
+    expect(ids).toContain('mehndi');
+    expect(ids).toContain('wedding');
+    // General entries
+    expect(ids).toContain('birthday_party');
+    expect(ids).toContain('anniversary');
   });
 });
