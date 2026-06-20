@@ -37,6 +37,15 @@ test.afterEach(async () => {
 
 test('first-time vendor: public → claim → signup → onboarding → dashboard', async ({ page }) => {
   test.setTimeout(5 * 60_000); // generous, we're going slow on purpose
+  // Skip in CI — requires /tmp/walkthrough-seed.json produced by scripts/walkthrough/seed.ts
+  const seedExists = await fs
+    .access('/tmp/walkthrough-seed.json')
+    .then(() => true)
+    .catch(() => false);
+  test.skip(
+    !seedExists,
+    'Requires /tmp/walkthrough-seed.json — run scripts/walkthrough/seed.ts first'
+  );
   const seedJson = await fs.readFile('/tmp/walkthrough-seed.json', 'utf8');
   const seed = JSON.parse(seedJson) as {
     slug: string;
