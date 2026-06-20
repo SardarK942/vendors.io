@@ -178,6 +178,7 @@ export interface OperationsEvent {
   couple_full_name: string | null;
   package_label: string | null;
   status: string;
+  guest_count_override: number | null;
 }
 
 export interface OperationsBuckets {
@@ -202,7 +203,7 @@ export async function getOperationsBuckets(
     .from('booking_events')
     .select(
       `id, booking_id, sequence, event_date, event_start_time, event_end_time, event_type_label,
-       location_name, address_line_1, city,
+       location_name, address_line_1, city, guest_count_override,
        bookings!inner(vendor_profile_id, status, couple_full_name, package_name_snapshot)`
     )
     .eq('bookings.vendor_profile_id', vendorProfileId)
@@ -231,6 +232,7 @@ export async function getOperationsBuckets(
       couple_full_name: b.couple_full_name,
       package_label: b.package_name_snapshot,
       status: b.status,
+      guest_count_override: (r.guest_count_override as number | null) ?? null,
     };
   });
 

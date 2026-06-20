@@ -11,6 +11,27 @@ interface BookingCardProps {
     vendor_profiles?: { business_name: string; slug: string; category: string } | null;
   };
   role: 'couple' | 'vendor';
+  bookingEvents?: Array<{
+    event_type_label: string;
+    guest_count_override: number | null;
+  }>;
+}
+
+function GuestCountBadge({
+  events,
+}: {
+  events: { event_type_label: string; guest_count_override: number | null }[];
+}) {
+  if (events.length === 1) {
+    const count = events[0].guest_count_override ?? 0;
+    return <span className="text-xs text-ink/70">{count} guests</span>;
+  }
+  const total = events.reduce((sum, e) => sum + (e.guest_count_override ?? 0), 0);
+  return (
+    <span className="text-xs text-ink/70">
+      {total} guests across {events.length} events
+    </span>
+  );
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -27,7 +48,7 @@ const STATUS_COLORS: Record<string, string> = {
   cancelled_mutual: 'bg-gray-100 text-gray-800',
 };
 
-export function BookingCard({ booking, role }: BookingCardProps) {
+export function BookingCard({ booking, role, bookingEvents }: BookingCardProps) {
   const vendorName = booking.vendor_profiles?.business_name || 'Unknown Vendor';
   const packageName = (booking as unknown as Record<string, string | null>).package_name_snapshot;
 
@@ -51,12 +72,17 @@ export function BookingCard({ booking, role }: BookingCardProps) {
                 {packageName}
               </Badge>
             )}
-            {booking.guest_count && (
+            {bookingEvents && bookingEvents.length > 0 ? (
+              <span className="flex items-center gap-1">
+                <Users className="h-4 w-4" />
+                <GuestCountBadge events={bookingEvents} />
+              </span>
+            ) : booking.guest_count ? (
               <span className="flex items-center gap-1">
                 <Users className="h-4 w-4" />
                 {booking.guest_count} guests
               </span>
-            )}
+            ) : null}
           </div>
 
           {/* Show contact info only when revealed */}

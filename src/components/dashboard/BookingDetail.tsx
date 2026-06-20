@@ -15,6 +15,34 @@ import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import Link from 'next/link';
 
+function GuestCountSection({
+  events,
+}: {
+  events: { event_type_label: string; guest_count_override: number | null }[];
+}) {
+  if (events.length === 1) {
+    return (
+      <div>
+        <div className="text-xs uppercase text-ink/50">Guests</div>
+        <div className="text-base text-ink">{events[0].guest_count_override ?? 0}</div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      <div className="text-xs uppercase text-ink/50">Guests by event</div>
+      <ul className="mt-2 space-y-1">
+        {events.map((e, i) => (
+          <li key={i} className="text-sm text-ink">
+            <span className="font-medium">{e.event_type_label}</span>
+            <span className="text-ink/60"> · {e.guest_count_override ?? 0} guests</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
 interface BookingDetailProps {
   bookingId: string;
   mode: 'panel' | 'page';
@@ -108,6 +136,7 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
     state: string;
     postal_code: string;
     completed_at: string | null;
+    guest_count_override: number | null;
     vendor_notes?: string | null;
   }>;
   const totalEvents = events.length;
@@ -298,12 +327,17 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
                 </div>
               </>
             )}
-            {(bookingAsAny.guest_count as number) && (
+            {events.length > 0 ? (
+              <>
+                <Separator />
+                <GuestCountSection events={events} />
+              </>
+            ) : (bookingAsAny.guest_count as number) ? (
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Guests</span>
                 <span>{bookingAsAny.guest_count as number}</span>
               </div>
-            )}
+            ) : null}
             {(bookingAsAny.special_requests as string | null) && (
               <>
                 <Separator />

@@ -26,6 +26,11 @@ function FullRow({ ev }: { ev: OperationsEvent }) {
         {ev.address_line_1}
         {ev.city ? `, ${ev.city}` : ''} · {ev.package_label ?? 'Booking'}
       </div>
+      {ev.guest_count_override !== null && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          {ev.event_type_label} · {ev.guest_count_override} guests
+        </div>
+      )}
     </div>
   );
 }
@@ -36,7 +41,10 @@ function CompactRow({ ev }: { ev: OperationsEvent }) {
       <span className="font-medium">{fmtDate(ev.event_date)}</span>
       <span className="text-muted-foreground">·</span>
       <span>{ev.couple_full_name}</span>
-      <span className="ml-auto truncate text-muted-foreground">{ev.package_label}</span>
+      <span className="ml-auto truncate text-muted-foreground">
+        {ev.package_label}
+        {ev.guest_count_override !== null && ` · ${ev.guest_count_override} guests`}
+      </span>
     </div>
   );
 }
@@ -46,10 +54,7 @@ export async function OperationsBlock({ vendorProfileId }: OperationsBlockProps)
   const buckets = await getOperationsBuckets(supabase, vendorProfileId);
 
   const total =
-    buckets.today.length +
-    buckets.tomorrow.length +
-    buckets.thisWeek.length +
-    buckets.later.length;
+    buckets.today.length + buckets.tomorrow.length + buckets.thisWeek.length + buckets.later.length;
 
   if (total === 0) {
     return (
