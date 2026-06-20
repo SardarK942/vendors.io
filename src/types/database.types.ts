@@ -169,7 +169,7 @@ export interface Database {
           id: string;
           user_id: string;
           business_name: string;
-          slug: string;
+          slug: string | null;
           category:
             | 'photography'
             | 'videography'
@@ -214,7 +214,7 @@ export interface Database {
           id?: string;
           user_id: string;
           business_name: string;
-          slug: string;
+          slug?: string | null;
           category:
             | 'photography'
             | 'videography'
@@ -257,7 +257,7 @@ export interface Database {
         Update: {
           user_id?: string;
           business_name?: string;
-          slug?: string;
+          slug?: string | null;
           category?:
             | 'photography'
             | 'videography'

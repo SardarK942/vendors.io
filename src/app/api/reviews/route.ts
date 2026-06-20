@@ -82,7 +82,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
             coupleName,
             rating: parsed.ratingOverall,
             body: parsed.comment ?? '',
-            vendorSlug: ctx.slug,
+            vendorSlug: ctx.slug ?? '',
             notificationId: notifyResult.id,
           }),
         { booking_id: booking.id }
