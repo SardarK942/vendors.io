@@ -112,7 +112,11 @@ export function VendorProfile({
         {packages.length > 0 && (
           <div>
             <h2 className="mb-3 text-xl font-semibold">Packages</h2>
-            <PackageGrid packages={packages} vendorSlug={vendor.slug} interactive={interactive} />
+            <PackageGrid
+              packages={packages}
+              vendorSlug={vendor.slug ?? ''}
+              interactive={interactive}
+            />
           </div>
         )}
 

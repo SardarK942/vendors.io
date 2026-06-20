@@ -106,7 +106,7 @@ export async function getOrCreateWizardProfile(
     .insert({
       user_id: userId,
       business_name: '',
-      slug: '',
+      slug: null,
       // Placeholder — replaced when the vendor completes the basics step.
       category:
         'photography' as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
