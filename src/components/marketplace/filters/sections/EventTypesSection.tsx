@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { EVENT_TYPES } from '../constants';
+import { EVENT_TYPES_LEGACY } from '../constants';
 import type { FilterState } from '../use-filter-state';
 
 interface Props {
@@ -29,7 +29,7 @@ export function EventTypesSection({ state, patch }: Props) {
         Coming soon — vendor data backing in a follow-up PR.
       </p>
       <div className="flex flex-wrap gap-1.5">
-        {EVENT_TYPES.map((e) => {
+        {EVENT_TYPES_LEGACY.map((e) => {
           const on = state.events.includes(e.slug);
           return (
             <button

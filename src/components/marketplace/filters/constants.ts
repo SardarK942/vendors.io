@@ -56,7 +56,11 @@ export const YEARS_OPTIONS: { value: number; label: string }[] = [
   { value: 10, label: '10+ years' },
 ];
 
-export const EVENT_TYPES: { slug: string; label: string }[] = [
+/**
+ * @deprecated Use EVENT_TYPES from '@/types' instead.
+ * This legacy 6-entry list will be removed in T3 once all consumers migrate.
+ */
+export const EVENT_TYPES_LEGACY: { slug: string; label: string }[] = [
   { slug: 'wedding', label: 'Wedding ceremony' },
   { slug: 'reception', label: 'Reception' },
   { slug: 'sangeet', label: 'Sangeet' },

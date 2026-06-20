@@ -107,7 +107,11 @@ export const VENDOR_CATEGORY_LABELS: Record<string, string> = {
   carts: 'Carts',
 };
 
-export const EVENT_TYPES = [
+/**
+ * @deprecated Use EVENT_TYPES from '@/types' instead.
+ * This legacy 6-entry list will be removed in T3 once all consumers migrate.
+ */
+export const EVENT_TYPES_LEGACY = [
   'engagement',
   'mehndi',
   'sangeet',
