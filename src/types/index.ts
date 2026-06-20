@@ -81,23 +81,6 @@ export type EventTypeId = (typeof EVENT_TYPES)[number]['id'];
 export const CULTURAL_EVENT_TYPES = EVENT_TYPES.filter((e) => e.group === 'cultural');
 export const GENERAL_EVENT_TYPES = EVENT_TYPES.filter((e) => e.group === 'general');
 
-// ─── Legacy event type schema (6 entries) — kept for backward compat ─
-
-/**
- * @deprecated Use EVENT_TYPES / EventTypeId from this module instead.
- * This legacy 6-entry schema will be removed in T3 once all consumers migrate.
- */
-export const eventTypeSchema = z.enum([
-  'engagement',
-  'mehndi',
-  'sangeet',
-  'wedding',
-  'reception',
-  'multiple',
-]);
-
-export type EventType = z.infer<typeof eventTypeSchema>;
-
 export const bookingStatusSchema = z.enum([
   'pending',
   'deposit_paid',
