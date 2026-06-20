@@ -7,7 +7,7 @@ const buttonVariants = cva(
   [
     'inline-flex items-center justify-center whitespace-nowrap',
     'font-sans font-medium rounded-md',
-    'transition-all duration-[220ms] ease-[cubic-bezier(.22,1,.36,1)]',
+    'transition-all duration-[180ms] ease-out',
     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
     'disabled:opacity-40 disabled:pointer-events-none disabled:cursor-not-allowed',
     'motion-reduce:transition-none motion-reduce:hover:transform-none',
@@ -16,13 +16,13 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          'bg-ink text-cream hover:bg-[#2A1E1E] hover:-translate-y-[3px] hover:shadow-[0_8px_20px_rgba(27,20,20,0.25),0_3px_6px_rgba(27,20,20,0.12)]',
+          'bg-ink text-cream hover:bg-hot-pink hover:-translate-y-px hover:shadow-pink motion-reduce:hover:translate-y-0',
         secondary:
-          'bg-transparent text-ink border border-ink hover:bg-cream-soft hover:-translate-y-[3px] hover:shadow-[0_6px_14px_rgba(27,20,20,0.10),0_2px_4px_rgba(27,20,20,0.05)]',
-        tertiary: 'bg-transparent text-ink hover:bg-cream-soft',
-        link: 'bg-transparent text-ink !h-auto !p-0 hover:underline hover:underline-offset-4 hover:decoration-1',
+          'bg-transparent text-ink border border-ink hover:border-hot-pink hover:text-hot-pink hover:bg-hot-pink/[0.04]',
+        tertiary: 'bg-transparent text-ink hover:bg-cream-soft hover:text-hot-pink',
+        link: 'bg-transparent text-ink !h-auto !p-0 hover:underline hover:underline-offset-4 hover:decoration-1 hover:text-hot-pink hover:decoration-hot-pink',
         destructive:
-          'bg-error text-cream hover:bg-[#94121F] hover:-translate-y-[3px] hover:shadow-[0_8px_20px_rgba(184,22,40,0.30),0_3px_6px_rgba(184,22,40,0.15)] focus-visible:ring-error',
+          'bg-error text-cream hover:bg-[#94121F] hover:-translate-y-px hover:shadow-[0_8px_20px_rgba(184,22,40,0.30),0_3px_6px_rgba(184,22,40,0.15)] motion-reduce:hover:translate-y-0 focus-visible:ring-error',
       },
       size: {
         sm: 'h-8 px-3.5 text-xs gap-1',
