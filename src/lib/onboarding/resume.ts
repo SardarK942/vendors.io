@@ -60,8 +60,10 @@ export async function getOrCreateWizardProfile(
       .insert({
         user_id: userId,
         business_name: '',
-        slug: '',
-        // Placeholder — replaced when the vendor completes the basics step.
+        // Slug stays null until the vendor completes basics; the partial unique
+        // index (migration 00060) covers WHERE slug IS NOT NULL so concurrent
+        // wizard stubs don't collide on the constraint.
+        slug: null,
         category:
           'photography' as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
         service_area: [],
