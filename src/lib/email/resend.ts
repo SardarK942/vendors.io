@@ -121,7 +121,7 @@ export async function sendQuoteEmail(
     html: `
       <h2>Quote Received</h2>
       <p>${safeName} has sent you a quote of <strong>${fmtUsd(quoteAmount)}</strong>.</p>
-      <p>Log in to review the quote and secure your booking with a 10% hold deposit.</p>
+      <p>Log in to review the quote and secure your booking with a 5% deposit.</p>
       <p><a href="${appUrl()}/dashboard/bookings">View Quote</a></p>
       ${FOOTER}
     `,

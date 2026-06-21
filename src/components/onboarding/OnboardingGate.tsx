@@ -22,7 +22,15 @@ export function OnboardingGate({ role, onboardingCompleted }: OnboardingGateProp
   React.useEffect(() => {
     if (open && !markedRef.current) {
       markedRef.current = true;
-      fetch('/api/users/onboarding-complete', { method: 'POST' }).catch((err) => {
+      // Mark-on-show: send a skipped-shaped payload so onboardingCompleteSchema
+      // parses. If the user later fills out the modal, submitOrSkip re-POSTs
+      // with real data and overwrites users.onboarding_data. If they close the
+      // tab, they're still marked complete and won't see the modal again.
+      fetch('/api/users/onboarding-complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ skipped: true, data: null }),
+      }).catch((err) => {
         console.error('Failed to mark onboarding complete:', err);
       });
     }
