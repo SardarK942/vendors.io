@@ -14,7 +14,7 @@ export function PayoutHistory({ rows }: { rows: PayoutHistoryRow[] }) {
   if (rows.length === 0) {
     return (
       <Card className="p-6 text-center text-sm text-muted-foreground">
-        No payouts yet. Once Stripe sends a payout, you&rsquo;ll see it here.
+        No payout history yet. Your Stripe payout history (legacy) will appear here.
       </Card>
     );
   }

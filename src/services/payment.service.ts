@@ -894,8 +894,7 @@ export interface VendorEarnings {
   available_cents: number; // earned but not transferred
   transferred_cents: number; // historical
   requires_onboarding: boolean;
-  verification_pending: boolean; // details submitted but Stripe hasn't confirmed yet
-  stripe_account_id: string | null;
+  verification_pending: boolean;
   frozen_reason: string | null;
 }
 
@@ -940,7 +939,6 @@ export async function getVendorEarnings(
       transferred_cents: transferred,
       requires_onboarding: false,
       verification_pending: false,
-      stripe_account_id: null,
       frozen_reason: null,
     },
     status: 200,

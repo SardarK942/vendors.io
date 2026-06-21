@@ -37,7 +37,7 @@ export default function PrivacyPage() {
       <h2>2. Who we share with</h2>
       <ul>
         <li>
-          <strong>Stripe</strong> — payment processing and identity verification for vendor payouts.
+          <strong>Stripe</strong> — payment processing for customer deposits.
         </li>
         <li>
           <strong>Supabase</strong> — database and authentication hosting.

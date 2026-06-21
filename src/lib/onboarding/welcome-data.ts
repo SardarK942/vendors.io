@@ -87,7 +87,7 @@ export const VENDOR_FEATURES: readonly OnboardingFeature[] = [
     icon: CreditCard,
     title: 'Get paid securely',
     description:
-      "Stripe holds the deposit when a customer books. You're paid out after the event completes. No chasing invoices.",
+      'Customers pay a 5% deposit through Baazar. You collect the 95% balance directly from them — we handle the admin.',
     image: '',
   },
 ];
@@ -99,7 +99,7 @@ export const VENDOR_TIPS: readonly OnboardingTip[] = [
   },
   {
     number: 2,
-    text: 'Set your response SLA under Profile → Settings. Customers see this on your card — fast responders book more.',
+    text: 'Set your response SLA in Step 4 of the wizard (Profile Details). Customers see this on your card — fast responders book more.',
   },
   {
     number: 3,
