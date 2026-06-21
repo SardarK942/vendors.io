@@ -204,6 +204,7 @@ export interface Database {
           base_postal_code: string | null;
           base_google_place_id: string | null;
           base_address_public: boolean;
+          base_address_skipped: boolean;
           is_active: boolean;
           onboarding_complete: boolean;
           concurrent_capacity: number;
@@ -248,6 +249,7 @@ export interface Database {
           base_postal_code?: string | null;
           base_google_place_id?: string | null;
           base_address_public?: boolean;
+          base_address_skipped?: boolean;
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
@@ -291,6 +293,7 @@ export interface Database {
           base_postal_code?: string | null;
           base_google_place_id?: string | null;
           base_address_public?: boolean;
+          base_address_skipped?: boolean;
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;

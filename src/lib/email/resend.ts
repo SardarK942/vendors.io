@@ -353,12 +353,12 @@ export async function sendCompletionEmailToVendor(
 ): Promise<boolean> {
   return sendEmail({
     to: vendorEmail,
-    subject: `Funds Unlocked — ${fmtUsd(vendorPayoutCents)} Available`,
+    subject: `Booking complete — ${fmtUsd(vendorPayoutCents)} earned`,
     html: `
-      <h2>Your deposit share is unlocked</h2>
+      <h2>Booking marked complete</h2>
       <p>Hi ${escapeHtml(vendorName)},</p>
-      <p>A booking you delivered has been marked complete. <strong>${fmtUsd(vendorPayoutCents)}</strong> is now available to withdraw.</p>
-      <p><a href="${appUrl()}/dashboard">Go to Earnings</a></p>
+      <p>A booking you delivered has been marked complete. You&rsquo;ve earned <strong>${fmtUsd(vendorPayoutCents)}</strong> on this booking via Baazar. Collect the remaining 95% balance directly from your customer per your payment terms.</p>
+      <p><a href="${appUrl()}/dashboard">View your earnings</a></p>
       ${FOOTER}
     `,
   });

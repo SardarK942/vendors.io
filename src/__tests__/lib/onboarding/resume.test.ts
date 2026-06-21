@@ -13,13 +13,13 @@ const baseProfile = {
   base_postal_code: '60601',
   base_google_place_id: 'P',
   base_address_public: false,
+  base_address_skipped: false,
   instagram_handle: 'x',
   website_url: null,
   languages: ['english'],
   years_in_business: 3,
   response_sla_hours: 24,
   portfolio_images: ['x.jpg'],
-  payment_mode: 'stripe' as const,
 };
 
 describe('nextIncompleteStep', () => {
@@ -55,6 +55,62 @@ describe('nextIncompleteStep', () => {
   });
   it('returns basics when profile is null', () => {
     expect(nextIncompleteStep(null)).toBe('basics');
+  });
+
+  // ─── Address-skip (Bucket A T8 follow-through) ────────────────────────────
+  it('does NOT return location when address empty but base_address_skipped=true', () => {
+    // Vendor checked "I don't have a fixed address" — all address fields null/empty.
+    // Resume must NOT bounce them back to location. With instagram also missing
+    // (to isolate just the address-skip check) it should land on 'online'.
+    expect(
+      nextIncompleteStep({
+        ...baseProfile,
+        base_address_line_1: null,
+        base_city: null,
+        base_state: null,
+        base_postal_code: null,
+        base_google_place_id: null,
+        base_address_skipped: true,
+        instagram_handle: null, // not yet filled in — gives us a clear next step
+      })
+    ).toBe('online');
+  });
+
+  it('returns location when address empty and base_address_skipped=false', () => {
+    // Vendor has NOT skipped and has NOT filled in address — must route to location.
+    expect(
+      nextIncompleteStep({
+        ...baseProfile,
+        base_address_line_1: null,
+        base_city: null,
+        base_state: null,
+        base_postal_code: null,
+        base_google_place_id: null,
+        base_address_skipped: false,
+      })
+    ).toBe('location');
+  });
+
+  it('returns online when address empty and base_address_skipped is undefined (legacy row)', () => {
+    // Pre-migration rows lack the column (undefined). Treat same as false → route to location.
+    // (This intentionally keeps existing behaviour so legacy partial profiles still get fixed.)
+    expect(
+      nextIncompleteStep({
+        ...baseProfile,
+        base_address_line_1: null,
+        base_city: null,
+        base_state: null,
+        base_postal_code: null,
+        base_google_place_id: null,
+        base_address_skipped: undefined,
+      })
+    ).toBe('location');
+  });
+
+  it('returns review regardless of skip flag when address fields are filled and all other steps complete', () => {
+    // When address is present (filled), skip flag is irrelevant — no location bounce either way.
+    expect(nextIncompleteStep({ ...baseProfile, base_address_skipped: true })).toBe('review');
+    expect(nextIncompleteStep({ ...baseProfile, base_address_skipped: false })).toBe('review');
   });
 });
 

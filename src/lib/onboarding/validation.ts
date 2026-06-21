@@ -24,6 +24,8 @@ export const locationSchema = z.object({
   basePostalCode: z.string().optional(),
   baseGooglePlaceId: z.string().optional(),
   baseAddressPublic: z.boolean(),
+  /** True when vendor checked "I don't have a fixed address". Persisted to vendor_profiles. */
+  baseAddressSkipped: z.boolean().optional().default(false),
 });
 
 export const onlineSchema = z.object({

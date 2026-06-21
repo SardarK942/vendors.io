@@ -18,6 +18,7 @@ interface Initial {
   basePostalCode: string;
   baseGooglePlaceId: string;
   baseAddressPublic: boolean;
+  baseAddressSkipped: boolean;
 }
 
 interface Props {
@@ -36,7 +37,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
     google_place_id: initial.baseGooglePlaceId,
   });
   const [addressPublic, setAddressPublic] = useState(initial.baseAddressPublic);
-  const [skipAddress, setSkipAddress] = useState(!initial.baseAddressLine1);
+  const [skipAddress, setSkipAddress] = useState(initial.baseAddressSkipped);
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -49,6 +50,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
       basePostalCode: place.postal_code ?? '',
       baseGooglePlaceId: place.google_place_id ?? '',
       baseAddressPublic: addressPublic,
+      baseAddressSkipped: skipAddress,
     });
     if (!parsed.success) {
       applyZodErrors(parsed.error);

@@ -44,7 +44,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
       return;
     }
     const nextParam = mode === 'next' ? '?next=true' : '';
-    router.push(`/dashboard/profile/setup/portfolio${nextParam}`);
+    router.push(`/dashboard/profile/setup/details${nextParam}`);
   }
 
   return (
