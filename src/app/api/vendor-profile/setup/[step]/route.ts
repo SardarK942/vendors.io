@@ -126,6 +126,7 @@ export const PATCH = withErrorBoundary(
           base_postal_code: data.basePostalCode,
           base_google_place_id: data.baseGooglePlaceId,
           base_address_public: data.baseAddressPublic,
+          base_address_skipped: data.baseAddressSkipped ?? false,
         })
         .eq('id', profileId);
 

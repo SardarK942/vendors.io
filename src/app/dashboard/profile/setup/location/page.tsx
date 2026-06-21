@@ -22,7 +22,9 @@ export default async function LocationPage({ searchParams }: PageProps) {
 
   const { data: profile } = await supabase
     .from('vendor_profiles')
-    .select('base_address_line_1, base_city, base_state, base_postal_code, base_google_place_id, base_address_public')
+    .select(
+      'base_address_line_1, base_city, base_state, base_postal_code, base_google_place_id, base_address_public, base_address_skipped'
+    )
     .eq('id', profileId)
     .maybeSingle();
   return (
@@ -36,6 +38,7 @@ export default async function LocationPage({ searchParams }: PageProps) {
         basePostalCode: profile?.base_postal_code ?? '',
         baseGooglePlaceId: profile?.base_google_place_id ?? '',
         baseAddressPublic: profile?.base_address_public ?? false,
+        baseAddressSkipped: profile?.base_address_skipped ?? false,
       }}
     />
   );

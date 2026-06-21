@@ -14,6 +14,8 @@ export interface ProfileRowShape {
   base_state: string | null;
   base_postal_code: string | null;
   base_google_place_id: string | null;
+  /** Set to true when vendor checked "I don't have a fixed address". Persisted since migration 00061. */
+  base_address_skipped?: boolean | null;
   instagram_handle: string | null;
   languages?: string[] | null;
   years_in_business?: number | null;
@@ -133,12 +135,16 @@ export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep 
   if (!profile.business_name || !profile.category || !profile.bio || profile.bio.length < 50) {
     return 'basics';
   }
+  // A vendor who checked "I don't have a fixed address" has base_address_skipped=true.
+  // In that case all address fields are intentionally empty — skip the address check.
+  const addressSkipped = !!profile.base_address_skipped;
   if (
-    !profile.base_address_line_1 ||
-    !profile.base_city ||
-    !profile.base_state ||
-    !profile.base_postal_code ||
-    !profile.base_google_place_id
+    !addressSkipped &&
+    (!profile.base_address_line_1 ||
+      !profile.base_city ||
+      !profile.base_state ||
+      !profile.base_postal_code ||
+      !profile.base_google_place_id)
   ) {
     return 'location';
   }
