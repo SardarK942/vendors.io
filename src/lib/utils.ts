@@ -26,9 +26,9 @@ export function getPlatformCutRate(mode: PaymentMode): number {
   return mode === 'cash' ? 1.0 : 0.3;
 }
 
-/** Hold deposit = 10% of the vendor quote. */
+/** Hold deposit = DEPOSIT_RATE (5%) of the vendor quote. */
 export function calculateDepositAmount(quoteAmountCents: number): number {
-  return Math.round(quoteAmountCents / 10);
+  return Math.round(quoteAmountCents * DEPOSIT_RATE);
 }
 
 /** Platform's cut of a deposit. Defaults to stripe mode for backward compat. */
