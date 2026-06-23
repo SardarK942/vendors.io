@@ -114,8 +114,11 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
 async function runCustomer48hFollowup(): Promise<void> {
   const supabase = createServiceRoleClient();
   const now = new Date();
-  const windowStart = new Date(now.getTime() - 50 * 3600 * 1000).toISOString();
-  const windowEnd = new Date(now.getTime() - 46 * 3600 * 1000).toISOString();
+  // 24h-wide window (36h-60h since signup) — sized to overlap with the daily
+  // cron schedule regardless of when the user signed up. The followup_48h_sent_at
+  // gate prevents double-fires if a user falls into multiple consecutive runs.
+  const windowStart = new Date(now.getTime() - 60 * 3600 * 1000).toISOString();
+  const windowEnd = new Date(now.getTime() - 36 * 3600 * 1000).toISOString();
 
   const { data: candidates } = await supabase
     .from('users')
@@ -204,8 +207,11 @@ async function getRecentActiveVendorsByCategory(
 async function runVendor48hFollowup(): Promise<void> {
   const supabase = createServiceRoleClient();
   const now = new Date();
-  const windowStart = new Date(now.getTime() - 50 * 3600 * 1000).toISOString();
-  const windowEnd = new Date(now.getTime() - 46 * 3600 * 1000).toISOString();
+  // 24h-wide window (36h-60h since signup) — sized to overlap with the daily
+  // cron schedule regardless of when the user signed up. The followup_48h_sent_at
+  // gate prevents double-fires if a user falls into multiple consecutive runs.
+  const windowStart = new Date(now.getTime() - 60 * 3600 * 1000).toISOString();
+  const windowEnd = new Date(now.getTime() - 36 * 3600 * 1000).toISOString();
 
   const { data: candidates } = await supabase
     .from('vendor_profiles')
