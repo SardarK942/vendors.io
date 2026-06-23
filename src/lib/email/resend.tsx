@@ -7,6 +7,7 @@ import { CustomerWelcomeTemplate } from './templates/customer-welcome';
 import { Customer48hFollowupTemplate, SuggestedVendor } from './templates/customer-followup-48h';
 import { VendorWelcomeTemplate } from './templates/vendor-welcome';
 import { Vendor48hFollowupTemplate } from './templates/vendor-followup-48h';
+import { VendorFirstBookingTemplate } from './templates/vendor-first-booking';
 
 export type { SuggestedVendor };
 
@@ -548,6 +549,44 @@ export async function sendVendor48hFollowupEmail(
   return sendEmail({
     to: vendorEmail,
     subject: 'Tips for getting your first Baazar booking',
+    html,
+  });
+}
+
+/**
+ * Fired when a vendor receives their very first booking request.
+ * Replaces sendBookingRequestEmail for that milestone moment.
+ * Recipient: vendor.
+ */
+export async function sendVendorFirstBookingEmail(
+  vendorEmail: string,
+  customerFirstName: string,
+  eventType: string,
+  eventDate: string,
+  totalCents: number,
+  depositCents: number,
+  packageName: string,
+  responseSlaHours: number,
+  bookingId: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <VendorFirstBookingTemplate
+      customerFirstName={customerFirstName}
+      eventType={eventType}
+      eventDate={eventDate}
+      totalCents={totalCents}
+      depositCents={depositCents}
+      packageName={packageName}
+      responseSlaHours={responseSlaHours}
+      bookingId={bookingId}
+      unsubscribeToken={unsubscribeToken}
+    />
+  );
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Your first Baazar booking is here 🎉',
     html,
   });
 }
