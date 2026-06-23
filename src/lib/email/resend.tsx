@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { Resend } from 'resend';
 import { render } from '@react-email/render';
+import jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { CustomerWelcomeTemplate } from './templates/customer-welcome';
@@ -650,11 +651,10 @@ export async function sendWithRecord(args: {
 
 // ─── Customer Welcome ─────────────────────────────────────────────────────────
 
-/** Placeholder — T10 replaces with signed JWT (HS256). */
 function buildUnsubscribeToken(userId: string): string {
-  // Placeholder — implementation in T10 step 1 (signed JWT with HS256).
-  // For now, fall back to base64 of user id; T10 replaces with real signing.
-  return Buffer.from(userId).toString('base64url');
+  const secret =
+    process.env.SUPABASE_JWT_SECRET ?? process.env.RESEND_API_KEY ?? 'fallback-do-not-use';
+  return jwt.sign({ sub: userId, scope: 'email_unsubscribe' }, secret, { expiresIn: '365d' });
 }
 
 /**

@@ -7,6 +7,12 @@ import {
   redactStaleBookingPii,
 } from '@/services/payment.service';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
+import {
+  sendCustomer48hFollowupEmail,
+  sendVendor48hFollowupEmail,
+  type SuggestedVendor,
+} from '@/lib/email/resend';
+import { getRecentActiveVendors } from '@/services/vendor.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +68,18 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     console.error('[cron/tick] failed', err);
   }
 
+  // 48-hour follow-up emails — each is independent; one failure must not block the other.
+  try {
+    await runCustomer48hFollowup();
+  } catch (err) {
+    console.error('[cron] customer 48h followup failed:', err);
+  }
+  try {
+    await runVendor48hFollowup();
+  } catch (err) {
+    console.error('[cron] vendor 48h followup failed:', err);
+  }
+
   const ended = Date.now();
 
   if (runId) {
@@ -90,5 +108,128 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     { status: 200 }
   );
 });
+
+// ─── 48-Hour Follow-Up Helpers ────────────────────────────────────────────────
+
+async function runCustomer48hFollowup(): Promise<void> {
+  const supabase = createServiceRoleClient();
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - 50 * 3600 * 1000).toISOString();
+  const windowEnd = new Date(now.getTime() - 46 * 3600 * 1000).toISOString();
+
+  const { data: candidates } = await supabase
+    .from('users')
+    .select(
+      'id, email, full_name, onboarding_data, followup_48h_sent_at, role, onboarding_completed_at'
+    )
+    .eq('role', 'couple')
+    .gte('onboarding_completed_at', windowStart)
+    .lte('onboarding_completed_at', windowEnd)
+    .is('followup_48h_sent_at', null);
+
+  for (const user of candidates ?? []) {
+    const { count: bookingCount } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('couple_user_id', user.id);
+    if ((bookingCount ?? 0) > 0) continue;
+
+    const data = (user.onboarding_data ?? {}) as {
+      event_date?: string | null;
+      categories?: string[] | null;
+      just_browsing?: boolean | null;
+    };
+    const hasEvent = !data.just_browsing && !!data.event_date;
+    const primaryCategory = data.categories?.[0] ?? null;
+    const daysUntilEvent =
+      hasEvent && data.event_date
+        ? Math.max(0, Math.ceil((new Date(data.event_date).getTime() - now.getTime()) / 86_400_000))
+        : null;
+
+    const vendors = primaryCategory
+      ? await getRecentActiveVendorsByCategory(supabase, primaryCategory, 3)
+      : await getRecentActiveVendors(supabase, 3);
+
+    const suggested: SuggestedVendor[] = vendors.map((v) => ({
+      name: v.business_name ?? 'Vendor',
+      slug: v.slug ?? '',
+      category: v.category ?? 'vendor',
+      thumbnail_url:
+        Array.isArray(v.portfolio_images) && v.portfolio_images.length > 0
+          ? (v.portfolio_images[0] as string)
+          : null,
+    }));
+
+    const firstName = (user.full_name ?? '').split(' ')[0] || 'there';
+
+    await sendCustomer48hFollowupEmail(
+      user.email,
+      firstName,
+      hasEvent,
+      'wedding',
+      data.event_date ?? null,
+      daysUntilEvent,
+      suggested,
+      primaryCategory,
+      user.id
+    );
+
+    await supabase
+      .from('users')
+      .update({ followup_48h_sent_at: new Date().toISOString() })
+      .eq('id', user.id);
+  }
+}
+
+type VendorCategory = NonNullable<
+  import('@/types/database.types').Database['public']['Tables']['vendor_profiles']['Row']['category']
+>;
+
+async function getRecentActiveVendorsByCategory(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  category: string,
+  limit: number
+) {
+  const { data } = await supabase
+    .from('vendor_profiles')
+    .select('*')
+    .eq('is_active', true)
+    .eq('onboarding_complete', true)
+    .eq('category', category as VendorCategory)
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(limit);
+  return data ?? [];
+}
+
+async function runVendor48hFollowup(): Promise<void> {
+  const supabase = createServiceRoleClient();
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - 50 * 3600 * 1000).toISOString();
+  const windowEnd = new Date(now.getTime() - 46 * 3600 * 1000).toISOString();
+
+  const { data: candidates } = await supabase
+    .from('vendor_profiles')
+    .select('id, business_name, user_id, published_at, followup_48h_sent_at, users!user_id(email)')
+    .gte('published_at', windowStart)
+    .lte('published_at', windowEnd)
+    .is('followup_48h_sent_at', null);
+
+  for (const vp of candidates ?? []) {
+    const { count: bookingCount } = await supabase
+      .from('bookings')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_profile_id', vp.id);
+    if ((bookingCount ?? 0) > 0) continue;
+
+    const u = Array.isArray(vp.users) ? vp.users[0] : vp.users;
+    if (!u?.email) continue;
+
+    await sendVendor48hFollowupEmail(u.email, vp.business_name ?? 'Vendor', vp.user_id);
+    await supabase
+      .from('vendor_profiles')
+      .update({ followup_48h_sent_at: new Date().toISOString() })
+      .eq('id', vp.id);
+  }
+}
 
 export const GET = POST;
