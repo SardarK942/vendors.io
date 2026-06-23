@@ -571,8 +571,8 @@ Subject: `Welcome to Baazar, [first name]`
 
 Body sections (heading + paragraph each):
 
-- `Find your vendors` — `Browse 3,000+ Desi and Arab wedding vendors across photography, mehndi, DJs, and more. Heart your favorites to compare side-by-side.`
-- `Message before you book` — `Reach out with questions before committing. We hold your contact info private until you confirm a deposit.`
+- `Find your vendors` — `Browse 3,000+ culturally-focused wedding and event vendors across photography, mehndi, DJs, and more. Heart your favorites to compare side-by-side.`
+- `Request, don't commit` — `Send a booking request with your event details. Vendors respond with quotes you can accept, counter, or pass on — no charge until you confirm.`
 - `5% to lock it in` — `Once you're ready, a 5% deposit secures your date. Pay the remaining 95% directly to the vendor per their terms.`
 
 CTA button: `Start browsing →` → `/vendors`
@@ -596,7 +596,7 @@ Subject: `Your Baazar profile is live`
 Body:
 
 - Heading: `Welcome to Baazar, [business name].`
-- `Your public profile is live at <a href="...">baazar.io/vendors/[slug]</a>. Couples can find you, message you, and book you starting now.`
+- `Your public profile is live at <a href="...">baazar.io/vendors/[slug]</a>. Couples can find you and send booking requests starting now.`
 - `Here's how it works:`
   - `1. Couples discover your profile through search`
   - `2. They request a booking with their event details`
