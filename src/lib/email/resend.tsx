@@ -1,6 +1,9 @@
+import * as React from 'react';
 import { Resend } from 'resend';
+import { render } from '@react-email/render';
 import { logger } from '@/lib/logger';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { CustomerWelcomeTemplate } from './templates/customer-welcome';
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
@@ -552,4 +555,33 @@ export async function sendWithRecord(args: {
   }
 
   return ok ? { ok: true, id: data?.id } : { ok: false, error: error?.message ?? 'unknown' };
+}
+
+// ─── Customer Welcome ─────────────────────────────────────────────────────────
+
+/** Placeholder — T10 replaces with signed JWT (HS256). */
+function buildUnsubscribeToken(userId: string): string {
+  // Placeholder — implementation in T10 step 1 (signed JWT with HS256).
+  // For now, fall back to base64 of user id; T10 replaces with real signing.
+  return Buffer.from(userId).toString('base64url');
+}
+
+/**
+ * Fired when a couple completes sign-up.
+ * Recipient: couple.
+ */
+export async function sendCustomerWelcomeEmail(
+  coupleEmail: string,
+  firstName: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <CustomerWelcomeTemplate firstName={firstName} unsubscribeToken={unsubscribeToken} />
+  );
+  return sendEmail({
+    to: coupleEmail,
+    subject: `Welcome to Baazar, ${firstName}`,
+    html,
+  });
 }
