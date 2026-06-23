@@ -5,6 +5,7 @@ import { logger } from '@/lib/logger';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { CustomerWelcomeTemplate } from './templates/customer-welcome';
 import { Customer48hFollowupTemplate, SuggestedVendor } from './templates/customer-followup-48h';
+import { VendorWelcomeTemplate } from './templates/vendor-welcome';
 
 export type { SuggestedVendor };
 
@@ -500,6 +501,33 @@ export async function sendRemovalRequestTeamEmail(
       <p><em>The row was automatically marked disputed at submit time.</em></p>
       ${FOOTER}
     `,
+  });
+}
+
+// ─── Vendor Welcome ───────────────────────────────────────────────────────────
+
+/**
+ * Fired when a vendor finishes the wizard and clicks Publish.
+ * Recipient: vendor.
+ */
+export async function sendVendorWelcomeEmail(
+  vendorEmail: string,
+  businessName: string,
+  profileSlug: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <VendorWelcomeTemplate
+      businessName={businessName}
+      profileSlug={profileSlug}
+      unsubscribeToken={unsubscribeToken}
+    />
+  );
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Your Baazar profile is live',
+    html,
   });
 }
 
