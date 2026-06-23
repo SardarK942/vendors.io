@@ -6,6 +6,7 @@ import { createServiceRoleClient } from '@/lib/supabase/server';
 import { CustomerWelcomeTemplate } from './templates/customer-welcome';
 import { Customer48hFollowupTemplate, SuggestedVendor } from './templates/customer-followup-48h';
 import { VendorWelcomeTemplate } from './templates/vendor-welcome';
+import { Vendor48hFollowupTemplate } from './templates/vendor-followup-48h';
 
 export type { SuggestedVendor };
 
@@ -527,6 +528,26 @@ export async function sendVendorWelcomeEmail(
   return sendEmail({
     to: vendorEmail,
     subject: 'Your Baazar profile is live',
+    html,
+  });
+}
+
+/**
+ * Fired 48 hours after a vendor's profile is published with no bookings received.
+ * Recipient: vendor.
+ */
+export async function sendVendor48hFollowupEmail(
+  vendorEmail: string,
+  businessName: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <Vendor48hFollowupTemplate businessName={businessName} unsubscribeToken={unsubscribeToken} />
+  );
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Tips for getting your first Baazar booking',
     html,
   });
 }
