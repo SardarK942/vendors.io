@@ -4,6 +4,9 @@ import { render } from '@react-email/render';
 import { logger } from '@/lib/logger';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { CustomerWelcomeTemplate } from './templates/customer-welcome';
+import { Customer48hFollowupTemplate, SuggestedVendor } from './templates/customer-followup-48h';
+
+export type { SuggestedVendor };
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
@@ -564,6 +567,40 @@ function buildUnsubscribeToken(userId: string): string {
   // Placeholder — implementation in T10 step 1 (signed JWT with HS256).
   // For now, fall back to base64 of user id; T10 replaces with real signing.
   return Buffer.from(userId).toString('base64url');
+}
+
+/**
+ * Fired 48 hours after a couple completes onboarding with no bookings.
+ * Recipient: couple.
+ */
+export async function sendCustomer48hFollowupEmail(
+  coupleEmail: string,
+  firstName: string,
+  hasEvent: boolean,
+  eventType: string | null,
+  eventDate: string | null,
+  daysUntilEvent: number | null,
+  suggestedVendors: SuggestedVendor[],
+  primaryCategory: string | null,
+  userId: string
+): Promise<boolean> {
+  void firstName; // reserved for personalisation in future
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <Customer48hFollowupTemplate
+      hasEvent={hasEvent}
+      eventType={eventType}
+      eventDate={eventDate}
+      daysUntilEvent={daysUntilEvent}
+      suggestedVendors={suggestedVendors}
+      primaryCategory={primaryCategory}
+      unsubscribeToken={unsubscribeToken}
+    />
+  );
+  const subject = hasEvent
+    ? `${daysUntilEvent} days until your event — here are vendors to consider`
+    : 'Looking for wedding inspiration?';
+  return sendEmail({ to: coupleEmail, subject, html });
 }
 
 /**
