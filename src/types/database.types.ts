@@ -32,6 +32,9 @@
  *   - 00053 scraped_vendor_engagement + scraped_vendor_requests (Sub-project K-2)
  *   - 00054 match_scraped_vendors_by_name returns slug (Sub-project K-2)
  *   - 00055 scraped_vendors.tiktok_handle nullable (Sub-project K — cultural re-scrape 2026-06-04)
+ *   - 00062 saved_vendors table + RLS (Bucket J)
+ *   - 00063 first_booking_at/first_save_at/dashboard_welcome_dismissed_at/followup_48h_sent_at
+ *           on users + vendor_profiles; published_at + served_event_types on vendor_profiles (Bucket J)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -115,6 +118,39 @@ export interface Database {
           },
         ];
       };
+      saved_vendors: {
+        Row: {
+          user_id: string;
+          vendor_profile_id: string;
+          saved_at: string;
+        };
+        Insert: {
+          user_id: string;
+          vendor_profile_id: string;
+          saved_at?: string;
+        };
+        Update: {
+          user_id?: string;
+          vendor_profile_id?: string;
+          saved_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'saved_vendors_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'saved_vendors_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       users: {
         Row: {
           id: string;
@@ -128,6 +164,10 @@ export interface Database {
           profile_backfill_dismissed_at: string | null;
           onboarding_completed_at: string | null;
           onboarding_data: Record<string, unknown> | null;
+          first_save_at: string | null;
+          first_booking_at: string | null;
+          dashboard_welcome_dismissed_at: string | null;
+          followup_48h_sent_at: string | null;
         };
         Insert: {
           id: string;
@@ -141,6 +181,10 @@ export interface Database {
           profile_backfill_dismissed_at?: string | null;
           onboarding_completed_at?: string | null;
           onboarding_data?: Record<string, unknown> | null;
+          first_save_at?: string | null;
+          first_booking_at?: string | null;
+          dashboard_welcome_dismissed_at?: string | null;
+          followup_48h_sent_at?: string | null;
         };
         Update: {
           id?: string;
@@ -153,6 +197,10 @@ export interface Database {
           profile_backfill_dismissed_at?: string | null;
           onboarding_completed_at?: string | null;
           onboarding_data?: Record<string, unknown> | null;
+          first_save_at?: string | null;
+          first_booking_at?: string | null;
+          dashboard_welcome_dismissed_at?: string | null;
+          followup_48h_sent_at?: string | null;
         };
         Relationships: [
           {
@@ -210,6 +258,10 @@ export interface Database {
           concurrent_capacity: number;
           created_at: string;
           updated_at: string;
+          first_booking_at: string | null;
+          followup_48h_sent_at: string | null;
+          published_at: string | null;
+          served_event_types: string[];
         };
         Insert: {
           id?: string;
@@ -255,6 +307,10 @@ export interface Database {
           concurrent_capacity?: number;
           created_at?: string;
           updated_at?: string;
+          first_booking_at?: string | null;
+          followup_48h_sent_at?: string | null;
+          published_at?: string | null;
+          served_event_types?: string[];
         };
         Update: {
           user_id?: string;
@@ -298,6 +354,10 @@ export interface Database {
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
           updated_at?: string;
+          first_booking_at?: string | null;
+          followup_48h_sent_at?: string | null;
+          published_at?: string | null;
+          served_event_types?: string[];
         };
         Relationships: [
           {
