@@ -1,6 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { Navbar } from '@/components/ui/Navbar';
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Menu } from 'lucide-react';
 
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
@@ -34,6 +36,25 @@ export default async function DashboardLayout({
       <div className="min-h-screen bg-muted/40">
         <Navbar />
         <div className="mx-auto flex max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8">
+          {/* Mobile hamburger */}
+          <div className="absolute right-4 top-20 z-10 md:hidden">
+            <Sheet>
+              <SheetTrigger asChild>
+                <button
+                  type="button"
+                  className="rounded-md p-2 hover:bg-ink/5"
+                  aria-label="Open menu"
+                >
+                  <Menu className="h-5 w-5" />
+                </button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-64 bg-cream">
+                <SidebarNav role={role} />
+              </SheetContent>
+            </Sheet>
+          </div>
+
+          {/* Desktop sidebar */}
           <aside className="hidden w-56 shrink-0 md:block">
             <SidebarNav role={role} />
           </aside>
