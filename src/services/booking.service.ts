@@ -593,7 +593,13 @@ export async function createBooking(
   supabase: SupabaseClient<Database>,
   coupleUserId: string,
   input: CreateBookingInput
-): Promise<ServiceResult<{ booking: Record<string, unknown>; events: Record<string, unknown>[] }>> {
+): Promise<
+  ServiceResult<{
+    booking: Record<string, unknown>;
+    events: Record<string, unknown>[];
+    isFirstBooking: boolean;
+  }>
+> {
   // Fetch package + verify it's active
   const { data: pkg } = await supabase
     .from('packages')
@@ -684,6 +690,17 @@ export async function createBooking(
     return { error: eventsError.message, status: 500 };
   }
 
+  // Atomic first-booking detection — flip first_booking_at on the couple's user row.
+  // The .is('first_booking_at', null) guard means only the very first booking ever returns rows.
+  const { data: firstResult } = await supabase
+    .from('users')
+    .update({ first_booking_at: new Date().toISOString() })
+    .eq('id', coupleUserId)
+    .is('first_booking_at', null)
+    .select('first_booking_at');
+
+  const isFirstBooking = (firstResult?.length ?? 0) > 0;
+
   // Notify vendor of the new booking request — fire-and-forget.
   void (async () => {
     const { data: ctx } = await supabase
@@ -703,7 +720,7 @@ export async function createBooking(
   })();
 
   return {
-    data: { booking: booking as Record<string, unknown>, events: events ?? [] },
+    data: { booking: booking as Record<string, unknown>, events: events ?? [], isFirstBooking },
     status: 201,
   };
 }

@@ -14,6 +14,7 @@ import { ConflictWarning } from '@/components/dashboard/ConflictWarning';
 import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import Link from 'next/link';
+import { FirstBookingCelebration } from '@/components/celebration/FirstBookingCelebration';
 
 function GuestCountSection({
   events,
@@ -49,6 +50,8 @@ interface BookingDetailProps {
   /** Value of ?action= query param. Passed down to client action components so they
    *  can auto-open the matching modal on first render, then strip the query. */
   initialAction?: string;
+  /** When true (from ?welcome=true), show the first-booking celebration overlay. */
+  showWelcome?: boolean;
 }
 
 function statusBadgeStyle(status: string) {
@@ -61,7 +64,12 @@ function statusBadgeStyle(status: string) {
   return '';
 }
 
-export async function BookingDetail({ bookingId, mode, initialAction }: BookingDetailProps) {
+export async function BookingDetail({
+  bookingId,
+  mode,
+  initialAction,
+  showWelcome,
+}: BookingDetailProps) {
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -172,8 +180,32 @@ export async function BookingDetail({ bookingId, mode, initialAction }: BookingD
   }
   const showConflictWarning = conflictOverlapCount > 0;
 
+  // Derive first-booking overlay props from booking data
+  const firstEventDate =
+    events.length > 0
+      ? new Date(events[0].event_date).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : '';
+  const totalCents = (bookingAsAny.total_price_cents as number) ?? 0;
+  const depositCents = Math.round(totalCents * 0.05);
+  const responseSlaHours =
+    (bookingAsAny.vendor_response_sla_hours as number | null | undefined) ?? 24;
+
   return (
     <div className="space-y-6">
+      {/* First-booking celebration overlay — only rendered once via ?welcome=true */}
+      {showWelcome && role === 'couple' && (
+        <FirstBookingCelebration
+          vendorName={vendorProfile?.business_name ?? 'Your vendor'}
+          eventDate={firstEventDate}
+          totalCents={totalCents}
+          depositCents={depositCents}
+          responseSlaHours={responseSlaHours}
+        />
+      )}
       {mode === 'page' && (
         <div className="flex items-center justify-between">
           <div>

@@ -142,7 +142,12 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
       }
 
       const bookingId = json.data?.booking?.id as string | undefined;
-      router.push(bookingId ? `/dashboard/bookings/${bookingId}` : '/dashboard/bookings');
+      const isFirst = json.data?.is_first_booking === true;
+      router.push(
+        bookingId
+          ? `/dashboard/bookings/${bookingId}${isFirst ? '?welcome=true' : ''}`
+          : '/dashboard/bookings'
+      );
     } catch {
       setError('Network error. Please try again.');
     } finally {

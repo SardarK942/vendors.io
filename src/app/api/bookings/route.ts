@@ -57,5 +57,14 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     );
   }
 
-  return NextResponse.json({ data: result.data }, { status: 201 });
+  return NextResponse.json(
+    {
+      data: {
+        booking: result.data!.booking,
+        events: result.data!.events,
+        is_first_booking: result.data!.isFirstBooking,
+      },
+    },
+    { status: 201 }
+  );
 });
