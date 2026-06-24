@@ -11,6 +11,7 @@ import { OperationsBlock } from '@/components/dashboard/OperationsBlock';
 import { AnalyticsTeaser } from '@/components/dashboard/AnalyticsTeaser';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { BackfillBanner } from '@/components/dashboard/BackfillBanner';
+import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBanner';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +29,38 @@ export default async function DashboardPage() {
 
   // Couple branch — unchanged from Sub-project D (event card grid).
   if (role === 'couple') {
+    // Fetch onboarding_data + dismiss flag for the welcome banner (Bucket J T20).
+    const { data: coupleProfile } = await supabase
+      .from('users')
+      .select('onboarding_data, dashboard_welcome_dismissed_at')
+      .eq('id', user.id)
+      .single();
+
+    const onboardingData = (coupleProfile?.onboarding_data ?? {}) as {
+      event_date?: string | null;
+      categories?: string[] | null;
+      just_browsing?: boolean | null;
+    };
+    const showBanner =
+      !coupleProfile?.dashboard_welcome_dismissed_at &&
+      !onboardingData.just_browsing &&
+      (onboardingData.event_date || (onboardingData.categories?.length ?? 0) > 0);
+
+    const daysUntil = onboardingData.event_date
+      ? Math.max(
+          0,
+          Math.ceil((new Date(onboardingData.event_date).getTime() - Date.now()) / 86_400_000)
+        )
+      : null;
+
+    const formattedDate = onboardingData.event_date
+      ? new Date(onboardingData.event_date).toLocaleDateString('en-US', {
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric',
+        })
+      : null;
+
     // Read from booking_events_public (excludes vendor_notes — Sub-project E §8).
     const { data: rawEvents } = await supabase
       .from('booking_events_public')
@@ -83,6 +116,15 @@ export default async function DashboardPage() {
 
     return (
       <div className="space-y-6">
+        {showBanner && (
+          <CustomerWelcomeBanner
+            eventDate={onboardingData.event_date ?? null}
+            categories={onboardingData.categories ?? []}
+            daysUntilEvent={daysUntil}
+            formattedEventDate={formattedDate}
+          />
+        )}
+
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">Dashboard</h1>

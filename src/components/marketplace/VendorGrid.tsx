@@ -13,18 +13,8 @@ interface VendorGridProps {
 }
 
 export function VendorGrid({ vendors, searchDate }: VendorGridProps) {
-  // Local save-state Set keyed by vendor.id. Lost on page navigation.
-  // Follow-up PR will replace with persisted state from /api/users/me/saved.
-  const [savedSet, setSavedSet] = React.useState<Set<string>>(new Set());
-
-  const toggleSave = React.useCallback((vendorId: string, next: boolean) => {
-    setSavedSet((prev) => {
-      const updated = new Set(prev);
-      if (next) updated.add(vendorId);
-      else updated.delete(vendorId);
-      return updated;
-    });
-  }, []);
+  // Heart state is now owned by SavedVendorsProvider (T13).
+  // VendorCard consumes useSavedVendors directly — no local state needed here.
 
   if (vendors.length === 0) {
     return (
@@ -38,13 +28,7 @@ export function VendorGrid({ vendors, searchDate }: VendorGridProps) {
   return (
     <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {vendors.map((vendor) => (
-        <VendorCard
-          key={vendor.id}
-          vendor={vendor}
-          searchDate={searchDate}
-          isSaved={savedSet.has(vendor.id)}
-          onSaveToggle={(next) => toggleSave(vendor.id, next)}
-        />
+        <VendorCard key={vendor.id} vendor={vendor} searchDate={searchDate} />
       ))}
     </div>
   );

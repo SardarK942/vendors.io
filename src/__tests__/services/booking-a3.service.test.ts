@@ -13,7 +13,28 @@ import * as availabilityService from '@/services/availability.service';
 
 // Mock availability service — capacity pre-check. Default: no conflict.
 vi.mock('@/services/availability.service', () => ({
-  wouldExceedCapacity: vi.fn().mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
+  wouldExceedCapacity: vi
+    .fn()
+    .mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
+}));
+
+// Mock supabase server module — createServiceRoleClient is used by the vendor
+// first-booking detection path. Without this, the real client errors on missing
+// SUPABASE_SERVICE_ROLE_KEY at test time. The returned chainable resolves to an
+// empty data array (no rows → isVendorFirstBooking = false), matching the
+// "this is not the vendor's first booking" path that existing tests assume.
+vi.mock('@/lib/supabase/server', () => ({
+  createServiceRoleClient: vi.fn(() => ({
+    from: () => ({
+      update: () => ({
+        eq: () => ({
+          is: () => ({
+            select: () => Promise.resolve({ data: [], error: null }),
+          }),
+        }),
+      }),
+    }),
+  })),
 }));
 
 // Mock notifications service so fire-and-forget calls don't fail with mock Supabase clients.
@@ -124,6 +145,15 @@ function makeSupabase(overrides: Record<string, unknown> = {}) {
           single: vi.fn().mockResolvedValue(defaults.bookings.updateResult),
         }),
       });
+    }
+
+    // Atomic first-booking detection for couple (users table) and vendor (vendor_profiles table).
+    // Chain: .update().eq().is().select() → returns empty array (not first booking) by default.
+    if (op === 'update' && (tableKey === 'users' || tableKey === 'vendor_profiles')) {
+      const isStub = vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
+      chain.eq = vi.fn().mockReturnValue({ is: isStub });
     }
 
     return chain;

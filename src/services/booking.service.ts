@@ -14,6 +14,7 @@ import {
 import { sendCoupleCounteredEmail } from '@/lib/email/couple-countered';
 import { wouldExceedCapacity } from '@/services/availability.service';
 import { deliver } from '@/lib/notifications/deliver';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -593,7 +594,14 @@ export async function createBooking(
   supabase: SupabaseClient<Database>,
   coupleUserId: string,
   input: CreateBookingInput
-): Promise<ServiceResult<{ booking: Record<string, unknown>; events: Record<string, unknown>[] }>> {
+): Promise<
+  ServiceResult<{
+    booking: Record<string, unknown>;
+    events: Record<string, unknown>[];
+    isFirstBooking: boolean;
+    isVendorFirstBooking: boolean;
+  }>
+> {
   // Fetch package + verify it's active
   const { data: pkg } = await supabase
     .from('packages')
@@ -684,6 +692,33 @@ export async function createBooking(
     return { error: eventsError.message, status: 500 };
   }
 
+  // Atomic first-booking detection — flip first_booking_at on the couple's user row.
+  // The .is('first_booking_at', null) guard means only the very first booking ever returns rows.
+  const { data: firstResult } = await supabase
+    .from('users')
+    .update({ first_booking_at: new Date().toISOString() })
+    .eq('id', coupleUserId)
+    .is('first_booking_at', null)
+    .select('first_booking_at');
+
+  const isFirstBooking = (firstResult?.length ?? 0) > 0;
+
+  // Atomic vendor first-booking detection — flip first_booking_at on vendor_profiles.
+  // The .is('first_booking_at', null) guard ensures only the very first booking returns rows.
+  // Uses the service-role client because RLS blocks couples from updating vendor_profiles
+  // (the booking is created by the couple, so `supabase` here is the couple's RLS-scoped
+  // client). Without this, isVendorFirstBooking would always be false and the celebration
+  // would never fire in production.
+  const adminClient = createServiceRoleClient();
+  const { data: vendorFirstResult } = await adminClient
+    .from('vendor_profiles')
+    .update({ first_booking_at: new Date().toISOString() })
+    .eq('id', input.vendor_profile_id)
+    .is('first_booking_at', null)
+    .select('first_booking_at, business_name, user_id, users!user_id(email, full_name)');
+
+  const isVendorFirstBooking = (vendorFirstResult?.length ?? 0) > 0;
+
   // Notify vendor of the new booking request — fire-and-forget.
   void (async () => {
     const { data: ctx } = await supabase
@@ -699,11 +734,17 @@ export async function createBooking(
       coupleName: cu?.full_name ?? 'A couple',
       packageName: pkg.name,
       totalCents: ((booking as Record<string, unknown>).total_price_cents as number) ?? 0,
+      isFirst: isVendorFirstBooking,
     });
   })();
 
   return {
-    data: { booking: booking as Record<string, unknown>, events: events ?? [] },
+    data: {
+      booking: booking as Record<string, unknown>,
+      events: events ?? [],
+      isFirstBooking,
+      isVendorFirstBooking,
+    },
     status: 201,
   };
 }

@@ -35,9 +35,9 @@ export const COUPLE_FEATURES: readonly OnboardingFeature[] = [
   {
     id: 'save',
     icon: Heart,
-    title: 'Save & compare',
+    title: 'Heart your favorites',
     description:
-      'Heart the vendors you love. Compare packages, pricing, and availability side-by-side.',
+      'Tap the heart on any vendor card to save them. Your shortlist is waiting in your dashboard.',
     image: '',
   },
   {

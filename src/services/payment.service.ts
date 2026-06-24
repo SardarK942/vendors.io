@@ -4,7 +4,7 @@ import type { CancellerRole, ServiceResult } from '@/types';
 import { getBookingDateRange } from '@/services/booking.service';
 import { stripe } from '@/lib/stripe/client';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { DEPOSIT_RATE, calculatePlatformCut, calculateVendorPending } from '@/lib/utils';
+import { DEPOSIT_RATE } from '@/lib/utils';
 import {
   sendDepositConfirmationEmail,
   sendCompletionEmailToVendor,
@@ -54,8 +54,8 @@ export async function createDepositCheckout(
   // Compute the deposit amount — uniform 5% of the booking total.
   // Baazar retains 100% of the deposit; no Connect transfer to vendor.
   const depositAmount = Math.round(booking.total_price_cents * DEPOSIT_RATE);
-  const platformCut = calculatePlatformCut(depositAmount, 'cash');
-  const vendorPending = calculateVendorPending(depositAmount, 'cash');
+  const platformCut = depositAmount; // Baazar retains 100%
+  const vendorPending = 0; // No Connect transfer to vendor
 
   const session = await stripe.checkout.sessions.create(
     {
@@ -100,8 +100,10 @@ export async function handlePaymentSuccess(
   bookingId: string,
   amount: number
 ): Promise<void> {
-  const platformCut = calculatePlatformCut(amount);
-  const vendorPending = calculateVendorPending(amount);
+  // Bucket F single-mode: Baazar retains the entire 5% deposit; vendor handles
+  // the 95% balance directly with the customer off-platform.
+  const platformCut = amount;
+  const vendorPending = 0;
 
   await supabase
     .from('bookings')
@@ -1024,52 +1026,3 @@ export async function getPayoutHistory(
 
 export type { AttributionRange, Attribution } from '@/services/payment.attribution';
 export { getVendorAttribution } from '@/services/payment.attribution';
-
-export interface CashToCollectRow {
-  bookingEventId: string;
-  bookingId: string;
-  eventDate: string;
-  coupleName: string;
-  packageLabel: string;
-  amountCents: number;
-}
-
-export async function getCashToCollect(
-  supabase: SupabaseClient<Database>,
-  vendorProfileId: string,
-  daysAhead = 30
-): Promise<{ data: CashToCollectRow[] | null; error: unknown }> {
-  const today = new Date().toISOString().slice(0, 10);
-  const end = new Date(Date.now() + daysAhead * 86_400_000).toISOString().slice(0, 10);
-
-  const { data, error } = await supabase
-    .from('booking_events')
-    .select(
-      'id, booking_id, event_date, event_type_label, bookings!inner(status, vendor_profile_id, couple_full_name, package_name_snapshot, total_price_cents)'
-    )
-    .eq('bookings.vendor_profile_id', vendorProfileId)
-    .eq('bookings.status', 'deposit_paid')
-    .gte('event_date', today)
-    .lte('event_date', end)
-    .order('event_date');
-
-  if (error) return { data: null, error };
-
-  const rows = (data ?? []).map((r) => {
-    const b = r.bookings as unknown as {
-      couple_full_name: string | null;
-      package_name_snapshot: string | null;
-      total_price_cents: number;
-    };
-    return {
-      bookingEventId: r.id as string,
-      bookingId: r.booking_id as string,
-      eventDate: r.event_date as string,
-      coupleName: b.couple_full_name ?? 'Couple',
-      packageLabel: b.package_name_snapshot ?? 'Booking',
-      amountCents: Math.round(b.total_price_cents * (1 - DEPOSIT_RATE)),
-    };
-  });
-
-  return { data: rows, error: null };
-}

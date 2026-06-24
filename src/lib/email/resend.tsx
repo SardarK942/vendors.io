@@ -1,6 +1,16 @@
+import * as React from 'react';
 import { Resend } from 'resend';
+import { render } from '@react-email/render';
+import jwt from 'jsonwebtoken';
 import { logger } from '@/lib/logger';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { CustomerWelcomeTemplate } from './templates/customer-welcome';
+import { Customer48hFollowupTemplate, SuggestedVendor } from './templates/customer-followup-48h';
+import { VendorWelcomeTemplate } from './templates/vendor-welcome';
+import { Vendor48hFollowupTemplate } from './templates/vendor-followup-48h';
+import { VendorFirstBookingTemplate } from './templates/vendor-first-booking';
+
+export type { SuggestedVendor };
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
@@ -497,6 +507,91 @@ export async function sendRemovalRequestTeamEmail(
   });
 }
 
+// ─── Vendor Welcome ───────────────────────────────────────────────────────────
+
+/**
+ * Fired when a vendor finishes the wizard and clicks Publish.
+ * Recipient: vendor.
+ */
+export async function sendVendorWelcomeEmail(
+  vendorEmail: string,
+  businessName: string,
+  profileSlug: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <VendorWelcomeTemplate
+      businessName={businessName}
+      profileSlug={profileSlug}
+      unsubscribeToken={unsubscribeToken}
+    />
+  );
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Your Baazar profile is live',
+    html,
+  });
+}
+
+/**
+ * Fired 48 hours after a vendor's profile is published with no bookings received.
+ * Recipient: vendor.
+ */
+export async function sendVendor48hFollowupEmail(
+  vendorEmail: string,
+  businessName: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <Vendor48hFollowupTemplate businessName={businessName} unsubscribeToken={unsubscribeToken} />
+  );
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Tips for getting your first Baazar booking',
+    html,
+  });
+}
+
+/**
+ * Fired when a vendor receives their very first booking request.
+ * Replaces sendBookingRequestEmail for that milestone moment.
+ * Recipient: vendor.
+ */
+export async function sendVendorFirstBookingEmail(
+  vendorEmail: string,
+  customerFirstName: string,
+  eventType: string,
+  eventDate: string,
+  totalCents: number,
+  depositCents: number,
+  packageName: string,
+  responseSlaHours: number,
+  bookingId: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <VendorFirstBookingTemplate
+      customerFirstName={customerFirstName}
+      eventType={eventType}
+      eventDate={eventDate}
+      totalCents={totalCents}
+      depositCents={depositCents}
+      packageName={packageName}
+      responseSlaHours={responseSlaHours}
+      bookingId={bookingId}
+      unsubscribeToken={unsubscribeToken}
+    />
+  );
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Your first Baazar booking is here 🎉',
+    html,
+  });
+}
+
 /** Auto-reply to the vendor who requested removal. */
 export async function sendRemovalConfirmationVendorEmail(
   requesterEmail: string,
@@ -552,4 +647,66 @@ export async function sendWithRecord(args: {
   }
 
   return ok ? { ok: true, id: data?.id } : { ok: false, error: error?.message ?? 'unknown' };
+}
+
+// ─── Customer Welcome ─────────────────────────────────────────────────────────
+
+function buildUnsubscribeToken(userId: string): string {
+  const secret =
+    process.env.SUPABASE_JWT_SECRET ?? process.env.RESEND_API_KEY ?? 'fallback-do-not-use';
+  return jwt.sign({ sub: userId, scope: 'email_unsubscribe' }, secret, { expiresIn: '365d' });
+}
+
+/**
+ * Fired 48 hours after a couple completes onboarding with no bookings.
+ * Recipient: couple.
+ */
+export async function sendCustomer48hFollowupEmail(
+  coupleEmail: string,
+  firstName: string,
+  hasEvent: boolean,
+  eventType: string | null,
+  eventDate: string | null,
+  daysUntilEvent: number | null,
+  suggestedVendors: SuggestedVendor[],
+  primaryCategory: string | null,
+  userId: string
+): Promise<boolean> {
+  void firstName; // reserved for personalisation in future
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <Customer48hFollowupTemplate
+      hasEvent={hasEvent}
+      eventType={eventType}
+      eventDate={eventDate}
+      daysUntilEvent={daysUntilEvent}
+      suggestedVendors={suggestedVendors}
+      primaryCategory={primaryCategory}
+      unsubscribeToken={unsubscribeToken}
+    />
+  );
+  const subject = hasEvent
+    ? `${daysUntilEvent} days until your event — here are vendors to consider`
+    : 'Looking for wedding inspiration?';
+  return sendEmail({ to: coupleEmail, subject, html });
+}
+
+/**
+ * Fired when a couple completes sign-up.
+ * Recipient: couple.
+ */
+export async function sendCustomerWelcomeEmail(
+  coupleEmail: string,
+  firstName: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(
+    <CustomerWelcomeTemplate firstName={firstName} unsubscribeToken={unsubscribeToken} />
+  );
+  return sendEmail({
+    to: coupleEmail,
+    subject: `Welcome to Baazar, ${firstName}`,
+    html,
+  });
 }

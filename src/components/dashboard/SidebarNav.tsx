@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, BookOpen, Calendar, Wallet, Bell, User } from 'lucide-react';
+import { Home, BookOpen, Heart, Calendar, Wallet, Bell, User } from 'lucide-react';
 
 export function SidebarNav({ role }: { role: 'couple' | 'vendor' }) {
   const pathname = usePathname();
@@ -22,6 +22,11 @@ export function SidebarNav({ role }: { role: 'couple' | 'vendor' }) {
       <Link href="/dashboard/bookings" className={cls('/dashboard/bookings')}>
         <BookOpen className="h-4 w-4" /> Bookings
       </Link>
+      {role === 'couple' && (
+        <Link href="/dashboard/saved" className={cls('/dashboard/saved')}>
+          <Heart className="h-4 w-4" /> Saved
+        </Link>
+      )}
       <Link href="/dashboard/notifications" className={cls('/dashboard/notifications')}>
         <Bell className="h-4 w-4" /> Notifications
       </Link>

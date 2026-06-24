@@ -10,5 +10,13 @@ export default async function BookingDetailPage({ params, searchParams }: Bookin
   const sp = await searchParams;
   const rawAction = sp['action'];
   const initialAction = typeof rawAction === 'string' ? rawAction : undefined;
-  return <BookingDetail bookingId={id} mode="page" initialAction={initialAction} />;
+  const showWelcome = sp['welcome'] === 'true';
+  return (
+    <BookingDetail
+      bookingId={id}
+      mode="page"
+      initialAction={initialAction}
+      showWelcome={showWelcome}
+    />
+  );
 }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import { publishGateSchema } from '@/lib/onboarding/validation';
+import { sendVendorWelcomeEmail } from '@/lib/email/resend';
 
 export const POST = withErrorBoundary(async (req: Request) => {
   const { user, supabase } = await requireUser();
@@ -67,11 +68,34 @@ export const POST = withErrorBoundary(async (req: Request) => {
     .update({
       onboarding_complete: true,
       is_active: true,
+      published_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     })
     .eq('id', profileRow.id);
 
   if (updateError) throw new HttpError(500, updateError.message);
+
+  // Fire vendor welcome email (non-blocking — failure must not break publish).
+  try {
+    const { data: vendorData } = await supabase
+      .from('vendor_profiles')
+      .select('business_name, slug, user_id, users!user_id(email)')
+      .eq('id', profileRow.id)
+      .single();
+    if (vendorData) {
+      const userRecord = Array.isArray(vendorData.users) ? vendorData.users[0] : vendorData.users;
+      if (userRecord?.email) {
+        await sendVendorWelcomeEmail(
+          userRecord.email,
+          vendorData.business_name ?? 'Vendor',
+          vendorData.slug ?? '',
+          vendorData.user_id
+        );
+      }
+    }
+  } catch {
+    // Email failure must not break the publish response.
+  }
 
   // Sub-project I §6: when adding a second business, set it as the active
   // business so the user lands inside it after redirect.

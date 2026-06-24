@@ -359,6 +359,16 @@ Defined in `tailwind.config.ts`:
 - Touch devices: Tailwind gates `:hover` behind `@media (hover: hover)` so touch users see resting states
 - prefers-reduced-motion: transforms disabled; color transitions remain
 
+### Heart icon — exception to the hot-pink rule
+
+The filled-heart state on `VendorCard` (and any "saved" indicator across the product) renders as **plain red** (`text-red-500`), not hot-pink. This is a deliberate exception:
+
+- Hot-pink (`#D1006C`) remains reserved for **hover** treatments only (per the rule above)
+- Red (`#E11D48`) signals **saved/loved** as a resting state — a different semantic from "you can interact with this"
+- The idle (unsaved) heart icon uses `text-ink/50` with `hover-pink-text` so the hover treatment is consistent with everything else
+
+The first-save celebration (Bucket J §3.7) uses a confetti burst with both hot-pink and red dots, blending the two when the action lands.
+
 ### Wordmark spec — the pan-cultural cycle
 
 The mark is **the word "baazar" in cycling scripts** + Latin anchor. The cycle is the brand's signature motion. "Baazar" / "بازار" / "बाज़ार" is the same word across Hindi, Urdu, Persian, Arabic, Turkish, Pashto — a pan-cultural reality, not just a Hindi reference. The mark phases through four script settings to make that explicit.

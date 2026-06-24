@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { DEPOSIT_RATE, calculatePlatformCut, calculateVendorPending } from '@/lib/utils';
+import { DEPOSIT_RATE } from '@/lib/utils';
 
 // Mock external dependencies that payment.service.ts imports at module load time.
 vi.mock('@/lib/stripe/client', () => ({
@@ -45,21 +45,19 @@ describe('Deposit rate — uniform 5% (single-mode)', () => {
     expect(depositAmount).toBe(15000); // $150
   });
 
-  it('platform retains 100% of deposit (cash mode — no Connect transfer)', () => {
+  it('platform retains 100% of deposit (no Connect transfer)', () => {
     const depositAmount = 15000;
-    expect(calculatePlatformCut(depositAmount, 'cash')).toBe(15000);
-  });
-
-  it('vendor pending = 0 from deposit (vendor gets paid at event time, not from deposit)', () => {
-    const depositAmount = 15000;
-    expect(calculateVendorPending(depositAmount, 'cash')).toBe(0);
+    const platformCut = depositAmount; // Baazar retains 100%
+    const vendorPending = 0;
+    expect(platformCut).toBe(15000);
+    expect(vendorPending).toBe(0);
   });
 
   it('end-to-end on $3000 quote: $150 deposit → $150 platform / $0 vendor pending', () => {
     const totalCents = 300_000;
     const depositAmount = Math.round(totalCents * DEPOSIT_RATE);
-    const platform = calculatePlatformCut(depositAmount, 'cash');
-    const vendor = calculateVendorPending(depositAmount, 'cash');
+    const platform = depositAmount; // Baazar retains 100%
+    const vendor = 0;
 
     expect(depositAmount).toBe(15000);
     expect(platform).toBe(15000);

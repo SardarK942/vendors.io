@@ -122,15 +122,6 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
         )}
       </div>
 
-      {/* Cash-friendly */}
-      <Chip
-        variant="toggle"
-        isActive={state.cashFriendly}
-        onClick={() => apply({ cashFriendly: !state.cashFriendly })}
-      >
-        Cash-friendly
-      </Chip>
-
       {/* Languages */}
       <div className="relative">
         <Chip

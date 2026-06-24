@@ -10,7 +10,6 @@ export interface FilterState {
   verified: boolean;
   /** Hours int (1, 4, 24, 48, 72) — vendor matches if response_sla_hours <= this. 0 = unset. */
   respondsIn: number;
-  cashFriendly: boolean;
   priceBand: PriceBand | null;
   priceMin: number | null; // cents
   priceMax: number | null; // cents
@@ -22,7 +21,6 @@ export interface FilterState {
 const EMPTY_STATE: FilterState = {
   verified: false,
   respondsIn: 0,
-  cashFriendly: false,
   priceBand: null,
   priceMin: null,
   priceMax: null,
@@ -57,7 +55,6 @@ export function readFilterState(params: URLSearchParams): FilterState {
   return {
     verified: get('verified') === '1',
     respondsIn: parseInt0('respondsIn'),
-    cashFriendly: get('cashFriendly') === '1',
     priceBand: (get('priceBand') as PriceBand | null) ?? null,
     priceMin: parseCents('priceMin'),
     priceMax: parseCents('priceMax'),
@@ -74,7 +71,6 @@ export function serializeFilterState(state: FilterState): URLSearchParams {
   const p = new URLSearchParams();
   if (state.verified) p.set('verified', '1');
   if (state.respondsIn > 0) p.set('respondsIn', String(state.respondsIn));
-  if (state.cashFriendly) p.set('cashFriendly', '1');
   if (state.priceBand) p.set('priceBand', state.priceBand);
   if (state.priceMin !== null) p.set('priceMin', String(state.priceMin));
   if (state.priceMax !== null) p.set('priceMax', String(state.priceMax));

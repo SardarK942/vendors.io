@@ -23,11 +23,6 @@ export function TrustSection({ state, patch }: Props) {
         on={state.respondsIn === 24}
         onChange={(v) => patch({ respondsIn: v ? 24 : 0 })}
       />
-      <ToggleRow
-        label="Cash-friendly payments"
-        on={state.cashFriendly}
-        onChange={(v) => patch({ cashFriendly: v })}
-      />
     </section>
   );
 }

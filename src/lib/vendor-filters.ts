@@ -5,7 +5,6 @@ export interface VendorFilterParams {
   category?: string;
   verified?: boolean;
   respondsIn?: number;
-  cashFriendly?: boolean;
   priceBand?: PriceBand;
   priceMin?: number; // cents
   priceMax?: number; // cents
@@ -31,7 +30,6 @@ export function parseVendorFilterParams(
   const category = get('category');
   if (category) out.category = category;
   if (get('verified') === '1') out.verified = true;
-  if (get('cashFriendly') === '1') out.cashFriendly = true;
 
   const respondsIn = Number(get('respondsIn'));
   if (Number.isFinite(respondsIn) && respondsIn > 0) out.respondsIn = respondsIn;
@@ -66,10 +64,6 @@ export function applyVendorFilters<Q extends { eq: any; gte: any; lte: any; cont
   let q = query;
   if (filters.category) q = q.eq('category', filters.category);
   if (filters.verified) q = q.eq('verified', true);
-  // Bucket F removed payment_mode; under single-mode every vendor is
-  // 5%-deposit-then-95%-direct, so cashFriendly is now a no-op filter.
-  // Leaving the param accepted for backwards compatibility with any client
-  // that still passes it; a follow-up will drop the UI surface entirely.
   if (filters.respondsIn) q = q.lte('response_sla_hours', filters.respondsIn);
   if (filters.years) q = q.gte('years_in_business', filters.years);
 
@@ -100,7 +94,7 @@ export function applyVendorFilters<Q extends { eq: any; gte: any; lte: any; cont
  * so price filtering only works in full vendor queries (getVendors in vendor.service.ts)
  * where filtering is applied in the application layer after fetching.
  * This is acceptable for the UI's live footer count, which only filters by
- * category, verification, cashFriendly, respondsIn, years, languages — all vendor_profiles columns.
+ * category, verification, respondsIn, years, languages — all vendor_profiles columns.
  */
 export async function countFilteredVendors(
   supabase: SupabaseClient,
@@ -118,7 +112,6 @@ export async function countFilteredVendors(
   // Apply only non-price filters (price filtering is app-layer only)
   if (filters.category) query = query.eq('category', filters.category);
   if (filters.verified) query = query.eq('verified', true);
-  // Bucket F removed payment_mode; cashFriendly is now a no-op (see above).
   if (filters.respondsIn) query = query.lte('response_sla_hours', filters.respondsIn);
   if (filters.years) query = query.gte('years_in_business', filters.years);
   if (filters.languages && filters.languages.length > 0) {
