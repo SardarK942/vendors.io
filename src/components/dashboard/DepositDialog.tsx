@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -48,6 +49,9 @@ export function DepositDialog({
 
     if (data.data?.checkoutUrl) {
       window.location.href = data.data.checkoutUrl;
+    } else {
+      toast.error('Could not redirect to checkout. Please try again.');
+      setLoading(false);
     }
   };
 
@@ -78,24 +82,19 @@ export function DepositDialog({
             remaining 95% directly to the vendor per their payment terms.
           </p>
 
-          <details className="mb-3 text-xs text-ink/70">
-            <summary className="cursor-pointer font-medium text-ink">Cancellation policy</summary>
-            <div className="mt-2 space-y-2">
-              <p>
-                <strong>Customer cancellation.</strong> Your 5% deposit is fully refundable within
-                24 hours of booking. After that, the deposit confirms your reservation and is
-                non-refundable.
-              </p>
-              <p>
-                <strong>Vendor cancellation.</strong> If the vendor cancels at any time, you receive
-                a full refund of your 5% deposit.
-              </p>
-              <p>
-                The 95% balance you pay directly to the vendor is between you and them; Baazar
-                doesn&apos;t process or hold those funds.
-              </p>
-            </div>
-          </details>
+          <div className="my-3 rounded-md border border-ink/10 bg-cream/50 p-3 text-xs">
+            <p className="font-semibold text-ink">Cancellation policy</p>
+            <p className="mt-1 text-ink/80">
+              Your 5% deposit is fully refundable within 24 hours of booking. After that, it&apos;s
+              non-refundable. If the vendor cancels, you get a full refund.
+            </p>
+            <Link
+              href="/terms#cancellations"
+              className="mt-2 inline-block text-ink underline hover-pink-text"
+            >
+              Full policy →
+            </Link>
+          </div>
 
           <div className="flex items-start gap-2">
             <input
@@ -105,8 +104,16 @@ export function DepositDialog({
               onChange={(e) => setAgreed(e.target.checked)}
               className="mt-1 h-4 w-4 rounded border-input"
             />
-            <label htmlFor="agree-deposit" className="text-xs text-muted-foreground">
-              I understand the cancellation policy and agree to the Terms.
+            <label htmlFor="agree-deposit" className="text-xs">
+              I agree to the{' '}
+              <Link href="/terms" className="underline hover-pink-text">
+                Terms
+              </Link>{' '}
+              and{' '}
+              <Link href="/terms#cancellations" className="underline hover-pink-text">
+                Cancellation Policy
+              </Link>
+              .
             </label>
           </div>
         </div>
