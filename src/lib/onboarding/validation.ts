@@ -40,10 +40,6 @@ export const portfolioSchema = z.object({
   portfolioImages: z.array(z.string().url()).min(1, 'At least 1 portfolio image is required'),
 });
 
-export const paymentModeSchema = z.object({
-  paymentMode: z.enum(['stripe', 'cash']),
-});
-
 export const detailsSchema = z.object({
   languages: z
     .array(z.string())
@@ -52,8 +48,6 @@ export const detailsSchema = z.object({
   years_in_business: z.number().int().min(0).max(99),
   response_sla_hours: z.number().refine((n) => VALID_SLA_VALUES.includes(n), 'Invalid SLA value'),
 });
-
-export type PaymentModeInput = z.infer<typeof paymentModeSchema>;
 
 // Server-side gate on the full DB row before flipping onboarding_complete = true.
 // Mirrors the four step schemas but reads the DB column names directly.

@@ -1,14 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  formatPrice,
-  calculatePlatformFee,
-  calculateDepositAmount,
-  generateSlug,
-  getPlatformCutRate,
-  calculatePlatformCut,
-  calculateVendorPending,
-  DEPOSIT_RATE,
-} from '@/lib/utils';
+import { formatPrice, calculateDepositAmount, generateSlug, DEPOSIT_RATE } from '@/lib/utils';
 
 describe('formatPrice', () => {
   it('formats cents to USD', () => {
@@ -22,27 +13,6 @@ describe('formatPrice', () => {
   it('handles large amounts', () => {
     expect(formatPrice(500000)).toBe('$5,000.00');
     expect(formatPrice(1000000)).toBe('$10,000.00');
-  });
-});
-
-describe('calculatePlatformFee (deprecated helper — default is now 30%)', () => {
-  it('calculates 30% fee by default', () => {
-    expect(calculatePlatformFee(10000)).toBe(3000);
-    expect(calculatePlatformFee(5000)).toBe(1500);
-  });
-
-  it('calculates custom fee percentage', () => {
-    expect(calculatePlatformFee(10000, 5)).toBe(500);
-    expect(calculatePlatformFee(10000, 15)).toBe(1500);
-  });
-
-  it('rounds to integer cents', () => {
-    expect(calculatePlatformFee(1001, 10)).toBe(100);
-    expect(calculatePlatformFee(333, 10)).toBe(33);
-  });
-
-  it('handles zero', () => {
-    expect(calculatePlatformFee(0)).toBe(0);
   });
 });
 
@@ -69,40 +39,6 @@ describe('generateSlug', () => {
   it('handles special characters', () => {
     expect(generateSlug('Café & More!')).toBe('caf-more');
     expect(generateSlug('  Spaces  Everywhere  ')).toBe('spaces-everywhere');
-  });
-});
-
-describe('payment-mode helpers', () => {
-  it('getPlatformCutRate returns 0.30 for stripe', () => {
-    expect(getPlatformCutRate('stripe')).toBe(0.3);
-  });
-
-  it('getPlatformCutRate returns 1.0 for cash', () => {
-    expect(getPlatformCutRate('cash')).toBe(1.0);
-  });
-
-  describe('calculatePlatformCut', () => {
-    it('stripe mode: 30% of deposit', () => {
-      expect(calculatePlatformCut(30000, 'stripe')).toBe(9000); // 30% of $300
-    });
-
-    it('cash mode: 100% of deposit', () => {
-      expect(calculatePlatformCut(15000, 'cash')).toBe(15000); // 100% of $150
-    });
-
-    it('defaults to stripe mode when no arg', () => {
-      expect(calculatePlatformCut(30000)).toBe(9000);
-    });
-  });
-
-  describe('calculateVendorPending', () => {
-    it('stripe mode: 70% of deposit goes to vendor', () => {
-      expect(calculateVendorPending(30000, 'stripe')).toBe(21000);
-    });
-
-    it('cash mode: 0 (no vendor share)', () => {
-      expect(calculateVendorPending(15000, 'cash')).toBe(0);
-    });
   });
 });
 

@@ -16,36 +16,9 @@ export function formatPrice(cents: number): string {
 /** Unified deposit rate for all vendors (5% of total). */
 export const DEPOSIT_RATE = 0.05;
 
-export type PaymentMode = 'stripe' | 'cash';
-
-/**
- * Returns the fraction of the deposit the platform retains.
- * Stripe: 30% (vendor gets 70%). Cash: 100% (vendor gets nothing from deposit).
- */
-export function getPlatformCutRate(mode: PaymentMode): number {
-  return mode === 'cash' ? 1.0 : 0.3;
-}
-
 /** Hold deposit = DEPOSIT_RATE (5%) of the vendor quote. */
 export function calculateDepositAmount(quoteAmountCents: number): number {
   return Math.round(quoteAmountCents * DEPOSIT_RATE);
-}
-
-/** Platform's cut of a deposit. Defaults to stripe mode for backward compat. */
-export function calculatePlatformCut(depositCents: number, mode: PaymentMode = 'stripe'): number {
-  return Math.round(depositCents * getPlatformCutRate(mode));
-}
-
-/** Vendor's portion of a deposit. Defaults to stripe mode for backward compat. */
-export function calculateVendorPending(depositCents: number, mode: PaymentMode = 'stripe'): number {
-  return depositCents - calculatePlatformCut(depositCents, mode);
-}
-
-/**
- * @deprecated Use calculatePlatformCut. Kept for back-compat while code migrates.
- */
-export function calculatePlatformFee(amountCents: number, feePercentage: number = 30): number {
-  return Math.round((amountCents * feePercentage) / 100);
 }
 
 /**

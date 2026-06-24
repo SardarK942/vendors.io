@@ -4,7 +4,6 @@ import {
   locationSchema,
   onlineSchema,
   portfolioSchema,
-  paymentModeSchema,
   publishGateSchema,
 } from '@/lib/onboarding/validation';
 
@@ -85,18 +84,6 @@ describe('portfolioSchema', () => {
   });
   it('rejects 0 images', () => {
     expect(portfolioSchema.safeParse({ portfolioImages: [] }).success).toBe(false);
-  });
-});
-
-describe('paymentModeSchema', () => {
-  it('accepts stripe', () => {
-    expect(paymentModeSchema.safeParse({ paymentMode: 'stripe' }).success).toBe(true);
-  });
-  it('accepts cash', () => {
-    expect(paymentModeSchema.safeParse({ paymentMode: 'cash' }).success).toBe(true);
-  });
-  it('rejects unknown mode', () => {
-    expect(paymentModeSchema.safeParse({ paymentMode: 'bank' }).success).toBe(false);
   });
 });
 
