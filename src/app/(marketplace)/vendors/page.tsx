@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VendorGrid } from '@/components/marketplace/VendorGrid';
 import { FilterShell } from '@/components/marketplace/filters/FilterShell';
 import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filters';
+import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
 import type { VendorCardProps } from '@/components/marketplace/VendorCard';
 import type { Metadata } from 'next';
 import { listUnclaimed } from '@/lib/scraped-vendor/public';
@@ -114,62 +115,66 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const showVendorGrid = claimedCount > 0 || unclaimedCount === 0;
 
   return (
-    <div className="py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">Browse Vendors</h1>
-        <p className="text-muted-foreground">
-          {totalCount} vendor{totalCount !== 1 ? 's' : ''}
-          {unclaimedCount > 0 && claimedCount > 0
-            ? ` (${claimedCount} ready to book, ${unclaimedCount} unclaimed)`
-            : unclaimedCount > 0
-              ? ' listed — most haven’t joined Baazar yet'
-              : ''}
-        </p>
-      </div>
+    <SavedVendorsProvider>
+      <div className="py-8">
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold">Browse Vendors</h1>
+          <p className="text-muted-foreground">
+            {totalCount} vendor{totalCount !== 1 ? 's' : ''}
+            {unclaimedCount > 0 && claimedCount > 0
+              ? ` (${claimedCount} ready to book, ${unclaimedCount} unclaimed)`
+              : unclaimedCount > 0
+                ? " listed — most haven't joined Baazar yet"
+                : ''}
+          </p>
+        </div>
 
-      <FilterShell initialCategory={category} />
-      {showVendorGrid && (
-        <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
-      )}
+        <FilterShell initialCategory={category} />
+        {showVendorGrid && (
+          <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
+        )}
 
-      {unclaimed.length > 0 && (
-        <section className={showVendorGrid ? 'mt-12' : 'mt-2'}>
-          {showVendorGrid && (
-            <>
-              <h2 className="mb-4 text-lg font-semibold">More vendors</h2>
-              <p className="mb-4 text-sm text-muted-foreground">
-                These vendors haven&apos;t claimed their Baazar listing yet. Booking opens when they
-                do.
-              </p>
-            </>
-          )}
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-            {unclaimed.map((v) => (
-              <UnclaimedVendorCard key={v.id} vendor={v} />
+        {unclaimed.length > 0 && (
+          <section className={showVendorGrid ? 'mt-12' : 'mt-2'}>
+            {showVendorGrid && (
+              <>
+                <h2 className="mb-4 text-lg font-semibold">More vendors</h2>
+                <p className="mb-4 text-sm text-muted-foreground">
+                  These vendors haven&apos;t claimed their Baazar listing yet. Booking opens when
+                  they do.
+                </p>
+              </>
+            )}
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+              {unclaimed.map((v) => (
+                <UnclaimedVendorCard key={v.id} vendor={v} />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-8 flex justify-center gap-2">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+              <a
+                key={p}
+                href={`/vendors?${new URLSearchParams({
+                  ...(category ? { category } : {}),
+                  page: String(p),
+                }).toString()}`}
+                className={`rounded border px-3 py-1 text-sm ${
+                  p === page
+                    ? 'border-primary bg-primary text-primary-foreground'
+                    : 'hover:bg-muted'
+                }`}
+              >
+                {p}
+              </a>
             ))}
           </div>
-        </section>
-      )}
-
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="mt-8 flex justify-center gap-2">
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-            <a
-              key={p}
-              href={`/vendors?${new URLSearchParams({
-                ...(category ? { category } : {}),
-                page: String(p),
-              }).toString()}`}
-              className={`rounded border px-3 py-1 text-sm ${
-                p === page ? 'border-primary bg-primary text-primary-foreground' : 'hover:bg-muted'
-              }`}
-            >
-              {p}
-            </a>
-          ))}
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </SavedVendorsProvider>
   );
 }
