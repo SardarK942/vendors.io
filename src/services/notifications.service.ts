@@ -81,18 +81,25 @@ export async function createNotification(
 export function notifyBookingRequestReceived(
   sb: Sb,
   vendorUserId: string,
-  ctx: { bookingId: string; coupleName: string; packageName: string; totalCents: number }
+  ctx: {
+    bookingId: string;
+    coupleName: string;
+    packageName: string;
+    totalCents: number;
+    isFirst?: boolean;
+  }
 ): Promise<{ id: string } | null> {
   return createNotification(sb, {
     user_id: vendorUserId,
     type: 'booking_request_received',
-    title: 'New booking request',
+    title: ctx.isFirst ? '🎉 Your first booking request!' : 'New booking request',
     body: `From ${ctx.coupleName} for ${ctx.packageName} (${fmtUsd(ctx.totalCents)})`,
     link: `/dashboard/bookings/${ctx.bookingId}`,
     metadata: {
       booking_id: ctx.bookingId,
       package_name: ctx.packageName,
       total_cents: ctx.totalCents,
+      is_first: ctx.isFirst ?? false,
     },
   });
 }

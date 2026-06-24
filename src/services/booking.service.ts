@@ -598,6 +598,7 @@ export async function createBooking(
     booking: Record<string, unknown>;
     events: Record<string, unknown>[];
     isFirstBooking: boolean;
+    isVendorFirstBooking: boolean;
   }>
 > {
   // Fetch package + verify it's active
@@ -701,6 +702,17 @@ export async function createBooking(
 
   const isFirstBooking = (firstResult?.length ?? 0) > 0;
 
+  // Atomic vendor first-booking detection — flip first_booking_at on vendor_profiles.
+  // The .is('first_booking_at', null) guard ensures only the very first booking returns rows.
+  const { data: vendorFirstResult } = await supabase
+    .from('vendor_profiles')
+    .update({ first_booking_at: new Date().toISOString() })
+    .eq('id', input.vendor_profile_id)
+    .is('first_booking_at', null)
+    .select('first_booking_at, business_name, user_id, users!user_id(email, full_name)');
+
+  const isVendorFirstBooking = (vendorFirstResult?.length ?? 0) > 0;
+
   // Notify vendor of the new booking request — fire-and-forget.
   void (async () => {
     const { data: ctx } = await supabase
@@ -716,11 +728,17 @@ export async function createBooking(
       coupleName: cu?.full_name ?? 'A couple',
       packageName: pkg.name,
       totalCents: ((booking as Record<string, unknown>).total_price_cents as number) ?? 0,
+      isFirst: isVendorFirstBooking,
     });
   })();
 
   return {
-    data: { booking: booking as Record<string, unknown>, events: events ?? [], isFirstBooking },
+    data: {
+      booking: booking as Record<string, unknown>,
+      events: events ?? [],
+      isFirstBooking,
+      isVendorFirstBooking,
+    },
     status: 201,
   };
 }

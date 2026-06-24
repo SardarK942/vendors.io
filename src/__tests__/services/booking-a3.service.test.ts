@@ -13,7 +13,9 @@ import * as availabilityService from '@/services/availability.service';
 
 // Mock availability service — capacity pre-check. Default: no conflict.
 vi.mock('@/services/availability.service', () => ({
-  wouldExceedCapacity: vi.fn().mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
+  wouldExceedCapacity: vi
+    .fn()
+    .mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
 }));
 
 // Mock notifications service so fire-and-forget calls don't fail with mock Supabase clients.
@@ -124,6 +126,15 @@ function makeSupabase(overrides: Record<string, unknown> = {}) {
           single: vi.fn().mockResolvedValue(defaults.bookings.updateResult),
         }),
       });
+    }
+
+    // Atomic first-booking detection for couple (users table) and vendor (vendor_profiles table).
+    // Chain: .update().eq().is().select() → returns empty array (not first booking) by default.
+    if (op === 'update' && (tableKey === 'users' || tableKey === 'vendor_profiles')) {
+      const isStub = vi.fn().mockReturnValue({
+        select: vi.fn().mockResolvedValue({ data: [], error: null }),
+      });
+      chain.eq = vi.fn().mockReturnValue({ is: isStub });
     }
 
     return chain;

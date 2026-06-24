@@ -138,6 +138,7 @@ describe('typed helpers compose correctly', () => {
       booking_id: 'b-1',
       package_name: 'Full Wedding Coverage',
       total_cents: 240000,
+      is_first: false,
     });
   });
 

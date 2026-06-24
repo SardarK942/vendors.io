@@ -52,8 +52,10 @@ export function NotificationBell({ userId }: Props) {
           setNotifications((prev) => [row, ...prev].slice(0, 50));
           // Toast for high-priority types on REALTIME arrival only (not initial load)
           if (!isInitialLoad.current && isHighPriority(row.type as NotificationType)) {
+            const isFirst = (row.metadata as { is_first?: boolean } | null)?.is_first === true;
             toast(row.title, {
               description: row.body,
+              duration: isFirst ? 8000 : 4000,
               action: row.link
                 ? {
                     label: 'View',
@@ -95,13 +97,11 @@ export function NotificationBell({ userId }: Props) {
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="relative rounded-md p-2 hover:bg-accent"
-        aria-label={
-          unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'
-        }
+        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
       >
         <Bell className="h-5 w-5" />
         {unreadCount > 0 && (
-          <span className="absolute -top-1 -right-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+          <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -113,9 +113,7 @@ export function NotificationBell({ userId }: Props) {
           onClose={() => setOpen(false)}
           onMarkRead={(id) => {
             setNotifications((prev) =>
-              prev.map((n) =>
-                n.id === id ? { ...n, read_at: new Date().toISOString() } : n
-              )
+              prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
             );
           }}
           onMarkAllRead={() => {
