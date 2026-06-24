@@ -18,6 +18,25 @@ vi.mock('@/services/availability.service', () => ({
     .mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
 }));
 
+// Mock supabase server module — createServiceRoleClient is used by the vendor
+// first-booking detection path. Without this, the real client errors on missing
+// SUPABASE_SERVICE_ROLE_KEY at test time. The returned chainable resolves to an
+// empty data array (no rows → isVendorFirstBooking = false), matching the
+// "this is not the vendor's first booking" path that existing tests assume.
+vi.mock('@/lib/supabase/server', () => ({
+  createServiceRoleClient: vi.fn(() => ({
+    from: () => ({
+      update: () => ({
+        eq: () => ({
+          is: () => ({
+            select: () => Promise.resolve({ data: [], error: null }),
+          }),
+        }),
+      }),
+    }),
+  })),
+}));
+
 // Mock notifications service so fire-and-forget calls don't fail with mock Supabase clients.
 vi.mock('@/services/notifications.service', () => ({
   notifyBookingRequestReceived: vi.fn(),

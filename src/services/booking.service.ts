@@ -14,6 +14,7 @@ import {
 import { sendCoupleCounteredEmail } from '@/lib/email/couple-countered';
 import { wouldExceedCapacity } from '@/services/availability.service';
 import { deliver } from '@/lib/notifications/deliver';
+import { createServiceRoleClient } from '@/lib/supabase/server';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -704,7 +705,12 @@ export async function createBooking(
 
   // Atomic vendor first-booking detection — flip first_booking_at on vendor_profiles.
   // The .is('first_booking_at', null) guard ensures only the very first booking returns rows.
-  const { data: vendorFirstResult } = await supabase
+  // Uses the service-role client because RLS blocks couples from updating vendor_profiles
+  // (the booking is created by the couple, so `supabase` here is the couple's RLS-scoped
+  // client). Without this, isVendorFirstBooking would always be false and the celebration
+  // would never fire in production.
+  const adminClient = createServiceRoleClient();
+  const { data: vendorFirstResult } = await adminClient
     .from('vendor_profiles')
     .update({ first_booking_at: new Date().toISOString() })
     .eq('id', input.vendor_profile_id)
