@@ -69,7 +69,15 @@ function testEmail(prefix: string): string {
   return `${prefix}-${stamp}-${rand}@${TEST_EMAIL_DOMAIN}`;
 }
 
-export async function seedCouple(): Promise<TestUser> {
+export interface SeedCoupleOptions {
+  /**
+   * When true, sets users.onboarding_completed_at = now() so the OnboardingGate
+   * modal does not block the session. Default false.
+   */
+  markOnboardingComplete?: boolean;
+}
+
+export async function seedCouple(options: SeedCoupleOptions = {}): Promise<TestUser> {
   const supabase = getServiceClient();
   const email = testEmail('couple');
   const { data, error } = await supabase.auth.admin.createUser({
@@ -82,6 +90,14 @@ export async function seedCouple(): Promise<TestUser> {
   // The handle_new_user trigger should have inserted a public.users row with
   // role='couple' from user_metadata. Double-check + backfill if not.
   await supabase.from('users').upsert({ id: data.user.id, email, role: 'couple' });
+
+  if (options.markOnboardingComplete) {
+    await supabase
+      .from('users')
+      .update({ onboarding_completed_at: new Date().toISOString() })
+      .eq('id', data.user.id);
+  }
+
   return { id: data.user.id, email, password: PASSWORD, role: 'couple' };
 }
 
