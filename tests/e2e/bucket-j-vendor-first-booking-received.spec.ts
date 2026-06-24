@@ -100,12 +100,19 @@ test.describe('Bucket J — vendor first booking received', () => {
     expect(notif).not.toBeNull();
     expect(notif?.type).toBe('booking_request_received');
 
-    // NOTE: Because the booking.service couple-scoped supabase client cannot update
-    // vendor_profiles (RLS), isVendorFirstBooking is always false → is_first: false.
-    // The 🎉 first-booking notification path requires a service-role fix in the API.
-    // We assert what the code actually does: is_first: false, standard title.
-    expect((notif?.metadata as { is_first?: boolean } | null)?.is_first).toBe(false);
-    expect(notif?.title).toBe('New booking request');
+    // Vendor first-booking detection (T17 + post-T25 RLS fix): the booking
+    // service uses createServiceRoleClient to flip vendor_profiles.first_booking_at,
+    // so the celebration path actually fires.
+    expect((notif?.metadata as { is_first?: boolean } | null)?.is_first).toBe(true);
+    expect(notif?.title).toBe('🎉 Your first booking request!');
+
+    // Confirm vendor_profiles.first_booking_at was set
+    const { data: vp } = await sb
+      .from('vendor_profiles')
+      .select('first_booking_at')
+      .eq('id', vendor.vendorProfileId)
+      .single();
+    expect(vp?.first_booking_at).not.toBeNull();
 
     await ctx.close();
   });
