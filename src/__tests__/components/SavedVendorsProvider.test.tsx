@@ -1,5 +1,5 @@
 // src/__tests__/components/SavedVendorsProvider.test.tsx
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import {
   SavedVendorsProvider,
