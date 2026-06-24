@@ -100,8 +100,10 @@ export async function handlePaymentSuccess(
   bookingId: string,
   amount: number
 ): Promise<void> {
-  const platformCut = Math.round(amount * 0.3); // Platform retains 30% of deposit on Stripe path
-  const vendorPending = amount - platformCut; // Vendor receives 70%
+  // Bucket F single-mode: Baazar retains the entire 5% deposit; vendor handles
+  // the 95% balance directly with the customer off-platform.
+  const platformCut = amount;
+  const vendorPending = 0;
 
   await supabase
     .from('bookings')
