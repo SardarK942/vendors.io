@@ -7,6 +7,7 @@ import { Heart, ArrowRight, Camera } from 'lucide-react';
 import { cn, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { formatShortDate, formatWeddingCount, formatPriceFromCents } from './vendor-card-helpers';
 import { useSavedVendors } from './SavedVendorsProvider';
+import { showHeartConfettiToast } from '@/components/celebration/HeartConfetti';
 import type { Database } from '@/types/database.types';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
@@ -41,17 +42,10 @@ export interface VendorCardProps {
   onSaveToggle?: (next: boolean) => void;
 }
 
-// ---------------------------------------------------------------------------
-// T15 placeholder — replace with HeartConfetti + sonner toast in T15.
-// ---------------------------------------------------------------------------
-function showHeartConfettiToast(vendorName: string) {
-  // TODO(T15): replace with real confetti + sonner toast
-  console.log('[first-save]', vendorName);
-}
-
 export function VendorCard({ vendor, searchDate, compact = false }: VendorCardProps) {
   const { savedIds, toggle } = useSavedVendors();
   const isSaved = savedIds.has(vendor.id);
+  const heartRef = React.useRef<HTMLButtonElement>(null);
 
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
@@ -66,7 +60,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
     e.stopPropagation();
     const result = await toggle(vendor.id);
     if (result.isFirstSave && result.wasSaved) {
-      showHeartConfettiToast(vendor.business_name ?? 'this vendor');
+      showHeartConfettiToast(vendor.business_name ?? 'this vendor', heartRef.current);
     }
   };
 
@@ -135,6 +129,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
 
         {/* Save heart */}
         <button
+          ref={heartRef}
           type="button"
           onClick={handleSaveClick}
           aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
