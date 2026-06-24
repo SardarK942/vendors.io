@@ -155,6 +155,25 @@ export async function getSavedVendorsForUser(
   return (data ?? []).map((r) => r.vendor_profiles as unknown as VendorRow);
 }
 
+/** Returns up to N active vendors matching any of the given categories. Falls back to getRecentActiveVendors if categories is empty. */
+export async function getVendorsByCategory(
+  supabase: SupabaseClient<Database>,
+  categories: string[],
+  limit = 3
+): Promise<VendorRow[]> {
+  if (categories.length === 0) return getRecentActiveVendors(supabase, limit);
+  const { data, error } = await supabase
+    .from('vendor_profiles')
+    .select('*')
+    .eq('is_active', true)
+    .eq('onboarding_complete', true)
+    .in('category', categories as VendorRow['category'][])
+    .order('published_at', { ascending: false, nullsFirst: false })
+    .limit(limit);
+  if (error) throw error;
+  return data ?? [];
+}
+
 /** Returns up to N most-recent active vendors (used as fallback for "just browsing" modal step 2). */
 export async function getRecentActiveVendors(
   supabase: SupabaseClient<Database>,

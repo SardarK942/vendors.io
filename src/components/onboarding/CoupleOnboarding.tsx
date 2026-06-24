@@ -1,48 +1,43 @@
 'use client';
 
 import * as React from 'react';
+import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { Onboarding, FeatureCarousel, TipsList, useOnboarding } from '@/components/ui/onboarding';
-import { Button } from '@/components/ui/button';
-import { DatePicker } from '@/components/ui/date-picker';
-import { COUPLE_FEATURES, COUPLE_TIPS, COMMISSION_CATEGORIES } from '@/lib/onboarding/welcome-data';
-import { VENDOR_CATEGORY_LABELS, cn } from '@/lib/utils';
-import { ArrowLeft } from 'lucide-react';
+import { CULTURAL_EVENT_TYPES, GENERAL_EVENT_TYPES } from '@/types';
+import { VendorCard } from '@/components/marketplace/VendorCard';
+import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
+import type { Database } from '@/types/database.types';
 
-const STEP_CONFIG = [
-  {
-    title: 'Welcome to Baazar',
-    description: "Chicago's marketplace for cultural wedding vendors. Here's what you can do.",
-  },
-  {
-    title: 'Tell us about your event',
-    description: 'Two quick questions so we can show you the most relevant vendors.',
-  },
-  {
-    title: "You're ready to start",
-    description: 'Three things to remember as you explore.',
-  },
-];
+type VendorProfileRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
 export interface CoupleOnboardingProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps) {
+type StepState =
+  | { step: 0 }
+  | { step: 1; hasEvent: true; date: string; categories: string[] }
+  | { step: 2; hasEvent: boolean; categories: string[] };
+
+export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps): React.JSX.Element {
   const router = useRouter();
-  const [eventDate, setEventDate] = React.useState<string>('');
-  const [categories, setCategories] = React.useState<string[]>([]);
+  const [state, setState] = React.useState<StepState>({ step: 0 });
+  const [vendors, setVendors] = React.useState<VendorProfileRow[]>([]);
   const [submitting, setSubmitting] = React.useState(false);
 
-  async function submitOrSkip(skipped: boolean) {
+  // Fetch preview vendors when entering Step 2
+  React.useEffect(() => {
+    if (state.step !== 2) return;
+    const params = new URLSearchParams();
+    if (state.categories.length > 0) params.set('categories', state.categories.join(','));
+    fetch(`/api/users/me/preview-vendors?${params.toString()}`)
+      .then((r) => r.json())
+      .then((j: { data: VendorProfileRow[] }) => setVendors(j.data ?? []))
+      .catch(() => setVendors([]));
+  }, [state]);
+
+  async function submitOnboarding(skipped: boolean) {
     setSubmitting(true);
     try {
       const body = skipped
@@ -50,8 +45,9 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps) 
         : {
             skipped: false,
             data: {
-              event_date: eventDate || null,
-              categories,
+              event_date: state.step === 1 ? state.date : null,
+              categories: state.step === 1 ? state.categories : [],
+              just_browsing: state.step === 0 || (state.step === 2 && !state.hasEvent),
             },
           };
       await fetch('/api/users/onboarding-complete', {
@@ -59,242 +55,150 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps) 
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify(body),
       });
-      onOpenChange(false);
-      if (!skipped) {
-        router.push('/vendors');
-      }
-      router.refresh();
     } finally {
       setSubmitting(false);
+      onOpenChange(false);
+      router.push('/vendors');
     }
   }
 
-  return (
-    <Dialog open={open} onOpenChange={(o) => !o && submitOrSkip(true)}>
-      <DialogContent className="w-full max-w-[calc(100dvw-2rem)] border-none bg-transparent p-0 shadow-none sm:max-w-3xl">
-        <div className="w-full rounded-2xl bg-cream-soft p-[2px] md:p-2">
-          <Onboarding
-            canGoNext={(step) => step === 1 || (step === 2 && categories.length >= 1) || step === 3}
-            className="relative overflow-hidden rounded-2xl bg-cream p-6 md:p-8"
-            maxStepValue={COUPLE_FEATURES.length - 1}
-            onComplete={() => submitOrSkip(false)}
-            totalSteps={3}
-          >
-            <CoupleHeader onSkip={() => submitOrSkip(true)} submitting={submitting} />
-            <div className="my-8 min-h-[280px]">
-              <Onboarding.Step step={1}>
-                <CoupleFeatureStep />
-              </Onboarding.Step>
-              <Onboarding.Step step={2}>
-                <CouplePersonalizeStep
-                  eventDate={eventDate}
-                  onEventDateChange={setEventDate}
-                  categories={categories}
-                  onCategoriesChange={setCategories}
-                />
-              </Onboarding.Step>
-              <Onboarding.Step step={3}>
-                <CoupleTipsStep />
-              </Onboarding.Step>
+  // Step 0 — branching choice
+  if (state.step === 0) {
+    return (
+      <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
+        <DialogContent className="max-w-md">
+          <h2 className="text-2xl font-semibold text-ink">Are you planning an event?</h2>
+          <p className="mt-2 text-sm text-ink/70">Tell us so we can show you the right vendors.</p>
+
+          <div className="mt-6 space-y-3">
+            <button
+              type="button"
+              onClick={() => setState({ step: 1, hasEvent: true, date: '', categories: [] })}
+              className="w-full rounded-md border-2 border-ink p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+            >
+              <p className="font-medium">Yes, I have an event coming up</p>
+              <p className="mt-1 text-xs text-ink/60">
+                We&apos;ll personalize your recommendations.
+              </p>
+            </button>
+            <button
+              type="button"
+              onClick={() => setState({ step: 2, hasEvent: false, categories: [] })}
+              className="w-full rounded-md border border-ink/30 p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+            >
+              <p className="font-medium">Just browsing for now</p>
+              <p className="mt-1 text-xs text-ink/60">We&apos;ll show you what&apos;s popular.</p>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Step 1 — date + categories
+  if (state.step === 1) {
+    const allTypes = [...CULTURAL_EVENT_TYPES, ...GENERAL_EVENT_TYPES];
+    const canContinue = state.date && state.categories.length > 0;
+    return (
+      <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
+        <DialogContent className="max-w-lg">
+          <h2 className="text-2xl font-semibold text-ink">Tell us about your event</h2>
+
+          <div className="mt-4 space-y-4">
+            <label className="block">
+              <span className="text-sm font-medium text-ink">Event date</span>
+              <input
+                type="date"
+                value={state.date}
+                onChange={(e) => setState({ ...state, date: e.target.value })}
+                className="mt-1 w-full rounded-md border border-ink/20 px-3 py-2"
+              />
+            </label>
+
+            <div>
+              <span className="text-sm font-medium text-ink">Categories (max 3)</span>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {allTypes.map((t) => {
+                  const isSelected = state.categories.includes(t.id);
+                  return (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        if (isSelected) {
+                          setState({
+                            ...state,
+                            categories: state.categories.filter((c) => c !== t.id),
+                          });
+                        } else if (state.categories.length < 3) {
+                          setState({ ...state, categories: [...state.categories, t.id] });
+                        }
+                      }}
+                      className={
+                        isSelected
+                          ? 'rounded-full bg-ink px-3 py-1 text-sm text-cream'
+                          : 'rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover-pink-border'
+                      }
+                    >
+                      {t.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-            <Onboarding.Navigation completeLabel="Start browsing" />
-          </Onboarding>
-        </div>
+          </div>
+
+          <div className="mt-6 flex justify-between">
+            <button
+              type="button"
+              onClick={() => setState({ step: 0 })}
+              className="text-sm text-ink/70 hover-pink-text"
+            >
+              Back
+            </button>
+            <button
+              type="button"
+              disabled={!canContinue}
+              onClick={() => setState({ step: 2, hasEvent: true, categories: state.categories })}
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:bg-hot-pink disabled:opacity-50"
+            >
+              Continue →
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Step 2 — preview vendors with hearts
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(false)}>
+      <DialogContent className="max-w-xl">
+        <h2 className="text-2xl font-semibold text-ink">Here&apos;s what we found</h2>
+        <p className="mt-2 text-sm text-ink/70">
+          Heart your favorites — they&apos;ll be saved to your shortlist.
+        </p>
+
+        <SavedVendorsProvider>
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+            {vendors.map((v) => (
+              <VendorCard key={v.id} vendor={v} compact />
+            ))}
+            {vendors.length === 0 && (
+              <p className="col-span-3 py-8 text-center text-sm text-ink/50">Loading vendors...</p>
+            )}
+          </div>
+        </SavedVendorsProvider>
+
+        <button
+          type="button"
+          onClick={() => submitOnboarding(false)}
+          disabled={submitting}
+          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink"
+        >
+          Start exploring →
+        </button>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function CoupleHeader({ onSkip, submitting }: { onSkip: () => void; submitting: boolean }) {
-  const { currentStep } = useOnboarding();
-  const config = STEP_CONFIG[currentStep - 1];
-  return (
-    <DialogHeader className="relative !text-center">
-      <button
-        type="button"
-        onClick={onSkip}
-        disabled={submitting}
-        className="absolute right-0 top-0 text-xs font-medium text-ink-soft transition-colors hover:text-ink"
-      >
-        Skip for now
-      </button>
-      <DialogTitle className="font-serif font-bold tracking-tight text-ink md:text-3xl">
-        {config.title}
-      </DialogTitle>
-      <DialogDescription className="text-ink-muted md:text-base">
-        {config.description}
-      </DialogDescription>
-      <div className="pt-3">
-        <Onboarding.StepIndicator />
-      </div>
-    </DialogHeader>
-  );
-}
-
-function CoupleFeatureStep() {
-  const { stepValue, setStepValue } = useOnboarding();
-  return (
-    <div className="flex flex-col gap-4 md:flex-row md:gap-6">
-      <FeatureCarousel
-        className="order-2 flex w-full flex-col gap-3 md:order-1 md:w-1/2"
-        onValueChange={setStepValue}
-        totalItems={COUPLE_FEATURES.length}
-        value={stepValue}
-      >
-        {COUPLE_FEATURES.map((feature, index) => {
-          const Icon = feature.icon;
-          const isActive = stepValue === index;
-          return (
-            <FeatureCarousel.Item index={index} key={feature.id}>
-              <div
-                className={cn(
-                  'flex items-start gap-3 rounded-lg border p-4 text-left transition-all duration-200',
-                  isActive ? 'border-indigo/30 bg-indigo/10' : 'border-hairline hover:bg-cream-soft'
-                )}
-              >
-                <Icon
-                  className={cn(
-                    'mt-0.5 size-5 shrink-0',
-                    isActive ? 'text-indigo' : 'text-ink-muted'
-                  )}
-                />
-                <div>
-                  <p className="text-sm font-medium text-ink">{feature.title}</p>
-                  {isActive && (
-                    <p className="mt-1 text-sm leading-relaxed text-ink-muted">
-                      {feature.description}
-                    </p>
-                  )}
-                </div>
-              </div>
-            </FeatureCarousel.Item>
-          );
-        })}
-      </FeatureCarousel>
-      <div className="order-1 w-full md:order-2 md:w-1/2">
-        <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg border border-hairline bg-cream-soft">
-          <p className="text-sm text-ink-soft">Feature preview</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CouplePersonalizeStep({
-  eventDate,
-  onEventDateChange,
-  categories,
-  onCategoriesChange,
-}: {
-  eventDate: string;
-  onEventDateChange: (v: string) => void;
-  categories: string[];
-  onCategoriesChange: (v: string[]) => void;
-}) {
-  const [question, setQuestion] = React.useState(categories.length > 0 ? 2 : 1);
-
-  return (
-    <div className="flex flex-col gap-4">
-      {question === 1 ? (
-        <div className="flex flex-col gap-4" key="q1">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex size-6 items-center justify-center rounded-lg bg-cream-soft text-sm text-ink-muted">
-              1
-            </span>
-            <span className="text-base font-medium text-ink">When&apos;s the big day?</span>
-          </div>
-          <DatePicker selected={eventDate} onSelect={onEventDateChange} />
-          <div className="flex items-center justify-between">
-            <Button
-              className="text-sm text-ink-muted hover:text-ink"
-              onClick={() => {
-                onEventDateChange('');
-                setQuestion(2);
-              }}
-              type="button"
-              size="sm"
-              variant="ghost"
-            >
-              Still figuring it out →
-            </Button>
-            <Button type="button" size="sm" onClick={() => setQuestion(2)} disabled={!eventDate}>
-              Next question
-            </Button>
-          </div>
-          <p className="text-sm text-ink-muted">Question 1 of 2</p>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-4" key="q2">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex size-6 items-center justify-center rounded-lg bg-cream-soft text-sm text-ink-muted">
-              2
-            </span>
-            <span className="text-base font-medium text-ink">
-              Which vendors are top priority? (pick 1–5)
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:gap-3 md:grid-cols-3">
-            {COMMISSION_CATEGORIES.map((slug) => {
-              const isSelected = categories.includes(slug);
-              return (
-                <button
-                  key={slug}
-                  type="button"
-                  onClick={() => {
-                    if (isSelected) {
-                      onCategoriesChange(categories.filter((c) => c !== slug));
-                    } else if (categories.length < 5) {
-                      onCategoriesChange([...categories, slug]);
-                    }
-                  }}
-                  className={cn(
-                    'flex cursor-pointer items-center gap-2.5 rounded-lg border px-4 py-3 text-left text-sm transition-all duration-200',
-                    isSelected
-                      ? 'border-indigo/30 bg-indigo/10 text-ink'
-                      : 'border-hairline bg-cream text-ink hover:bg-cream-soft'
-                  )}
-                >
-                  <span>{VENDOR_CATEGORY_LABELS[slug] ?? slug}</span>
-                </button>
-              );
-            })}
-          </div>
-          <div className="flex items-center justify-between">
-            <Button
-              className="text-sm text-ink-muted hover:text-ink"
-              onClick={() => setQuestion(1)}
-              type="button"
-              size="sm"
-              variant="ghost"
-            >
-              <ArrowLeft className="size-4" />
-              Back to question 1
-            </Button>
-            <p className="text-sm text-ink-muted">{categories.length}/5 · Question 2 of 2</p>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CoupleTipsStep() {
-  return (
-    <div className="flex flex-col gap-4 md:flex-row md:items-stretch md:gap-6">
-      <div className="order-2 w-full md:order-1 md:w-1/2">
-        <TipsList className="flex h-full flex-col gap-4" title="Tips">
-          {COUPLE_TIPS.map((tip) => (
-            <TipsList.Item className="flex items-start gap-3" key={tip.number} number={tip.number}>
-              <p className="text-sm leading-relaxed text-ink">{tip.text}</p>
-            </TipsList.Item>
-          ))}
-        </TipsList>
-      </div>
-      <div className="order-1 w-full md:order-2 md:w-1/2">
-        <div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden rounded-lg border border-hairline bg-cream-soft">
-          <p className="text-sm text-ink-soft">Tips preview</p>
-        </div>
-      </div>
-    </div>
   );
 }
