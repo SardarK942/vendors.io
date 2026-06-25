@@ -120,7 +120,7 @@ function DefaultView() {
 }
 
 function ManageView() {
-  const { setView } = useFamilyDrawer();
+  const { setView, close } = useFamilyDrawer();
   const { value, onChange, endpoint, maxFiles, showPrimarySelector } = useUploader();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef(value);
@@ -193,8 +193,8 @@ function ManageView() {
       <button
         type="button"
         onClick={() => {
-          // closing the drawer is handled by FamilyDrawerClose globally; this just resets to default view
           setView('default');
+          close();
         }}
         className="mt-4 w-full rounded-lg bg-ink py-2.5 text-sm font-medium text-cream hover:bg-ink/90"
       >

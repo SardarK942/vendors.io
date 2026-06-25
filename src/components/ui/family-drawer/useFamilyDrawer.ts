@@ -6,6 +6,7 @@ interface FamilyDrawerContextValue {
   view: string;
   setView: (view: string) => void;
   views: Record<string, React.ComponentType>;
+  close: () => void;
 }
 
 export const FamilyDrawerContext = createContext<FamilyDrawerContextValue | null>(null);

@@ -108,7 +108,7 @@ export function VendorProfile({
           <div className="mt-6 space-y-8">
             <IdentityPanel vendor={vendor} />
             {packages.length > 0 && (
-              <div>
+              <div id="packages-section">
                 <h2 className="font-spectral text-xl font-semibold text-ink">
                   Choose your package
                 </h2>
@@ -145,7 +145,7 @@ export function VendorProfile({
               <IdentityPanel vendor={vendor} />
 
               {packages.length > 0 && (
-                <div className="border-t border-ink/10 pt-8">
+                <div id="packages-section" className="border-t border-ink/10 pt-8">
                   <h2 className="font-spectral text-xl font-semibold text-ink">
                     Choose your package
                   </h2>

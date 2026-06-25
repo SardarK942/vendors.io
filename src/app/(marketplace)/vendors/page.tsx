@@ -5,8 +5,6 @@ import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filter
 import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
 import type { VendorCardProps } from '@/components/marketplace/VendorCard';
 import type { Metadata } from 'next';
-import { listUnclaimed } from '@/lib/scraped-vendor/public';
-import { UnclaimedVendorCard } from '@/components/marketplace/UnclaimedVendorCard';
 
 type VendorWithEnrichments = VendorCardProps['vendor'];
 
@@ -49,19 +47,17 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     typeof params.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : null;
 
   // Run vendors + enrichments + price band in parallel.
-  const [{ data: vendors, count }, { data: enrichments }, { data: priceBands }, unclaimed] =
-    await Promise.all([
+  // Unclaimed (scraped) vendors are hidden from public browse for now — we'll
+  // be onboarding vendors manually until first-batch claim flow settles.
+  const [{ data: vendors, count }, { data: enrichments }, { data: priceBands }] = await Promise.all(
+    [
       query,
       supabase.rpc('vendor_list_enrichments', { p_search_date: searchDateParam }),
       supabase
         .from('vendor_packages_price_band')
         .select('vendor_profile_id, min_price_cents, max_price_cents'),
-      listUnclaimed({
-        category: filters.category ?? null,
-        city: null,
-        limit: 60,
-      }),
-    ]);
+    ]
+  );
 
   const totalPages = Math.ceil((count ?? 0) / limit);
 
@@ -105,14 +101,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     }),
   })) as VendorWithEnrichments[];
 
-  const claimedCount = count ?? 0;
-  const unclaimedCount = unclaimed.length;
-  const totalCount = claimedCount + unclaimedCount;
-
-  // When there are no claimed vendors but there ARE unclaimed ones, suppress
-  // the VendorGrid empty state — it'd read as "nothing here" while real
-  // listings are visible below.
-  const showVendorGrid = claimedCount > 0 || unclaimedCount === 0;
+  const totalCount = count ?? 0;
 
   return (
     <SavedVendorsProvider>
@@ -121,37 +110,11 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
           <h1 className="text-2xl font-bold">Browse Vendors</h1>
           <p className="text-muted-foreground">
             {totalCount} vendor{totalCount !== 1 ? 's' : ''}
-            {unclaimedCount > 0 && claimedCount > 0
-              ? ` (${claimedCount} ready to book, ${unclaimedCount} unclaimed)`
-              : unclaimedCount > 0
-                ? " listed — most haven't joined Baazar yet"
-                : ''}
           </p>
         </div>
 
         <FilterShell initialCategory={category} />
-        {showVendorGrid && (
-          <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
-        )}
-
-        {unclaimed.length > 0 && (
-          <section className={showVendorGrid ? 'mt-12' : 'mt-2'}>
-            {showVendorGrid && (
-              <>
-                <h2 className="mb-4 text-lg font-semibold">More vendors</h2>
-                <p className="mb-4 text-sm text-muted-foreground">
-                  These vendors haven&apos;t claimed their Baazar listing yet. Booking opens when
-                  they do.
-                </p>
-              </>
-            )}
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
-              {unclaimed.map((v) => (
-                <UnclaimedVendorCard key={v.id} vendor={v} />
-              ))}
-            </div>
-          </section>
-        )}
+        <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
 
         {/* Pagination */}
         {totalPages > 1 && (

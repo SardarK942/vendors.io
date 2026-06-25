@@ -7,9 +7,12 @@ const VALID_SLA_VALUES = RESPONSE_SLA_OPTIONS.map((o) => o.value);
 
 const instagramHandle = z
   .string()
-  .min(1, 'Instagram handle is required')
+  .optional()
+  .default('')
   .transform((s) => s.replace(/^@/, '').trim())
-  .pipe(z.string().regex(/^[A-Za-z0-9._]{1,30}$/, 'Invalid Instagram handle'));
+  .pipe(
+    z.union([z.literal(''), z.string().regex(/^[A-Za-z0-9._]{1,30}$/, 'Invalid Instagram handle')])
+  );
 
 export const basicsSchema = z.object({
   businessName: z.string().min(1).max(120),

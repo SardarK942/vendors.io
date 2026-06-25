@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import {
@@ -100,6 +101,7 @@ export const PATCH = withErrorBoundary(
         : await supabase.from('vendor_profiles').insert(payload);
 
       if (error) throw new HttpError(500, error.message);
+      revalidatePath('/dashboard/profile/setup', 'layout');
       return NextResponse.json({ ok: true });
     }
 
@@ -131,6 +133,7 @@ export const PATCH = withErrorBoundary(
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
+      revalidatePath('/dashboard/profile/setup', 'layout');
       return NextResponse.json({ ok: true });
     }
 
@@ -146,12 +149,13 @@ export const PATCH = withErrorBoundary(
       const { error } = await supabase
         .from('vendor_profiles')
         .update({
-          instagram_handle: data.instagramHandle,
+          instagram_handle: data.instagramHandle || null,
           website_url: data.websiteUrl || null,
         })
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
+      revalidatePath('/dashboard/profile/setup', 'layout');
       return NextResponse.json({ ok: true });
     }
 
@@ -172,6 +176,7 @@ export const PATCH = withErrorBoundary(
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
+      revalidatePath('/dashboard/profile/setup', 'layout');
       return NextResponse.json({ ok: true });
     }
 
@@ -194,6 +199,7 @@ export const PATCH = withErrorBoundary(
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
+      revalidatePath('/dashboard/profile/setup', 'layout');
       return NextResponse.json({ ok: true });
     }
 

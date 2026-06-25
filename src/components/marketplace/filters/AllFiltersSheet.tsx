@@ -11,7 +11,6 @@ import { TrustSection } from './sections/TrustSection';
 import { PriceSection } from './sections/PriceSection';
 import { LanguagesSection } from './sections/LanguagesSection';
 import { ExperienceSection } from './sections/ExperienceSection';
-import { EventTypesSection } from './sections/EventTypesSection';
 import { CategorySpecificSection } from './sections/CategorySpecificSection';
 
 interface AllFiltersSheetProps {
@@ -97,7 +96,10 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
             <PriceSection state={state} patch={patch} />
             <LanguagesSection state={state} patch={patch} />
             <ExperienceSection state={state} patch={patch} />
-            <EventTypesSection state={state} patch={patch} />
+            {/* EventTypesSection hidden until the served_event_types backing
+                column is wired into applyVendorFilters (currently a no-op).
+                Vendors do have data in served_event_types per Bucket J — what's
+                missing is the query-side filter. Re-enable once that ships. */}
             <CategorySpecificSection category={category} />
           </div>
 

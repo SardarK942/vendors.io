@@ -59,9 +59,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="instagramHandle">
-          Instagram handle <span className="text-destructive">*</span>
-        </Label>
+        <Label htmlFor="instagramHandle">Instagram handle (optional)</Label>
         <div className="flex items-center gap-1">
           <span className="text-sm text-muted-foreground">@</span>
           <Input
@@ -76,7 +74,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Instagram is how customers discover Desi wedding vendors. This field is required.
+          Instagram is how customers discover culturally-focused vendors. Add it if you have one.
         </p>
         {getError('instagramHandle') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('instagramHandle')}</p>
