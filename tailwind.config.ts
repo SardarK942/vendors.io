@@ -103,6 +103,15 @@ const config: Config = {
         pink: '0 4px 10px rgba(209, 0, 108, 0.25)',
         'pink-card': '0 8px 20px rgba(209, 0, 108, 0.15)',
       },
+      keyframes: {
+        'pulse-pink': {
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(209, 0, 108, 0.4)' },
+          '50%': { boxShadow: '0 0 0 6px rgba(209, 0, 108, 0.0)' },
+        },
+      },
+      animation: {
+        'pulse-pink': 'pulse-pink 1.5s ease-out 1',
+      },
     },
   },
   plugins: [
@@ -152,6 +161,14 @@ const config: Config = {
             '&:hover': {
               transform: 'none',
             },
+          },
+        },
+        '.pulse-pink': {
+          animation: 'pulse-pink 1.5s ease-out 1',
+          '@media (prefers-reduced-motion: reduce)': {
+            animation: 'none',
+            outline: '2px solid rgba(209, 0, 108, 0.5)',
+            'outline-offset': '4px',
           },
         },
       });
