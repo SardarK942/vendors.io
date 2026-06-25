@@ -16,14 +16,10 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
           </p>
           <h1
             aria-label="Baazar"
-            className="m-0 mt-1 leading-[0.85] tracking-[-0.03em] text-ink"
-            style={{
-              fontFamily: 'var(--font-wordmark-deva), serif',
-              fontSize: 'clamp(40px, 6vw, 56px)',
-              fontWeight: 400,
-            }}
+            className="m-0 mt-1 font-serif font-extrabold lowercase leading-none tracking-[-0.025em] text-ink"
+            style={{ fontSize: 'clamp(40px, 6vw, 56px)' }}
           >
-            <span aria-hidden="true">बाज़ार</span>
+            <span>baazar</span>
             <span aria-hidden="true" className="text-hot-pink">
               .
             </span>
