@@ -43,9 +43,13 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
           <SearchBar />
         </div>
 
-        <div className="flex gap-3">
-          <Button size="lg" asChild>
-            <Link href="/vendors">Browse all vendors</Link>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button
+            size="lg"
+            asChild
+            className="bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
+          >
+            <Link href="/vendors">Browse all vendors →</Link>
           </Button>
           {showVendorCta && (
             <Button size="lg" variant="outline" asChild>

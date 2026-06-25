@@ -51,7 +51,10 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
             Customers can only book vendors with at least one active package.
           </p>
         </div>
-        <Button asChild>
+        <Button
+          asChild
+          className="bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
+        >
           <Link href="/dashboard/profile/packages/new">+ Add Package</Link>
         </Button>
       </div>
@@ -60,8 +63,12 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
         <Card className="p-12 text-center">
           <h2 className="text-lg font-semibold">No packages yet</h2>
           <p className="mt-2 text-muted-foreground">Add your first package to go live in search.</p>
-          <Button className="mt-6" asChild>
-            <Link href="/dashboard/profile/packages/new">Add your first package</Link>
+          <Button
+            asChild
+            size="lg"
+            className="mt-6 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
+          >
+            <Link href="/dashboard/profile/packages/new">+ Add your first package</Link>
           </Button>
         </Card>
       ) : (

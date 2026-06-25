@@ -199,8 +199,12 @@ export default async function DashboardPage() {
           <p className="mt-1 text-sm text-yellow-800">
             Customers can only book vendors with at least one active package.
           </p>
-          <Button asChild className="mt-4" size="sm">
-            <Link href="/dashboard/profile/packages/new">Add Package</Link>
+          <Button
+            asChild
+            size="lg"
+            className="mt-4 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
+          >
+            <Link href="/dashboard/profile/packages/new">+ Add Package</Link>
           </Button>
         </Card>
       )}

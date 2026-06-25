@@ -1,59 +1,102 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+
 /**
  * Right-side brand panel of the V2 asymmetric homepage hero.
- * Tagline + static Devanagari wordmark + 4-script glyph row.
- * No animation — the footer carries the page's one cycling wordmark moment.
+ * Main wordmark cycles through the supported scripts on a 2.5s loop with
+ * crossfade. Glyph row at the bottom remains static for at-a-glance reference.
  */
+
+const SCRIPTS = [
+  {
+    label: 'Devanagari',
+    text: 'बाज़ार',
+    font: 'var(--font-wordmark-deva), serif',
+  },
+  {
+    label: 'Nastaliq',
+    text: 'بازار',
+    font: 'var(--font-wordmark-nastaliq), serif',
+  },
+  {
+    label: 'Naskh',
+    text: 'بازار',
+    font: 'var(--font-wordmark-naskh), serif',
+  },
+  {
+    label: 'Persian',
+    text: 'بازار',
+    font: 'var(--font-wordmark-persian), serif',
+  },
+] as const;
+
+const CYCLE_MS = 2500;
+
 export function HomepageWordmarkPanel() {
+  const [index, setIndex] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+    const id = window.setInterval(() => {
+      setIndex((i) => (i + 1) % SCRIPTS.length);
+    }, CYCLE_MS);
+    return () => window.clearInterval(id);
+  }, [prefersReducedMotion]);
+
+  const current = SCRIPTS[index];
+
   return (
     <div className="relative hidden border-l border-hairline pl-16 lg:block">
       <p className="m-0 mb-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
         MADE IN <span className="text-haldi">CHICAGO</span>
       </p>
 
-      <h2
+      {/* Cycling wordmark — stacked positions so each script fades in over the previous */}
+      <div
+        className="relative"
+        style={{ fontSize: 'clamp(72px, 9vw, 130px)', minHeight: '0.85em', lineHeight: '0.85' }}
         aria-label="Baazar"
-        className="m-0 leading-[0.85] tracking-[-0.03em] text-ink"
-        style={{
-          fontFamily: 'var(--font-wordmark-deva), serif',
-          fontSize: 'clamp(72px, 9vw, 130px)',
-          fontWeight: 400,
-        }}
       >
-        <span aria-hidden="true">बाज़ार</span>
-        <span aria-hidden="true" className="text-hot-pink">
-          .
-        </span>
-      </h2>
+        {SCRIPTS.map((s, i) => (
+          <h2
+            key={s.label}
+            aria-hidden="true"
+            className={`duration-[600ms] absolute left-0 top-0 m-0 tracking-[-0.03em] text-ink transition-opacity ${
+              i === index ? 'opacity-100' : 'opacity-0'
+            }`}
+            style={{
+              fontFamily: s.font,
+              fontSize: 'inherit',
+              fontWeight: 400,
+              lineHeight: 'inherit',
+            }}
+          >
+            <span>{s.text}</span>
+            <span className="text-hot-pink">.</span>
+          </h2>
+        ))}
+      </div>
 
       <div className="mt-5 flex items-baseline gap-4" aria-label="Scripts">
-        <span
-          title="Hindi"
-          className="text-base font-semibold leading-none text-ink"
-          style={{ fontFamily: 'var(--font-wordmark-deva), serif' }}
-        >
-          बाज़ार
-        </span>
-        <span
-          title="Urdu"
-          className="text-xs leading-none text-ink-soft"
-          style={{ fontFamily: 'var(--font-wordmark-nastaliq), serif' }}
-        >
-          بازار
-        </span>
-        <span
-          title="Arabic"
-          className="text-sm leading-none text-ink-soft"
-          style={{ fontFamily: 'var(--font-wordmark-naskh), serif' }}
-        >
-          بازار
-        </span>
-        <span
-          title="Persian"
-          className="text-base leading-none text-ink-soft"
-          style={{ fontFamily: 'var(--font-wordmark-persian), serif' }}
-        >
-          بازار
-        </span>
+        {SCRIPTS.map((s, i) => (
+          <span
+            key={s.label}
+            title={s.label}
+            className={`text-base leading-none transition-colors duration-300 ${
+              i === index ? 'font-semibold text-ink' : 'text-ink-soft'
+            }`}
+            style={{ fontFamily: s.font }}
+          >
+            {s.text}
+          </span>
+        ))}
       </div>
     </div>
   );
