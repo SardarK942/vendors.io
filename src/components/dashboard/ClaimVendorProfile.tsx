@@ -131,9 +131,9 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
 
       <div className="border-t pt-4 text-center text-sm text-muted-foreground">
         Don&apos;t see your business?{' '}
-        <button onClick={onCreateNew} className="font-medium text-primary hover:underline">
+        <Button onClick={onCreateNew} variant="link" className="h-auto p-0 align-baseline">
           Create a new profile
-        </button>
+        </Button>
       </div>
     </div>
   );

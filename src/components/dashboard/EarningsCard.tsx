@@ -1,6 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import {
   getVendorAttribution,
@@ -52,12 +54,9 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
         <p className="mt-1 text-xs text-ink/60">
           When customers confirm bookings with you, you&apos;ll see them here.
         </p>
-        <a
-          href="/vendors"
-          className="mt-3 inline-block text-sm font-medium text-hot-pink hover:underline"
-        >
-          Browse the marketplace →
-        </a>
+        <Button asChild variant="outline" className="mt-3">
+          <Link href="/vendors">Browse the marketplace →</Link>
+        </Button>
       </div>
     );
   }
