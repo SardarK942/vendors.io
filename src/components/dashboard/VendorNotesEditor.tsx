@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
 const MAX = 5000;
@@ -78,9 +79,13 @@ export function VendorNotesEditor({
           {status === 'saving' && 'Saving…'}
           {status === 'saved' && 'Saved · just now'}
           {status === 'error' && (
-            <button onClick={save} className="text-red-600 hover:underline">
+            <Button
+              onClick={save}
+              variant="link"
+              className="h-auto p-0 align-baseline text-red-600"
+            >
               Couldn&rsquo;t save — retry
-            </button>
+            </Button>
           )}
         </span>
       </div>

@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getAnalyticsTeaser, type TeaserMetric } from '@/services/analytics.service';
 
@@ -24,9 +25,9 @@ export async function AnalyticsTeaser({ vendorProfileId }: { vendorProfileId: st
         <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
           This week
         </h2>
-        <Link href="/dashboard/analytics" className="text-sm text-indigo-600 hover:underline">
-          Full analytics →
-        </Link>
+        <Button asChild variant="link" className="h-auto p-0 text-sm">
+          <Link href="/dashboard/analytics">Full analytics →</Link>
+        </Button>
       </div>
       <div className="grid grid-cols-3 gap-4">
         <div>
