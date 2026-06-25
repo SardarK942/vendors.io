@@ -25,7 +25,10 @@ export default async function MoneyPage() {
   // Money page only renders the EarningsCard (attribution dashboard).
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Money</h1>
+      <div>
+        <h1 className="text-2xl font-bold">Business Analytics</h1>
+        <p className="text-sm text-muted-foreground">Booking earnings attributed to Baazar.</p>
+      </div>
       <EarningsCard vendorProfileId={vendorProfileRaw.id} />
     </div>
   );
