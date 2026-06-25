@@ -148,7 +148,8 @@ export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep 
   ) {
     return 'location';
   }
-  if (!profile.instagram_handle) return 'online';
+  // 'online' step is fully optional (Instagram + website both optional). It is
+  // never auto-routed to; vendors can still navigate there from the sidebar.
   if (
     !profile.languages ||
     profile.languages.length === 0 ||

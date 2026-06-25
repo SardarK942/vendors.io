@@ -15,8 +15,10 @@ export function FamilyDrawerRoot({ views, defaultView = 'default', children }: R
   const [view, setView] = useState(defaultView);
   const [open, setOpen] = useState(false);
 
+  const close = () => setOpen(false);
+
   return (
-    <FamilyDrawerContext.Provider value={{ view, setView, views }}>
+    <FamilyDrawerContext.Provider value={{ view, setView, views, close }}>
       <Drawer.Root
         open={open}
         onOpenChange={(o) => {

@@ -35,8 +35,11 @@ describe('nextIncompleteStep', () => {
   it('returns location when city missing', () => {
     expect(nextIncompleteStep({ ...baseProfile, base_city: null })).toBe('location');
   });
-  it('returns online when instagram_handle missing', () => {
-    expect(nextIncompleteStep({ ...baseProfile, instagram_handle: null })).toBe('online');
+  it('skips online when instagram_handle missing (online is optional)', () => {
+    // Online step is fully optional — it should NEVER be auto-routed to.
+    // With only instagram missing and everything else filled, resume jumps
+    // straight to review.
+    expect(nextIncompleteStep({ ...baseProfile, instagram_handle: null })).toBe('review');
   });
   it('returns details when languages missing', () => {
     expect(nextIncompleteStep({ ...baseProfile, languages: [] })).toBe('details');
@@ -60,8 +63,8 @@ describe('nextIncompleteStep', () => {
   // ─── Address-skip (Bucket A T8 follow-through) ────────────────────────────
   it('does NOT return location when address empty but base_address_skipped=true', () => {
     // Vendor checked "I don't have a fixed address" — all address fields null/empty.
-    // Resume must NOT bounce them back to location. With instagram also missing
-    // (to isolate just the address-skip check) it should land on 'online'.
+    // Resume must NOT bounce them back to location. With everything else filled
+    // and instagram optional, resume should jump to review.
     expect(
       nextIncompleteStep({
         ...baseProfile,
@@ -71,9 +74,9 @@ describe('nextIncompleteStep', () => {
         base_postal_code: null,
         base_google_place_id: null,
         base_address_skipped: true,
-        instagram_handle: null, // not yet filled in — gives us a clear next step
+        instagram_handle: null, // optional — not auto-routed to
       })
-    ).toBe('online');
+    ).toBe('review');
   });
 
   it('returns location when address empty and base_address_skipped=false', () => {

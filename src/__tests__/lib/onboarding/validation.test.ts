@@ -65,10 +65,13 @@ describe('onlineSchema', () => {
       true
     );
   });
-  it('rejects missing instagram', () => {
+  it('accepts missing instagram (optional)', () => {
     expect(
       onlineSchema.safeParse({ instagramHandle: '', websiteUrl: 'https://x.com' }).success
-    ).toBe(false);
+    ).toBe(true);
+  });
+  it('accepts entirely missing instagramHandle key', () => {
+    expect(onlineSchema.safeParse({ websiteUrl: '' }).success).toBe(true);
   });
   it('strips leading @ from instagram', () => {
     const r = onlineSchema.parse({ instagramHandle: '@hennaart', websiteUrl: '' });
