@@ -33,11 +33,11 @@ export function BookingStickyCard({
     return (
       <aside
         data-testid="vendor-sticky-card"
-        className="sticky top-6 rounded-lg border-2 border-ink bg-white p-5 shadow-md"
+        className="sticky top-6 z-30 rounded-lg border-2 border-ink bg-white p-5 shadow-md"
       >
         <p className="text-sm text-ink">
-          This vendor hasn&apos;t listed packages yet. Reach out to ask about availability and
-          pricing.
+          This vendor hasn&apos;t listed packages yet. Send them a custom request to ask about
+          availability and pricing.
         </p>
         <Button
           className="mt-4 w-full"
@@ -59,7 +59,7 @@ export function BookingStickyCard({
   return (
     <aside
       data-testid="vendor-sticky-card"
-      className="sticky top-6 rounded-lg border-2 border-ink bg-white p-5 shadow-md"
+      className="sticky top-6 z-30 rounded-lg border-2 border-ink bg-white p-5 shadow-md"
     >
       <span className="inline-block rounded-full bg-hot-pink/10 px-2.5 py-1 text-xs font-medium text-hot-pink">
         Most popular

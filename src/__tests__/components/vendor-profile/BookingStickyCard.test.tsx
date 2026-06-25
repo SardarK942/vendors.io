@@ -88,7 +88,7 @@ describe('BookingStickyCard', () => {
         onRequestBooking={() => {}}
       />
     );
-    expect(screen.getByText(/custom request|custom booking/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /custom request/i })).toBeInTheDocument();
   });
 
   it('renders trust row (rating, response time, events)', () => {
