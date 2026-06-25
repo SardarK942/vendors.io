@@ -58,7 +58,7 @@ export function PackageGrid({
 
   return (
     <>
-      <div id="packages-section" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {packages.map((p) =>
           isCustom(p) ? (
             <Link

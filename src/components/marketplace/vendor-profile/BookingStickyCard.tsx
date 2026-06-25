@@ -1,6 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
+import { ExternalLink, Instagram } from 'lucide-react';
 import type { Database } from '@/types/database.types';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
 import {
@@ -48,6 +49,7 @@ export function BookingStickyCard({
           Send a custom request →
         </Button>
         <TrustRow vendor={vendor} />
+        <Socials vendor={vendor} />
       </aside>
     );
   }
@@ -69,12 +71,14 @@ export function BookingStickyCard({
         <p className="text-xs text-ink/70">{featured.duration_hours} hours</p>
       )}
 
-      <p className="mt-3 text-3xl font-bold text-ink">{formatPrice(total)}</p>
+      <p className="mt-6 text-3xl font-bold text-ink">{formatPrice(total)}</p>
       <p className="text-xs text-ink/60">Total cost (everything included)</p>
 
       <div className="my-4 rounded-md bg-cream p-3 text-center text-xs text-ink">
-        Pay <b className="text-hot-pink">{formatPrice(deposit)}</b> deposit today ·{' '}
-        {formatPrice(remaining)} due to vendor at event
+        Pay <b className="text-hot-pink">{formatPrice(deposit)}</b> deposit today.{' '}
+        <span className="text-ink/80">
+          Vendor will arrange the remaining {formatPrice(remaining)} with you.
+        </span>
       </div>
 
       <Button
@@ -97,7 +101,36 @@ export function BookingStickyCard({
       )}
 
       <TrustRow vendor={vendor} />
+      <Socials vendor={vendor} />
     </aside>
+  );
+}
+
+function Socials({ vendor }: { vendor: VendorRow }) {
+  if (!vendor.instagram_handle && !vendor.website_url) return null;
+  return (
+    <div className="mt-3 flex items-center justify-center gap-4 border-t border-ink/10 pt-3 text-xs">
+      {vendor.instagram_handle && (
+        <a
+          href={`https://instagram.com/${vendor.instagram_handle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-ink/70 hover-pink-text"
+        >
+          <Instagram className="h-3.5 w-3.5" />@{vendor.instagram_handle}
+        </a>
+      )}
+      {vendor.website_url && (
+        <a
+          href={vendor.website_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-1 text-ink/70 hover-pink-text"
+        >
+          <ExternalLink className="h-3.5 w-3.5" /> Website
+        </a>
+      )}
+    </div>
   );
 }
 
