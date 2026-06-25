@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Star } from 'lucide-react';
 import type { Database } from '@/types/database.types';
+import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 
 import { OwnerBanner } from '@/components/marketplace/OwnerBanner';
 import { ExitPreviewPill } from '@/components/marketplace/ExitPreviewPill';
@@ -46,7 +47,7 @@ function reviewerName(users: ReviewItem['users']): string {
 
 export function VendorProfile({
   vendor,
-  showBookingButton: _ignored, // legacy prop — sticky card handles CTA visibility now
+  showBookingButton = true,
   reviews = [],
   packages = [],
   isOwner = false,
@@ -54,7 +55,7 @@ export function VendorProfile({
 }: VendorProfileProps) {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState(false);
-  const interactive = interactiveProp ?? (!isOwner || previewMode);
+  const interactive = (interactiveProp ?? (!isOwner || previewMode)) && showBookingButton;
   const showBanner = isOwner && !previewMode;
   const featured = getFeaturedPackage(packages);
 
@@ -84,12 +85,14 @@ export function VendorProfile({
         />
       )}
 
-      <div className="mx-auto max-w-6xl px-4 py-4">
+      <div className="mx-auto max-w-6xl px-4 py-4 pb-24 md:pb-4">
         {/* Breadcrumb */}
         <nav className="mb-4 text-xs text-ink/60">
           <Link href="/vendors" className="hover-pink-text">
-            All vendors
+            {VENDOR_CATEGORY_LABELS[vendor.category] || vendor.category}
           </Link>
+          <span className="mx-1">·</span>
+          <span>{vendor.service_area?.[0] || 'Chicago'}</span>
           <span className="mx-1">·</span>
           <span>{vendor.business_name}</span>
         </nav>

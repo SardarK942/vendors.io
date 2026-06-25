@@ -141,7 +141,9 @@ export function PackageGrid({
                     <span className="text-lg font-bold">
                       ${(p.base_price_cents / 100).toLocaleString()}
                     </span>
-                    <span className="text-sm text-primary group-hover:underline">Select →</span>
+                    <span className="text-sm text-primary group-hover:underline">
+                      Book {p.name} →
+                    </span>
                   </div>
                 </div>
               </button>

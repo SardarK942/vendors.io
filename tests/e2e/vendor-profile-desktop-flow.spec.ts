@@ -67,7 +67,10 @@ test.describe('Vendor profile — desktop flow', () => {
     await expect(featuredCard).toBeVisible();
 
     // ── Featured card CTA routes to /book ───────────────────────────────────
-    await featuredCard.getByText(/Book.*Standard/i).click();
+    // Card click opens PackageDetailModal first; click its "Continue to booking" CTA
+    await featuredCard.click();
+    await expect(page.getByText(/continue to booking/i)).toBeVisible();
+    await page.getByRole('button', { name: /continue to booking/i }).click();
     await page.waitForURL(/\/book/);
 
     await ctx.close();
