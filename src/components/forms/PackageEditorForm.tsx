@@ -91,8 +91,21 @@ export function PackageEditorForm({ mode, initial }: Props) {
       });
 
       if (!res.ok) {
-        const json = await res.json();
-        toast.error(json.error?.message ?? 'Failed to save package');
+        const json = await res.json().catch(() => ({}));
+        // Error boundary returns { error: "message" } for HttpError/ZodError/generic.
+        // The legacy Supabase path returns { error: { message: "..." } }. Handle both.
+        const headline =
+          typeof json.error === 'string'
+            ? json.error
+            : (json.error?.message ?? 'Failed to save package');
+        // ZodError surfaces field-level details under json.details.fieldErrors.
+        const fieldErrors = json.details?.fieldErrors as Record<string, string[]> | undefined;
+        const fieldList = fieldErrors
+          ? Object.entries(fieldErrors)
+              .map(([field, msgs]) => `${field}: ${msgs.join(', ')}`)
+              .join(' · ')
+          : '';
+        toast.error(fieldList ? `${headline} — ${fieldList}` : headline);
         return;
       }
 
