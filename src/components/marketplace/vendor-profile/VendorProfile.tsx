@@ -206,8 +206,15 @@ export function VendorProfile({
               {reviews.map((r) => (
                 <article key={r.id} className="rounded-lg border border-ink/10 bg-white p-4">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="font-semibold text-ink">
-                      <span className="text-amber-400">★ </span>
+                    <span className="flex items-center gap-1.5 font-semibold text-ink">
+                      <span className="flex text-amber-400">
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <Star
+                            key={n}
+                            className={`h-3.5 w-3.5 ${n <= Math.round(r.rating_overall) ? 'fill-current' : 'fill-none'}`}
+                          />
+                        ))}
+                      </span>
                       {reviewerName(r.users)}
                     </span>
                     <span className="text-xs text-ink/50">
