@@ -972,54 +972,6 @@ export async function handlePayoutEvent(
   // No-op: stripe_accounts table dropped in migration 00058.
 }
 
-export interface PayoutHistoryRow {
-  id: string;
-  stripe_payout_id: string;
-  amount_cents: number;
-  status: string;
-  arrival_date: string | null;
-  failure_message: string | null;
-  bookings_count: number;
-}
-
-export async function getPayoutHistory(
-  supabase: SupabaseClient<Database>,
-  vendorProfileId: string,
-  params: { cursor?: string; limit?: number } = {}
-): Promise<{ data: PayoutHistoryRow[] | null; error: unknown; nextCursor?: string }> {
-  const { cursor, limit = 25 } = params;
-  let query = supabase
-    .from('payouts')
-    .select(
-      'id, stripe_payout_id, amount_cents, status, arrival_date, failure_message, payout_bookings(count)'
-    )
-    .eq('vendor_profile_id', vendorProfileId)
-    .order('arrival_date', { ascending: false, nullsFirst: false })
-    .limit(limit + 1);
-  if (cursor) query = query.lt('arrival_date', cursor);
-
-  const { data, error } = await query;
-  if (error) return { data: null, error };
-
-  const rows: PayoutHistoryRow[] = (data ?? []).map((r) => ({
-    id: r.id as string,
-    stripe_payout_id: r.stripe_payout_id as string,
-    amount_cents: r.amount_cents as number,
-    status: r.status as string,
-    arrival_date: (r.arrival_date as string | null) ?? null,
-    failure_message: (r.failure_message as string | null) ?? null,
-    bookings_count: ((r.payout_bookings as { count: number }[] | null) ?? []).reduce(
-      (s, c) => s + (c.count ?? 0),
-      0
-    ),
-  }));
-
-  const hasMore = rows.length > limit;
-  const trimmed = hasMore ? rows.slice(0, limit) : rows;
-  const nextCursor = hasMore ? (trimmed[trimmed.length - 1].arrival_date ?? undefined) : undefined;
-  return { data: trimmed, error: null, nextCursor };
-}
-
 // ─── Vendor Attribution (Baazar attribution dashboard) ───────────────────────
 // Extracted to payment.attribution.ts (client-safe). Re-exported here so that
 // server-side callers (money/page.tsx, unit tests) can still import from this module.
