@@ -290,6 +290,8 @@ export async function seedVendorUnpublished(): Promise<TestVendorUnpublished> {
 }
 
 export interface SeedPackageOptions {
+  name?: string;
+  durationHours?: number;
   basePriceCents?: number;
   eventsCount?: number;
   addons?: Array<{ name: string; priceDeltaCents: number }>;
@@ -316,12 +318,12 @@ export async function seedPackage(
     .from('packages')
     .insert({
       vendor_profile_id: vendor.vendorProfileId,
-      name: 'E2E Package',
+      name: options.name ?? 'E2E Package',
       description: 'Seeded for E2E tests',
       base_price_cents: basePriceCents,
       included_items: ['Coverage', 'Photos'],
       max_guests: 200,
-      duration_hours: 8,
+      duration_hours: options.durationHours ?? 8,
       events_count: eventsCount,
       featured_image_url: 'https://utfs.io/f/e2e-fake-img',
       gallery_image_urls: [],
