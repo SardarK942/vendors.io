@@ -2,6 +2,7 @@ import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supab
 import { notFound, redirect } from 'next/navigation';
 import { VendorProfile } from '@/components/marketplace/VendorProfile';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
+import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
 import { recordVendorProfileView } from '@/services/analytics.actions';
 import { appendCustomRequest } from '@/lib/vendor-packages/with-custom-request';
 import { getUnclaimedBySlug } from '@/lib/scraped-vendor/public';
@@ -95,12 +96,14 @@ export default async function VendorPage({ params }: VendorPageProps) {
 
   return (
     <div className="py-8">
-      <VendorProfile
-        vendor={vendor}
-        reviews={reviews ?? []}
-        packages={packages as unknown as Parameters<typeof VendorProfile>[0]['packages']}
-        isOwner={isOwner}
-      />
+      <SavedVendorsProvider>
+        <VendorProfile
+          vendor={vendor}
+          reviews={reviews ?? []}
+          packages={packages as unknown as Parameters<typeof VendorProfile>[0]['packages']}
+          isOwner={isOwner}
+        />
+      </SavedVendorsProvider>
     </div>
   );
 }

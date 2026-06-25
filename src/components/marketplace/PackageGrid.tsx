@@ -33,6 +33,7 @@ interface Props {
   packages: PackageItem[];
   vendorSlug: string;
   interactive?: boolean;
+  featuredPackageId?: string;
 }
 
 function isCustom(p: PackageItem): p is CustomRequestPackage {
@@ -45,14 +46,19 @@ function isCustom(p: PackageItem): p is CustomRequestPackage {
  * Real packages open PackageDetailModal. Custom Request (virtual, always last)
  * navigates directly to /vendors/{slug}/request (no intermediate modal).
  */
-export function PackageGrid({ packages, vendorSlug, interactive = true }: Props) {
+export function PackageGrid({
+  packages,
+  vendorSlug,
+  interactive = true,
+  featuredPackageId,
+}: Props) {
   const [selected, setSelected] = useState<PackageWithAddons | null>(null);
 
   if (packages.length === 0) return null;
 
   return (
     <>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div id="packages-section" className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {packages.map((p) =>
           isCustom(p) ? (
             <Link
@@ -93,41 +99,55 @@ export function PackageGrid({ packages, vendorSlug, interactive = true }: Props)
               </div>
             </Link>
           ) : (
-            <button
+            <div
               key={p.id}
-              type="button"
-              onClick={() => {
-                if (!interactive) {
-                  toast('Preview mode — bookings disabled.');
-                  return;
-                }
-                setSelected(p);
-              }}
-              className="group overflow-hidden rounded-xl border border-border text-left transition-shadow hover:shadow-lg"
+              className="relative"
+              data-pkg-featured={p.id === featuredPackageId ? 'true' : undefined}
             >
-              <div className="relative aspect-[4/3] bg-muted">
-                <Image
-                  src={p.featured_image_url}
-                  alt={p.name}
-                  fill
-                  className="object-cover"
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                />
-              </div>
-              <div className="space-y-2 p-4">
-                <h3 className="text-base font-semibold leading-tight">{p.name}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {p.duration_hours}h · up to {p.max_guests} guests
-                  {p.events_count > 1 && ` · ${p.events_count} events`}
-                </p>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="text-lg font-bold">
-                    ${(p.base_price_cents / 100).toLocaleString()}
-                  </span>
-                  <span className="text-sm text-primary group-hover:underline">Select →</span>
+              {p.id === featuredPackageId && (
+                <span className="absolute -top-2.5 left-4 z-10 rounded-full bg-hot-pink px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cream">
+                  Most popular
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  if (!interactive) {
+                    toast('Preview mode — bookings disabled.');
+                    return;
+                  }
+                  setSelected(p);
+                }}
+                className={`group w-full overflow-hidden rounded-xl text-left transition-shadow hover:shadow-lg ${
+                  p.id === featuredPackageId ? 'border-2 border-ink' : 'border border-border'
+                }`}
+              >
+                <div className="relative aspect-[4/3] bg-muted">
+                  <Image
+                    src={p.featured_image_url}
+                    alt={p.name}
+                    fill
+                    className="object-cover"
+                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                  />
                 </div>
-              </div>
-            </button>
+                <div className="space-y-2 p-4">
+                  <h3 className="text-base font-semibold leading-tight">{p.name}</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {p.duration_hours}h · up to {p.max_guests} guests
+                    {p.events_count > 1 && ` · ${p.events_count} events`}
+                  </p>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="text-lg font-bold">
+                      ${(p.base_price_cents / 100).toLocaleString()}
+                    </span>
+                    <span className="text-sm text-primary group-hover:underline">
+                      Book {p.name} →
+                    </span>
+                  </div>
+                </div>
+              </button>
+            </div>
           )
         )}
       </div>
