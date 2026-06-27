@@ -73,10 +73,10 @@ export function ConnectCalendarModal({ open, onClose, feedUrl, onIntent }: Props
               icon={<OutlookCalIcon />}
               name={
                 <>
-                  Outlook <span className="text-xs text-ink/60">· Microsoft 365, web</span>
+                  Outlook <span className="text-xs text-ink/60">· Microsoft 365, Outlook.com</span>
                 </>
               }
-              desc="Subscribe via Microsoft's add-by-URL feature."
+              desc="Subscribes via Outlook's calendar add-by-URL."
               onClick={() => onIntent('outlook')}
             />
 

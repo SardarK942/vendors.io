@@ -25,9 +25,9 @@ describe('ConnectCalendarModal', () => {
         onIntent={() => {}}
       />
     );
-    expect(screen.getByText(/Google Calendar/)).toBeTruthy();
-    expect(screen.getByText(/Apple Calendar/)).toBeTruthy();
-    expect(screen.getByText(/Outlook/)).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Google Calendar/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Apple Calendar/i })).toBeTruthy();
+    expect(screen.getByRole('link', { name: /Outlook/i })).toBeTruthy();
   });
 
   it('fires onIntent("google") when Google row clicked', () => {
