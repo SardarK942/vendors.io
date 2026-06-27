@@ -17,7 +17,7 @@ vi.mock('@/lib/supabase/server', () => ({
 import { GET } from '@/app/api/cal/[token]/route';
 
 function mockReq(ua = 'Google-Calendar-Importer', ip = '1.2.3.4') {
-  return new Request('http://localhost/api/cal/abc.ics', {
+  return new Request('http://localhost/api/cal/abc123456789abcdefghij.ics', {
     headers: { 'user-agent': ua, 'x-forwarded-for': ip },
   });
 }
@@ -69,5 +69,37 @@ describe('GET /api/cal/[token].ics', () => {
     buildIcsMock.mockResolvedValue('BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n');
     await GET(mockReq(), { params: { token: 'xyz123abc456def789ghi.ics' } });
     expect(eqMock).toHaveBeenCalledWith('calendar_feed_token', 'xyz123abc456def789ghi');
+  });
+
+  it('returns 429 when rate limit is exceeded (600+ polls/hour)', async () => {
+    const fromMock = vi.fn((table) => {
+      if (table === 'vendor_profiles') {
+        return {
+          select: () => ({
+            eq: () => ({
+              maybeSingle: () => Promise.resolve({ data: { id: 'v-1' }, error: null }),
+            }),
+          }),
+        };
+      } else if (table === 'vendor_calendar_feed_polls') {
+        return {
+          select: () => ({
+            eq: () => ({
+              gte: () => Promise.resolve({ count: 600, data: [], error: null }),
+            }),
+          }),
+        };
+      }
+    });
+    serviceRoleMock.mockReturnValue({ from: fromMock });
+    const res = await GET(mockReq(), { params: { token: 'abc123456789abcdefghij.ics' } });
+    expect(res.status).toBe(429);
+    expect(recordPollMock).toHaveBeenCalledWith(expect.objectContaining({ statusReturned: 429 }));
+  });
+
+  it('returns 404 for token that fails regex validation', async () => {
+    const res = await GET(mockReq(), { params: { token: 'abc.ics' } });
+    expect(res.status).toBe(404);
+    expect(serviceRoleMock).not.toHaveBeenCalled();
   });
 });
