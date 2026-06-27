@@ -262,6 +262,14 @@ export interface Database {
           followup_48h_sent_at: string | null;
           published_at: string | null;
           served_event_types: string[];
+          calendar_feed_token: string | null;
+          calendar_feed_state: 'not_connected' | 'pending' | 'connected';
+          calendar_feed_intent_at: string | null;
+          calendar_feed_intent_method: string | null;
+          calendar_feed_connected_at: string | null;
+          calendar_feed_connected_via_ua: string | null;
+          calendar_feed_nudge_dismissed_at: string | null;
+          first_confirmed_booking_at: string | null;
         };
         Insert: {
           id?: string;
@@ -311,6 +319,14 @@ export interface Database {
           followup_48h_sent_at?: string | null;
           published_at?: string | null;
           served_event_types?: string[];
+          calendar_feed_token?: string | null;
+          calendar_feed_state?: 'not_connected' | 'pending' | 'connected';
+          calendar_feed_intent_at?: string | null;
+          calendar_feed_intent_method?: string | null;
+          calendar_feed_connected_at?: string | null;
+          calendar_feed_connected_via_ua?: string | null;
+          calendar_feed_nudge_dismissed_at?: string | null;
+          first_confirmed_booking_at?: string | null;
         };
         Update: {
           user_id?: string;
@@ -358,6 +374,14 @@ export interface Database {
           followup_48h_sent_at?: string | null;
           published_at?: string | null;
           served_event_types?: string[];
+          calendar_feed_token?: string | null;
+          calendar_feed_state?: 'not_connected' | 'pending' | 'connected';
+          calendar_feed_intent_at?: string | null;
+          calendar_feed_intent_method?: string | null;
+          calendar_feed_connected_at?: string | null;
+          calendar_feed_connected_via_ua?: string | null;
+          calendar_feed_nudge_dismissed_at?: string | null;
+          first_confirmed_booking_at?: string | null;
         };
         Relationships: [
           {
