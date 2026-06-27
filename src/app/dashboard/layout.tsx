@@ -1,6 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { Navbar } from '@/components/ui/Navbar';
+import { BaazarChrome } from '@/components/ui/BaazarChrome';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Menu } from 'lucide-react';
 
@@ -34,8 +34,8 @@ export default async function DashboardLayout({
   return (
     <ActiveBusinessProvider activeBusinessId={activeBusinessId}>
       <div className="min-h-screen bg-muted/40">
-        <Navbar />
-        <div className="mx-auto flex max-w-7xl gap-8 px-4 py-8 sm:px-6 lg:px-8">
+        <BaazarChrome />
+        <div className="mx-auto flex max-w-7xl gap-8 px-4 pb-8 pt-24 sm:px-6 lg:px-8">
           {/* Mobile hamburger */}
           <div className="absolute right-4 top-20 z-10 md:hidden">
             <Sheet>

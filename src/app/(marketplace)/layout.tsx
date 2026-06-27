@@ -1,11 +1,11 @@
-import { Navbar } from '@/components/ui/Navbar';
+import { BaazarChrome } from '@/components/ui/BaazarChrome';
 import { Footer } from '@/components/layout/Footer';
 
 export default function MarketplaceLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
-      <Navbar />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 sm:px-6 lg:px-8">{children}</main>
+      <BaazarChrome />
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 pt-20 sm:px-6 lg:px-8">{children}</main>
       <Footer />
     </div>
   );
