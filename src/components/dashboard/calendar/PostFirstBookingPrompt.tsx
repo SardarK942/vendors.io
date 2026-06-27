@@ -12,7 +12,11 @@ interface Props {
   isFirstConfirmedBooking: boolean;
 }
 
-export function PostFirstBookingPrompt({ feedStatus, bookingId, isFirstConfirmedBooking }: Props) {
+export function PostFirstBookingPrompt({
+  feedStatus,
+  bookingId: _bookingId,
+  isFirstConfirmedBooking,
+}: Props) {
   const [dismissed, setDismissed] = useState(false);
   const [modalOpen, setModalOpen] = useState(false);
   const [feedUrl, setFeedUrl] = useState<string | null>(feedStatus.feed_url);

@@ -393,6 +393,44 @@ export interface Database {
           },
         ];
       };
+      vendor_calendar_feed_polls: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          polled_at: string;
+          user_agent: string | null;
+          recognized_provider: string | null;
+          ip_hash: string | null;
+          status_returned: number;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          polled_at?: string;
+          user_agent?: string | null;
+          recognized_provider?: string | null;
+          ip_hash?: string | null;
+          status_returned?: number;
+        };
+        Update: {
+          id?: string;
+          vendor_profile_id?: string;
+          polled_at?: string;
+          user_agent?: string | null;
+          recognized_provider?: string | null;
+          ip_hash?: string | null;
+          status_returned?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vendor_calendar_feed_polls_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
       packages: {
         Row: {
           id: string;

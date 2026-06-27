@@ -130,7 +130,7 @@ export async function buildIcsForVendor(
   lines.push('X-PUBLISHED-TTL:PT12H');
 
   const dtStamp = fmtDtUtc(now.toISOString());
-  for (const e of events) {
+  for (const e of events ?? []) {
     const isPaid = e.status === 'deposit_paid' || e.status === 'completed';
     const summary = `[Baazar] ${e.package_name || e.event_type || 'Booking'} — ${lastNameOf(e.couple_name)}`;
     const descLines = [
