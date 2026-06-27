@@ -17,6 +17,9 @@ vi.mock('@/lib/api/auth', () => ({
 vi.mock('@/lib/vendor/active', () => ({
   getActiveVendorProfileId: (...a: unknown[]) => activeVendorMock(...a),
 }));
+vi.mock('@/lib/logger', () => ({
+  logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+}));
 
 import { GET as statusGet } from '@/app/api/vendor-calendar/feed/status/route';
 import { POST as intentPost } from '@/app/api/vendor-calendar/feed/intent/route';
@@ -72,9 +75,28 @@ describe('POST /api/vendor-calendar/feed/intent', () => {
     expect(res.status).toBe(400);
   });
 
-  it('flips to pending, returns feed_url', async () => {
-    const updateEq = vi.fn(() => Promise.resolve({ error: null }));
-    const mockSb = { from: () => ({ update: () => ({ eq: updateEq }) }) };
+  it('surfaces DB update error as 500', async () => {
+    // This test captures the regression: silently-discarded DB mutation errors.
+    // On unpatched code this returns 200; after the fix it must return 500.
+    const eqMock = vi.fn(() => Promise.resolve({ error: { message: 'db blew up' } }));
+    const updateMock = vi.fn(() => ({ eq: eqMock }));
+    const mockSb = { from: () => ({ update: updateMock }) };
+    requireUserMock.mockResolvedValue({ user: { id: 'user-1' }, supabase: mockSb });
+    activeVendorMock.mockResolvedValue('vendor-1');
+    getOrCreateFeedTokenMock.mockResolvedValue('tokenABC');
+    const req = new Request('http://localhost/api/vendor-calendar/feed/intent', {
+      method: 'POST',
+      body: JSON.stringify({ method: 'google' }),
+      headers: { 'content-type': 'application/json' },
+    });
+    const res = await intentPost(req);
+    expect(res.status).toBe(500);
+  });
+
+  it('flips to pending, returns feed_url, and writes correct DB patch', async () => {
+    const eqMock = vi.fn(() => Promise.resolve({ error: null }));
+    const updateMock = vi.fn(() => ({ eq: eqMock }));
+    const mockSb = { from: () => ({ update: updateMock }) };
     requireUserMock.mockResolvedValue({ user: { id: 'user-1' }, supabase: mockSb });
     activeVendorMock.mockResolvedValue('vendor-1');
     getOrCreateFeedTokenMock.mockResolvedValue('tokenABC');
@@ -88,5 +110,16 @@ describe('POST /api/vendor-calendar/feed/intent', () => {
     const body = await res.json();
     expect(body.state).toBe('pending');
     expect(body.feed_url).toBe('https://baazar.io/api/cal/tokenABC.ics');
+
+    // Assert the DB write contained all required fields.
+    expect(updateMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        calendar_feed_state: 'pending',
+        calendar_feed_intent_method: 'google',
+        calendar_feed_intent_at: expect.any(String),
+      })
+    );
+    // Assert .eq() was called with the correct vendor id.
+    expect(eqMock).toHaveBeenCalledWith('id', 'vendor-1');
   });
 });

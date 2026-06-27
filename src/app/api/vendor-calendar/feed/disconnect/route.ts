@@ -1,15 +1,16 @@
 // src/app/api/vendor-calendar/feed/disconnect/route.ts
 // Clears all calendar-feed connection state, returning the vendor to 'not_connected'.
 
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
 
-export async function POST(_req: Request): Promise<Response> {
+export const POST = withErrorBoundary(async (_req: Request) => {
   const { user, supabase } = await requireUser();
   const vendorId = await getActiveVendorProfileId(supabase, user.id);
   if (!vendorId) return Response.json({ error: 'unauthenticated' }, { status: 401 });
 
-  await supabase
+  const { error } = await supabase
     .from('vendor_profiles')
     .update({
       calendar_feed_state: 'not_connected',
@@ -20,5 +21,7 @@ export async function POST(_req: Request): Promise<Response> {
     })
     .eq('id', vendorId);
 
+  if (error) throw new HttpError(500, error.message);
+
   return Response.json({ state: 'not_connected' });
-}
+});
