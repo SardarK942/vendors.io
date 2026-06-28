@@ -10,7 +10,10 @@
 -- TypeScript callers in src/lib/ai/search.ts don't read those fields — the
 -- page-level merge fetches pricing from vendor_packages_price_band separately.
 
-CREATE OR REPLACE FUNCTION search_vendors_semantic(
+DROP FUNCTION IF EXISTS search_vendors_semantic(VECTOR, INT, FLOAT);
+DROP FUNCTION IF EXISTS search_vendors_fulltext(TEXT, INT);
+
+CREATE FUNCTION search_vendors_semantic(
   query_embedding VECTOR(1536),
   match_count INT DEFAULT 10,
   similarity_threshold FLOAT DEFAULT 0.5
@@ -58,7 +61,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION search_vendors_fulltext(
+CREATE FUNCTION search_vendors_fulltext(
   search_query TEXT,
   match_count INT DEFAULT 20
 )
