@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CounterModal } from '@/components/bookings/CounterModal';
 import { fmtUSD } from '@/lib/intl';
 
@@ -45,6 +47,7 @@ export function AdjustmentReview({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [counterOpen, setCounterOpen] = useState(false);
+  const [declineConfirmOpen, setDeclineConfirmOpen] = useState(false);
 
   // T18: Remaining counter-offers for this couple (cap is 2)
   const countersLeft = Math.max(0, 2 - coupleCounterCount);
@@ -77,17 +80,20 @@ export function AdjustmentReview({
       if (res.ok) {
         const json = await res.json();
         if (endpoint === 'accept-adjusted' && json.data?.deposit_checkout_url) {
+          toast.success('Quote accepted. Redirecting to payment…');
           window.location.href = json.data.deposit_checkout_url;
         } else {
-          window.location.reload();
+          toast.success(endpoint === 'accept-adjusted' ? 'Quote accepted.' : 'Quote declined.');
+          setDeclineConfirmOpen(false);
+          router.refresh();
         }
       } else {
         const json = await res.json().catch(() => ({}));
-        alert(json.error ?? 'Action failed. Please try again.');
+        toast.error(json.error ?? 'Action failed. Please try again.');
         setBusy(false);
       }
     } catch {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
       setBusy(false);
     }
   }
@@ -131,7 +137,7 @@ export function AdjustmentReview({
         <Button onClick={() => action('accept-adjusted')} disabled={busy}>
           Accept adjusted quote
         </Button>
-        <Button variant="outline" onClick={() => action('decline-adjusted')} disabled={busy}>
+        <Button variant="outline" onClick={() => setDeclineConfirmOpen(true)} disabled={busy}>
           Decline
         </Button>
 
@@ -163,6 +169,17 @@ export function AdjustmentReview({
         bookingId={bookingId}
         currentTotalCents={totalPriceCents}
         onSuccess={() => router.refresh()}
+      />
+
+      <ConfirmDialog
+        open={declineConfirmOpen}
+        onOpenChange={setDeclineConfirmOpen}
+        title="Decline This Quote?"
+        description="The vendor will be asked to revise. If they don't, the booking will fall through."
+        confirmLabel="Decline Quote"
+        destructive
+        busy={busy}
+        onConfirm={() => action('decline-adjusted')}
       />
     </div>
   );
