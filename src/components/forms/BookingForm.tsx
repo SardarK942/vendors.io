@@ -169,7 +169,9 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 <Image src={pkg.featured_image_url} alt={pkg.name} fill className="object-cover" />
               </div>
               <div>
-                <p className="font-semibold">{pkg.name}</p>
+                <p className="font-semibold" translate="no">
+                  {pkg.name}
+                </p>
                 <p className="text-sm text-muted-foreground">
                   {pkg.duration_hours}
                   {' '}h · up to {pkg.max_guests} guests

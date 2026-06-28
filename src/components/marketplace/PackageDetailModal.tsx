@@ -72,7 +72,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{pkg.name}</DialogTitle>
+          <DialogTitle translate="no">{pkg.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5">

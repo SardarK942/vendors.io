@@ -99,7 +99,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
           <dl className="space-y-1 text-sm">
             <div className="flex gap-2">
               <dt className="w-32 font-medium text-muted-foreground">Business name</dt>
-              <dd>{profile.business_name}</dd>
+              <dd translate="no">{profile.business_name}</dd>
             </div>
             <div className="flex gap-2">
               <dt className="w-32 font-medium text-muted-foreground">Category</dt>
@@ -156,7 +156,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
               <dt className="w-32 font-medium text-muted-foreground">Instagram</dt>
               <dd>
                 {profile.instagram_handle ? (
-                  `@${profile.instagram_handle}`
+                  <span translate="no">@{profile.instagram_handle}</span>
                 ) : (
                   <span className="text-destructive">Missing</span>
                 )}

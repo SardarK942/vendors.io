@@ -139,7 +139,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             <DialogHeader>
               <DialogTitle>Remove this listing</DialogTitle>
               <DialogDescription>
-                We’ll take {businessName} offline within 48 hours.
+                We’ll take <span translate="no">{businessName}</span> offline within 48 hours.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 text-sm">

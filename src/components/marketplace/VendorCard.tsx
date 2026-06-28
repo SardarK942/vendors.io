@@ -176,6 +176,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             'font-display font-bold leading-[1.18] tracking-[-0.014em] text-ink',
             compact ? 'text-[15px]' : 'mb-2 text-[21px]'
           )}
+          translate="no"
         >
           {vendor.business_name}
         </h3>

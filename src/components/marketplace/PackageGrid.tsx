@@ -83,7 +83,9 @@ export function PackageGrid({
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-hot-pink">
                   Quote on request
                 </p>
-                <h3 className="text-base font-semibold leading-tight text-ink">{p.name}</h3>
+                <h3 className="text-base font-semibold leading-tight text-ink" translate="no">
+                  {p.name}
+                </h3>
                 <p className="flex-1 text-sm text-ink-muted">{p.description}</p>
                 <div className="flex items-center justify-between pt-1">
                   <span className="font-display text-lg font-medium italic text-ink">
@@ -132,7 +134,9 @@ export function PackageGrid({
                   />
                 </div>
                 <div className="space-y-2 p-4">
-                  <h3 className="text-base font-semibold leading-tight">{p.name}</h3>
+                  <h3 className="text-base font-semibold leading-tight" translate="no">
+                    {p.name}
+                  </h3>
                   <p className="text-sm text-muted-foreground">
                     {p.duration_hours}
                     {' '}h · up to {p.max_guests} guests
@@ -143,7 +147,7 @@ export function PackageGrid({
                       ${(p.base_price_cents / 100).toLocaleString()}
                     </span>
                     <span className="text-sm text-primary group-hover:underline">
-                      Book {p.name} →
+                      Book <span translate="no">{p.name}</span> →
                     </span>
                   </div>
                 </div>

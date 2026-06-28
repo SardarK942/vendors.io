@@ -88,7 +88,7 @@ export function Footer() {
           {/* Legal band */}
           <div className="flex flex-col items-start justify-between gap-4 border-t border-hairline pt-6 md:flex-row md:items-center">
             <div className="flex flex-wrap items-center gap-[18px] text-xs text-ink-soft">
-              <span>&copy; {year} Baazar Marketplace</span>
+              <span translate="no">&copy; {year} Baazar Marketplace</span>
               <a
                 href="/terms"
                 className="text-ink-soft transition-colors duration-150 hover:text-ink"

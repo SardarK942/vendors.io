@@ -61,7 +61,7 @@ export function BusinessSwitcher({ activeBusinessId, businesses }: BusinessSwitc
           disabled={isPending}
         >
           <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
-          <span className="max-w-[180px] truncate">
+          <span className="max-w-[180px] truncate" translate="no">
             {active?.businessName ?? 'Switch business'}
           </span>
           <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
@@ -77,7 +77,9 @@ export function BusinessSwitcher({ activeBusinessId, businesses }: BusinessSwitc
             onClick={() => switchTo(b.id)}
             className="flex items-center justify-between"
           >
-            <span className="truncate">{b.businessName}</span>
+            <span className="truncate" translate="no">
+              {b.businessName}
+            </span>
             {b.id === activeBusinessId && (
               <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" />
             )}

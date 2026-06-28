@@ -93,6 +93,7 @@ export function NewsletterForm() {
       <button
         type="submit"
         aria-label="Subscribe to The Bazaar Letter"
+        translate="no"
         disabled={submitting || success}
         className={[
           'flex h-10 w-10 flex-none items-center justify-center rounded-full bg-hot-pink text-cream',

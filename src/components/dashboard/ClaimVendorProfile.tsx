@@ -95,9 +95,7 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
       {!searching && query.trim().length >= 2 && results.length === 0 && (
         <Card>
           <CardContent className="space-y-3 pt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              No unclaimed listing matches “{query}”.
-            </p>
+            <p className="text-sm text-muted-foreground">No unclaimed listing matches “{query}”.</p>
             <Button onClick={onCreateNew} variant="outline">
               Create a new profile instead
             </Button>
@@ -111,13 +109,19 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
             <Card key={v.id}>
               <CardContent className="flex items-center justify-between gap-4 pt-6">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{v.business_name}</p>
+                  <p className="font-medium" translate="no">
+                    {v.business_name}
+                  </p>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline">
                       {VENDOR_CATEGORY_LABELS[v.category] || v.category}
                     </Badge>
                     {v.service_area?.length > 0 && <span>{v.service_area.join(', ')}</span>}
-                    {v.instagram_handle && <span>@{v.instagram_handle}</span>}
+                    {v.instagram_handle && (
+                      <span>
+                        <span translate="no">@{v.instagram_handle}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Button onClick={() => handleClaim(v.id)} disabled={claimingId === v.id} size="sm">

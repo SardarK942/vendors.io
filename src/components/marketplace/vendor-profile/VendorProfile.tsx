@@ -94,7 +94,7 @@ export function VendorProfile({
           <span className="mx-1">·</span>
           <span>{vendor.service_area?.[0] || 'Chicago'}</span>
           <span className="mx-1">·</span>
-          <span>{vendor.business_name}</span>
+          <span translate="no">{vendor.business_name}</span>
         </nav>
 
         {/* Mobile carousel + bio + packages (single column) */}

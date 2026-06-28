@@ -118,6 +118,7 @@ function Socials({ vendor }: { vendor: VendorRow }) {
           href={`https://instagram.com/${vendor.instagram_handle}`}
           target="_blank"
           rel="noopener noreferrer"
+          translate="no"
           className="flex items-center gap-1 text-ink/70 hover-pink-text"
         >
           <Instagram className="h-3.5 w-3.5" aria-hidden="true" />@{vendor.instagram_handle}

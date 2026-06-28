@@ -16,10 +16,17 @@ export function ScrapedVendorMatchPrompt({ matches }: Props) {
         We already have a listing for your business on Baazar.
       </h3>
       <div className="mb-4 rounded-md border bg-background p-3">
-        <p className="font-medium">{top.business_name}</p>
+        <p className="font-medium" translate="no">
+          {top.business_name}
+        </p>
         <p className="text-xs text-muted-foreground">
           {top.category ?? 'category unknown'} · {top.city ?? 'unknown city'}
-          {top.instagram_handle && ` · @${top.instagram_handle}`}
+          {top.instagram_handle && (
+            <>
+              {' '}
+              · <span translate="no">@{top.instagram_handle}</span>
+            </>
+          )}
         </p>
       </div>
       <p className="mb-3 text-sm">To verify it’s yours and take ownership:</p>

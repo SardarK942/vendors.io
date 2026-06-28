@@ -16,7 +16,9 @@ export function IdentityPanel({ vendor }: IdentityPanelProps) {
     <section data-testid="identity-panel" className="space-y-6">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="font-spectral text-3xl font-bold text-ink">{vendor.business_name}</h1>
+          <h1 className="font-spectral text-3xl font-bold text-ink" translate="no">
+            {vendor.business_name}
+          </h1>
           {vendor.verified && (
             <Badge className="gap-1">
               <CheckCircle className="h-3 w-3" aria-hidden="true" /> Verified

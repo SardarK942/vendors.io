@@ -63,6 +63,7 @@ export function HomepageWordmarkPanel() {
         className="relative"
         style={{ fontSize: 'clamp(72px, 9vw, 130px)', minHeight: '0.85em', lineHeight: '0.85' }}
         aria-label="Baazar"
+        translate="no"
       >
         {SCRIPTS.map((s, i) => (
           <h2

@@ -88,6 +88,7 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
     <h2
       ref={wrapperRef}
       aria-label="Baazar"
+      translate="no"
       className={
         className ??
         'm-0 text-[clamp(60px,16vw,200px)] font-normal leading-[0.85] tracking-[-0.03em] text-cream'
