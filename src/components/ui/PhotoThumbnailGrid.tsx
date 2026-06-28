@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { Star, X, GripVertical } from 'lucide-react';
 import {
   DndContext,
@@ -17,6 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Props {
   urls: string[];
@@ -108,6 +110,7 @@ export function PhotoThumbnailGrid({
   onSetPrimary,
   onReorder,
 }: Props) {
+  const [pendingRemoveIdx, setPendingRemoveIdx] = useState<number | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -133,12 +136,29 @@ export function PhotoThumbnailGrid({
               url={url}
               idx={i}
               showPrimarySelector={showPrimarySelector}
-              onRemove={onRemove}
+              onRemove={(idx) => setPendingRemoveIdx(idx)}
               onSetPrimary={onSetPrimary}
             />
           ))}
         </div>
       </SortableContext>
+
+      <ConfirmDialog
+        open={pendingRemoveIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) setPendingRemoveIdx(null);
+        }}
+        title="Remove This Photo?"
+        description="You'll lose any caption you've added."
+        confirmLabel="Remove Photo"
+        destructive
+        onConfirm={() => {
+          if (pendingRemoveIdx !== null) {
+            onRemove(pendingRemoveIdx);
+            setPendingRemoveIdx(null);
+          }
+        }}
+      />
     </DndContext>
   );
 }

@@ -1,6 +1,8 @@
 'use client';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { fmtDate } from '@/lib/intl';
 
 interface Hold {
@@ -38,10 +40,25 @@ function parseRange(range: string): {
 
 export function CalendarHoldsList({ holds }: Props) {
   const [items, setItems] = useState(holds);
+  const [pendingUnblockId, setPendingUnblockId] = useState<string | null>(null);
+  const [unblockBusy, setUnblockBusy] = useState(false);
 
   async function unblock(id: string) {
-    const res = await fetch(`/api/vendor-calendar/block/${id}`, { method: 'DELETE' });
-    if (res.ok) setItems((prev) => prev.filter((h) => h.id !== id));
+    setUnblockBusy(true);
+    try {
+      const res = await fetch(`/api/vendor-calendar/block/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setItems((prev) => prev.filter((h) => h.id !== id));
+        toast.success('Date unblocked.');
+        setPendingUnblockId(null);
+      } else {
+        toast.error('Failed to unblock date.');
+      }
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setUnblockBusy(false);
+    }
   }
 
   if (items.length === 0) {
@@ -75,7 +92,7 @@ export function CalendarHoldsList({ holds }: Props) {
                 </span>
               </span>
               {h.hold_type === 'vendor_blocked' && (
-                <Button variant="ghost" size="sm" onClick={() => unblock(h.id)}>
+                <Button variant="ghost" size="sm" onClick={() => setPendingUnblockId(h.id)}>
                   Unblock
                 </Button>
               )}
@@ -83,6 +100,21 @@ export function CalendarHoldsList({ holds }: Props) {
           );
         })}
       </ul>
+
+      <ConfirmDialog
+        open={pendingUnblockId !== null}
+        onOpenChange={(o) => {
+          if (!o) setPendingUnblockId(null);
+        }}
+        title="Unblock This Date?"
+        description="The date returns to available. Couples can book it again."
+        confirmLabel="Unblock Date"
+        destructive
+        busy={unblockBusy}
+        onConfirm={() => {
+          if (pendingUnblockId) void unblock(pendingUnblockId);
+        }}
+      />
     </div>
   );
 }
