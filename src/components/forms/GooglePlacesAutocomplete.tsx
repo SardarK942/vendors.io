@@ -82,11 +82,21 @@ export function GooglePlacesAutocomplete({
     return () => cleanup?.();
   }, [onChange]);
 
+  // The legacy Google Maps Autocomplete widget attaches its own listbox
+  // (`.pac-container`) and progressively enhances the input with the dynamic
+  // ARIA wiring (`aria-expanded`, `aria-controls`, `aria-activedescendant`)
+  // once the predictions arrive. We set the static ARIA baseline here so the
+  // input is announced as a combobox even before the script loads (or if it
+  // fails to load entirely).
   return (
     <input
       id={id}
       ref={inputRef}
       type="text"
+      role="combobox"
+      aria-autocomplete="list"
+      aria-expanded={false}
+      aria-haspopup="listbox"
       className={className ?? 'w-full rounded border p-2 text-sm'}
       placeholder={placeholder ?? 'Where will this event take place?'}
       defaultValue={value?.address_line_1 ?? ''}
