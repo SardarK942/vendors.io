@@ -2,6 +2,7 @@
 
 import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion';
 import './StaggeredMenu.css';
 
 export const StaggeredMenu = ({
@@ -26,6 +27,11 @@ export const StaggeredMenu = ({
 }) => {
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
+  const prefersReducedMotionRef = useRef(prefersReducedMotion);
+  prefersReducedMotionRef.current = prefersReducedMotion;
+  /** Returns 0 when reduce-motion is on so GSAP snaps to the final state. */
+  const safeDur = useCallback((d) => (prefersReducedMotionRef.current ? 0 : d), []);
   const panelRef = useRef(null);
   const preLayersRef = useRef(null);
   const preLayerElsRef = useRef([]);
@@ -112,7 +118,7 @@ export const StaggeredMenu = ({
     const tl = gsap.timeline({ paused: true });
 
     layerStates.forEach((ls, i) => {
-      tl.fromTo(ls.el, { xPercent: ls.start }, { xPercent: 0, duration: 0.5, ease: 'power4.out' }, i * 0.07);
+      tl.fromTo(ls.el, { xPercent: ls.start }, { xPercent: 0, duration: safeDur(0.5), ease: 'power4.out' }, i * 0.07);
     });
     const lastTime = layerStates.length ? (layerStates.length - 1) * 0.07 : 0;
     const panelInsertTime = lastTime + (layerStates.length ? 0.08 : 0);
@@ -120,7 +126,7 @@ export const StaggeredMenu = ({
     tl.fromTo(
       panel,
       { xPercent: panelStart },
-      { xPercent: 0, duration: panelDuration, ease: 'power4.out' },
+      { xPercent: 0, duration: safeDur(panelDuration), ease: 'power4.out' },
       panelInsertTime,
     );
 
@@ -132,7 +138,7 @@ export const StaggeredMenu = ({
         {
           yPercent: 0,
           rotate: 0,
-          duration: 1,
+          duration: safeDur(1),
           ease: 'power4.out',
           stagger: { each: 0.1, from: 'start' },
         },
@@ -142,7 +148,7 @@ export const StaggeredMenu = ({
         tl.to(
           numberEls,
           {
-            duration: 0.6,
+            duration: safeDur(0.6),
             ease: 'power2.out',
             '--sm-num-opacity': 1,
             stagger: { each: 0.08, from: 'start' },
@@ -159,7 +165,7 @@ export const StaggeredMenu = ({
           socialTitle,
           {
             opacity: 1,
-            duration: 0.5,
+            duration: safeDur(0.5),
             ease: 'power2.out',
           },
           socialsStart,
@@ -171,7 +177,7 @@ export const StaggeredMenu = ({
           {
             y: 0,
             opacity: 1,
-            duration: 0.55,
+            duration: safeDur(0.55),
             ease: 'power3.out',
             stagger: { each: 0.08, from: 'start' },
             onComplete: () => {
@@ -185,7 +191,7 @@ export const StaggeredMenu = ({
 
     openTlRef.current = tl;
     return tl;
-  }, [position]);
+  }, [position, safeDur]);
 
   const playOpen = useCallback(() => {
     if (busyRef.current) return;
@@ -215,7 +221,7 @@ export const StaggeredMenu = ({
     const offscreen = position === 'left' ? -100 : 100;
     closeTweenRef.current = gsap.to(all, {
       xPercent: offscreen,
-      duration: 0.32,
+      duration: safeDur(0.32),
       ease: 'power3.in',
       overwrite: 'auto',
       onComplete: () => {
@@ -234,18 +240,21 @@ export const StaggeredMenu = ({
         busyRef.current = false;
       },
     });
-  }, [position]);
+  }, [position, safeDur]);
 
-  const animateIcon = useCallback((opening) => {
-    const icon = iconRef.current;
-    if (!icon) return;
-    spinTweenRef.current?.kill();
-    if (opening) {
-      spinTweenRef.current = gsap.to(icon, { rotate: 225, duration: 0.8, ease: 'power4.out', overwrite: 'auto' });
-    } else {
-      spinTweenRef.current = gsap.to(icon, { rotate: 0, duration: 0.35, ease: 'power3.inOut', overwrite: 'auto' });
-    }
-  }, []);
+  const animateIcon = useCallback(
+    (opening) => {
+      const icon = iconRef.current;
+      if (!icon) return;
+      spinTweenRef.current?.kill();
+      if (opening) {
+        spinTweenRef.current = gsap.to(icon, { rotate: 225, duration: safeDur(0.8), ease: 'power4.out', overwrite: 'auto' });
+      } else {
+        spinTweenRef.current = gsap.to(icon, { rotate: 0, duration: safeDur(0.35), ease: 'power3.inOut', overwrite: 'auto' });
+      }
+    },
+    [safeDur],
+  );
 
   const animateColor = useCallback(
     (opening) => {
@@ -256,15 +265,15 @@ export const StaggeredMenu = ({
         const targetColor = opening ? openMenuButtonColor : menuButtonColor;
         colorTweenRef.current = gsap.to(btn, {
           color: targetColor,
-          delay: 0.18,
-          duration: 0.3,
+          delay: safeDur(0.18),
+          duration: safeDur(0.3),
           ease: 'power2.out',
         });
       } else {
         gsap.set(btn, { color: menuButtonColor });
       }
     },
-    [openMenuButtonColor, menuButtonColor, changeMenuColorOnOpen],
+    [openMenuButtonColor, menuButtonColor, changeMenuColorOnOpen, safeDur],
   );
 
   React.useEffect(() => {
@@ -278,33 +287,36 @@ export const StaggeredMenu = ({
     }
   }, [changeMenuColorOnOpen, menuButtonColor, openMenuButtonColor]);
 
-  const animateText = useCallback((opening) => {
-    const inner = textInnerRef.current;
-    if (!inner) return;
-    textCycleAnimRef.current?.kill();
+  const animateText = useCallback(
+    (opening) => {
+      const inner = textInnerRef.current;
+      if (!inner) return;
+      textCycleAnimRef.current?.kill();
 
-    const currentLabel = opening ? 'Menu' : 'Close';
-    const targetLabel = opening ? 'Close' : 'Menu';
-    const cycles = 3;
-    const seq = [currentLabel];
-    let last = currentLabel;
-    for (let i = 0; i < cycles; i++) {
-      last = last === 'Menu' ? 'Close' : 'Menu';
-      seq.push(last);
-    }
-    if (last !== targetLabel) seq.push(targetLabel);
-    seq.push(targetLabel);
-    setTextLines(seq);
+      const currentLabel = opening ? 'Menu' : 'Close';
+      const targetLabel = opening ? 'Close' : 'Menu';
+      const cycles = 3;
+      const seq = [currentLabel];
+      let last = currentLabel;
+      for (let i = 0; i < cycles; i++) {
+        last = last === 'Menu' ? 'Close' : 'Menu';
+        seq.push(last);
+      }
+      if (last !== targetLabel) seq.push(targetLabel);
+      seq.push(targetLabel);
+      setTextLines(seq);
 
-    gsap.set(inner, { yPercent: 0 });
-    const lineCount = seq.length;
-    const finalShift = ((lineCount - 1) / lineCount) * 100;
-    textCycleAnimRef.current = gsap.to(inner, {
-      yPercent: -finalShift,
-      duration: 0.5 + lineCount * 0.07,
-      ease: 'power4.out',
-    });
-  }, []);
+      gsap.set(inner, { yPercent: 0 });
+      const lineCount = seq.length;
+      const finalShift = ((lineCount - 1) / lineCount) * 100;
+      textCycleAnimRef.current = gsap.to(inner, {
+        yPercent: -finalShift,
+        duration: safeDur(0.5 + lineCount * 0.07),
+        ease: 'power4.out',
+      });
+    },
+    [safeDur],
+  );
 
   const toggleMenu = useCallback(() => {
     const target = !openRef.current;

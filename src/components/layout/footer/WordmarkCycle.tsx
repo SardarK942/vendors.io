@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion';
 import { WORDMARK_SCRIPTS, nextScriptIndex } from './wordmark-cycle-helpers';
 
 const HOLD_MS = 3500; // motion.cycle-hold
@@ -14,8 +15,8 @@ export interface WordmarkCycleProps {
 /**
  * Cycles "baazar" through Devanagari → Nastaliq → Naskh → Persian on a
  * 3.5s hold + 400ms crossfade. Pauses when offscreen (IntersectionObserver).
- * Intentionally ignores prefers-reduced-motion — the cycle is a brand
- * signature and the 400ms crossfade is gentle enough to be safe.
+ * Respects prefers-reduced-motion: when on, locks to the first wordmark
+ * variant (Devanagari) and skips the interval entirely.
  *
  * Renders Devanagari statically on the server; the cycle starts after hydration.
  */
@@ -24,12 +25,14 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
   const [opacity, setOpacity] = React.useState(1);
   const wrapperRef = React.useRef<HTMLHeadingElement | null>(null);
   const visibleRef = React.useRef(false);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   React.useEffect(() => {
-    // Brand decision: force the cycle to run even when prefers-reduced-motion
-    // is set. The wordmark fade is the signature brand moment in the footer
-    // and we want every visitor to see it. Crossfade is 400ms — gentle enough
-    // that it doesn't trigger motion sickness for most reduce-motion users.
+    // Reduce-motion users see a static Devanagari wordmark — no crossfade, no
+    // setInterval. The cycle is a brand moment, not a functional affordance,
+    // so a static variant preserves the meaning while honoring the system pref.
+    if (prefersReducedMotion) return;
+
     const el = wrapperRef.current;
     if (!el) return;
 
@@ -80,7 +83,7 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
       io.disconnect();
       stop();
     };
-  }, []);
+  }, [prefersReducedMotion]);
 
   const script = WORDMARK_SCRIPTS[index];
 
