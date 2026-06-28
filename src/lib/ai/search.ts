@@ -2,17 +2,35 @@ import OpenAI from 'openai';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import { generateEmbedding } from './embeddings';
+import { getCached, setCached } from './search-cache';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
-interface ParsedQuery {
+export interface ParsedQuery {
   originalQuery: string;
   searchText: string;
   category?: string;
   budgetHint?: string;
+  /** Extracted budget in cents (parsed from budgetHint), undefined if unparseable. */
+  budgetCents?: number;
   locationHint?: string;
+}
+
+/**
+ * Extract a cents value from a free-form budget string. Handles "$800",
+ * "1500", "$2k", "under 2000", etc. Returns undefined when unparseable.
+ */
+function parseBudgetCents(hint: string | undefined): number | undefined {
+  if (!hint) return undefined;
+  const cleaned = hint.toLowerCase().replace(/[$,]/g, '').trim();
+  const m = cleaned.match(/(\d+(?:\.\d+)?)\s*(k)?/);
+  if (!m) return undefined;
+  const n = parseFloat(m[1]);
+  if (!Number.isFinite(n) || n <= 0) return undefined;
+  const dollars = m[2] === 'k' ? n * 1000 : n;
+  return Math.round(dollars * 100);
 }
 
 /**
@@ -42,11 +60,14 @@ Respond ONLY with valid JSON, no markdown.`,
     const content = response.choices[0]?.message?.content ?? '{}';
     const parsed = JSON.parse(content);
 
+    const budgetHint: string | undefined = parsed.budgetHint || undefined;
+
     return {
       originalQuery: query,
       searchText: parsed.searchText || query,
       category: parsed.category || undefined,
-      budgetHint: parsed.budgetHint || undefined,
+      budgetHint,
+      budgetCents: parseBudgetCents(budgetHint),
       locationHint: parsed.locationHint || undefined,
     };
   } catch {
@@ -62,7 +83,7 @@ Respond ONLY with valid JSON, no markdown.`,
 export async function semanticSearch(
   supabase: SupabaseClient<Database>,
   query: string,
-  matchCount: number = 10
+  matchCount: number = 20
 ): Promise<(VendorRow & { similarity: number })[]> {
   const embedding = await generateEmbedding(query);
 
@@ -106,19 +127,23 @@ export async function fullTextSearch(
  * Two-tier hybrid search:
  * 1. Semantic search (primary) via pgvector
  * 2. Full-text fallback if semantic results < 5
- * 3. Optional category filter from parsed query
+ * 3. Parsed-query hints (category, location, budget) as **soft** filters —
+ *    only applied if they shrink the set to ≥1, so the user always sees
+ *    something rather than an empty page when the parser overconstrains.
  */
 export async function hybridSearch(
   supabase: SupabaseClient<Database>,
   query: string
 ): Promise<{ vendors: VendorRow[]; parsedQuery: ParsedQuery }> {
-  // Step 1: Parse the query for intent
+  // Cache hit short-circuits OpenAI + pgvector entirely. Dormant when Upstash
+  // env vars are unset.
+  const cached = await getCached<{ vendors: VendorRow[]; parsedQuery: ParsedQuery }>(query);
+  if (cached) return cached;
+
   const parsedQuery = await parseSearchQuery(query);
 
-  // Step 2: Semantic search
   let results = await semanticSearch(supabase, parsedQuery.searchText);
 
-  // Step 3: Fallback to full-text if < 5 results
   if (results.length < 5) {
     const fallbackResults = await fullTextSearch(supabase, parsedQuery.searchText);
     const existingIds = new Set(results.map((r) => r.id));
@@ -126,13 +151,29 @@ export async function hybridSearch(
     results = [...results, ...newResults.map((r) => ({ ...r, similarity: 0 }))];
   }
 
-  // Step 4: Filter by category if parsed
   if (parsedQuery.category) {
     const filtered = results.filter((r) => r.category === parsedQuery.category);
-    if (filtered.length > 0) {
-      results = filtered;
-    }
+    if (filtered.length > 0) results = filtered;
   }
 
-  return { vendors: results, parsedQuery };
+  if (parsedQuery.locationHint) {
+    const hint = parsedQuery.locationHint.toLowerCase();
+    const filtered = results.filter((r) => {
+      const city = (r.base_city ?? '').toLowerCase();
+      if (city && (city.includes(hint) || hint.includes(city))) return true;
+      const areas = (r.service_area ?? []) as string[];
+      return areas.some((a) => a.toLowerCase().includes(hint));
+    });
+    if (filtered.length > 0) results = filtered;
+  }
+
+  // Budget hint is parsed (and exposed via parsedQuery) but not applied here —
+  // vendor_profiles has no `starting_price_cents` column. The page-level merge
+  // joins vendor_packages_price_band; budget filtering can layer in there.
+
+  const out = { vendors: results, parsedQuery };
+  // Cache only non-empty results — we want a new attempt next time if the
+  // first try had bad parser luck.
+  if (results.length > 0) await setCached(query, out);
+  return out;
 }
