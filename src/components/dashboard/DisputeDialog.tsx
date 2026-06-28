@@ -56,7 +56,7 @@ export function DisputeDialog({ bookingId, open, onOpenChange, onSuccess }: Disp
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Report an issue</DialogTitle>
+          <DialogTitle>Report an Issue</DialogTitle>
           <DialogDescription>
             Use this only if the vendor was a no-show or significantly failed to deliver. The
             booking will be paused and funds held in escrow while our team reviews.

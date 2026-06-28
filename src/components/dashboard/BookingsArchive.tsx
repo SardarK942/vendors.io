@@ -115,7 +115,7 @@ export function BookingsArchive({
               setTab('all');
             }}
           >
-            Show all
+            Show All
           </Button>
         </div>
       ) : (

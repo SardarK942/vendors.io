@@ -102,9 +102,9 @@ function DefaultView() {
           className={`mx-auto mb-3 size-10 ${isDragging ? 'text-hot-pink' : 'text-ink/60'}`}
         />
         <p className="mb-1 text-sm font-medium text-ink">
-          {isUploading ? 'Uploading…' : isDragging ? 'Drop photos here' : 'Drag photos here'}
+          {isUploading ? 'Uploading…' : isDragging ? 'Drop Photos Here' : 'Drag photos here'}
         </p>
-        <p className="text-xs text-ink/60">or click to browse</p>
+        <p className="text-xs text-ink/60">or Click to Browse</p>
         <p className="mt-4 text-xs text-ink/50">
           JPG, PNG, or WebP · max {maxSizeMb}
           {' '}MB

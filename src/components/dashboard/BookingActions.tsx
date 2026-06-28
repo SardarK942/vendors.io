@@ -158,7 +158,7 @@ export function BookingActions({
             {loading ? 'Processing…' : 'Mark Complete'}
           </Button>
           <Button variant="outline" onClick={() => setDisputeOpen(true)} disabled={loading}>
-            Report an issue
+            Report an Issue
           </Button>
         </>
       )}

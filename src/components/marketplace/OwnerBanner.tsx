@@ -20,13 +20,13 @@ export function OwnerBanner({ onPreview, editHref }: OwnerBannerProps) {
           onClick={onPreview}
           className="rounded-md border border-ink px-3 py-1.5 text-sm font-medium text-ink hover-pink-border"
         >
-          View as customer
+          View as Customer
         </button>
         <Link
           href={editHref}
           className="duration-[180ms] rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-all ease-out hover:-translate-y-px hover:bg-hot-pink hover:shadow-pink motion-reduce:hover:translate-y-0"
         >
-          Edit profile
+          Edit Profile
         </Link>
       </div>
     </div>

@@ -22,7 +22,7 @@ interface Props {
  * - Add-on toggles with live total
  * - Gallery images
  * - vendor_notes_template preview
- * - "Continue to booking" CTA → writes signed cookie + navigates to /book
+ * - "Continue to Booking" CTA → writes signed cookie + navigates to /book
  */
 export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = true }: Props) {
   const router = useRouter();
@@ -176,7 +176,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
               <p className="text-xl font-bold">${(total / 100).toLocaleString()}</p>
             </div>
             <Button onClick={handleContinue} disabled={loading} size="lg">
-              {loading ? 'Please wait…' : 'Continue to booking'}
+              {loading ? 'Please wait…' : 'Continue to Booking'}
             </Button>
           </div>
         </div>

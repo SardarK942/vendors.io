@@ -284,7 +284,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       <div className="flex justify-end">
         <Button onClick={onPublish} disabled={publishing} size="lg">
-          {publishing ? 'Publishing…' : 'Publish profile'}
+          {publishing ? 'Publishing…' : 'Publish Profile'}
         </Button>
       </div>
     </div>

@@ -29,8 +29,8 @@ export function CapacityField({ initial }: Props) {
   }
 
   return (
-    <div className="rounded-md border p-4 space-y-2">
-      <h2 className="font-semibold">Concurrent capacity</h2>
+    <div className="space-y-2 rounded-md border p-4">
+      <h2 className="font-semibold">Concurrent Capacity</h2>
       <p className="text-sm text-muted-foreground">
         Increase this if you run multiple teams. Default 1.
       </p>

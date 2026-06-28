@@ -27,7 +27,7 @@ export default async function SavedPage() {
           href="/vendors"
           className="mt-4 inline-block rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:bg-hot-pink"
         >
-          Browse vendors
+          Browse Vendors
         </Link>
       </div>
     );
@@ -35,7 +35,7 @@ export default async function SavedPage() {
 
   return (
     <SavedVendorsProvider>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Your saved vendors</h1>
+      <h1 className="mb-6 text-2xl font-bold text-ink">Your Saved Vendors</h1>
       <VendorGrid vendors={vendors} />
     </SavedVendorsProvider>
   );

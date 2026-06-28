@@ -28,10 +28,10 @@ export default function SetupError({
       )}
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
         <Button onClick={reset} variant="outline">
-          Try again
+          Try Again
         </Button>
         <Button asChild>
-          <Link href="/dashboard">Back to dashboard</Link>
+          <Link href="/dashboard">Back to Dashboard</Link>
         </Button>
       </div>
     </div>

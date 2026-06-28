@@ -105,12 +105,12 @@ export function VendorBookingActions({
       <CardHeader className="pb-2">
         <CardTitle className="text-base">
           {isPending
-            ? 'Respond to this booking'
+            ? 'Respond to This Booking'
             : isPendingQuote
-              ? 'Send a custom quote'
+              ? 'Send a Custom Quote'
               : isCoupleCountered
-                ? 'Respond to counter-offer'
-                : 'Send revised quote'}
+                ? 'Respond to Counter-Offer'
+                : 'Send Revised Quote'}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -122,9 +122,7 @@ export function VendorBookingActions({
               onClick={handleAccept}
               disabled={accepting}
             >
-              {accepting
-                ? 'Accepting…'
-                : `Accept at $${(totalPriceCents / 100).toLocaleString()}`}
+              {accepting ? 'Accepting…' : `Accept at $${(totalPriceCents / 100).toLocaleString()}`}
             </Button>
             <div className="flex flex-1 flex-col gap-1">
               <Button
