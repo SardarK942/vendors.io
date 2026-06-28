@@ -66,7 +66,9 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="border-ink/10 shadow-sm">
         <CardHeader>
-          <CardTitle className="font-spectral text-2xl text-ink">Welcome back</CardTitle>
+          <CardTitle className="font-spectral text-balance text-2xl text-ink">
+            Welcome back
+          </CardTitle>
           <CardDescription className="text-ink/70">Sign in to your Baazar account.</CardDescription>
         </CardHeader>
         <CardContent>

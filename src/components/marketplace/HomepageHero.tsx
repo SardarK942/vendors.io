@@ -25,7 +25,7 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
         </p>
 
         <h1
-          className="m-0 mb-7 font-serif font-extrabold leading-[0.92] tracking-[-0.025em] text-ink"
+          className="m-0 mb-7 text-balance font-serif font-extrabold leading-[0.92] tracking-[-0.025em] text-ink"
           style={{ fontSize: 'clamp(44px, 6vw, 76px)' }}
         >
           All your vendors.

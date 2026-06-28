@@ -35,7 +35,7 @@ export default async function SavedPage() {
 
   return (
     <SavedVendorsProvider>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Your Saved Vendors</h1>
+      <h1 className="mb-6 text-pretty text-2xl font-bold text-ink">Your Saved Vendors</h1>
       <VendorGrid vendors={vendors} />
     </SavedVendorsProvider>
   );

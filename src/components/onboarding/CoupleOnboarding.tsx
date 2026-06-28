@@ -67,7 +67,9 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
     return (
       <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
         <DialogContent className="max-w-md">
-          <h2 className="text-2xl font-semibold text-ink">Are you planning an event?</h2>
+          <h2 className="text-balance text-2xl font-semibold text-ink">
+            Are you planning an event?
+          </h2>
           <p className="mt-2 text-sm text-ink/70">Tell us so we can show you the right vendors.</p>
 
           <div className="mt-6 space-y-3">

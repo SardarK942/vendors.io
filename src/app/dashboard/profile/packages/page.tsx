@@ -49,7 +49,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Your Packages</h1>
+          <h1 className="text-pretty text-2xl font-bold">Your Packages</h1>
           <p className="text-muted-foreground">
             Customers can only book vendors with at least one active package.
           </p>

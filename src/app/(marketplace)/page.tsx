@@ -38,13 +38,13 @@ export default async function HomePage() {
           Browse by category
         </p>
         <h2
-          className="m-0 mb-2 font-serif font-bold leading-[0.96] tracking-[-0.020em] text-ink"
+          className="m-0 mb-2 text-balance font-serif font-bold leading-[0.96] tracking-[-0.020em] text-ink"
           style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}
         >
           Every vendor your celebration needs.
         </h2>
-        <p className="m-0 mx-auto max-w-[540px] text-base text-ink-muted">
-          Photography, mehndi, catering, and eight more. Hover to peek; click to browse.
+        <p className="m-0 mx-auto max-w-[540px] text-balance text-base text-ink-muted">
+          Photography, mehndi, catering, and 8 more. Hover to peek; click to browse.
         </p>
       </header>
 
