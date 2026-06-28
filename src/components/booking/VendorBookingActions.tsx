@@ -6,6 +6,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { VendorAdjustQuoteForm } from '@/components/booking/VendorAdjustQuoteForm';
 import { useCrossBusinessActionToast } from '@/components/dashboard/CrossBusinessActionToast';
 import { fmtUSD } from '@/lib/intl';
@@ -39,6 +40,7 @@ export function VendorBookingActions({
   const router = useRouter();
   const [showAdjustForm, setShowAdjustForm] = useState(false);
   const [accepting, setAccepting] = useState(false);
+  const [acceptConfirmOpen, setAcceptConfirmOpen] = useState(false);
   const triggerCrossBusinessToast = useCrossBusinessActionToast();
 
   // T17: Compute remaining adjustments (cap is 2)
@@ -93,6 +95,7 @@ export function VendorBookingActions({
         });
       }
 
+      setAcceptConfirmOpen(false);
       router.refresh();
     } catch {
       toast.error('Network error, please try again.');
@@ -120,7 +123,7 @@ export function VendorBookingActions({
             <Button
               variant="default"
               className="flex-1"
-              onClick={handleAccept}
+              onClick={() => setAcceptConfirmOpen(true)}
               disabled={accepting}
             >
               {accepting ? 'Accepting…' : `Accept at ${fmtUSD(totalPriceCents)}`}
@@ -184,6 +187,16 @@ export function VendorBookingActions({
           </>
         )}
       </CardContent>
+
+      <ConfirmDialog
+        open={acceptConfirmOpen}
+        onOpenChange={setAcceptConfirmOpen}
+        title="Accept This Booking?"
+        description={`Vendor confirms availability at ${fmtUSD(totalPriceCents)}. Accepting locks in the date and notifies the couple.`}
+        confirmLabel="Accept Booking"
+        busy={accepting}
+        onConfirm={handleAccept}
+      />
     </Card>
   );
 }
