@@ -65,15 +65,15 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
             No notifications yet.
           </p>
         ) : (
-          notifications
-            .slice(0, 10)
-            .map((n) => (
+          <ul className="m-0 list-none p-0">
+            {notifications.slice(0, 10).map((n) => (
               <NotificationCard
                 key={n.id}
                 notification={n}
                 onClick={() => handleRowClick(n.id, !n.read_at)}
               />
-            ))
+            ))}
+          </ul>
         )}
       </div>
 

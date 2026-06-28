@@ -61,16 +61,17 @@ export function EventCard({ data }: Props) {
   const sb = statusBadge(data.status);
 
   return (
-    <div
-      className={`${styles.card} ${flipped ? styles.flipped : ''}`}
-      aria-label={`${data.eventTypeLabel} with ${data.vendor.businessName} on ${fmtDate(data.eventDate)} — ${cd}`}
-      onClick={() => setFlipped((v) => !v)}
-      role="button"
-      tabIndex={0}
-    >
+    <div className={`${styles.card} ${flipped ? styles.flipped : ''}`}>
       <div className={styles.content}>
-        {/* FRONT */}
-        <div className={styles.front}>
+        {/* FRONT — real <button> so Enter/Space toggle and SR users hear it */}
+        <button
+          type="button"
+          className={styles.front}
+          onClick={() => setFlipped(true)}
+          aria-pressed={flipped}
+          aria-label={`${data.eventTypeLabel} with ${data.vendor.businessName} on ${fmtDate(data.eventDate)} — ${cd}. Activate to see booking details.`}
+          inert={flipped}
+        >
           {data.vendor.portfolioImage && (
             // eslint-disable-next-line @next/next/no-img-element -- card is sized via parent + object-fit; width/height attrs reserve a layout box
             <img
@@ -93,10 +94,10 @@ export function EventCard({ data }: Props) {
               <p className={styles.cardFooter}>{fmtDate(data.eventDate)}</p>
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* BACK */}
-        <div className={styles.back}>
+        {/* BACK — non-interactive container; Link is the primary action */}
+        <div className={styles.back} inert={!flipped}>
           <div className={styles.backContent}>
             <p style={{ fontSize: '16px', fontWeight: 700 }}>{data.eventTypeLabel}</p>
             <p style={{ fontSize: '12px' }}>
@@ -119,10 +120,26 @@ export function EventCard({ data }: Props) {
             <Link
               href={`/dashboard/bookings/${data.bookingId}`}
               style={{ color: '#ff9966', fontSize: '11px', textDecoration: 'underline' }}
-              onClick={(e) => e.stopPropagation()}
             >
               Open booking →
             </Link>
+            <button
+              type="button"
+              onClick={() => setFlipped(false)}
+              style={{
+                marginTop: 8,
+                fontSize: '11px',
+                color: 'rgba(255,255,255,0.7)',
+                textDecoration: 'underline',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                alignSelf: 'flex-start',
+              }}
+            >
+              ← Back to card
+            </button>
           </div>
         </div>
       </div>

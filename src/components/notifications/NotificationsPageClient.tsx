@@ -156,7 +156,7 @@ export function NotificationsPageClient({ initial }: Props) {
                   )}
                 </button>
                 {!collapsed && (
-                  <div className="divide-y">
+                  <ul className="m-0 list-none divide-y p-0">
                     {items.map((n) => (
                       <NotificationCard
                         key={n.id}
@@ -165,7 +165,7 @@ export function NotificationsPageClient({ initial }: Props) {
                         showAllActions
                       />
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             );

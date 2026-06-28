@@ -24,6 +24,20 @@
   transform: rotateY(180deg);
 }
 
+@media (prefers-reduced-motion: reduce) {
+  .content {
+    transition: none;
+  }
+  .card:hover .content {
+    /* Don't auto-flip on hover when reduced motion is preferred — explicit
+       click still flips via .flipped. */
+    transform: none;
+  }
+  .back::before {
+    animation: none;
+  }
+}
+
 .front,
 .back {
   background-color: #151515;
@@ -133,6 +147,10 @@
 
 /* Fixed: original CSS had two 0% keyframes — corrected to 0% / 100%. */
 @keyframes rotation_481 {
-  0% { transform: rotateZ(0deg); }
-  100% { transform: rotateZ(360deg); }
+  0% {
+    transform: rotateZ(0deg);
+  }
+  100% {
+    transform: rotateZ(360deg);
+  }
 }
