@@ -1,5 +1,5 @@
 /**
- * The 11 vendor categories featured on the homepage HoverExpand strip.
+ * The 13 vendor categories featured on the homepage HoverExpand strip.
  * Locked order (bride-journey first) and Coming Soon flags per the spec
  * at docs/superpowers/specs/2026-05-25-baazar-homepage-hero-design.md.
  *
@@ -97,6 +97,15 @@ export const CATEGORIES_FEATURED: readonly FeaturedCategory[] = [
     comingSoon: false,
   },
   {
+    slug: 'photobooth',
+    label: 'Photo Booth',
+    kicker: 'Entertainment',
+    // TODO: replace placeholder photo before merging the PR
+    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPOFxoUEHZicD1KWg6MSjTLJnYR98myEdeAlNo',
+    alt: 'Photobooth placeholder — replace before merge',
+    comingSoon: false,
+  },
+  {
     slug: 'decor',
     label: 'Decor & Floral',
     kicker: 'Atmosphere',
@@ -110,6 +119,15 @@ export const CATEGORIES_FEATURED: readonly FeaturedCategory[] = [
     kicker: 'Space',
     photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPb3WTn76WA6ONcBD7dQZXKPkV8TajJxf5lFrI',
     alt: 'Indian wedding venue with a decorated mandap',
+    comingSoon: true,
+  },
+  {
+    slug: 'invitations',
+    label: 'Invitations',
+    kicker: 'Stationery',
+    // TODO: replace placeholder photo before merging the PR
+    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPkVe7ZgIjlX45n7sT0u2NhOobr3e1W98Fyxip',
+    alt: 'Invitations placeholder — replace before merge',
     comingSoon: true,
   },
 ];
