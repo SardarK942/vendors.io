@@ -69,7 +69,7 @@ export function MobileSearchSheet({
         <Drawer.Content
           className={cn(
             'fixed bottom-0 left-0 right-0 z-50 rounded-t-lg bg-cream',
-            'flex h-[75vh] flex-col'
+            'flex h-[75dvh] flex-col'
           )}
         >
           {/* Drag handle */}
@@ -137,7 +137,7 @@ export function MobileSearchSheet({
           </div>
 
           {/* Sticky footer */}
-          <div className="border-t border-hairline bg-cream px-5 py-4">
+          <div className="border-t border-hairline bg-cream px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
               Search
             </Button>

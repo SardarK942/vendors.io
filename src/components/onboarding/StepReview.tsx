@@ -231,7 +231,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
               <VendorCard vendor={previewVendor} />
             </button>
           </DialogTrigger>
-          <DialogContent className="m-0 h-screen w-screen max-w-none rounded-none border-0 p-0">
+          <DialogContent className="m-0 h-[100dvh] w-screen max-w-none rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
             {/* Top banner */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink/15 bg-cream px-4 py-3">
               <p className="flex items-center gap-2 text-sm text-ink">

@@ -27,7 +27,7 @@ export function BookingBottomBar({
     return (
       <div
         data-testid="vendor-bottom-bar"
-        className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-ink bg-white px-4 py-2.5 shadow-lg md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 touch-manipulation border-t-2 border-ink bg-white px-4 py-2.5 shadow-lg md:hidden"
         style={{ paddingBottom: `calc(0.625rem + env(safe-area-inset-bottom))` }}
       >
         <div className="flex items-center justify-between gap-3">

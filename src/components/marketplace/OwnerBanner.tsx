@@ -9,7 +9,7 @@ interface OwnerBannerProps {
 
 export function OwnerBanner({ onPreview, editHref }: OwnerBannerProps) {
   return (
-    <div className="sticky top-0 z-30 flex items-center justify-between border-b border-ink/15 bg-cream px-6 py-3">
+    <div className="sticky top-0 z-30 flex items-center justify-between border-b border-ink/15 bg-cream px-6 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
       <div className="flex items-center gap-2">
         <span className="h-2 w-2 rounded-full bg-hot-pink" aria-hidden />
         <p className="text-sm text-ink">This is how customers see your profile.</p>

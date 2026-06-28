@@ -105,7 +105,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
           </div>
 
           {/* Sticky footer */}
-          <div className="flex items-center justify-between border-t border-hairline bg-cream px-7 py-4">
+          <div className="flex items-center justify-between border-t border-hairline bg-cream px-7 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
               onClick={handleClear}

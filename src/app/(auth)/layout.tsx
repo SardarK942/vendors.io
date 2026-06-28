@@ -7,7 +7,7 @@ import Link from 'next/link';
  */
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="relative flex min-h-screen flex-col bg-cream">
+    <div className="relative flex min-h-[100dvh] flex-col bg-cream pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
       {/* Top header — Baazar wordmark + Made in Chicago kicker */}
       <header className="mx-auto w-full max-w-md px-4 pt-10">
         <Link href="/" className="block text-center">
