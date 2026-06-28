@@ -1,7 +1,15 @@
 'use client';
 
 import * as React from 'react';
+import { Command as CommandPrimitive } from 'cmdk';
 import { cn } from '@/lib/utils';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
 import { POPULAR_QUERIES } from './categories';
 
 export interface WhatPickerProps {
@@ -14,8 +22,11 @@ export interface WhatPickerProps {
 }
 
 /**
- * Free-text input + filtered popular-query suggestions.
- * Filter is case-insensitive substring match against POPULAR_QUERIES.
+ * Free-text input + filtered popular-query suggestions, wired into a cmdk
+ * Command so the listbox gets proper ARIA + arrow-key nav for free.
+ *
+ * Filter is delegated to cmdk's built-in fuzzy matcher rather than our own
+ * substring check, but visible behavior is equivalent for short query lists.
  */
 export function WhatPicker({ query, onChange, onSubmit }: WhatPickerProps) {
   const inputRef = React.useRef<HTMLInputElement>(null);
@@ -24,65 +35,58 @@ export function WhatPicker({ query, onChange, onSubmit }: WhatPickerProps) {
     inputRef.current?.focus();
   }, []);
 
-  const suggestions = React.useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return POPULAR_QUERIES;
-    return POPULAR_QUERIES.filter((p) => p.toLowerCase().includes(q));
-  }, [query]);
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      e.preventDefault();
-      onSubmit(query);
+      // Only intercept if the user hasn't navigated into the listbox — cmdk
+      // handles Enter on a highlighted item itself via onSelect.
+      const root = (e.currentTarget.closest('[cmdk-root]') as HTMLElement | null) ?? null;
+      const hasSelected = root?.querySelector('[cmdk-item][data-selected="true"]');
+      if (!hasSelected) {
+        e.preventDefault();
+        onSubmit(query);
+      }
     }
   };
 
   return (
-    <div className="w-full">
-      <input
+    <Command className="w-full bg-transparent">
+      <CommandPrimitive.Input
         ref={inputRef}
-        type="text"
         value={query}
-        onChange={(e) => onChange(e.target.value)}
+        onValueChange={onChange}
         onKeyDown={handleKeyDown}
         placeholder='"Bollywood DJ" or "Mehndi artist"…'
         aria-label="What are you looking for?"
         className={cn(
           'w-full rounded-sm border border-hairline bg-cream px-3.5 py-2.5',
-          'font-sans text-[13px] text-ink',
+          'font-sans text-[13px] text-ink outline-none',
           'placeholder:italic placeholder:text-ink-soft',
-          'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+          'focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
         )}
       />
 
-      <p className="sr-only" aria-live="polite" aria-atomic="true">
-        {suggestions.length} suggestion{suggestions.length === 1 ? '' : 's'}
+      <p className="mb-1.5 mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-soft">
+        Popular
       </p>
-
-      {suggestions.length > 0 && (
-        <>
-          <p className="mb-1.5 mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-soft">
-            Popular
-          </p>
-          <ul className="space-y-0.5">
-            {suggestions.map((s) => (
-              <li key={s}>
-                <button
-                  type="button"
-                  onClick={() => onSubmit(s)}
-                  className={cn(
-                    'w-full rounded-sm px-2.5 py-1.5 text-left text-[12px] text-ink-muted',
-                    'transition-colors hover:bg-cream-soft hover:text-ink',
-                    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo'
-                  )}
-                >
-                  {s}
-                </button>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-    </div>
+      <CommandList>
+        <CommandEmpty>
+          <span className="text-[12px] italic text-ink-soft">
+            No matches. Try a different phrase.
+          </span>
+        </CommandEmpty>
+        <CommandGroup>
+          {POPULAR_QUERIES.map((s) => (
+            <CommandItem
+              key={s}
+              value={s}
+              onSelect={(v) => onSubmit(v)}
+              className="text-[12px] text-ink-muted data-[selected=true]:bg-cream-soft data-[selected=true]:text-ink"
+            >
+              {s}
+            </CommandItem>
+          ))}
+        </CommandGroup>
+      </CommandList>
+    </Command>
   );
 }
