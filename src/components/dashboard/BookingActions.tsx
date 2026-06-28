@@ -183,6 +183,7 @@ export function BookingActions({
         open={reviewOpen}
         onOpenChange={setReviewOpen}
         onSuccess={() => router.refresh()}
+        vendorName={vendorName || undefined}
       />
 
       <DisputeDialog
