@@ -58,8 +58,10 @@ function makeBlankEvent(seq: number): EventRowData {
   return {
     sequence: seq,
     event_date: today,
-    event_start_time: `${today}T16:00:00Z`,
-    event_end_time: `${today}T22:00:00Z`,
+    // No trailing `Z`: keep these as local time-of-day defaults so the
+    // <input type="datetime-local"> reads them without a TZ shift.
+    event_start_time: `${today}T16:00:00`,
+    event_end_time: `${today}T22:00:00`,
     event_type_label: '',
     location_name: null,
     address_line_1: '',
@@ -74,7 +76,9 @@ function makeBlankEvent(seq: number): EventRowData {
 
 export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
   const router = useRouter();
-  const [events, setEvents] = useState<EventRowData[]>([makeBlankEvent(1)]);
+  // Lazy init so makeBlankEvent's `new Date()` runs once at mount instead of
+  // every render — avoids SSR/hydration date drift.
+  const [events, setEvents] = useState<EventRowData[]>(() => [makeBlankEvent(1)]);
   const [coupleFullName, setCoupleFullName] = useState('');
   const [couplePhone, setCouplePhone] = useState('');
   // Bucket B T6: per-event guest counts keyed by event sequence (1-indexed)

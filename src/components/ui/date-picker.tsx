@@ -20,8 +20,6 @@ export interface DatePickerProps {
   className?: string;
 }
 
-const DEFAULT_DISABLED: Matcher = { before: new Date() };
-
 const DEFAULT_MODIFIERS_CLASSNAMES: Record<string, string> = {
   unavailable: 'text-ink-soft line-through opacity-50 cursor-not-allowed',
   partial: 'bg-haldi/15 text-ink hover:bg-haldi/25',
@@ -47,7 +45,11 @@ export function DatePicker({
   modifiersClassNames,
   className,
 }: DatePickerProps) {
-  const selectedDate = selected ? new Date(`${selected}T00:00:00`) : undefined;
+  // Memoize so `new Date(...)` is stable across renders (avoids hydration drift).
+  const selectedDate = React.useMemo(
+    () => (selected ? new Date(`${selected}T00:00:00`) : undefined),
+    [selected]
+  );
 
   const handleSelect = (date: Date | undefined) => {
     if (!date) return;
@@ -58,8 +60,12 @@ export function DatePicker({
     onSelect(`${y}-${m}-${d}`);
   };
 
+  // Today is computed lazily so it's stable for the first commit pass and
+  // doesn't drift if the picker re-renders mid-session.
+  const [defaultDisabled] = React.useState<Matcher>(() => ({ before: new Date() }));
+
   const mergedDisabled: Matcher[] = [
-    DEFAULT_DISABLED,
+    defaultDisabled,
     ...(Array.isArray(disabled) ? disabled : disabled ? [disabled] : []),
   ];
 
