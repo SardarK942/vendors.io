@@ -47,7 +47,9 @@ describe('GET /api/cal/[token].ics', () => {
         select: () => ({
           eq: () => ({
             maybeSingle: () => Promise.resolve({ data: { id: 'v-1' }, error: null }),
-            gte: () => Promise.resolve({ count: 0, data: [], error: null }),
+            eq: () => ({
+              gte: () => Promise.resolve({ count: 0, data: [], error: null }),
+            }),
           }),
         }),
       }),
@@ -63,7 +65,9 @@ describe('GET /api/cal/[token].ics', () => {
   it('strips the .ics suffix from the token before lookup', async () => {
     const eqMock = vi.fn(() => ({
       maybeSingle: () => Promise.resolve({ data: { id: 'v-1' }, error: null }),
-      gte: () => Promise.resolve({ count: 0, data: [], error: null }),
+      eq: () => ({
+        gte: () => Promise.resolve({ count: 0, data: [], error: null }),
+      }),
     }));
     serviceRoleMock.mockReturnValue({ from: () => ({ select: () => ({ eq: eqMock }) }) });
     buildIcsMock.mockResolvedValue('BEGIN:VCALENDAR\r\nEND:VCALENDAR\r\n');
@@ -85,7 +89,9 @@ describe('GET /api/cal/[token].ics', () => {
         return {
           select: () => ({
             eq: () => ({
-              gte: () => Promise.resolve({ count: 600, data: [], error: null }),
+              eq: () => ({
+                gte: () => Promise.resolve({ count: 600, data: [], error: null }),
+              }),
             }),
           }),
         };

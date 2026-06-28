@@ -86,6 +86,24 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
     }));
   }
 
+  async function openModal() {
+    if (!status.feed_url) {
+      const r = await fetch('/api/vendor-calendar/feed/intent', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ method: 'copy' }),
+      });
+      const body = await r.json();
+      setStatus((s) => ({
+        ...s,
+        state: 'pending',
+        intent_method: 'copy',
+        feed_url: body.feed_url,
+      }));
+    }
+    setModalOpen(true);
+  }
+
   async function rotate() {
     const r = await fetch('/api/vendor-calendar/feed/rotate', { method: 'POST' });
     const body = await r.json();
@@ -106,7 +124,7 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
           ? 'bg-emerald-100 text-emerald-800'
           : status.state === 'pending'
             ? 'bg-amber-100 text-amber-800'
-            : 'bg-cream-2 text-ink/70'
+            : 'bg-cream-soft text-ink/70'
       }`}
     >
       <span
@@ -150,7 +168,7 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
             </span>
           </div>
           <button
-            onClick={() => setModalOpen(true)}
+            onClick={openModal}
             className="rounded-lg bg-ink px-4 py-2.5 text-sm font-semibold text-white hover:bg-black"
           >
             Choose your calendar app →
@@ -182,7 +200,7 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
               </code>
               <button
                 onClick={() => navigator.clipboard?.writeText(status.feed_url!)}
-                className="hover:bg-cream-2 rounded-md border border-ink/10 px-3 py-1.5 text-sm font-semibold"
+                className="rounded-md border border-ink/10 px-3 py-1.5 text-sm font-semibold hover:bg-cream-soft"
               >
                 Copy
               </button>
@@ -190,7 +208,7 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
           )}
           <button
             onClick={disconnect}
-            className="hover:bg-cream-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold"
+            className="rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold hover:bg-cream-soft"
           >
             Cancel — disconnect
           </button>
@@ -217,13 +235,13 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
           <div className="mb-4 flex flex-wrap gap-2">
             <button
               onClick={() => status.feed_url && navigator.clipboard?.writeText(status.feed_url)}
-              className="hover:bg-cream-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold"
+              className="rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold hover:bg-cream-soft"
             >
               Copy feed URL
             </button>
             <button
               onClick={rotate}
-              className="hover:bg-cream-2 rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold"
+              className="rounded-md border border-ink/10 px-3 py-2 text-sm font-semibold hover:bg-cream-soft"
             >
               Rotate URL
             </button>
@@ -234,7 +252,7 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
               Disconnect
             </button>
           </div>
-          <p className="rounded-md bg-indigo-50 px-3 py-2 text-xs text-indigo-900 text-ink/60">
+          <p className="rounded-md bg-indigo-50 px-3 py-2 text-xs text-indigo-900">
             💡 How we know it&apos;s working: your calendar app fetched our feed and identified
             itself in its <code>User-Agent</code> header. No OAuth, no password — the request itself
             is the proof.
@@ -253,13 +271,6 @@ export function ExternalCalendarSyncCard({ initialStatus }: Props) {
           }}
         />
       )}
-      {modalOpen && !status.feed_url && (
-        // If no feed_url yet (vendor never had a token), fetch intent first to generate one then open.
-        <FetchIntentAndOpen
-          onReady={(feedUrl) => setStatus((s) => ({ ...s, feed_url: feedUrl }))}
-          method="copy"
-        />
-      )}
     </div>
   );
 }
@@ -271,24 +282,4 @@ function Stat({ k, v, small }: { k: string; v: string; small?: boolean }) {
       <div className={`font-semibold ${small ? 'text-sm' : 'text-lg'} mt-0.5`}>{v}</div>
     </div>
   );
-}
-
-function FetchIntentAndOpen({
-  onReady,
-  method,
-}: {
-  onReady: (feedUrl: string) => void;
-  method: 'copy';
-}) {
-  useEffect(() => {
-    fetch('/api/vendor-calendar/feed/intent', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ method }),
-    })
-      .then((r) => r.json())
-      .then((b) => onReady(b.feed_url));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  return null;
 }

@@ -25,10 +25,12 @@ export function ConnectCalendarModal({ open, onClose, feedUrl, onIntent }: Props
   const copyUrl = async () => {
     try {
       await navigator.clipboard.writeText(feedUrl);
-    } catch {}
-    setCopied(true);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // intentionally silent — user can see URL in the box and select-copy manually
+    }
     onIntent('copy');
-    setTimeout(() => setCopied(false), 1500);
   };
 
   return (
@@ -40,7 +42,7 @@ export function ConnectCalendarModal({ open, onClose, feedUrl, onIntent }: Props
             <Dialog.Title className="font-display text-xl font-semibold tracking-tight">
               Choose your calendar app
             </Dialog.Title>
-            <Dialog.Close className="hover:bg-cream-2 rounded-md px-2 py-1 text-xl text-ink/60">
+            <Dialog.Close className="rounded-md px-2 py-1 text-xl text-ink/60 hover:bg-cream-soft">
               ×
             </Dialog.Close>
           </div>
@@ -94,7 +96,7 @@ export function ConnectCalendarModal({ open, onClose, feedUrl, onIntent }: Props
               <code className="flex-1 truncate font-mono text-xs text-ink/70">{feedUrl}</code>
               <button
                 onClick={copyUrl}
-                className="hover:bg-cream-2 rounded-md border border-ink/10 px-3 py-1.5 text-sm font-semibold"
+                className="rounded-md border border-ink/10 px-3 py-1.5 text-sm font-semibold hover:bg-cream-soft"
               >
                 {copied ? 'Copied ✓' : 'Copy'}
               </button>

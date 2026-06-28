@@ -44,6 +44,7 @@ export async function GET(
     .from('vendor_calendar_feed_polls')
     .select('id', { count: 'exact', head: true })
     .eq('ip_hash', ipHash)
+    .eq('vendor_profile_id', vp.id)
     .gte('polled_at', since);
   if ((count ?? 0) >= 600) {
     await recordPoll({

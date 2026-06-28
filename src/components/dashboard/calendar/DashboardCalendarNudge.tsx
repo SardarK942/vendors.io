@@ -23,6 +23,7 @@ export function DashboardCalendarNudge({ feedStatus, nudgeDismissed }: Props) {
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ method: 'copy' }),
     });
+    if (!r.ok) throw new Error('feed/intent failed');
     const b = await r.json();
     setFeedUrl(b.feed_url);
     return b.feed_url;
@@ -48,8 +49,12 @@ export function DashboardCalendarNudge({ feedStatus, nudgeDismissed }: Props) {
         <div className="flex items-center gap-2">
           <button
             onClick={async () => {
-              await ensureFeedUrl();
-              setModalOpen(true);
+              try {
+                await ensureFeedUrl();
+                setModalOpen(true);
+              } catch {
+                // Best-effort UI; fail silently. The vendor can retry from the calendar page card.
+              }
             }}
             className="rounded-md bg-ink px-3 py-2 text-sm font-semibold text-white hover:bg-black"
           >
@@ -57,7 +62,7 @@ export function DashboardCalendarNudge({ feedStatus, nudgeDismissed }: Props) {
           </button>
           <button
             onClick={dismiss}
-            className="hover:bg-cream-2 rounded-md px-3 py-2 text-sm font-semibold text-ink/70"
+            className="rounded-md px-3 py-2 text-sm font-semibold text-ink/70 hover:bg-cream-soft"
           >
             Maybe later
           </button>
