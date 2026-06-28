@@ -65,7 +65,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
   // Step 0 — branching choice
   if (state.step === 0) {
     return (
-      <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
           <h2 className="text-balance text-2xl font-semibold text-ink">
             Are you planning an event?
@@ -100,7 +100,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
     const allTypes = [...CULTURAL_EVENT_TYPES, ...GENERAL_EVENT_TYPES];
     const canContinue = state.date && state.categories.length > 0;
     return (
-      <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
           <h2 className="text-2xl font-semibold text-ink">Tell us about your event</h2>
 
@@ -170,9 +170,10 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
     );
   }
 
-  // Step 2 — preview vendors with hearts
+  // Step 2 — preview vendors with hearts. ESC / outside-click closes the modal
+  // WITHOUT submitting; only the explicit "Start exploring" CTA submits.
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(false)}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
         <h2 className="text-2xl font-semibold text-ink">Here’s what we found</h2>
         <p className="mt-2 text-sm text-ink/70">

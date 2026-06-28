@@ -43,11 +43,13 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
     }
   }
 
+  // ESC / outside-click closes the modal WITHOUT submitting. Only an explicit
+  // "Skip for now" or the primary CTA fires submitOnboarding.
   if (step === 1) {
     const allTypes = [...CULTURAL_EVENT_TYPES, ...GENERAL_EVENT_TYPES];
     const canContinue = eventTypes.length >= 1;
     return (
-      <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
           <h2 className="text-2xl font-semibold text-ink">What types of events do you serve?</h2>
           <p className="mt-2 text-sm text-ink/70">Pick 1-5. You can change this later.</p>
@@ -86,13 +88,22 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
           >
             Continue →
           </button>
+
+          <button
+            type="button"
+            onClick={() => submitOnboarding(true)}
+            disabled={submitting}
+            className="mt-3 w-full text-center text-xs text-ink/60 hover:text-hot-pink"
+          >
+            Skip for now
+          </button>
         </DialogContent>
       </Dialog>
     );
   }
 
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(false)}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <h2 className="text-2xl font-semibold text-ink">
           Here’s what customer requests look like:
