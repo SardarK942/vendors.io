@@ -19,9 +19,11 @@ import { BioAssistCard } from './BioAssistCard';
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { ScrapedVendorMatchPrompt } from './ScrapedVendorMatchPrompt';
 import type { ScrapedVendorMatch } from '@/lib/scraped-vendor/match';
+import { SubcategoryMultiSelect } from './SubcategoryMultiSelect';
+import { getSubcategoriesForCategory } from '@/lib/vendor-subcategories';
 
 interface Props {
-  initial: { businessName: string; category: string; bio: string };
+  initial: { businessName: string; category: string; bio: string; subcategories: string[] };
   profileId: string;
   mode: 'first' | 'next';
 }
@@ -154,6 +156,20 @@ export function StepBasics({ initial, profileId, mode }: Props) {
           <p className="mt-1 text-xs text-hot-pink">{getError('category')}</p>
         )}
       </div>
+
+      {getSubcategoriesForCategory(data.category).length > 0 && (
+        <div className="space-y-2">
+          <Label>Cart types you offer</Label>
+          <p className="text-xs text-ink/60">
+            Pick the cart types your business runs. You can change this later.
+          </p>
+          <SubcategoryMultiSelect
+            category={data.category}
+            selected={data.subcategories}
+            onChange={(next) => setData({ ...data, subcategories: next })}
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         <Label htmlFor="bio">Bio</Label>
