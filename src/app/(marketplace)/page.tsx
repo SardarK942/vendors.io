@@ -81,7 +81,7 @@ export default async function HomePage() {
             <Shield className="mx-auto h-10 w-10 text-primary" />
             <h3 className="mt-3 font-semibold">Secure Deposits</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Small hold deposits powered by Stripe. Full refund if vendor doesn&apos;t confirm.
+              Small hold deposits powered by Stripe. Full refund if vendor doesn’t confirm.
             </p>
           </div>
           <div className="text-center">

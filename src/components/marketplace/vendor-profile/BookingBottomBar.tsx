@@ -31,7 +31,7 @@ export function BookingBottomBar({
         style={{ paddingBottom: `calc(0.625rem + env(safe-area-inset-bottom))` }}
       >
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-ink/70">Vendor hasn&apos;t listed packages yet.</p>
+          <p className="text-xs text-ink/70">Vendor hasn’t listed packages yet.</p>
           <Button size="sm" onClick={() => onRequestBooking(null)} disabled={!interactive}>
             Custom request →
           </Button>

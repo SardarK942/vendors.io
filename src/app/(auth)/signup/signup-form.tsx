@@ -168,7 +168,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
                 }`}
               >
                 <span className="block text-2xl">🏪</span>
-                <span className="mt-1 block text-sm font-medium">I&apos;m a Vendor</span>
+                <span className="mt-1 block text-sm font-medium">I’m a Vendor</span>
               </button>
             </div>
           </div>

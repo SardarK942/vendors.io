@@ -17,7 +17,7 @@ export default function TermsPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        Baazar.io (&quot;the Platform&quot;, &quot;we&quot;) is a marketplace that connects
+        Baazar.io (“the Platform”, “we”) is a marketplace that connects
         customers planning Desi weddings with independent service vendors in the Chicago area. We
         are not a vendor ourselves; we facilitate introductions, quotes, and hold deposits.
       </p>
@@ -40,7 +40,7 @@ export default function TermsPage() {
         </p>
         <p>
           The 95% balance you pay directly to the vendor is between you and them; Baazar
-          doesn&apos;t process or hold those funds.
+          doesn’t process or hold those funds.
         </p>
       </div>
 
@@ -49,7 +49,7 @@ export default function TermsPage() {
         Either party may dispute an event outcome within 48 hours of the event date. Filing a
         dispute pauses automatic completion. Our team reviews each dispute within 3 business days.
         We may adjust the refund split, retain funds in escrow pending resolution, or take action on
-        either party&apos;s account.
+        either party’s account.
       </p>
 
       <h2>5. Vendor obligations</h2>
@@ -58,14 +58,14 @@ export default function TermsPage() {
         solely responsible for the quality, timing, and legality of the services they deliver.
       </p>
       <p>
-        Two strikes (no-shows or same-day cancellations classified as &quot;vendor fault&quot;) in a
-        calendar year result in a temporary freeze of the vendor&apos;s account.
+        Two strikes (no-shows or same-day cancellations classified as “vendor fault”) in a
+        calendar year result in a temporary freeze of the vendor’s account.
       </p>
 
       <h2>6. Customer obligations</h2>
       <p>
         By paying a deposit, customers agree to pay the remaining balance directly to the vendor
-        before or after the event per the vendor&apos;s terms. Remaining balance is not collected or
+        before or after the event per the vendor’s terms. Remaining balance is not collected or
         held by the Platform.
       </p>
 

@@ -124,7 +124,7 @@ export function VendorProfile({
                   />
                 </div>
                 <p className="mt-4 text-center text-xs">
-                  Don&apos;t see what you need?{' '}
+                  Don’t see what you need?{' '}
                   <Link
                     href={`/vendors/${vendor.slug}/request`}
                     className="text-ink underline hover-pink-text"
@@ -161,7 +161,7 @@ export function VendorProfile({
                     />
                   </div>
                   <p className="mt-4 text-center text-xs">
-                    Don&apos;t see what you need?{' '}
+                    Don’t see what you need?{' '}
                     <Link
                       href={`/vendors/${vendor.slug}/request`}
                       className="text-ink underline hover-pink-text"

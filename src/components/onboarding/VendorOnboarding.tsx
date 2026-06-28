@@ -95,7 +95,7 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
     <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(false)}>
       <DialogContent className="max-w-lg">
         <h2 className="text-2xl font-semibold text-ink">
-          Here&apos;s what customer requests look like:
+          Here’s what customer requests look like:
         </h2>
 
         <div className="mt-4 space-y-3">

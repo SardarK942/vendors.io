@@ -99,7 +99,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           {/* Included items */}
           {pkg.included_items.length > 0 && (
             <div>
-              <h4 className="mb-2 text-sm font-semibold">What&apos;s included</h4>
+              <h4 className="mb-2 text-sm font-semibold">What’s included</h4>
               <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                 {pkg.included_items.map((item, idx) => (
                   <li key={idx}>{item}</li>

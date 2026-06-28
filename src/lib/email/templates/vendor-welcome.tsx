@@ -36,7 +36,7 @@ export function VendorWelcomeTemplate({
         as="h2"
         style={{ color: INK, fontSize: 18, marginBottom: 8, fontFamily: 'Spectral, serif' }}
       >
-        Here&apos;s how it works:
+        Here’s how it works:
       </Heading>
 
       <Section style={{ marginBottom: 32, paddingLeft: 16 }}>

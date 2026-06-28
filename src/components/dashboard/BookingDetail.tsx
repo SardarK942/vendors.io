@@ -275,7 +275,7 @@ export async function BookingDetail({
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <p className="mb-2 font-medium text-emerald-800">Quote accepted!</p>
           <p className="mb-3 text-sm text-emerald-700">
-            Pay your deposit to confirm the booking. The vendor&apos;s full address and instructions
+            Pay your deposit to confirm the booking. The vendor’s full address and instructions
             will appear after payment.
           </p>
         </div>
@@ -290,7 +290,7 @@ export async function BookingDetail({
       )}
       {role === 'vendor' && booking.status === 'accepted' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Waiting for the customer to pay the deposit. They have 72 hours; you&apos;ll get an email
+          Waiting for the customer to pay the deposit. They have 72 hours; you’ll get an email
           when they pay.
         </div>
       )}

@@ -32,7 +32,7 @@ export function CustomerWelcomeBanner({
         <div className="flex-1">
           {eventDate && formattedEventDate && daysUntilEvent !== null && (
             <p className="text-lg font-semibold text-ink">
-              Your event is on {formattedEventDate} — that&apos;s {daysUntilEvent} days away.
+              Your event is on {formattedEventDate} — that’s {daysUntilEvent} days away.
             </p>
           )}
 

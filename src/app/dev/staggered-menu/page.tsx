@@ -54,7 +54,7 @@ function MockSwitcherPill() {
       className="flex items-center gap-1.5 rounded-full border border-ink/15 bg-cream-soft/70 px-3 py-1.5 text-sm font-medium text-ink hover:bg-cream-soft"
     >
       <span className="h-2 w-2 rounded-full bg-indigo" />
-      Sardar&apos;s Studio
+      Sardar’s Studio
       <ChevronDown className="h-3.5 w-3.5 opacity-60" />
     </button>
   );
@@ -109,7 +109,7 @@ export default function StaggeredMenuDemoPage() {
           baazar<span className="text-hot-pink">.</span>
         </h1>
         <p className="mt-4 max-w-md text-base text-ink/70">
-          Tap &quot;Menu&quot; in the top right to see the StaggeredMenu cascade. Switch demo state
+          Tap “Menu” in the top right to see the StaggeredMenu cascade. Switch demo state
           to preview the anonymous, couple, and vendor variants.
         </p>
       </main>

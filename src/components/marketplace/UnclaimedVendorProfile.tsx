@@ -26,7 +26,7 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
       <div className="rounded-lg border bg-muted/30 p-4 text-sm">
         <p className="font-medium">Unclaimed listing</p>
         <p className="text-muted-foreground">
-          This vendor hasn&apos;t joined Baazar yet. Booking will be available after they claim this
+          This vendor hasn’t joined Baazar yet. Booking will be available after they claim this
           listing.
         </p>
       </div>

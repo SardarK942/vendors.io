@@ -50,9 +50,9 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
   if (data.bookingCount === 0) {
     return (
       <div className="rounded-lg border border-ink/15 bg-cream p-6 text-center">
-        <p className="text-sm text-ink">You haven&apos;t received any Baazar bookings yet.</p>
+        <p className="text-sm text-ink">You haven’t received any Baazar bookings yet.</p>
         <p className="mt-1 text-xs text-ink/60">
-          When customers confirm bookings with you, you&apos;ll see them here.
+          When customers confirm bookings with you, you’ll see them here.
         </p>
         <Button asChild variant="outline" className="mt-3">
           <Link href="/vendors">Browse the marketplace →</Link>
@@ -107,7 +107,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
       </div>
 
       <p className="mt-4 text-[11px] text-ink/50">
-        Based on confirmed booking totals; doesn&apos;t track balance collection.
+        Based on confirmed booking totals; doesn’t track balance collection.
       </p>
     </div>
   );

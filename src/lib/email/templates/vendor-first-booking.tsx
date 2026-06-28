@@ -48,7 +48,7 @@ export function VendorFirstBookingTemplate(props: Props): React.JSX.Element {
       <Heading
         style={{ color: INK, fontSize: 28, marginBottom: 16, fontFamily: 'Spectral, serif' }}
       >
-        Congratulations — you&apos;ve got your first request.
+        Congratulations — you’ve got your first request.
       </Heading>
 
       <Text style={{ color: INK, fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>

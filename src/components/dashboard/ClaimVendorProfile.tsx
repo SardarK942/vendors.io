@@ -96,7 +96,7 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
         <Card>
           <CardContent className="space-y-3 pt-6 text-center">
             <p className="text-sm text-muted-foreground">
-              No unclaimed listing matches &quot;{query}&quot;.
+              No unclaimed listing matches “{query}”.
             </p>
             <Button onClick={onCreateNew} variant="outline">
               Create a new profile instead
@@ -130,7 +130,7 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
       )}
 
       <div className="border-t pt-4 text-center text-sm text-muted-foreground">
-        Don&apos;t see your business?{' '}
+        Don’t see your business?{' '}
         <Button onClick={onCreateNew} variant="link" className="h-auto p-0 align-baseline">
           Create a new profile
         </Button>

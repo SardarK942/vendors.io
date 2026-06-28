@@ -63,7 +63,7 @@ function ForgotPasswordInner() {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Didn&apos;t get the email? Check your spam folder, or{' '}
+              Didn’t get the email? Check your spam folder, or{' '}
               <button
                 type="button"
                 onClick={() => setSent(null)}
@@ -93,7 +93,7 @@ function ForgotPasswordInner() {
         <CardHeader>
           <CardTitle className="font-spectral text-2xl text-ink">Forgot your password?</CardTitle>
           <CardDescription className="text-ink/70">
-            Enter the email you signed up with and we&apos;ll send you a link to choose a new one.
+            Enter the email you signed up with and we’ll send you a link to choose a new one.
           </CardDescription>
         </CardHeader>
         <CardContent>

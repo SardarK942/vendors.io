@@ -78,7 +78,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
             >
               <p className="font-medium">Yes, I have an event coming up</p>
               <p className="mt-1 text-xs text-ink/60">
-                We&apos;ll personalize your recommendations.
+                We’ll personalize your recommendations.
               </p>
             </button>
             <button
@@ -87,7 +87,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               className="w-full rounded-md border border-ink/30 p-4 text-left hover:border-hot-pink hover:text-hot-pink"
             >
               <p className="font-medium">Just browsing for now</p>
-              <p className="mt-1 text-xs text-ink/60">We&apos;ll show you what&apos;s popular.</p>
+              <p className="mt-1 text-xs text-ink/60">We’ll show you what’s popular.</p>
             </button>
           </div>
         </DialogContent>
@@ -174,9 +174,9 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
   return (
     <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(false)}>
       <DialogContent className="max-w-xl">
-        <h2 className="text-2xl font-semibold text-ink">Here&apos;s what we found</h2>
+        <h2 className="text-2xl font-semibold text-ink">Here’s what we found</h2>
         <p className="mt-2 text-sm text-ink/70">
-          Heart your favorites — they&apos;ll be saved to your shortlist.
+          Heart your favorites — they’ll be saved to your shortlist.
         </p>
 
         <SavedVendorsProvider>

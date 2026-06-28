@@ -22,7 +22,7 @@ export function ScrapedVendorMatchPrompt({ matches }: Props) {
           {top.instagram_handle && ` · @${top.instagram_handle}`}
         </p>
       </div>
-      <p className="mb-3 text-sm">To verify it&apos;s yours and take ownership:</p>
+      <p className="mb-3 text-sm">To verify it’s yours and take ownership:</p>
       <ol className="ml-5 list-decimal text-sm">
         <li>Visit your listing</li>
         <li>Click &ldquo;I own this business&rdquo;</li>

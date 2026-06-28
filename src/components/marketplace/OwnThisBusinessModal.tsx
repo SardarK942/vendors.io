@@ -139,7 +139,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             <DialogHeader>
               <DialogTitle>Remove this listing</DialogTitle>
               <DialogDescription>
-                We&apos;ll take {businessName} offline within 48 hours.
+                We’ll take {businessName} offline within 48 hours.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 text-sm">
@@ -203,7 +203,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             <ol className="ml-5 list-decimal text-sm">
               <li>Confirm your Instagram handle below.</li>
               <li>Make sure your IG bio mentions your business name.</li>
-              <li>We&apos;ll DM you within 7 days with a claim link.</li>
+              <li>We’ll DM you within 7 days with a claim link.</li>
               <li>Click the link to take ownership.</li>
             </ol>
             <div className="space-y-3 text-sm">

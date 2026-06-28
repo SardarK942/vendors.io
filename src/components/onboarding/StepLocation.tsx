@@ -129,7 +129,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
               }
             }}
           />
-          I don&apos;t have a fixed address (I travel to clients)
+          I don’t have a fixed address (I travel to clients)
         </label>
         {!skipAddress && !place.address_line_1 && (
           <p className="mt-1 text-xs text-ink/60">

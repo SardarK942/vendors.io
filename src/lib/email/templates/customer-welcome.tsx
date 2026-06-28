@@ -34,7 +34,7 @@ export function CustomerWelcomeTemplate({ firstName, unsubscribeToken }: Props):
 
       <Section style={{ marginBottom: 24 }}>
         <Heading as="h2" style={{ color: INK, fontSize: 18, marginBottom: 8 }}>
-          Request, don&apos;t commit
+          Request, don’t commit
         </Heading>
         <Text style={{ color: INK, fontSize: 14, lineHeight: 1.6 }}>
           Send a booking request with your event details. Vendors respond with quotes you can
@@ -47,7 +47,7 @@ export function CustomerWelcomeTemplate({ firstName, unsubscribeToken }: Props):
           5% to lock it in
         </Heading>
         <Text style={{ color: INK, fontSize: 14, lineHeight: 1.6 }}>
-          Once you&apos;re ready, a 5% deposit secures your date. Pay the remaining 95% directly to
+          Once you’re ready, a 5% deposit secures your date. Pay the remaining 95% directly to
           the vendor per their terms.
         </Text>
       </Section>
