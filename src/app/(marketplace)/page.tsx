@@ -54,18 +54,6 @@ export default async function HomePage() {
       {/* Mobile fallback */}
       <CategoryHoverExpandMobile categories={CATEGORIES_FEATURED} counts={counts} />
 
-      {/* Skiper UI attribution */}
-      <p className="mx-auto max-w-[1280px] px-6 pb-8 text-center text-[10px] text-ink-soft lg:px-14">
-        Category browser pattern adapted from{' '}
-        <a href="https://skiper-ui.com" target="_blank" rel="noopener" className="hover:text-ink">
-          Skiper UI
-        </a>{' '}
-        · Original by{' '}
-        <a href="https://x.com/Gur__vi" target="_blank" rel="noopener" className="hover:text-ink">
-          @Gur__vi
-        </a>
-      </p>
-
       {/* Trust Signals — pre-M+, deferred refresh per spec */}
       <section className="mx-auto max-w-[1280px] rounded-xl bg-muted/50 px-6 py-12 lg:px-14">
         <h2 className="mb-8 text-center text-2xl font-bold">Why Customers Trust Us</h2>

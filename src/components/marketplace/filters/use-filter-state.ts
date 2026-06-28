@@ -4,9 +4,13 @@ import { useCallback, useMemo, useState } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import type { PriceBand } from './constants';
 
-export type FilterDropdown = 'price' | 'languages' | null;
+export type FilterDropdown = 'category' | 'price' | 'languages' | null;
 
 export interface FilterState {
+  /** AI search query (free text). Preserved across filter changes. */
+  q: string;
+  /** Vendor category slug from VENDOR_CATEGORIES, or null for all. */
+  category: string | null;
   verified: boolean;
   /** Hours int (1, 4, 24, 48, 72) — vendor matches if response_sla_hours <= this. 0 = unset. */
   respondsIn: number;
@@ -19,6 +23,8 @@ export interface FilterState {
 }
 
 const EMPTY_STATE: FilterState = {
+  q: '',
+  category: null,
   verified: false,
   respondsIn: 0,
   priceBand: null,
@@ -53,6 +59,8 @@ export function readFilterState(params: URLSearchParams): FilterState {
   };
 
   return {
+    q: get('q') ?? '',
+    category: get('category'),
     verified: get('verified') === '1',
     respondsIn: parseInt0('respondsIn'),
     priceBand: (get('priceBand') as PriceBand | null) ?? null,
@@ -69,6 +77,8 @@ export function readFilterState(params: URLSearchParams): FilterState {
  */
 export function serializeFilterState(state: FilterState): URLSearchParams {
   const p = new URLSearchParams();
+  if (state.q) p.set('q', state.q);
+  if (state.category) p.set('category', state.category);
   if (state.verified) p.set('verified', '1');
   if (state.respondsIn > 0) p.set('respondsIn', String(state.respondsIn));
   if (state.priceBand) p.set('priceBand', state.priceBand);
@@ -143,15 +153,11 @@ export function useFilterState(): UseFilterStateReturn {
       // Clear local patch — the URL will become the new source of truth.
       setLocalPatch({});
       const params = serializeFilterState(next);
-      // Preserve category from search bar (managed by search-state hook) by
-      // copying it over if present on the current URL.
-      const currentCategory = searchParams.get('category');
-      if (currentCategory) params.set('category', currentCategory);
       const qs = params.toString();
       const target = pathname + (qs ? `?${qs}` : '');
       router.push(target);
     },
-    [router, pathname, searchParams, urlState, localPatch]
+    [router, pathname, urlState, localPatch]
   );
 
   return {
