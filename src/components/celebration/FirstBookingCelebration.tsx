@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
+import { fmtUSDWithCents, fmtDate } from '@/lib/intl';
 
 interface FirstBookingCelebrationProps {
   vendorName: string;
@@ -10,10 +11,6 @@ interface FirstBookingCelebrationProps {
   totalCents: number;
   depositCents: number;
   responseSlaHours: number;
-}
-
-function formatUSD(cents: number): string {
-  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 }
 
 export function FirstBookingCelebration({
@@ -40,7 +37,8 @@ export function FirstBookingCelebration({
           <span aria-hidden="true">🎉</span> Your first booking request is in!
         </h2>
         <p className="mt-2 text-sm text-ink/70">
-          {vendorName} · {eventDate} · {formatUSD(totalCents)}
+          {vendorName} · {fmtDate(`${eventDate}T12:00:00`)} ·{' '}
+          <span className="tabular-nums">{fmtUSDWithCents(totalCents)}</span>
         </p>
 
         <div className="my-6 space-y-3 rounded-md border border-ink/10 bg-cream p-4">
@@ -52,7 +50,7 @@ export function FirstBookingCelebration({
             <strong>2.</strong> You’ll get an email when they accept or counter.
           </p>
           <p className="text-sm text-ink">
-            <strong>3.</strong> Pay your 5% deposit ({formatUSD(depositCents)}) to confirm and
+            <strong>3.</strong> Pay your 5% deposit ({fmtUSDWithCents(depositCents)}) to confirm and
             unlock their contact info.
           </p>
         </div>

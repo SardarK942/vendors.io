@@ -20,6 +20,7 @@ import { PhotoCarouselHero } from './PhotoCarouselHero';
 import { BookingStickyCard } from './BookingStickyCard';
 import { BookingBottomBar } from './BookingBottomBar';
 import { getFeaturedPackage } from './helpers';
+import { fmtDate } from '@/lib/intl';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -220,9 +221,7 @@ export function VendorProfile({
                       </span>
                       {reviewerName(r.users)}
                     </span>
-                    <span className="text-xs text-ink/50">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </span>
+                    <span className="text-xs text-ink/50">{fmtDate(r.created_at)}</span>
                   </div>
                   {r.comment && (
                     <p className="mt-2 whitespace-pre-wrap text-sm text-ink/85">{r.comment}</p>

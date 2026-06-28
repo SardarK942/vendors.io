@@ -60,7 +60,7 @@ export function AvailabilityCalendar({
         <div className="mt-3 rounded-md border border-haldi/30 bg-haldi/10 p-3 text-xs text-ink-muted">
           <strong className="text-ink">Limited availability:</strong>{' '}
           {selectedBusy.map((r, i) => (
-            <span key={i}>
+            <span key={i} className="tabular-nums">
               {r.start} – {r.end}
               {i < selectedBusy.length - 1 ? ', ' : ''}
             </span>

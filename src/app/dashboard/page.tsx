@@ -12,6 +12,7 @@ import { AnalyticsTeaser } from '@/components/dashboard/AnalyticsTeaser';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { BackfillBanner } from '@/components/dashboard/BackfillBanner';
 import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBanner';
+import { fmtDate } from '@/lib/intl';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,11 +55,7 @@ export default async function DashboardPage() {
       : null;
 
     const formattedDate = onboardingData.event_date
-      ? new Date(onboardingData.event_date).toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        })
+      ? fmtDate(onboardingData.event_date, { month: 'long', day: 'numeric', year: 'numeric' })
       : null;
 
     // Read from booking_events_public (excludes vendor_notes — Sub-project E §8).

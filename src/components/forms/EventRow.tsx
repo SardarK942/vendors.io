@@ -136,7 +136,8 @@ export function EventRow({
             onChange={(e) => {
               const [h, m] = e.target.value.split(':');
               const base = data.event_date || new Date().toISOString().slice(0, 10);
-              onChange(index, { event_start_time: `${base}T${h}:${m}:00Z` });
+              // No trailing `Z` — keep the time as the user typed it, in local TZ.
+              onChange(index, { event_start_time: `${base}T${h}:${m}:00` });
             }}
             required
           />
@@ -150,7 +151,8 @@ export function EventRow({
             onChange={(e) => {
               const [h, m] = e.target.value.split(':');
               const base = data.event_date || new Date().toISOString().slice(0, 10);
-              onChange(index, { event_end_time: `${base}T${h}:${m}:00Z` });
+              // No trailing `Z` — keep the time as the user typed it, in local TZ.
+              onChange(index, { event_end_time: `${base}T${h}:${m}:00` });
             }}
             required
           />

@@ -3,14 +3,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import styles from './EventCard.module.css';
 import { countdown } from '@/lib/dashboard/countdown';
+import { fmtDate as fmtDateIntl, fmtTime } from '@/lib/intl';
 
 export interface EventCardData {
   eventId: string;
   bookingId: string;
   eventTypeLabel: string;
   eventDate: string;
-  eventStartTime: string;  // ISO timestamp
-  eventEndTime: string;    // ISO timestamp
+  eventStartTime: string; // ISO timestamp
+  eventEndTime: string; // ISO timestamp
   addressLine1: string;
   city: string;
   state: string;
@@ -27,22 +28,19 @@ interface Props {
   data: EventCardData;
 }
 
+// Noon-anchored (no `Z`) so the YYYY-MM-DD is interpreted in the viewer's
+// timezone — avoids the "off-by-one day" UTC drift on the front of the card.
 function fmtDate(iso: string): string {
-  return new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
+  return fmtDateIntl(`${iso}T12:00:00`, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function fmtTimeRange(startIso: string, endIso: string): string {
-  const s = new Date(startIso);
-  const e = new Date(endIso);
-  const f = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return `${f(s)} – ${f(e)}`;
+  return `${fmtTime(startIso)} – ${fmtTime(endIso)}`;
 }
 
 function statusBadge(status: string): { label: string; color: string } {
-  if (status === 'deposit_paid' || status === 'completed') return { label: 'Confirmed', color: '#34d399' };
+  if (status === 'deposit_paid' || status === 'completed')
+    return { label: 'Confirmed', color: '#34d399' };
   if (status === 'pending') return { label: 'Awaiting vendor', color: '#fbbf24' };
   if (status === 'accepted') return { label: 'Awaiting deposit', color: '#fbbf24' };
   if (status === 'adjusted_quote_sent') return { label: 'Adjusted quote', color: '#60a5fa' };
@@ -92,10 +90,21 @@ export function EventCard({ data }: Props) {
         <div className={styles.back}>
           <div className={styles.backContent}>
             <p style={{ fontSize: '16px', fontWeight: 700 }}>{data.eventTypeLabel}</p>
-            <p style={{ fontSize: '12px' }}>{fmtTimeRange(data.eventStartTime, data.eventEndTime)}</p>
+            <p style={{ fontSize: '12px' }}>
+              {fmtTimeRange(data.eventStartTime, data.eventEndTime)}
+            </p>
             <p style={{ fontSize: '11px', opacity: 0.8 }}>{addressLine}</p>
             <p style={{ fontSize: '11px' }}>
-              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: sb.color, marginRight: 6 }} />
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: sb.color,
+                  marginRight: 6,
+                }}
+              />
               {sb.label}
             </p>
             <Link

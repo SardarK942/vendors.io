@@ -1,20 +1,29 @@
 'use client';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { fmtDate } from '@/lib/intl';
 
 interface Hold {
   id: string;
   hold_type: 'booking' | 'vendor_blocked';
   hold_range: string;
   booking_event_id: string | null;
-  booking_events?: { event_type_label: string; bookings: { couple_full_name: string | null } } | null;
+  booking_events?: {
+    event_type_label: string;
+    bookings: { couple_full_name: string | null };
+  } | null;
 }
 
 interface Props {
   holds: Hold[];
 }
 
-function parseRange(range: string): { date: string; startTime: string; endTime: string; fullDay: boolean } {
+function parseRange(range: string): {
+  date: string;
+  startTime: string;
+  endTime: string;
+  fullDay: boolean;
+} {
   // Parse '["2026-08-15T10:00:00+00:00","2026-08-15T12:00:00+00:00")'
   const m = range.match(/^\["([^"]+)","([^"]+)"\)$/);
   if (!m) return { date: '?', startTime: '?', endTime: '?', fullDay: false };
@@ -51,9 +60,12 @@ export function CalendarHoldsList({ holds }: Props) {
               : 'Personal block';
           const timeStr = fullDay ? '(full day)' : `${startTime} – ${endTime}`;
           return (
-            <li key={h.id} className="flex items-center justify-between rounded-md border px-3 py-2">
-              <span>
-                <span className="font-medium">{date}</span>
+            <li
+              key={h.id}
+              className="flex items-center justify-between rounded-md border px-3 py-2"
+            >
+              <span className="tabular-nums">
+                <span className="font-medium">{fmtDate(`${date}T12:00:00`)}</span>
                 <span className="ml-2 text-muted-foreground">{timeStr}</span>
                 <span className="ml-2">— {label}</span>
                 <span
