@@ -157,7 +157,7 @@ export function BioAssistCard({
           <p className="mt-2 whitespace-pre-wrap text-sm text-ink">
             {state.kind === 'error' ? state.message : state.suggestion}
             {state.kind === 'streaming' && (
-              <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-ink" />
+              <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-ink motion-reduce:animate-none" />
             )}
           </p>
 
