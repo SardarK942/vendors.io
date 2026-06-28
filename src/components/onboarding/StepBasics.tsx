@@ -104,7 +104,9 @@ export function StepBasics({ initial, profileId, mode }: Props) {
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       <div className="space-y-2">
@@ -183,7 +185,9 @@ export function StepBasics({ initial, profileId, mode }: Props) {
           }}
           placeholder="What do you do, who do you serve, and what makes you different?"
         />
-        <p className="mt-1 text-xs tabular-nums text-muted-foreground">{data.bio.length} / 500</p>
+        <p className="mt-1 text-xs tabular-nums text-muted-foreground" aria-live="polite">
+          {data.bio.length} / 500
+        </p>
         {getError('bio') && <p className="mt-1 text-xs text-hot-pink">{getError('bio')}</p>}
         {data.bio.length > 0 && data.bio.length < 50 && (
           <p className="mt-1 text-xs text-ink/60">

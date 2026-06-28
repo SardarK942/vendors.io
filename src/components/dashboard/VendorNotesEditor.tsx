@@ -70,13 +70,18 @@ export function VendorNotesEditor({
       />
       <div className="flex items-center justify-between text-xs">
         <span
+          aria-live="polite"
           className={
             tooLong ? 'text-red-600' : warning ? 'text-yellow-600' : 'text-muted-foreground'
           }
         >
           {notes.length} / {MAX}
         </span>
-        <span className="text-muted-foreground">
+        <span
+          className="text-muted-foreground"
+          role={status === 'error' ? 'alert' : 'status'}
+          aria-live={status === 'error' ? 'assertive' : 'polite'}
+        >
           {status === 'saving' && 'Saving…'}
           {status === 'saved' && 'Saved · just now'}
           {status === 'error' && (

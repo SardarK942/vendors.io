@@ -49,15 +49,23 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       {getError('portfolioImages') && (
-        <p className="mt-1 text-xs text-hot-pink">{getError('portfolioImages')}</p>
+        <p className="mt-1 text-xs text-hot-pink" role="alert" aria-live="assertive">
+          {getError('portfolioImages')}
+        </p>
       )}
 
       {images.length > 0 && images.length < 3 && (
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        <div
+          className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300"
+          role="status"
+          aria-live="polite"
+        >
           Vendors with 3+ photos get 2&times; more clicks &mdash; add more if you have them.
         </div>
       )}
@@ -75,7 +83,11 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
         triggerLabel={{ empty: 'Upload portfolio photos', manage: 'Manage photos' }}
       />
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting || images.length === 0}>

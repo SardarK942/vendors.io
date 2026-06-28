@@ -335,7 +335,11 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
         </Card>
 
         {error && (
-          <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+          >
             {error}
           </div>
         )}

@@ -55,6 +55,10 @@ export function WhatPicker({ query, onChange, onSubmit }: WhatPickerProps) {
         )}
       />
 
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {suggestions.length} suggestion{suggestions.length === 1 ? '' : 's'}
+      </p>
+
       {suggestions.length > 0 && (
         <>
           <p className="mb-1.5 mt-3 text-[10px] font-semibold uppercase tracking-[0.1em] text-ink-soft">

@@ -29,7 +29,11 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
   };
 
   return (
-    <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hairline bg-cream-soft px-5 py-3">
+    <div
+      className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hairline bg-cream-soft px-5 py-3"
+      role="status"
+      aria-live="polite"
+    >
       <div className="flex min-w-0 items-center gap-3">
         <span className="inline-flex size-9 flex-shrink-0 items-center justify-center rounded-full border border-hairline bg-cream">
           <SlidersHorizontal className="size-4 stroke-ink" strokeWidth={2} aria-hidden="true" />

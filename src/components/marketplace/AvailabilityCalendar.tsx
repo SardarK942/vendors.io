@@ -34,7 +34,11 @@ export function AvailabilityCalendar({
   }, [vendorSlug]);
 
   if (loading) {
-    return <p className="text-sm text-ink-muted">Loading availability…</p>;
+    return (
+      <p className="text-sm text-ink-muted" role="status" aria-live="polite">
+        Loading availability…
+      </p>
+    );
   }
 
   // Parse 'YYYY-MM-DD' as local-tz noon (avoids the date crossing a TZ boundary).
@@ -57,7 +61,11 @@ export function AvailabilityCalendar({
         modifiers={{ partial }}
       />
       {selectedBusy.length > 0 && (
-        <div className="mt-3 rounded-md border border-haldi/30 bg-haldi/10 p-3 text-xs text-ink-muted">
+        <div
+          className="mt-3 rounded-md border border-haldi/30 bg-haldi/10 p-3 text-xs text-ink-muted"
+          role="status"
+          aria-live="polite"
+        >
           <strong className="text-ink">Limited availability:</strong>{' '}
           {selectedBusy.map((r, i) => (
             <span key={i} className="tabular-nums">

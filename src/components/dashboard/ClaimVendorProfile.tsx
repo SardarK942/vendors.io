@@ -94,7 +94,11 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
         </p>
       </div>
 
-      {searching && <p className="text-sm text-muted-foreground">Searching…</p>}
+      {searching && (
+        <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+          Searching…
+        </p>
+      )}
 
       {!searching && query.trim().length >= 2 && results.length === 0 && (
         <Card>

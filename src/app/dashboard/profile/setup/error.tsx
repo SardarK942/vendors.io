@@ -16,7 +16,11 @@ export default function SetupError({
   }, [error]);
 
   return (
-    <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 text-center">
+    <div
+      className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 text-center"
+      role="alert"
+      aria-live="assertive"
+    >
       <h1 className="font-spectral text-balance text-2xl font-bold text-ink">
         We hit a snag setting up your profile
       </h1>

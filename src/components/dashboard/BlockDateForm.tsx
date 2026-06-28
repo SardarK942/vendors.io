@@ -78,7 +78,11 @@ export function BlockDateForm() {
           </div>
         </div>
       )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {error}
+        </p>
+      )}
       <Button type="submit" disabled={submitting || !date}>
         {submitting ? 'Blocking…' : 'Block this date'}
       </Button>

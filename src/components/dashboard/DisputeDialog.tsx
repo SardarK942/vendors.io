@@ -80,7 +80,9 @@ export function DisputeDialog({ bookingId, open, onOpenChange, onSuccess }: Disp
             maxLength={2000}
             autoComplete="off"
           />
-          <p className="text-xs text-muted-foreground">{reason.length} / 2000</p>
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            {reason.length} / 2000
+          </p>
         </div>
 
         <DialogFooter>

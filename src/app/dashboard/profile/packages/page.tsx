@@ -39,7 +39,11 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
   return (
     <div className="space-y-6">
       {justOnboarded && (
-        <div className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4">
+        <div
+          className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4"
+          role="status"
+          aria-live="polite"
+        >
           <h3 className="font-semibold">
             <span aria-hidden="true">🎉</span> Profile is live!
           </h3>

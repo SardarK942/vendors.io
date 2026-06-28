@@ -23,11 +23,17 @@ export function WizardStepper({ profile }: Props) {
   const next = nextIncompleteStep(profile);
   const nextIdx = STEPS.findIndex((s) => s.key === next);
 
+  const currentIdx = STEPS.findIndex((s) => s.key === current);
+  const currentLabel = STEPS[currentIdx]?.label;
+
   return (
     <nav className="space-y-1">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         Set up your profile
       </h2>
+      <p className="sr-only" role="status" aria-live="polite">
+        {currentLabel ? `Step ${currentIdx + 1} of ${STEPS.length}: ${currentLabel}` : ''}
+      </p>
       <ul className="space-y-1">
         {STEPS.map((step, idx) => {
           const isComplete = idx < nextIdx;

@@ -31,7 +31,7 @@ export default async function VendorProfilePage() {
         </div>
         <div className="text-right">
           <p className="text-sm font-medium">Search visibility</p>
-          <p className="mb-2 text-xs text-muted-foreground">
+          <p className="mb-2 text-xs text-muted-foreground" role="status" aria-live="polite">
             {isActive ? 'Active — visible in search' : 'Paused — hidden from search'}
           </p>
           <PauseProfileToggle isActive={isActive} />

@@ -27,7 +27,12 @@ export function CustomerWelcomeBanner({
   if (dismissed) return <></>;
 
   return (
-    <div className="mb-6 rounded-lg border border-ink/10 bg-cream p-6">
+    <div
+      className="mb-6 rounded-lg border border-ink/10 bg-cream p-6"
+      role="region"
+      aria-label="Welcome"
+      aria-live="polite"
+    >
       <div className="flex items-start justify-between">
         <div className="flex-1">
           {eventDate && formattedEventDate && daysUntilEvent !== null && (

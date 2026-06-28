@@ -29,7 +29,7 @@ export function WhatSuggestions({ query, onSubmit }: WhatSuggestionsProps) {
 
   if (suggestions.length === 0) {
     return (
-      <p className="px-2.5 py-3 text-[12px] italic text-ink-soft">
+      <p className="px-2.5 py-3 text-[12px] italic text-ink-soft" role="status" aria-live="polite">
         No matches. Try a different phrase.
       </p>
     );

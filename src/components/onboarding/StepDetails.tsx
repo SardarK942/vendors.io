@@ -94,7 +94,9 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
       </header>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       {/* Languages */}
@@ -181,7 +183,11 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         )}
       </div>
 
-      {serverError && <p className="text-sm text-error">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-error" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex items-center justify-end gap-3 border-t border-hairline pt-4">
         <Button type="submit" disabled={!isValid} isLoading={submitting}>

@@ -109,7 +109,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
       <div className="py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Browse Vendors</h1>
-          <p className="tabular-nums text-muted-foreground">
+          <p className="tabular-nums text-muted-foreground" aria-live="polite" aria-atomic="true">
             {fmtCount(totalCount)} vendor{totalCount !== 1 ? 's' : ''}
           </p>
         </div>

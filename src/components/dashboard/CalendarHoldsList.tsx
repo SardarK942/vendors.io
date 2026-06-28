@@ -68,6 +68,9 @@ export function CalendarHoldsList({ holds }: Props) {
   return (
     <div className="space-y-2">
       <h2 className="font-semibold">Upcoming (next 90 days)</h2>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {items.length} upcoming hold{items.length === 1 ? '' : 's'}
+      </p>
       <ul className="space-y-1 text-sm">
         {items.map((h) => {
           const { date, startTime, endTime, fullDay } = parseRange(h.hold_range);

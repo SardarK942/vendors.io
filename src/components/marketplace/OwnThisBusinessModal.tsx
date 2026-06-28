@@ -66,7 +66,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-md">
         {done && (
-          <div className="space-y-3">
+          <div className="space-y-3" role="status" aria-live="polite">
             <DialogHeader>
               <DialogTitle>
                 {done === 'remove' ? 'Removal request sent' : 'Claim request sent'}

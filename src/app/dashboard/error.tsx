@@ -10,7 +10,11 @@ export default function DashboardError({
   reset: () => void;
 }) {
   return (
-    <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+    <div
+      className="flex min-h-[400px] flex-col items-center justify-center text-center"
+      role="alert"
+      aria-live="assertive"
+    >
       <h1 className="text-pretty text-2xl font-bold">Dashboard Error</h1>
       <p className="mt-2 text-muted-foreground">
         {error.message || 'Something went wrong loading the dashboard.'}

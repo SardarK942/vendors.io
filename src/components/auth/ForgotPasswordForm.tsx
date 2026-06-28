@@ -52,7 +52,7 @@ function ForgotPasswordInner() {
 
   if (sent) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" role="status" aria-live="polite">
         <Card className="border-ink/10 shadow-sm">
           <CardHeader>
             <CardTitle className="font-spectral text-2xl text-ink">Check your email</CardTitle>

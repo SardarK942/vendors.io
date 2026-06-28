@@ -90,6 +90,9 @@ export function NotificationsPageClient({ initial }: Props) {
 
   return (
     <div className="space-y-4">
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {tabCounts.action} action needed, {tabCounts.updates} updates, {tabCounts.archived} archived
+      </p>
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           {(['action', 'updates', 'archived'] as Tab[]).map((t) => (

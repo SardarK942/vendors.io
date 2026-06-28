@@ -10,7 +10,11 @@ interface Props {
 
 export function ConflictWarning({ overlapCount, capacity }: Props) {
   return (
-    <div className="rounded-md border border-amber-500/30 bg-amber-500/10 p-4">
+    <div
+      className="rounded-md border border-amber-500/30 bg-amber-500/10 p-4"
+      role="alert"
+      aria-live="assertive"
+    >
       <div className="flex items-start gap-2">
         <AlertTriangle className="h-5 w-5 shrink-0 text-amber-600" aria-hidden="true" />
         <div>

@@ -133,6 +133,10 @@ export function AdjustmentReview({
         </div>
       </div>
 
+      <p className="sr-only" role="status" aria-live="polite">
+        {busy ? 'Processing your decision…' : ''}
+      </p>
+
       <div className="flex flex-wrap gap-3">
         <Button onClick={() => action('accept-adjusted')} disabled={busy}>
           Accept adjusted quote

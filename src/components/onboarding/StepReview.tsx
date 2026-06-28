@@ -257,11 +257,17 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       {/* Publish error */}
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       {publishError && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+        <div
+          className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+          role="alert"
+          aria-live="assertive"
+        >
           <p>{publishError}</p>
           {publishErrorStep && (
             <Link

@@ -132,6 +132,7 @@ export function CustomRequestForm({
       {state.kind === 'error' && (
         <div
           role="alert"
+          aria-live="assertive"
           className="rounded-md border border-haldi/40 bg-haldi/10 p-3 text-sm text-ink"
         >
           {state.message}
@@ -250,7 +251,7 @@ export function CustomRequestForm({
           autoComplete="off"
           className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         />
-        <p className="mt-1 text-xs text-ink-soft">
+        <p className="mt-1 text-xs text-ink-soft" aria-live="polite">
           {description.length} / 1000 · minimum 50 characters
         </p>
       </div>

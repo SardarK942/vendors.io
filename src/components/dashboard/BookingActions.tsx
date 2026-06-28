@@ -173,7 +173,7 @@ export function BookingActions({
       )}
 
       {booking.status === 'disputed' && (
-        <p className="text-sm text-amber-700">
+        <p className="text-sm text-amber-700" role="status" aria-live="polite">
           This booking is under review. Our team will contact both parties within 3 business days.
         </p>
       )}

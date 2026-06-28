@@ -134,6 +134,7 @@ export function BioAssistCard({
         onClick={start}
         disabled={isLoading}
         className="w-fit"
+        aria-live="polite"
       >
         {isLoading ? loadingLabel : idleLabel}
       </Button>
@@ -154,7 +155,11 @@ export function BioAssistCard({
             </button>
           </div>
 
-          <p className="mt-2 whitespace-pre-wrap text-sm text-ink">
+          <p
+            className="mt-2 whitespace-pre-wrap text-sm text-ink"
+            aria-live="polite"
+            aria-atomic="false"
+          >
             {state.kind === 'error' ? state.message : state.suggestion}
             {state.kind === 'streaming' && (
               <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-ink motion-reduce:animate-none" />
