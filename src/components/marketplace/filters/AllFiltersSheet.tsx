@@ -66,7 +66,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
         <Drawer.Overlay className="fixed inset-0 z-40 bg-ink/50" />
         <Drawer.Content
           className={cn(
-            'fixed bottom-0 right-0 top-0 z-50 w-full bg-cream sm:w-[480px]',
+            'fixed bottom-0 right-0 top-0 z-50 w-full overscroll-contain bg-cream sm:w-[480px]',
             'flex flex-col border-l border-hairline shadow-[-12px_0_28px_rgba(27,20,20,0.10)]'
           )}
         >

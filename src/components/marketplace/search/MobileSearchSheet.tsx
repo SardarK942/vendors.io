@@ -68,7 +68,7 @@ export function MobileSearchSheet({
         <Drawer.Overlay className="fixed inset-0 z-40 bg-ink/50" />
         <Drawer.Content
           className={cn(
-            'fixed bottom-0 left-0 right-0 z-50 rounded-t-lg bg-cream',
+            'fixed bottom-0 left-0 right-0 z-50 overscroll-contain rounded-t-lg bg-cream',
             'flex h-[75dvh] flex-col'
           )}
         >
