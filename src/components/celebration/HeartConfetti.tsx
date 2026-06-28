@@ -4,6 +4,8 @@ import * as React from 'react';
 import { createRoot } from 'react-dom/client';
 import { toast } from 'sonner';
 
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion';
+
 interface Props {
   /** Pixel coordinates relative to viewport */
   x: number;
@@ -14,11 +16,16 @@ interface Props {
 const DOT_COUNT = 12;
 const DURATION_MS = 1000;
 
-export function HeartConfetti({ x, y, onComplete }: Props): React.JSX.Element {
+export function HeartConfetti({ x, y, onComplete }: Props): React.JSX.Element | null {
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   React.useEffect(() => {
-    const t = setTimeout(() => onComplete?.(), DURATION_MS);
+    // Honor reduce-motion by skipping the confetti animation entirely; still
+    // signal completion so the caller can unmount/cleanup on the same frame.
+    const delay = prefersReducedMotion ? 0 : DURATION_MS;
+    const t = setTimeout(() => onComplete?.(), delay);
     return () => clearTimeout(t);
-  }, [onComplete]);
+  }, [onComplete, prefersReducedMotion]);
 
   const dots = React.useMemo(() => {
     return Array.from({ length: DOT_COUNT }, (_, i) => {
@@ -31,6 +38,8 @@ export function HeartConfetti({ x, y, onComplete }: Props): React.JSX.Element {
       return { dx, dy, color, size, delay: Math.random() * 100 };
     });
   }, []);
+
+  if (prefersReducedMotion) return null;
 
   return (
     <div
