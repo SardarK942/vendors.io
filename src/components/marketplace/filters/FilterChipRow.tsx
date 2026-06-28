@@ -108,7 +108,7 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
             <CategoryDropdown
               selected={state.category}
               onSelect={(c) => {
-                apply({ category: c });
+                apply({ category: c, subcategories: [] });
                 setActiveDropdown(null);
               }}
             />
