@@ -262,6 +262,14 @@ export interface Database {
           followup_48h_sent_at: string | null;
           published_at: string | null;
           served_event_types: string[];
+          calendar_feed_token: string | null;
+          calendar_feed_state: 'not_connected' | 'pending' | 'connected';
+          calendar_feed_intent_at: string | null;
+          calendar_feed_intent_method: string | null;
+          calendar_feed_connected_at: string | null;
+          calendar_feed_connected_via_ua: string | null;
+          calendar_feed_nudge_dismissed_at: string | null;
+          first_confirmed_booking_at: string | null;
         };
         Insert: {
           id?: string;
@@ -311,6 +319,14 @@ export interface Database {
           followup_48h_sent_at?: string | null;
           published_at?: string | null;
           served_event_types?: string[];
+          calendar_feed_token?: string | null;
+          calendar_feed_state?: 'not_connected' | 'pending' | 'connected';
+          calendar_feed_intent_at?: string | null;
+          calendar_feed_intent_method?: string | null;
+          calendar_feed_connected_at?: string | null;
+          calendar_feed_connected_via_ua?: string | null;
+          calendar_feed_nudge_dismissed_at?: string | null;
+          first_confirmed_booking_at?: string | null;
         };
         Update: {
           user_id?: string;
@@ -358,6 +374,14 @@ export interface Database {
           followup_48h_sent_at?: string | null;
           published_at?: string | null;
           served_event_types?: string[];
+          calendar_feed_token?: string | null;
+          calendar_feed_state?: 'not_connected' | 'pending' | 'connected';
+          calendar_feed_intent_at?: string | null;
+          calendar_feed_intent_method?: string | null;
+          calendar_feed_connected_at?: string | null;
+          calendar_feed_connected_via_ua?: string | null;
+          calendar_feed_nudge_dismissed_at?: string | null;
+          first_confirmed_booking_at?: string | null;
         };
         Relationships: [
           {
@@ -365,6 +389,44 @@ export interface Database {
             columns: ['user_id'];
             isOneToOne: false;
             referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      vendor_calendar_feed_polls: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          polled_at: string;
+          user_agent: string | null;
+          recognized_provider: string | null;
+          ip_hash: string | null;
+          status_returned: number;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          polled_at?: string;
+          user_agent?: string | null;
+          recognized_provider?: string | null;
+          ip_hash?: string | null;
+          status_returned?: number;
+        };
+        Update: {
+          id?: string;
+          vendor_profile_id?: string;
+          polled_at?: string;
+          user_agent?: string | null;
+          recognized_provider?: string | null;
+          ip_hash?: string | null;
+          status_returned?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'vendor_calendar_feed_polls_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
             referencedColumns: ['id'];
           },
         ];
