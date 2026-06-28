@@ -68,7 +68,10 @@ export function PhotoCarouselHero({
         aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
         className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-ink/70 backdrop-blur transition hover:bg-ink"
       >
-        <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+        <Heart
+          className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-white'}`}
+          aria-hidden="true"
+        />
       </button>
 
       <div className="absolute bottom-3 right-3 rounded bg-ink/70 px-2 py-1 text-xs text-cream">
