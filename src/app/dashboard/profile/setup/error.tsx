@@ -17,9 +17,9 @@ export default function SetupError({
 
   return (
     <div className="mx-auto flex min-h-[60vh] max-w-xl flex-col items-center justify-center px-6 text-center">
-      <h2 className="font-spectral text-2xl font-bold text-ink">
+      <h1 className="font-spectral text-balance text-2xl font-bold text-ink">
         We hit a snag setting up your profile
-      </h2>
+      </h1>
       <p className="mt-3 text-sm text-ink/70">
         {error.message || 'An unexpected error occurred. Your data is safe.'}
       </p>

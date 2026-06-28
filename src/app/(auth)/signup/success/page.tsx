@@ -28,7 +28,7 @@ export default async function SignupSuccessPage() {
 
   return (
     <>
-      <p className="sr-only">Account created — welcome to Baazar.</p>
+      <h1 className="sr-only">Account created — welcome to Baazar.</h1>
       <OnboardingGate role={role} onboardingCompleted={onboardingCompleted} />
     </>
   );
