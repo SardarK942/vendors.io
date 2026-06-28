@@ -20,6 +20,7 @@ export interface FilterState {
   languages: string[]; // sorted slugs
   years: number; // years_in_business >= this. 0 = unset.
   events: string[]; // sorted slugs
+  subcategories: string[]; // sorted slugs
 }
 
 const EMPTY_STATE: FilterState = {
@@ -33,6 +34,7 @@ const EMPTY_STATE: FilterState = {
   languages: [],
   years: 0,
   events: [],
+  subcategories: [],
 };
 
 /**
@@ -69,6 +71,7 @@ export function readFilterState(params: URLSearchParams): FilterState {
     languages: parseList('lang'),
     years: parseInt0('years'),
     events: parseList('events'),
+    subcategories: parseList('subcategories'),
   };
 }
 
@@ -87,6 +90,7 @@ export function serializeFilterState(state: FilterState): URLSearchParams {
   if (state.languages.length > 0) p.set('lang', state.languages.join(','));
   if (state.years > 0) p.set('years', String(state.years));
   if (state.events.length > 0) p.set('events', state.events.join(','));
+  if (state.subcategories.length > 0) p.set('subcategories', state.subcategories.join(','));
   return p;
 }
 
