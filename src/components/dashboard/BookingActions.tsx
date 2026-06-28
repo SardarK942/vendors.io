@@ -198,6 +198,7 @@ export function BookingActions({
         open={cancelOpen}
         onOpenChange={setCancelOpen}
         onSuccess={() => router.refresh()}
+        bookingContext={vendorName || undefined}
       />
 
       {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
