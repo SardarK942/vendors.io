@@ -37,8 +37,8 @@ export const SegmentButton = React.forwardRef<HTMLButtonElement, SegmentButtonPr
         aria-expanded={isActive ?? false}
         aria-controls={panelId}
         className={cn(
-          'duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)] flex flex-col items-start justify-center text-left transition-all',
-          'h-full px-5 focus-visible:outline-none lg:px-6',
+          'duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)] flex flex-col items-start justify-center text-left transition-[background-color,box-shadow]',
+          'h-full px-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream lg:px-6',
           isFreeText && 'min-w-[220px] flex-1',
           // Non-active: hover bg + visible separator handled by parent
           !isActive && 'hover:bg-cream-soft',

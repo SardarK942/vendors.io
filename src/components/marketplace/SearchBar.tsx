@@ -164,7 +164,7 @@ export function SearchBar({
             <div
               className={cn(
                 'relative flex flex-1 cursor-text flex-col items-start justify-center px-5 text-left lg:px-6',
-                'duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)] transition-all',
+                'duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)] transition-[background-color,box-shadow]',
                 activeSegment !== 'what' && 'hover:bg-cream-soft',
                 activeSegment === 'what' &&
                   'relative z-10 rounded-full bg-cream shadow-[inset_0_0_0_2px_hsl(var(--ink)),_0_4px_12px_rgba(27,20,20,0.10)]'
@@ -217,7 +217,7 @@ export function SearchBar({
             className={cn(
               'm-1.5 self-center rounded-full bg-ink text-cream',
               'inline-flex flex-shrink-0 items-center justify-center',
-              'duration-[220ms] ease-[cubic-bezier(.22,1,.36,1)] transition-all',
+              'duration-[220ms] ease-[cubic-bezier(.22,1,.36,1)] transition-[background-color,box-shadow,transform]',
               'hover:-translate-y-[1px] hover:bg-[#2A1E1E] hover:shadow-[0_6px_14px_rgba(27,20,20,0.18)]',
               'motion-reduce:transition-none motion-reduce:hover:transform-none',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',

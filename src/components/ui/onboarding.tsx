@@ -28,18 +28,21 @@ const stepIndicatorVariants = cva('flex items-center justify-center gap-2', {
   },
 });
 
-const stepDotVariants = cva('rounded-full transition-all duration-200', {
-  variants: {
-    variant: {
-      dots: 'size-2 data-[state=active]:size-2.5 data-[state=active]:bg-foreground data-[state=completed]:bg-foreground/60 data-[state=inactive]:bg-muted-foreground/30',
-      pills:
-        'h-1 max-w-8 flex-1 rounded-full data-[state=active]:bg-foreground data-[state=completed]:bg-foreground/60 data-[state=inactive]:bg-muted-foreground/30',
+const stepDotVariants = cva(
+  'rounded-full transition-[background-color,width,height] duration-200',
+  {
+    variants: {
+      variant: {
+        dots: 'size-2 data-[state=active]:size-2.5 data-[state=active]:bg-foreground data-[state=completed]:bg-foreground/60 data-[state=inactive]:bg-muted-foreground/30',
+        pills:
+          'h-1 max-w-8 flex-1 rounded-full data-[state=active]:bg-foreground data-[state=completed]:bg-foreground/60 data-[state=inactive]:bg-muted-foreground/30',
+      },
     },
-  },
-  defaultVariants: {
-    variant: 'dots',
-  },
-});
+    defaultVariants: {
+      variant: 'dots',
+    },
+  }
+);
 
 export interface StepIndicatorProps
   extends

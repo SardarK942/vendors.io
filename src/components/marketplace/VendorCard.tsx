@@ -154,7 +154,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             className={cn(
               'absolute bottom-3.5 right-3.5 inline-flex size-10 items-center justify-center rounded-full',
               'bg-indigo text-cream',
-              'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] -translate-x-2 opacity-0 transition-all',
+              'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] -translate-x-2 opacity-0 transition-[transform,opacity]',
               'md:group-hover:translate-x-0 md:group-hover:opacity-100',
               'motion-reduce:md:group-hover:translate-x-0'
             )}

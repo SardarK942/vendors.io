@@ -40,7 +40,7 @@ function StarRating({
             key={n}
             type="button"
             onClick={() => onChange(n)}
-            className="transition"
+            className="rounded transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             aria-label={`${n} stars`}
           >
             <Star

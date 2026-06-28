@@ -97,7 +97,7 @@ export function BookingsArchive({
             key={tab}
             onClick={() => setTab(tab)}
             disabled={isPending}
-            className={`border-b-2 px-3 py-2 text-sm font-medium transition ${
+            className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
               activeTab === tab
                 ? 'border-indigo-600 text-indigo-700'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
