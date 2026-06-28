@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
+import { fmtUSD } from '@/lib/intl';
 
 export interface PackageWithAddons {
   id: string;
@@ -143,8 +144,8 @@ export function PackageGrid({
                     {p.events_count > 1 && ` · ${p.events_count} events`}
                   </p>
                   <div className="flex items-center justify-between pt-1">
-                    <span className="text-lg font-bold">
-                      ${(p.base_price_cents / 100).toLocaleString()}
+                    <span className="text-lg font-bold tabular-nums">
+                      {fmtUSD(p.base_price_cents)}
                     </span>
                     <span className="text-sm text-primary group-hover:underline">
                       Book <span translate="no">{p.name}</span> →

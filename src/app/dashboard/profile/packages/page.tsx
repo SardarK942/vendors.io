@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { listPackagesForVendor } from '@/services/packages.service';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
+import { fmtUSD } from '@/lib/intl';
 
 export const dynamic = 'force-dynamic';
 
@@ -113,9 +114,7 @@ function PackageCard({ pkg }: { pkg: PackageItem }) {
             <span className="shrink-0 text-xs uppercase text-muted-foreground">Inactive</span>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
-          ${(pkg.base_price_cents / 100).toLocaleString()}
-        </p>
+        <p className="text-sm tabular-nums text-muted-foreground">{fmtUSD(pkg.base_price_cents)}</p>
         <p className="text-xs text-muted-foreground">
           {pkg.duration_hours}
           {' '}h &middot; up to {pkg.max_guests} guests

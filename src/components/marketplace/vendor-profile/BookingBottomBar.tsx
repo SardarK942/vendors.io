@@ -52,8 +52,12 @@ export function BookingBottomBar({
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-bold text-ink">From {formatPrice(total)}</p>
-          <p className="text-xs text-ink/70">Pay {formatPrice(deposit)} deposit today</p>
+          <p className="truncate text-base font-bold tabular-nums text-ink">
+            From {formatPrice(total)}
+          </p>
+          <p className="text-xs tabular-nums text-ink/70">
+            Pay {formatPrice(deposit)} deposit today
+          </p>
 
           <Sheet open={pickerOpen} onOpenChange={setPickerOpen}>
             <SheetTrigger asChild>
@@ -94,7 +98,7 @@ export function BookingBottomBar({
                           </p>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-ink">
+                      <p className="text-sm font-bold tabular-nums text-ink">
                         {formatPrice(p.base_price_cents ?? 0)}
                       </p>
                     </button>

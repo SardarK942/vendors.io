@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { EventRow, type EventRowData } from './EventRow';
 import Image from 'next/image';
+import { fmtUSD } from '@/lib/intl';
 
 interface Addon {
   id: string;
@@ -179,24 +180,24 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 </p>
               </div>
             </div>
-            <div className="space-y-1 text-sm">
+            <div className="space-y-1 text-sm tabular-nums">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Package base</span>
-                <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+                <span>{fmtUSD(pkg.base_price_cents)}</span>
               </div>
               {selectedAddons.map((addon) => (
                 <div key={addon.addon_id} className="flex justify-between">
                   <span className="text-muted-foreground">+ {addon.name}</span>
                   <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
-                    {addon.price_delta_cents >= 0 ? '+' : ''}$
-                    {(addon.price_delta_cents / 100).toLocaleString()}
+                    {addon.price_delta_cents >= 0 ? '+' : ''}
+                    {fmtUSD(addon.price_delta_cents)}
                   </span>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between font-semibold">
                 <span>Subtotal</span>
-                <span>${(estimatedTotal / 100).toLocaleString()}</span>
+                <span>{fmtUSD(estimatedTotal)}</span>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -346,24 +347,24 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           <CardHeader>
             <CardTitle className="text-base">Price Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2 text-sm tabular-nums">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{pkg.name}</span>
-              <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+              <span>{fmtUSD(pkg.base_price_cents)}</span>
             </div>
             {selectedAddons.map((addon) => (
               <div key={addon.addon_id} className="flex justify-between">
                 <span className="text-muted-foreground">{addon.name}</span>
                 <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
-                  {addon.price_delta_cents >= 0 ? '+' : ''}$
-                  {(addon.price_delta_cents / 100).toLocaleString()}
+                  {addon.price_delta_cents >= 0 ? '+' : ''}
+                  {fmtUSD(addon.price_delta_cents)}
                 </span>
               </div>
             ))}
             <Separator />
             <div className="flex justify-between text-base font-bold">
               <span>Estimated Total</span>
-              <span>${(estimatedTotal / 100).toLocaleString()}</span>
+              <span>{fmtUSD(estimatedTotal)}</span>
             </div>
             <p className="pt-1 text-xs text-muted-foreground">
               Vendor may adjust the final price before deposit.

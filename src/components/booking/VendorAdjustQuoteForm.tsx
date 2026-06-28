@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { fmtUSDWithCents } from '@/lib/intl';
 
 const ADJUSTMENT_REASONS = [
   { value: 'travel', label: 'Travel distance' },
@@ -96,8 +97,8 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
           inputMode="decimal"
           autoComplete="off"
         />
-        <p className="text-xs text-muted-foreground">
-          Current: ${(currentTotalCents / 100).toFixed(2)}
+        <p className="text-xs tabular-nums text-muted-foreground">
+          Current: {fmtUSDWithCents(currentTotalCents)}
         </p>
       </div>
 

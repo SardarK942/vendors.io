@@ -11,6 +11,7 @@ import {
   formatPrice,
   scrollToPackages,
 } from './helpers';
+import { fmtCount } from '@/lib/intl';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -74,13 +75,14 @@ export function BookingStickyCard({
         </p>
       )}
 
-      <p className="mt-6 text-3xl font-bold text-ink">{formatPrice(total)}</p>
+      <p className="mt-6 text-3xl font-bold tabular-nums text-ink">{formatPrice(total)}</p>
       <p className="text-xs text-ink/60">Total cost (everything included)</p>
 
       <div className="my-4 rounded-md bg-cream p-3 text-center text-xs text-ink">
-        Pay <b className="text-hot-pink">{formatPrice(deposit)}</b> deposit today.{' '}
+        Pay <b className="tabular-nums text-hot-pink">{formatPrice(deposit)}</b> deposit today.{' '}
         <span className="text-ink/80">
-          Vendor will arrange the remaining {formatPrice(remaining)} with you.
+          Vendor will arrange the remaining{' '}
+          <span className="tabular-nums">{formatPrice(remaining)}</span> with you.
         </span>
       </div>
 
@@ -140,11 +142,11 @@ function Socials({ vendor }: { vendor: VendorRow }) {
 
 function TrustRow({ vendor }: { vendor: VendorRow }) {
   return (
-    <div className="mt-4 flex items-start justify-around border-t border-ink/10 pt-4 text-center text-xs text-ink">
+    <div className="mt-4 flex items-start justify-around border-t border-ink/10 pt-4 text-center text-xs tabular-nums text-ink">
       {vendor.average_rating != null && vendor.review_count != null && vendor.review_count > 0 && (
         <div>
           <div className="font-semibold">★ {vendor.average_rating.toFixed(1)}</div>
-          <div className="text-ink/60">{vendor.review_count} reviews</div>
+          <div className="text-ink/60">{fmtCount(vendor.review_count)} reviews</div>
         </div>
       )}
       {vendor.response_sla_hours != null && (
@@ -159,7 +161,7 @@ function TrustRow({ vendor }: { vendor: VendorRow }) {
       {vendor.total_bookings != null && vendor.total_bookings > 0 && (
         <div>
           <div className="font-semibold">
-            <span aria-hidden="true">✓</span> {vendor.total_bookings.toLocaleString()}
+            <span aria-hidden="true">✓</span> {fmtCount(vendor.total_bookings)}
           </div>
           <div className="text-ink/60">Events</div>
         </div>

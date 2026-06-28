@@ -9,6 +9,7 @@ import {
   type Attribution,
   type AttributionRange,
 } from '@/services/payment.attribution';
+import { fmtUSD, fmtCount } from '@/lib/intl';
 
 interface EarningsCardProps {
   vendorProfileId: string;
@@ -20,15 +21,6 @@ const RANGES: { id: AttributionRange; label: string }[] = [
   { id: 'year', label: 'Year' },
   { id: 'all', label: 'All time' },
 ];
-
-function formatCents(cents: number): string {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
-}
 
 export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
   const [range, setRange] = useState<AttributionRange>('month');
@@ -82,27 +74,32 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
 
       <div className="grid grid-cols-3 gap-4">
         <div>
-          <p className="text-2xl font-semibold text-ink">{formatCents(data.totalCents)}</p>
+          <p className="text-2xl font-semibold tabular-nums text-ink">{fmtUSD(data.totalCents)}</p>
           <p className="text-xs text-ink/60">in confirmed bookings driven by Baazar</p>
         </div>
         <div>
-          <p className="text-2xl font-semibold text-ink">{data.bookingCount}</p>
+          <p className="text-2xl font-semibold tabular-nums text-ink">
+            {fmtCount(data.bookingCount)}
+          </p>
           <p className="text-xs text-ink/60">bookings confirmed</p>
         </div>
         <div>
-          <p className="text-2xl font-semibold text-ink">{formatCents(data.platformFeeCents)}</p>
+          <p className="text-2xl font-semibold tabular-nums text-ink">
+            {fmtUSD(data.platformFeeCents)}
+          </p>
           <p className="text-xs text-ink/60">in fees paid to Baazar</p>
         </div>
       </div>
 
       <div className="mt-4 border-t border-ink/10 pt-4">
         <p className="text-sm text-ink">
-          Net to you: <span className="font-semibold">{formatCents(data.netCents)}</span> (95% of
-          bookings driven)
+          Net to you: <span className="font-semibold tabular-nums">{fmtUSD(data.netCents)}</span>{' '}
+          (95% of bookings driven)
         </p>
         <p className="mt-2 text-base text-ink">
           ROI: every $1 paid to Baazar →{' '}
-          <span className="font-bold text-hot-pink">${data.roiMultiple}</span> in bookings
+          <span className="font-bold tabular-nums text-hot-pink">${data.roiMultiple}</span> in
+          bookings
         </p>
       </div>
 

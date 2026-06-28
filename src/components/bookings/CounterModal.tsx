@@ -98,7 +98,7 @@ export function CounterModal({ open, onClose, bookingId, currentTotalCents, onSu
                 onChange={(e) => setTotal(Number(e.target.value))}
                 inputMode="decimal"
                 autoComplete="off"
-                className="w-full rounded-md border bg-background py-2 pl-7 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                className="w-full rounded-md border bg-background py-2 pl-7 pr-3 text-sm tabular-nums ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
             </div>
           </div>

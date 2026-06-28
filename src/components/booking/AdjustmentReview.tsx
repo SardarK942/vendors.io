@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { CounterModal } from '@/components/bookings/CounterModal';
+import { fmtUSD } from '@/lib/intl';
 
 const REASON_LABELS: Record<string, string> = {
   travel: 'Travel distance',
@@ -102,14 +103,15 @@ export function AdjustmentReview({
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">Package + add-ons</p>
-          <p className="text-lg font-medium">${(originalSubtotalCents / 100).toLocaleString()}</p>
+          <p className="text-lg font-medium tabular-nums">{fmtUSD(originalSubtotalCents)}</p>
         </div>
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">Adjustment</p>
           <p
-            className={`text-lg font-medium ${isIncrease ? 'text-orange-600' : isDiscount ? 'text-green-600' : ''}`}
+            className={`text-lg font-medium tabular-nums ${isIncrease ? 'text-orange-600' : isDiscount ? 'text-green-600' : ''}`}
           >
-            {adjustmentCents >= 0 ? '+' : ''}${(adjustmentCents / 100).toLocaleString()}
+            {adjustmentCents >= 0 ? '+' : ''}
+            {fmtUSD(adjustmentCents)}
           </p>
           <p className="text-xs text-muted-foreground">{REASON_LABELS[reason] ?? reason}</p>
           {explanation && (
@@ -121,7 +123,7 @@ export function AdjustmentReview({
       <div className="flex items-center justify-between border-t pt-4">
         <div>
           <p className="text-xs text-muted-foreground">Adjusted total</p>
-          <p className="text-xl font-bold">${(finalTotal / 100).toLocaleString()}</p>
+          <p className="text-xl font-bold tabular-nums">{fmtUSD(finalTotal)}</p>
         </div>
       </div>
 

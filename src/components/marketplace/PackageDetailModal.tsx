@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { PackageWithAddons } from './PackageGrid';
+import { fmtUSD } from '@/lib/intl';
 
 interface Props {
   pkg: PackageWithAddons;
@@ -146,10 +147,10 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
                       <span className="text-sm">{addon.name}</span>
                     </span>
                     <span
-                      className={`font-mono text-sm ${addon.price_delta_cents < 0 ? 'text-green-600' : ''}`}
+                      className={`text-sm tabular-nums ${addon.price_delta_cents < 0 ? 'text-green-600' : ''}`}
                     >
-                      {addon.price_delta_cents >= 0 ? '+' : ''}$
-                      {(addon.price_delta_cents / 100).toLocaleString()}
+                      {addon.price_delta_cents >= 0 ? '+' : ''}
+                      {fmtUSD(addon.price_delta_cents)}
                     </span>
                   </label>
                 ))}
@@ -173,7 +174,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-xl font-bold">${(total / 100).toLocaleString()}</p>
+              <p className="text-xl font-bold tabular-nums">{fmtUSD(total)}</p>
             </div>
             <Button onClick={handleContinue} disabled={loading} size="lg">
               {loading ? 'Please wait…' : 'Continue to Booking'}

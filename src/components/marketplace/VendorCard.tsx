@@ -214,7 +214,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           </div>
         )}
         {minPrice && !compact && (
-          <p className="mt-3 text-[14px] font-semibold text-ink">
+          <p className="mt-3 text-[14px] font-semibold tabular-nums text-ink">
             <span className="text-[12px] font-normal text-ink-muted">From </span>
             {minPrice}
           </p>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { VendorAdjustQuoteForm } from '@/components/booking/VendorAdjustQuoteForm';
 import { useCrossBusinessActionToast } from '@/components/dashboard/CrossBusinessActionToast';
+import { fmtUSD } from '@/lib/intl';
 
 interface Props {
   bookingId: string;
@@ -122,7 +123,7 @@ export function VendorBookingActions({
               onClick={handleAccept}
               disabled={accepting}
             >
-              {accepting ? 'Accepting…' : `Accept at $${(totalPriceCents / 100).toLocaleString()}`}
+              {accepting ? 'Accepting…' : `Accept at ${fmtUSD(totalPriceCents)}`}
             </Button>
             <div className="flex flex-1 flex-col gap-1">
               <Button
