@@ -1,17 +1,17 @@
--- vendor_profiles new columns
+-- vendor_profiles new columns (idempotent — supports re-runs after partial apply)
 ALTER TABLE vendor_profiles
-  ADD COLUMN calendar_feed_token text UNIQUE,
-  ADD COLUMN calendar_feed_state text NOT NULL DEFAULT 'not_connected'
+  ADD COLUMN IF NOT EXISTS calendar_feed_token text UNIQUE,
+  ADD COLUMN IF NOT EXISTS calendar_feed_state text NOT NULL DEFAULT 'not_connected'
     CHECK (calendar_feed_state IN ('not_connected', 'pending', 'connected')),
-  ADD COLUMN calendar_feed_intent_at timestamptz,
-  ADD COLUMN calendar_feed_intent_method text,
-  ADD COLUMN calendar_feed_connected_at timestamptz,
-  ADD COLUMN calendar_feed_connected_via_ua text,
-  ADD COLUMN calendar_feed_nudge_dismissed_at timestamptz,
-  ADD COLUMN first_confirmed_booking_at timestamptz;
+  ADD COLUMN IF NOT EXISTS calendar_feed_intent_at timestamptz,
+  ADD COLUMN IF NOT EXISTS calendar_feed_intent_method text,
+  ADD COLUMN IF NOT EXISTS calendar_feed_connected_at timestamptz,
+  ADD COLUMN IF NOT EXISTS calendar_feed_connected_via_ua text,
+  ADD COLUMN IF NOT EXISTS calendar_feed_nudge_dismissed_at timestamptz,
+  ADD COLUMN IF NOT EXISTS first_confirmed_booking_at timestamptz;
 
 -- polls table (service-role-only — no RLS policy needed)
-CREATE TABLE vendor_calendar_feed_polls (
+CREATE TABLE IF NOT EXISTS vendor_calendar_feed_polls (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   vendor_profile_id uuid NOT NULL REFERENCES vendor_profiles(id) ON DELETE CASCADE,
   polled_at timestamptz NOT NULL DEFAULT now(),
@@ -20,24 +20,30 @@ CREATE TABLE vendor_calendar_feed_polls (
   ip_hash text,
   status_returned smallint NOT NULL DEFAULT 200
 );
-CREATE INDEX vendor_calendar_feed_polls_vendor_idx
+CREATE INDEX IF NOT EXISTS vendor_calendar_feed_polls_vendor_idx
   ON vendor_calendar_feed_polls (vendor_profile_id, polled_at DESC);
 
 ALTER TABLE vendor_calendar_feed_polls ENABLE ROW LEVEL SECURITY;
 -- No SELECT/INSERT/UPDATE/DELETE policies for non-service-role; service-role bypasses RLS.
 
--- Backfill first_confirmed_booking_at for vendors with existing confirmed bookings
+-- Backfill first_confirmed_booking_at for vendors with existing confirmed bookings.
+-- bookings.accepted_at does not exist on this schema — using created_at as the
+-- best-effort proxy for "when did this vendor's first locked booking arrive."
+-- The trigger below uses now() going forward, so backfill precision matters only
+-- for vendors who already have locked bookings (and for them the prompt won't
+-- re-fire on past bookings anyway — first_confirmed_booking_at just needs to be
+-- non-null to keep the going-forward gate correct).
 UPDATE vendor_profiles vp
 SET first_confirmed_booking_at = sub.first_at
 FROM (
-  SELECT b.vendor_profile_id, MIN(b.accepted_at) AS first_at
+  SELECT b.vendor_profile_id, MIN(b.created_at) AS first_at
   FROM bookings b
   WHERE b.status IN ('accepted', 'adjusted_quote_sent', 'adjusted_quote_declined',
                      'deposit_paid', 'completed')
-    AND b.accepted_at IS NOT NULL
   GROUP BY b.vendor_profile_id
 ) sub
-WHERE vp.id = sub.vendor_profile_id;
+WHERE vp.id = sub.vendor_profile_id
+  AND vp.first_confirmed_booking_at IS NULL;
 
 -- Trigger function: maintain first_confirmed_booking_at on status transitions
 CREATE OR REPLACE FUNCTION sync_first_confirmed_booking()
@@ -56,6 +62,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS bookings_first_confirmed_trigger ON bookings;
 CREATE TRIGGER bookings_first_confirmed_trigger
   AFTER INSERT OR UPDATE OF status ON bookings
   FOR EACH ROW EXECUTE FUNCTION sync_first_confirmed_booking();

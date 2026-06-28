@@ -45,7 +45,7 @@ export default async function BookingDetailPage({ params, searchParams }: Bookin
             .select('id')
             .eq('vendor_profile_id', vendor.id)
             .in('status', LOCKING)
-            .order('accepted_at', { ascending: true })
+            .order('created_at', { ascending: true })
             .limit(1)
             .maybeSingle();
           const isFirstConfirmedBooking = firstBooking?.id === id;
