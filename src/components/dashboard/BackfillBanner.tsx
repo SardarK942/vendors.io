@@ -44,7 +44,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
       <div className="flex flex-shrink-0 items-center gap-2">
         <Link
           href="/dashboard/profile/setup/details?backfill=true"
-          className="inline-flex h-9 items-center rounded-md bg-ink px-4 text-[13px] font-medium text-cream transition-colors hover:bg-[#2A1E1E]"
+          className="inline-flex h-9 items-center rounded-md bg-ink px-4 text-[13px] font-medium text-cream transition-colors hover:bg-[#2A1E1E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           Add details
         </Link>
@@ -52,7 +52,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="inline-flex size-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink"
+          className="inline-flex size-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           <X className="size-4" strokeWidth={2} aria-hidden="true" />
         </button>

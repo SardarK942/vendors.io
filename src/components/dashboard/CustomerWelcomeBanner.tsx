@@ -42,7 +42,8 @@ export function CustomerWelcomeBanner({
                 <Link
                   key={c}
                   href={`/vendors?category=${c}`}
-                  className="rounded-full border border-ink/20 px-3 py-1 text-xs text-ink hover-pink-border"
+                  aria-label={`Browse ${c} vendors`}
+                  className="rounded-full border border-ink/20 px-3 py-1 text-xs text-ink transition-colors hover-pink-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 >
                   Browse {c}
                 </Link>
@@ -53,7 +54,7 @@ export function CustomerWelcomeBanner({
         <button
           type="button"
           onClick={handleDismiss}
-          className="ml-4 text-ink/40 hover:text-ink"
+          className="ml-4 rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
           aria-label="Dismiss welcome banner"
         >
           <X size={18} aria-hidden="true" />

@@ -72,7 +72,7 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
                 <button
                   type="button"
                   onClick={handleIgClick}
-                  className="rounded-md border bg-background px-3 py-1.5 text-sm font-medium hover:bg-muted"
+                  className="rounded-md border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 >
                   Show on Instagram
                 </button>

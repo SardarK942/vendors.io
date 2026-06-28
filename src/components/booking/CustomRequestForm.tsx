@@ -169,7 +169,7 @@ export function CustomRequestForm({
                   value={event.startTime}
                   onChange={(e) => updateEvent(event.id, { startTime: e.target.value })}
                   disabled={submitting}
-                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 />
               </div>
 
@@ -191,7 +191,7 @@ export function CustomRequestForm({
                     updateEvent(event.id, { guestCount: Number(e.target.value) || 1 })
                   }
                   disabled={submitting}
-                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 />
               </div>
 
@@ -248,7 +248,7 @@ export function CustomRequestForm({
           placeholder="Tell the vendor what makes your event special — guest count breakdown, dietary needs, location, anything outside their standard packages…"
           required
           autoComplete="off"
-          className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+          className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         />
         <p className="mt-1 text-xs text-ink-soft">
           {description.length} / 1000 · minimum 50 characters

@@ -126,7 +126,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
                   ...(category ? { category } : {}),
                   page: String(p),
                 }).toString()}`}
-                className={`rounded border px-3 py-1 text-sm ${
+                className={`rounded border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   p === page
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'hover:bg-muted'

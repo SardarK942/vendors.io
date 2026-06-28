@@ -111,6 +111,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
           <input
             type="checkbox"
             checked={skipAddress}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             onChange={(e) => {
               setSkipAddress(e.target.checked);
               if (e.target.checked) {

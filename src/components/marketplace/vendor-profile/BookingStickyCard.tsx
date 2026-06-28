@@ -97,7 +97,7 @@ export function BookingStickyCard({
         <button
           type="button"
           onClick={scrollToPackages}
-          className="mt-3 block w-full text-center text-xs text-ink underline hover-pink-text"
+          className="mt-3 block w-full rounded text-center text-xs text-ink underline transition-colors hover-pink-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           or compare all {packages.length} packages ↓
         </button>

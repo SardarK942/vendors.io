@@ -40,7 +40,11 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
       >
         <header className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-sm font-semibold">Booking details</h2>
-          <button onClick={close} aria-label="Close panel" className="rounded p-1 hover:bg-accent">
+          <button
+            onClick={close}
+            aria-label="Close panel"
+            className="rounded p-1 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </header>

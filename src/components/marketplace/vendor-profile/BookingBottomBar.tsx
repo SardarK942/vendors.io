@@ -79,7 +79,7 @@ export function BookingBottomBar({
                         setSelectedId(p.id);
                         setPickerOpen(false);
                       }}
-                      className={`flex w-full items-center justify-between rounded-md border p-3 text-left ${
+                      className={`flex w-full items-center justify-between rounded-md border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                         isSel
                           ? 'border-ink bg-white'
                           : 'border-ink/15 bg-white hover:border-hot-pink'

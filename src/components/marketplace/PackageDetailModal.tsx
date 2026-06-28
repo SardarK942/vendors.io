@@ -139,7 +139,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
                     <span className="flex items-center gap-3">
                       <input
                         type="checkbox"
-                        className="rounded"
+                        className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                         checked={toggled.has(addon.id)}
                         onChange={() => toggleAddon(addon.id)}
                       />

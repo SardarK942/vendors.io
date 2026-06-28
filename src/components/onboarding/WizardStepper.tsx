@@ -60,7 +60,12 @@ export function WizardStepper({ profile }: Props) {
           return (
             <li key={step.key}>
               {isReachable ? (
-                <Link href={`/dashboard/profile/setup/${step.key}`}>{content}</Link>
+                <Link
+                  href={`/dashboard/profile/setup/${step.key}`}
+                  className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                >
+                  {content}
+                </Link>
               ) : (
                 content
               )}
@@ -70,7 +75,7 @@ export function WizardStepper({ profile }: Props) {
       </ul>
       <Link
         href="/dashboard"
-        className="mt-6 block px-3 py-2 text-xs text-muted-foreground underline hover:text-foreground"
+        className="mt-6 block rounded px-3 py-2 text-xs text-muted-foreground underline transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
       >
         Save &amp; exit
       </Link>

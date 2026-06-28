@@ -167,7 +167,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
               type="button"
               onClick={() => setShowPrefillBanner(false)}
               aria-label="Dismiss notice"
-              className="text-ink/40 hover:text-ink"
+              className="rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             >
               <X className="size-3" />
             </button>

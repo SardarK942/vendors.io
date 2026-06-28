@@ -120,7 +120,7 @@ export function PackageGrid({
                   }
                   setSelected(p);
                 }}
-                className={`group w-full overflow-hidden rounded-xl text-left transition-shadow hover:shadow-lg ${
+                className={`group w-full overflow-hidden rounded-xl text-left transition-shadow hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   p.id === featuredPackageId ? 'border-2 border-ink' : 'border border-border'
                 }`}
               >

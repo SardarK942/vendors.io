@@ -68,8 +68,8 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
                   }}
                   className={
                     isSelected
-                      ? 'rounded-full bg-ink px-3 py-1 text-sm text-cream'
-                      : 'rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover-pink-border'
+                      ? 'rounded-full bg-ink px-3 py-1 text-sm text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+                      : 'rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover-pink-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
                   }
                 >
                   {t.label}

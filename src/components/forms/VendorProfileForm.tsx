@@ -241,7 +241,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
             <label className="flex cursor-pointer items-start gap-2">
               <input
                 type="checkbox"
-                className="mt-0.5"
+                className="mt-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 checked={baseAddressPublic}
                 onChange={(e) => setBaseAddressPublic(e.target.checked)}
               />

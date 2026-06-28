@@ -149,7 +149,8 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               <button
                 type="button"
                 onClick={() => setRole('couple')}
-                className={`rounded-lg border-2 p-4 text-center transition-colors ${
+                aria-pressed={role === 'couple'}
+                className={`rounded-lg border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   role === 'couple'
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
@@ -163,7 +164,8 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               <button
                 type="button"
                 onClick={() => setRole('vendor')}
-                className={`rounded-lg border-2 p-4 text-center transition-colors ${
+                aria-pressed={role === 'vendor'}
+                className={`rounded-lg border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   role === 'vendor'
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
@@ -239,7 +241,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-input"
+              className="mt-1 h-4 w-4 rounded border-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             />
             <label htmlFor="agree" className="text-xs text-muted-foreground">
               I agree to the{' '}

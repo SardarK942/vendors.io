@@ -42,7 +42,7 @@ export default async function DashboardLayout({
               <SheetTrigger asChild>
                 <button
                   type="button"
-                  className="rounded-md p-2 hover:bg-ink/5"
+                  className="rounded-md p-2 transition-colors hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                   aria-label="Open menu"
                 >
                   <Menu className="h-5 w-5" />

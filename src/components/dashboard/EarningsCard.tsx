@@ -71,8 +71,8 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
             onClick={() => setRange(r.id)}
             className={
               range === r.id
-                ? 'rounded-full bg-ink px-3 py-1 text-xs font-medium text-cream'
-                : 'rounded-full border border-ink/20 px-3 py-1 text-xs font-medium text-ink hover:bg-ink/5'
+                ? 'rounded-full bg-ink px-3 py-1 text-xs font-medium text-cream transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+                : 'rounded-full border border-ink/20 px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
             }
           >
             {r.label}

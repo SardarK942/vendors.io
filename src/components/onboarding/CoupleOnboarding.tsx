@@ -77,9 +77,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               className="w-full rounded-md border-2 border-ink p-4 text-left hover:border-hot-pink hover:text-hot-pink"
             >
               <p className="font-medium">Yes, I have an event coming up</p>
-              <p className="mt-1 text-xs text-ink/60">
-                We’ll personalize your recommendations.
-              </p>
+              <p className="mt-1 text-xs text-ink/60">We’ll personalize your recommendations.</p>
             </button>
             <button
               type="button"
@@ -136,8 +134,8 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
                       }}
                       className={
                         isSelected
-                          ? 'rounded-full bg-ink px-3 py-1 text-sm text-cream'
-                          : 'rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover-pink-border'
+                          ? 'rounded-full bg-ink px-3 py-1 text-sm text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+                          : 'rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover-pink-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
                       }
                     >
                       {t.label}

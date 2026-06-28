@@ -61,7 +61,7 @@ export default async function HomePage() {
           href="https://skiper-ui.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-ink"
+          className="rounded transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           Skiper UI
         </a>{' '}
@@ -70,7 +70,7 @@ export default async function HomePage() {
           href="https://x.com/Gur__vi"
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-ink"
+          className="rounded transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           @Gur__vi
         </a>

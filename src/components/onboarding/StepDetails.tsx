@@ -109,7 +109,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
                 key={lang.slug}
                 type="button"
                 onClick={() => toggleLang(lang.slug)}
-                className={`inline-flex h-9 items-center rounded-full border px-4 text-[13px] font-medium transition-colors ${
+                className={`inline-flex h-9 items-center rounded-full border px-4 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   on
                     ? 'border-ink bg-ink text-cream'
                     : 'border-hairline bg-cream text-ink hover:border-ink'
@@ -170,7 +170,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
                   setSla(opt.value);
                   clearField('response_sla_hours');
                 }}
-                className="size-4 accent-ink"
+                className="size-4 accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               />
               <span className="text-sm text-ink">{opt.label}</span>
             </label>

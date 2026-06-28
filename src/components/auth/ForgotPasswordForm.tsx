@@ -67,7 +67,7 @@ function ForgotPasswordInner() {
               <button
                 type="button"
                 onClick={() => setSent(null)}
-                className="font-medium text-ink underline underline-offset-4 hover-pink-text"
+                className="rounded font-medium text-ink underline underline-offset-4 hover-pink-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 try a different address
               </button>

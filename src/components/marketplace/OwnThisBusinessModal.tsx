@@ -80,7 +80,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream"
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             >
               Close
             </button>
@@ -119,14 +119,14 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-md border px-3 py-1.5 text-sm"
+                className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => setView(intent)}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 Continue
               </button>
@@ -182,7 +182,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
               <button
                 type="button"
                 onClick={() => setView('choice')}
-                className="rounded-md border px-3 py-1.5 text-sm"
+                className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 Back
               </button>
@@ -190,7 +190,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                 type="button"
                 onClick={() => submit('remove')}
                 disabled={!email || submitting}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream disabled:opacity-60"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60"
               >
                 {submitting ? 'Sending…' : 'Send removal request'}
               </button>
@@ -257,7 +257,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
               <button
                 type="button"
                 onClick={() => setView('choice')}
-                className="rounded-md border px-3 py-1.5 text-sm"
+                className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 Back
               </button>
@@ -265,7 +265,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                 type="button"
                 onClick={() => submit('claim_request')}
                 disabled={!email || !ig || submitting}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream disabled:opacity-60"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60"
               >
                 {submitting ? 'Sending…' : 'Request claim link'}
               </button>

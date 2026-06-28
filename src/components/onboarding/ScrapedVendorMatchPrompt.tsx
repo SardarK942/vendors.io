@@ -38,7 +38,7 @@ export function ScrapedVendorMatchPrompt({ matches }: Props) {
       <div className="mt-4">
         <Link
           href={`/vendors/${top.slug}`}
-          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:opacity-90"
+          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           Visit my listing
         </Link>
