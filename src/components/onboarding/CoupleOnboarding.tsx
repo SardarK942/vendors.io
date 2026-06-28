@@ -185,7 +185,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               <VendorCard key={v.id} vendor={v} compact />
             ))}
             {vendors.length === 0 && (
-              <p className="col-span-3 py-8 text-center text-sm text-ink/50">Loading vendors...</p>
+              <p className="col-span-3 py-8 text-center text-sm text-ink/50">Loading vendors…</p>
             )}
           </div>
         </SavedVendorsProvider>

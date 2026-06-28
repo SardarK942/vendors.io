@@ -123,7 +123,7 @@ export function DepositDialog({
             Not now
           </Button>
           <Button onClick={handleSubmit} disabled={!agreed || loading}>
-            {loading ? 'Processing...' : `Pay ${formatPrice(depositCents)}`}
+            {loading ? 'Processing…' : `Pay ${formatPrice(depositCents)}`}
           </Button>
         </DialogFooter>
       </DialogContent>

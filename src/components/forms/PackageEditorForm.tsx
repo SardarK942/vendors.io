@@ -149,7 +149,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               maxLength={2000}
               rows={4}
               defaultValue={initial?.description}
-              placeholder="What's included, your style, what makes this package special..."
+              placeholder="What’s included, your style, what makes this package special…"
             />
           </div>
 
@@ -275,7 +275,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               rows={3}
               maxLength={1000}
               defaultValue={initial?.vendor_notes_template ?? ''}
-              placeholder="I'll arrive 30 min early to set up. Please have..."
+              placeholder="I’ll arrive 30 min early to set up. Please have…"
             />
             <p className="text-xs text-muted-foreground">
               Sent to customers automatically when you accept a booking.
@@ -287,7 +287,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
 
           <div className="flex gap-3">
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : mode === 'create' ? 'Create Package' : 'Update Package'}
+              {loading ? 'Saving…' : mode === 'create' ? 'Create Package' : 'Update Package'}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancel

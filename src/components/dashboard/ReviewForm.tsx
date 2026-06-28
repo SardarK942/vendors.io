@@ -130,7 +130,7 @@ export function ReviewForm({ bookingId, open, onOpenChange, onSuccess }: ReviewF
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Submitting...' : 'Submit review'}
+            {loading ? 'Submitting…' : 'Submit review'}
           </Button>
         </DialogFooter>
       </DialogContent>

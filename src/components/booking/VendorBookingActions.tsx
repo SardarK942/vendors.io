@@ -123,7 +123,7 @@ export function VendorBookingActions({
               disabled={accepting}
             >
               {accepting
-                ? 'Accepting...'
+                ? 'Accepting…'
                 : `Accept at $${(totalPriceCents / 100).toLocaleString()}`}
             </Button>
             <div className="flex flex-1 flex-col gap-1">

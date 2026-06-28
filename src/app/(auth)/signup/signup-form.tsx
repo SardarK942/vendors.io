@@ -104,7 +104,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
   };
 
   const submitLabel = loading
-    ? 'Creating account...'
+    ? 'Creating account…'
     : !role
       ? 'Choose an account type'
       : !agreed

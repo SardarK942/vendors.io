@@ -245,7 +245,7 @@ export function CustomRequestForm({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           disabled={submitting}
-          placeholder="Tell the vendor what makes your event special — guest count breakdown, dietary needs, location, anything outside their standard packages."
+          placeholder="Tell the vendor what makes your event special — guest count breakdown, dietary needs, location, anything outside their standard packages…"
           required
           className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
         />

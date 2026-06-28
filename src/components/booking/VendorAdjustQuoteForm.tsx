@@ -102,7 +102,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
         <Label>Reason</Label>
         <Select value={reason} onValueChange={setReason} required>
           <SelectTrigger>
-            <SelectValue placeholder="Select a reason..." />
+            <SelectValue placeholder="Select a reason…" />
           </SelectTrigger>
           <SelectContent>
             {ADJUSTMENT_REASONS.map((r) => (
@@ -123,7 +123,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
             onChange={(e) => setExplanation(e.target.value)}
             rows={3}
             maxLength={1000}
-            placeholder="Describe the reason for your adjustment..."
+            placeholder="Describe the reason for your adjustment…"
             required
           />
         </div>
@@ -138,13 +138,13 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
             onChange={(e) => setExplanation(e.target.value)}
             rows={2}
             maxLength={1000}
-            placeholder="Any additional context..."
+            placeholder="Any additional context…"
           />
         </div>
       )}
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Sending...' : 'Send Adjusted Quote'}
+        {loading ? 'Sending…' : 'Send Adjusted Quote'}
       </Button>
     </form>
   );

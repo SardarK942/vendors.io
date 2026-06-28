@@ -310,7 +310,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               <label className="mb-1 block text-sm font-medium">Special Requests (optional)</label>
               <textarea
                 className="min-h-[80px] w-full rounded border p-2 text-sm"
-                placeholder="Any special needs, dietary restrictions, setup requests..."
+                placeholder="Any special needs, dietary restrictions, setup requests…"
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
               />
@@ -325,7 +325,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit Booking Request'}
+          {submitting ? 'Submitting…' : 'Submit Booking Request'}
         </Button>
       </div>
 

@@ -45,7 +45,7 @@ export function WhatPicker({ query, onChange, onSubmit }: WhatPickerProps) {
         value={query}
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder='"Bollywood DJ" or "Mehndi artist"'
+        placeholder='"Bollywood DJ" or "Mehndi artist"…'
         aria-label="What are you looking for?"
         className={cn(
           'w-full rounded-sm border border-hairline bg-cream px-3.5 py-2.5',

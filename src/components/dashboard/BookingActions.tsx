@@ -155,7 +155,7 @@ export function BookingActions({
       {role === 'couple' && booking.status === 'deposit_paid' && (
         <>
           <Button onClick={handleComplete} disabled={loading}>
-            {loading ? 'Processing...' : 'Mark Complete'}
+            {loading ? 'Processing…' : 'Mark Complete'}
           </Button>
           <Button variant="outline" onClick={() => setDisputeOpen(true)} disabled={loading}>
             Report an issue

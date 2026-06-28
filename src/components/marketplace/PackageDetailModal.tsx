@@ -175,7 +175,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
               <p className="text-xl font-bold">${(total / 100).toLocaleString()}</p>
             </div>
             <Button onClick={handleContinue} disabled={loading} size="lg">
-              {loading ? 'Please wait...' : 'Continue to booking'}
+              {loading ? 'Please wait…' : 'Continue to booking'}
             </Button>
           </div>
         </div>

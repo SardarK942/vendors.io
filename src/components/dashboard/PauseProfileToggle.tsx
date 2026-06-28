@@ -38,7 +38,7 @@ export function PauseProfileToggle({ isActive }: Props) {
   return (
     <div className="mt-3 space-y-1">
       <Button size="sm" onClick={toggle} disabled={loading} variant={isActive ? 'secondary' : 'default'}>
-        {loading ? '...' : isActive ? 'Pause profile' : 'Resume profile'}
+        {loading ? '…' : isActive ? 'Pause profile' : 'Resume profile'}
       </Button>
       {error && <p className="text-xs text-destructive">{error}</p>}
     </div>

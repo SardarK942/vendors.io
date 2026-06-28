@@ -83,14 +83,14 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Start typing your business name..."
+          placeholder="Start typing your business name…"
         />
         <p className="text-xs text-muted-foreground">
           We pre-populated a directory of Chicago Desi wedding vendors. Find yours to claim it.
         </p>
       </div>
 
-      {searching && <p className="text-sm text-muted-foreground">Searching...</p>}
+      {searching && <p className="text-sm text-muted-foreground">Searching…</p>}
 
       {!searching && query.trim().length >= 2 && results.length === 0 && (
         <Card>
@@ -121,7 +121,7 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
                   </div>
                 </div>
                 <Button onClick={() => handleClaim(v.id)} disabled={claimingId === v.id} size="sm">
-                  {claimingId === v.id ? 'Claiming...' : 'This is me'}
+                  {claimingId === v.id ? 'Claiming…' : 'This is me'}
                 </Button>
               </CardContent>
             </Card>

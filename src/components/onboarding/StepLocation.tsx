@@ -95,7 +95,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
             clearField('basePostalCode');
             clearField('baseGooglePlaceId');
           }}
-          placeholder={skipAddress ? 'Skipped' : 'Start typing your address...'}
+          placeholder={skipAddress ? 'Skipped' : 'Start typing your address…'}
           disabled={skipAddress}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         />

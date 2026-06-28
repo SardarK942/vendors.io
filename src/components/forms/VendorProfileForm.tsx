@@ -164,7 +164,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               name="bio"
               rows={4}
               defaultValue={vendorProfile?.bio || ''}
-              placeholder="Tell customers about your services, style, and experience..."
+              placeholder="Tell customers about your services, style, and experience…"
             />
           </div>
 
@@ -216,7 +216,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               <GooglePlacesAutocomplete
                 value={baseAddress}
                 onChange={(place) => setBaseAddress(place)}
-                placeholder="Start typing your address..."
+                placeholder="Start typing your address…"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               {baseAddress.city && (
@@ -243,7 +243,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
           </div>
 
           <Button type="submit" disabled={loading}>
-            {loading ? 'Saving...' : vendorProfile ? 'Update Profile' : 'Create Profile'}
+            {loading ? 'Saving…' : vendorProfile ? 'Update Profile' : 'Create Profile'}
           </Button>
         </form>
       </CardContent>

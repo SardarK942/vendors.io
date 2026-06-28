@@ -44,7 +44,7 @@ export function PackageActiveToggle({ packageId, isActive }: Props) {
         onClick={toggle}
         disabled={loading}
       >
-        {loading ? '...' : isActive ? 'Deactivate' : 'Activate'}
+        {loading ? '…' : isActive ? 'Deactivate' : 'Activate'}
       </Button>
       {error && <p className="text-xs text-destructive max-w-[160px]">{error}</p>}
     </div>

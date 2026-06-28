@@ -81,7 +81,7 @@ export function DisputeDialog({ bookingId, open, onOpenChange, onSuccess }: Disp
             Cancel
           </Button>
           <Button variant="destructive" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Filing...' : 'File dispute'}
+            {loading ? 'Filing…' : 'File dispute'}
           </Button>
         </DialogFooter>
       </DialogContent>

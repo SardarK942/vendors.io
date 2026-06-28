@@ -118,7 +118,7 @@ export function MobileSearchSheet({
             {/* What */}
             <MobileSection
               label="What are you looking for?"
-              value={state.query || '"Bollywood DJ" or "Mehndi artist"'}
+              value={state.query || '"Bollywood DJ" or "Mehndi artist"…'}
               isPlaceholder={!state.query}
               expanded={expanded === 'what'}
               onToggle={() => setExpanded(expanded === 'what' ? null : 'what')}

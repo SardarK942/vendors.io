@@ -155,7 +155,7 @@ export function CancelDialog({
             Keep booking
           </Button>
           <Button variant="destructive" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Cancelling...' : 'Cancel booking'}
+            {loading ? 'Cancelling…' : 'Cancel booking'}
           </Button>
         </DialogFooter>
       </DialogContent>

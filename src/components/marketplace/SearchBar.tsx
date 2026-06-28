@@ -190,7 +190,7 @@ export function SearchBar({
                     submit({ query: state.query });
                   }
                 }}
-                placeholder='"Bollywood DJ" or "Mehndi artist"'
+                placeholder='"Bollywood DJ" or "Mehndi artist"…'
                 aria-controls="search-panel-what"
                 aria-expanded={activeSegment === 'what'}
                 className={cn(
