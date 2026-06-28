@@ -34,10 +34,13 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
       <div className="grid gap-6 md:grid-cols-[1fr_2fr]">
         <div className="aspect-[4/5] overflow-hidden rounded-lg bg-muted">
           {vendor.photos[0] ? (
-            // eslint-disable-next-line @next/next/no-img-element
+            // eslint-disable-next-line @next/next/no-img-element -- scraped photos pre-claim; w/h reserves the 4/5 box and prevents CLS
             <img
               src={vendor.photos[0]}
               alt={vendor.business_name}
+              width={400}
+              height={500}
+              loading="lazy"
               className="h-full w-full object-cover"
             />
           ) : (

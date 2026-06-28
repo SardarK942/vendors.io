@@ -237,7 +237,15 @@ export function PhotoUploaderDrawer({
                 key={`${url}-${i}`}
                 className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md"
               >
-                <img src={url} alt="" className="h-full w-full object-cover" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- 56px thumb strip; explicit w/h prevents CLS during upload */}
+                <img
+                  src={url}
+                  alt=""
+                  width={56}
+                  height={56}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
                 {showPrimarySelector && i === 0 && (
                   <span className="absolute left-0 top-0 rounded-br-md bg-hot-pink px-1 py-0.5 text-[8px] font-medium text-cream">
                     Primary

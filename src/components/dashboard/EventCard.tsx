@@ -72,7 +72,16 @@ export function EventCard({ data }: Props) {
         {/* FRONT */}
         <div className={styles.front}>
           {data.vendor.portfolioImage && (
-            <img src={data.vendor.portfolioImage} alt="" className={styles.frontImg} aria-hidden />
+            // eslint-disable-next-line @next/next/no-img-element -- card is sized via parent + object-fit; width/height attrs reserve a layout box
+            <img
+              src={data.vendor.portfolioImage}
+              alt=""
+              width={320}
+              height={420}
+              loading="lazy"
+              className={styles.frontImg}
+              aria-hidden
+            />
           )}
           <div className={styles.frontContent}>
             <div className={styles.titleRow}>

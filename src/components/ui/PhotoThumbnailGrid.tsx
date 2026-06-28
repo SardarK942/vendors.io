@@ -54,7 +54,15 @@ function SortableThumbnail({
       style={style}
       className="group relative aspect-square overflow-hidden rounded-md"
     >
-      <img src={url} alt="" className="h-full w-full object-cover" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- thumb grid; w/h reserves an aspect-square box to prevent CLS */}
+      <img
+        src={url}
+        alt=""
+        width={200}
+        height={200}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
       {showPrimarySelector && idx === 0 && (
         <span className="absolute left-1 top-1 z-10 rounded-full bg-hot-pink px-2 py-0.5 text-[10px] font-medium text-cream">
           Primary
