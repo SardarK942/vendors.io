@@ -26,6 +26,7 @@ interface Props {
   placeholder?: string;
   className?: string;
   disabled?: boolean;
+  id?: string;
 }
 
 export function GooglePlacesAutocomplete({
@@ -34,6 +35,7 @@ export function GooglePlacesAutocomplete({
   placeholder,
   className,
   disabled,
+  id,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -82,6 +84,7 @@ export function GooglePlacesAutocomplete({
 
   return (
     <input
+      id={id}
       ref={inputRef}
       type="text"
       className={className ?? 'w-full rounded border p-2 text-sm'}

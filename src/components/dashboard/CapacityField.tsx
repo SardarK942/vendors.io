@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ interface Props {
 
 export function CapacityField({ initial }: Props) {
   const router = useRouter();
+  const capacityId = useId();
   const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
 
@@ -36,8 +37,11 @@ export function CapacityField({ initial }: Props) {
       </p>
       <div className="flex items-end gap-3">
         <div>
-          <label className="text-sm">I can handle</label>
+          <label htmlFor={capacityId} className="text-sm">
+            I can handle
+          </label>
           <Input
+            id={capacityId}
             type="number"
             min={1}
             max={50}

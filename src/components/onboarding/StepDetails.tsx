@@ -100,8 +100,8 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
       )}
 
       {/* Languages */}
-      <div className="space-y-3">
-        <Label className="font-display text-base font-semibold">Languages your team speaks</Label>
+      <fieldset className="space-y-3">
+        <legend className="font-display text-base font-semibold">Languages your team speaks</legend>
         <p className="text-xs text-ink-soft">Pick all that apply.</p>
         <div className="flex flex-wrap gap-2">
           {LANGUAGES.map((lang) => {
@@ -125,7 +125,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         {getError('languages') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('languages')}</p>
         )}
-      </div>
+      </fieldset>
 
       {/* Years in business */}
       <div className="space-y-2">
@@ -155,8 +155,10 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
       </div>
 
       {/* Response SLA */}
-      <div className="space-y-3">
-        <Label className="font-display text-base font-semibold">How quickly do you respond?</Label>
+      <fieldset className="space-y-3">
+        <legend className="font-display text-base font-semibold">
+          How quickly do you respond?
+        </legend>
         <p className="text-xs text-ink-soft">
           Customers filter for fast-responding vendors — pick what you can honestly commit to.
         </p>
@@ -181,7 +183,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         {getError('response_sla_hours') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('response_sla_hours')}</p>
         )}
-      </div>
+      </fieldset>
 
       {serverError && (
         <p className="text-sm text-error" role="alert" aria-live="assertive">

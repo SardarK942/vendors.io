@@ -139,18 +139,21 @@ export function CustomRequestForm({
         </div>
       )}
 
-      <section>
-        <label className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+      <fieldset>
+        <legend className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
           Events
-        </label>
+        </legend>
 
         {events.map((event) => (
           <div key={event.id} className="mb-3 rounded-md border border-ink/15 p-4">
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+              <div role="group" aria-labelledby={`date-label-${event.id}`}>
+                <span
+                  id={`date-label-${event.id}`}
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                >
                   Date
-                </label>
+                </span>
                 <DatePicker
                   selected={event.date}
                   onSelect={(v) => updateEvent(event.id, { date: v })}
@@ -196,10 +199,13 @@ export function CustomRequestForm({
                 />
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+              <div role="group" aria-labelledby={`event-type-label-${event.id}`}>
+                <span
+                  id={`event-type-label-${event.id}`}
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                >
                   Event type
-                </label>
+                </span>
                 <EventTypePicker
                   value={event.eventTypeId}
                   onValueChange={(v) => updateEvent(event.id, { eventTypeId: v })}
@@ -229,7 +235,7 @@ export function CustomRequestForm({
         >
           + Add another event
         </button>
-      </section>
+      </fieldset>
 
       <div>
         <label

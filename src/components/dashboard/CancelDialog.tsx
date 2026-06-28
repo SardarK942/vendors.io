@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,6 +62,7 @@ export function CancelDialog({
   onSuccess,
   bookingContext,
 }: CancelDialogProps) {
+  const faultId = useId();
   const [reason, setReason] = useState('');
   const [fault, setFault] = useState<Fault>('none');
   const [loading, setLoading] = useState(false);
@@ -128,9 +129,9 @@ export function CancelDialog({
         <div className="space-y-4 py-2">
           {role === 'vendor' && (
             <div className="space-y-2">
-              <Label>Reason type</Label>
+              <Label htmlFor={faultId}>Reason type</Label>
               <Select value={fault} onValueChange={(v) => setFault(v as Fault)}>
-                <SelectTrigger>
+                <SelectTrigger id={faultId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

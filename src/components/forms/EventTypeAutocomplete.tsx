@@ -37,12 +37,14 @@ interface Props {
   value: string;
   onChange: (v: string) => void;
   className?: string;
+  inputId?: string;
 }
 
-export function EventTypeAutocomplete({ value, onChange, className }: Props) {
+export function EventTypeAutocomplete({ value, onChange, className, inputId }: Props) {
   return (
     <>
       <input
+        id={inputId}
         type="text"
         list="event-types-seed"
         className={className ?? 'w-full rounded border p-2 text-sm'}

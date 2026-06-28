@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
 import { Label } from '@/components/ui/label';
@@ -29,6 +29,7 @@ interface Props {
 
 export function StepLocation({ initial, profileId, mode }: Props) {
   const router = useRouter();
+  const baseAddressId = useId();
   const [place, setPlace] = useState<Partial<PlaceData>>({
     address_line_1: initial.baseAddressLine1,
     city: initial.baseCity,
@@ -86,8 +87,9 @@ export function StepLocation({ initial, profileId, mode }: Props) {
       )}
 
       <div className="space-y-2">
-        <Label>Base address</Label>
+        <Label htmlFor={baseAddressId}>Base address</Label>
         <GooglePlacesAutocomplete
+          id={baseAddressId}
           value={place}
           onChange={(p) => {
             setPlace(p);

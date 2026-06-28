@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ interface ClaimVendorProfileProps {
 export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
   const router = useRouter();
   const supabase = createClient();
+  const searchId = useId();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UnclaimedVendor[]>([]);
   const [searching, setSearching] = useState(false);
@@ -79,8 +80,11 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Search for your business</label>
+        <label htmlFor={searchId} className="text-sm font-medium">
+          Search for your business
+        </label>
         <Input
+          id={searchId}
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}

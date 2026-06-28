@@ -224,8 +224,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
           </div>
 
           {/* Featured Image */}
-          <div className="space-y-2">
-            <Label>Featured Image *</Label>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Featured Image *</legend>
             <PhotoUploaderDrawer
               value={featuredImageUrl ? [featuredImageUrl] : []}
               onChange={(urls) => setFeaturedImageUrl(urls[0] ?? '')}
@@ -234,11 +234,11 @@ export function PackageEditorForm({ mode, initial }: Props) {
               maxSizeMb={4}
               triggerLabel={{ empty: 'Upload feature image', manage: 'Change feature image' }}
             />
-          </div>
+          </fieldset>
 
           {/* Location Mode */}
-          <div className="space-y-2">
-            <Label>Location</Label>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Location</legend>
             <div className="flex gap-4">
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -261,7 +261,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 <span className="text-sm">At my location</span>
               </label>
             </div>
-          </div>
+          </fieldset>
 
           {/* Included Items */}
           <div className="space-y-2">

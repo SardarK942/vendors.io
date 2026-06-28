@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -35,6 +35,7 @@ interface VendorProfileFormProps {
 export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
   const router = useRouter();
   const supabase = createClient();
+  const streetAddressId = useId();
   const [loading, setLoading] = useState(false);
   const [baseAddress, setBaseAddress] = useState<Partial<PlaceData>>({
     address_line_1: (vendorProfile as Record<string, unknown> | null)?.base_address_line_1 as
@@ -225,8 +226,9 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Street Address</Label>
+              <Label htmlFor={streetAddressId}>Street Address</Label>
               <GooglePlacesAutocomplete
+                id={streetAddressId}
                 value={baseAddress}
                 onChange={(place) => setBaseAddress(place)}
                 placeholder="Start typing your address…"

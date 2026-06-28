@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 export interface AddonDraft {
   name: string;
@@ -44,8 +43,8 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
   }
 
   return (
-    <div className="space-y-3">
-      <Label>Add-ons (optional, max {max})</Label>
+    <fieldset className="space-y-3">
+      <legend className="text-sm font-medium">Add-ons (optional, max {max})</legend>
       {addons.length > 0 && (
         <div className="space-y-2">
           {addons.map((a, i) => (
@@ -90,6 +89,6 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
           + Add-on
         </Button>
       )}
-    </div>
+    </fieldset>
   );
 }

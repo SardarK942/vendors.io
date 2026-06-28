@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -88,6 +88,9 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
   const [specialRequests, setSpecialRequests] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fullNameId = useId();
+  const phoneId = useId();
+  const specialRequestsId = useId();
 
   const isSingleEvent = pkg.events_count === 1;
 
@@ -248,8 +251,11 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Full Name</label>
+              <label htmlFor={fullNameId} className="mb-1 block text-sm font-medium">
+                Full Name
+              </label>
               <input
+                id={fullNameId}
                 type="text"
                 required
                 className="w-full rounded border p-2 text-sm"
@@ -260,8 +266,11 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Contact Phone</label>
+              <label htmlFor={phoneId} className="mb-1 block text-sm font-medium">
+                Contact Phone
+              </label>
               <input
+                id={phoneId}
                 type="tel"
                 required
                 className="w-full rounded border p-2 text-sm"
@@ -322,8 +331,11 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               })
             )}
             <div>
-              <label className="mb-1 block text-sm font-medium">Special Requests (optional)</label>
+              <label htmlFor={specialRequestsId} className="mb-1 block text-sm font-medium">
+                Special Requests (optional)
+              </label>
               <textarea
+                id={specialRequestsId}
                 className="min-h-[80px] w-full rounded border p-2 text-sm"
                 placeholder="Any special needs, dietary restrictions, setup requests…"
                 value={specialRequests}

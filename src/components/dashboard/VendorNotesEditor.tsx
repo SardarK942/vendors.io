@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useId, useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 
@@ -21,6 +21,7 @@ export function VendorNotesEditor({
   eventTypeLabel,
   initialNotes,
 }: VendorNotesEditorProps) {
+  const notesId = useId();
   const [notes, setNotes] = useState(initialNotes);
   const [status, setStatus] = useState<Status>('idle');
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -55,8 +56,11 @@ export function VendorNotesEditor({
 
   return (
     <div className="space-y-1">
-      <div className="text-xs font-medium text-muted-foreground">{eventTypeLabel}</div>
+      <label htmlFor={notesId} className="text-xs font-medium text-muted-foreground">
+        {eventTypeLabel}
+      </label>
       <Textarea
+        id={notesId}
         value={notes}
         onChange={(e) => setNotes(e.target.value.slice(0, MAX))}
         onBlur={() => {

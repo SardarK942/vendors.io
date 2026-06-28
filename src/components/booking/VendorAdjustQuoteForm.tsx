@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,7 @@ interface Props {
 }
 
 export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess }: Props) {
+  const reasonId = useId();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [newTotal, setNewTotal] = useState((currentTotalCents / 100).toFixed(2));
@@ -103,9 +104,9 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
       </div>
 
       <div className="space-y-2">
-        <Label>Reason</Label>
+        <Label htmlFor={reasonId}>Reason</Label>
         <Select value={reason} onValueChange={setReason} required>
-          <SelectTrigger>
+          <SelectTrigger id={reasonId}>
             <SelectValue placeholder="Select a reason…" />
           </SelectTrigger>
           <SelectContent>
