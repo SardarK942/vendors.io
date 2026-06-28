@@ -42,7 +42,10 @@ export function InboxRow({ data }: { data: InboxRowData }) {
             {formatDistanceToNow(new Date(data.receivedAt), { addSuffix: true })}
           </div>
           {data.urgencyHours !== undefined && (
-            <div className="mt-1 text-xs font-medium text-red-600">{data.urgencyHours}h left</div>
+            <div className="mt-1 text-xs font-medium text-red-600">
+              {data.urgencyHours}
+              {' '}h left
+            </div>
           )}
         </div>
       </div>

@@ -72,7 +72,8 @@ export function PhotoCarouselHero({
       </button>
 
       <div className="absolute bottom-3 right-3 rounded bg-ink/70 px-2 py-1 text-xs text-cream">
-        {activeIdx + 1} / {images.length}
+        {activeIdx + 1}
+        {' '}/ {images.length}
       </div>
 
       <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">

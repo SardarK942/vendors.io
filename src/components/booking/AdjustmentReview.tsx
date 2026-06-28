@@ -152,7 +152,7 @@ export function AdjustmentReview({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        If you decline, the vendor will have 72 hours to send a revised quote.
+        If you decline, the vendor will have 72 hours to send a revised quote.
       </p>
 
       <CounterModal

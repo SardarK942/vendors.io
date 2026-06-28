@@ -115,7 +115,8 @@ function PackageCard({ pkg }: { pkg: PackageItem }) {
           ${(pkg.base_price_cents / 100).toLocaleString()}
         </p>
         <p className="text-xs text-muted-foreground">
-          {pkg.duration_hours}h &middot; up to {pkg.max_guests} guests
+          {pkg.duration_hours}
+          {' '}h &middot; up to {pkg.max_guests} guests
         </p>
         <div className="flex items-center gap-2 pt-2">
           <Button size="sm" variant="outline" asChild>

@@ -171,7 +171,8 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               <div>
                 <p className="font-semibold">{pkg.name}</p>
                 <p className="text-sm text-muted-foreground">
-                  {pkg.duration_hours}h · up to {pkg.max_guests} guests
+                  {pkg.duration_hours}
+                  {' '}h · up to {pkg.max_guests} guests
                   {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
                 </p>
               </div>

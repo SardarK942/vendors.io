@@ -17,30 +17,30 @@ export default function TermsPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        Baazar.io (“the Platform”, “we”) is a marketplace that connects
-        customers planning Desi weddings with independent service vendors in the Chicago area. We
-        are not a vendor ourselves; we facilitate introductions, quotes, and hold deposits.
+        Baazar.io (“the Platform”, “we”) is a marketplace that connects customers planning Desi
+        weddings with independent service vendors in the Chicago area. We are not a vendor
+        ourselves; we facilitate introductions, quotes, and hold deposits.
       </p>
 
       <h2>2. Platform fee</h2>
       <p className="mt-2 text-sm">
-        Baazar charges a 5% deposit at booking. We keep that 5% as our platform fee. You pay the
+        Baazar charges a 5% deposit at booking. We keep that 5% as our platform fee. You pay the
         remaining 95% directly to the vendor per their payment terms.
       </p>
 
       <h2>3. Cancellations</h2>
       <div className="mt-2 space-y-3 text-sm">
         <p>
-          <strong>Customer cancellation.</strong> Your 5% deposit is fully refundable within 24
+          <strong>Customer cancellation.</strong> Your 5% deposit is fully refundable within 24
           hours of booking. After that, the deposit confirms your reservation and is non-refundable.
         </p>
         <p>
           <strong>Vendor cancellation.</strong> If the vendor cancels at any time, you receive a
-          full refund of your 5% deposit.
+          full refund of your 5% deposit.
         </p>
         <p>
-          The 95% balance you pay directly to the vendor is between you and them; Baazar
-          doesn’t process or hold those funds.
+          The 95% balance you pay directly to the vendor is between you and them; Baazar doesn’t
+          process or hold those funds.
         </p>
       </div>
 
@@ -58,15 +58,15 @@ export default function TermsPage() {
         solely responsible for the quality, timing, and legality of the services they deliver.
       </p>
       <p>
-        Two strikes (no-shows or same-day cancellations classified as “vendor fault”) in a
-        calendar year result in a temporary freeze of the vendor’s account.
+        Two strikes (no-shows or same-day cancellations classified as “vendor fault”) in a calendar
+        year result in a temporary freeze of the vendor’s account.
       </p>
 
       <h2>6. Customer obligations</h2>
       <p>
         By paying a deposit, customers agree to pay the remaining balance directly to the vendor
-        before or after the event per the vendor’s terms. Remaining balance is not collected or
-        held by the Platform.
+        before or after the event per the vendor’s terms. Remaining balance is not collected or held
+        by the Platform.
       </p>
 
       <h2>7. Platform liability</h2>

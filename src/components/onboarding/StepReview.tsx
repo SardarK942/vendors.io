@@ -212,7 +212,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       {/* Fee disclosure */}
       <p className="text-sm text-muted-foreground">
-        Baazar takes a 5% deposit at booking. Everything else you collect directly from the
+        Baazar takes a 5% deposit at booking. Everything else you collect directly from the
         customer.
       </p>
 
@@ -276,10 +276,9 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       <div className="rounded-md border border-ink/15 bg-cream/60 p-3">
         <p className="text-xs text-ink/80">
-          By publishing your profile, you agree to Baazar’s terms. Customers pay a 5% deposit
-          through Baazar at booking — that’s our platform fee. You collect the 95% balance
-          directly from them. If you cancel a confirmed booking, the customer’s deposit is
-          refunded in full.
+          By publishing your profile, you agree to Baazar’s terms. Customers pay a 5% deposit
+          through Baazar at booking — that’s our platform fee. You collect the 95% balance directly
+          from them. If you cancel a confirmed booking, the customer’s deposit is refunded in full.
         </p>
       </div>
 

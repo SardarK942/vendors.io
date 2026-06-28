@@ -76,7 +76,7 @@ export default async function BookPage({ params }: BookPageProps) {
       <div className="mb-6">
         <h1 className="text-2xl font-bold">Book {vendor.business_name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Fill in your event details below. The vendor will review and respond within 72 hours.
+          Fill in your event details below. The vendor will review and respond within 72 hours.
         </p>
       </div>
       <BookingForm

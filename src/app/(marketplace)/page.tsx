@@ -88,7 +88,7 @@ export default async function HomePage() {
             <Clock className="mx-auto h-10 w-10 text-primary" />
             <h3 className="mt-3 font-semibold">Fast Response</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Vendors must respond within 72 hours. No more waiting weeks for quotes.
+              Vendors must respond within 72 hours. No more waiting weeks for quotes.
             </p>
           </div>
         </div>

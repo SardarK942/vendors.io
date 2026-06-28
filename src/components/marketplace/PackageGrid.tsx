@@ -134,7 +134,8 @@ export function PackageGrid({
                 <div className="space-y-2 p-4">
                   <h3 className="text-base font-semibold leading-tight">{p.name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {p.duration_hours}h · up to {p.max_guests} guests
+                    {p.duration_hours}
+                    {' '}h · up to {p.max_guests} guests
                     {p.events_count > 1 && ` · ${p.events_count} events`}
                   </p>
                   <div className="flex items-center justify-between pt-1">

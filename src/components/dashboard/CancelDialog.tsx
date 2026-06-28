@@ -143,7 +143,7 @@ export function CancelDialog({
           {role === 'vendor' && (
             <div className="mb-3 rounded-md border border-hot-pink/30 bg-cream p-3">
               <p className="text-xs text-ink">
-                If you cancel, the customer receives a full refund of their 5% deposit and you lose
+                If you cancel, the customer receives a full refund of their 5% deposit and you lose
                 this booking.
               </p>
             </div>

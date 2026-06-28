@@ -50,7 +50,9 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
   const neighborhood = vendor.base_city ?? vendor.service_area?.[0] ?? 'Chicago';
-  const respondsIn = vendor.response_sla_hours ? `Responds in ${vendor.response_sla_hours}h` : null;
+  const respondsIn = vendor.response_sla_hours
+    ? `Responds in ${vendor.response_sla_hours} h`
+    : null;
   const weddingCount = formatWeddingCount(vendor.confirmed_wedding_count);
   const minPrice = formatPriceFromCents(vendor.vendor_packages_price_band?.min_price_cents);
   const showAvailablePill = !!searchDate && vendor.is_available_for_date === true;

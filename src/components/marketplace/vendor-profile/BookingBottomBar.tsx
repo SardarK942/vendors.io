@@ -87,7 +87,10 @@ export function BookingBottomBar({
                       <div>
                         <p className="text-sm font-semibold text-ink">{p.name}</p>
                         {p.duration_hours != null && (
-                          <p className="text-xs text-ink/60">{p.duration_hours} hours</p>
+                          <p className="text-xs text-ink/60">
+                            {p.duration_hours}
+                            {' '}hours
+                          </p>
                         )}
                       </div>
                       <p className="text-sm font-bold text-ink">

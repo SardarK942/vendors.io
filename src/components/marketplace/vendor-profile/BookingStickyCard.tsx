@@ -68,7 +68,10 @@ export function BookingStickyCard({
       </span>
       <h3 className="mt-3 text-base font-semibold text-ink">{featured.name}</h3>
       {featured.duration_hours != null && (
-        <p className="text-xs text-ink/70">{featured.duration_hours} hours</p>
+        <p className="text-xs text-ink/70">
+          {featured.duration_hours}
+          {' '}hours
+        </p>
       )}
 
       <p className="mt-6 text-3xl font-bold text-ink">{formatPrice(total)}</p>
@@ -145,7 +148,10 @@ function TrustRow({ vendor }: { vendor: VendorRow }) {
       )}
       {vendor.response_sla_hours != null && (
         <div>
-          <div className="font-semibold">⚡ {vendor.response_sla_hours}h</div>
+          <div className="font-semibold">
+            ⚡ {vendor.response_sla_hours}
+            {' '}h
+          </div>
           <div className="text-ink/60">Response time</div>
         </div>
       )}

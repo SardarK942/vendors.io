@@ -128,7 +128,7 @@ export function NotificationsPageClient({ initial }: Props) {
               ? 'Nothing needs your attention right now. 🎉'
               : tab === 'updates'
                 ? "When bookings move through their lifecycle, you'll see updates here."
-                : 'Read notifications older than 30 days appear here.'}
+                : 'Read notifications older than 30 days appear here.'}
           </p>
         ) : (
           Array.from(groups.entries()).map(([bookingId, items]) => {

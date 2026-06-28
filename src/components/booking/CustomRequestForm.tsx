@@ -104,7 +104,7 @@ export function CustomRequestForm({
         <h2 className="font-display text-2xl font-bold tracking-[-0.012em]">Request sent.</h2>
         <p className="mt-3 text-sm text-ink-muted">
           {vendorBusinessName} will respond
-          {vendorResponseSlaHours ? ` within ${vendorResponseSlaHours} hours` : ' soon'} with a
+          {vendorResponseSlaHours ? ` within ${vendorResponseSlaHours} hours` : ' soon'} with a
           quote. We&rsquo;ll send you a notification — check your dashboard inbox.
         </p>
         <div className="mt-6 flex gap-3">

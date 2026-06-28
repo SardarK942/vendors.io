@@ -105,7 +105,10 @@ function DefaultView() {
           {isUploading ? 'Uploading…' : isDragging ? 'Drop photos here' : 'Drag photos here'}
         </p>
         <p className="text-xs text-ink/60">or click to browse</p>
-        <p className="mt-4 text-xs text-ink/50">JPG, PNG, or WebP · max {maxSizeMb} MB</p>
+        <p className="mt-4 text-xs text-ink/50">
+          JPG, PNG, or WebP · max {maxSizeMb}
+          {' '}MB
+        </p>
         <input
           ref={fileInputRef}
           type="file"

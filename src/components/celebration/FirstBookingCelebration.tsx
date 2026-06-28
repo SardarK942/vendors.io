@@ -43,7 +43,8 @@ export function FirstBookingCelebration({
 
         <div className="my-6 space-y-3 rounded-md border border-ink/10 bg-cream p-4">
           <p className="text-sm text-ink">
-            <strong>1.</strong> {vendorName} reviews and responds within {responseSlaHours} hours.
+            <strong>1.</strong> {vendorName} reviews and responds within {responseSlaHours}
+            {' '}hours.
           </p>
           <p className="text-sm text-ink">
             <strong>2.</strong> You’ll get an email when they accept or counter.

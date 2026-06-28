@@ -29,7 +29,7 @@ function timeAgo(iso: string): string {
   if (m < 1) return 'just now';
   if (m < 60) return `${m}m`;
   const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
+  if (h < 24) return `${h} h`;
   const d = Math.floor(h / 24);
   if (d < 7) return `${d}d`;
   return new Date(iso).toLocaleDateString();
