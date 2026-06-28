@@ -137,6 +137,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 required
                 defaultValue={vendorProfile?.business_name}
                 placeholder="Mehndi by Priya"
+                autoComplete="organization"
               />
             </div>
 
@@ -165,6 +166,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               rows={4}
               defaultValue={vendorProfile?.bio || ''}
               placeholder="Tell customers about your services, style, and experience…"
+              autoComplete="off"
             />
           </div>
 
@@ -176,6 +178,11 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 name="instagram"
                 defaultValue={vendorProfile?.instagram_handle || ''}
                 placeholder="mehndibypriya"
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="none"
+                autoCorrect="off"
+                inputMode="text"
               />
             </div>
             <div className="space-y-2">
@@ -185,7 +192,11 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 name="website"
                 type="url"
                 defaultValue={vendorProfile?.website_url || ''}
-                placeholder="https://..."
+                placeholder="https://…"
+                autoComplete="url"
+                inputMode="url"
+                spellCheck={false}
+                autoCapitalize="none"
               />
             </div>
           </div>
@@ -199,6 +210,8 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               min={1}
               max={168}
               defaultValue={vendorProfile?.response_sla_hours || 48}
+              inputMode="numeric"
+              autoComplete="off"
             />
           </div>
 

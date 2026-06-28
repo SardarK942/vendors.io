@@ -137,6 +137,7 @@ export function CancelDialog({
               placeholder="Any details you want to share"
               rows={3}
               maxLength={1000}
+              autoComplete="off"
             />
           </div>
 

@@ -117,6 +117,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
             clearField('businessName');
           }}
           placeholder="Mehndi by Priya"
+          autoComplete="organization"
         />
         {getError('businessName') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('businessName')}</p>

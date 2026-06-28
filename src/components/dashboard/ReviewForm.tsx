@@ -121,6 +121,7 @@ export function ReviewForm({ bookingId, open, onOpenChange, onSuccess }: ReviewF
               placeholder="What stood out? Any details for other customers?"
               rows={4}
               maxLength={4000}
+              autoComplete="off"
             />
           </div>
         </div>

@@ -65,6 +65,7 @@ export function VendorNotesEditor({
         }}
         placeholder="e.g. customer is vegetarian, prefers minimal posing"
         rows={3}
+        autoComplete="off"
         className={tooLong ? 'border-red-500' : ''}
       />
       <div className="flex items-center justify-between text-xs">

@@ -247,6 +247,7 @@ export function CustomRequestForm({
           disabled={submitting}
           placeholder="Tell the vendor what makes your event special — guest count breakdown, dietary needs, location, anything outside their standard packages…"
           required
+          autoComplete="off"
           className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
         />
         <p className="mt-1 text-xs text-ink-soft">

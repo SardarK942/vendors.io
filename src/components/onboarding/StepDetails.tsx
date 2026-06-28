@@ -143,6 +143,8 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
             setYears(e.target.value === '' ? '' : Number(e.target.value));
             clearField('years_in_business');
           }}
+          inputMode="numeric"
+          autoComplete="off"
           className="w-32 rounded-md border border-hairline bg-cream px-3 py-2 font-mono text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
         />
         {getError('years_in_business') && (

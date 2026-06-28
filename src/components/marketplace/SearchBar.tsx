@@ -180,7 +180,7 @@ export function SearchBar({
               <input
                 ref={whatInputRef}
                 id="search-what-input"
-                type="text"
+                type="search"
                 value={state.query}
                 onChange={(e) => setQuery(e.target.value)}
                 onFocus={() => setActiveSegment('what')}
@@ -191,6 +191,9 @@ export function SearchBar({
                   }
                 }}
                 placeholder='"Bollywood DJ" or "Mehndi artist"…'
+                inputMode="search"
+                autoComplete="off"
+                spellCheck={false}
                 aria-controls="search-panel-what"
                 aria-expanded={activeSegment === 'what'}
                 className={cn(

@@ -88,6 +88,7 @@ export function GooglePlacesAutocomplete({
       placeholder={placeholder ?? 'Where will this event take place?'}
       defaultValue={value?.address_line_1 ?? ''}
       disabled={disabled}
+      autoComplete="street-address"
     />
   );
 }

@@ -81,9 +81,13 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
       <div className="space-y-2">
         <label className="text-sm font-medium">Search for your business</label>
         <Input
+          type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Start typing your business name…"
+          autoComplete="off"
+          spellCheck={false}
+          inputMode="search"
         />
         <p className="text-xs text-muted-foreground">
           We pre-populated a directory of Chicago Desi wedding vendors. Find yours to claim it.

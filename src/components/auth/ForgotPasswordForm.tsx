@@ -109,6 +109,9 @@ function ForgotPasswordInner() {
                   required
                   disabled={loading}
                   autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>

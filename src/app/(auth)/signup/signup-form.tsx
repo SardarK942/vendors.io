@@ -199,11 +199,27 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
-            <Input id="fullName" name="fullName" required placeholder="Your full name" />
+            <Input
+              id="fullName"
+              name="fullName"
+              required
+              placeholder="Your full name"
+              autoComplete="name"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required placeholder="you@example.com" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@example.com"
+              autoComplete="email"
+              inputMode="email"
+              spellCheck={false}
+              autoCapitalize="none"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
@@ -214,6 +230,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               required
               minLength={8}
               placeholder="Min 8 characters"
+              autoComplete="new-password"
             />
           </div>
           <div className="flex items-start gap-2">

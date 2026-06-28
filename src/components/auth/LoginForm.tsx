@@ -82,6 +82,9 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
                   required
                   disabled={loading}
                   autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                 />
               </div>
               <div className="grid gap-2">

@@ -72,6 +72,7 @@ export function DisputeDialog({ bookingId, open, onOpenChange, onSuccess }: Disp
             placeholder="Be specific. What did the vendor agree to? What actually happened? Any photos or messages we should know about?"
             rows={6}
             maxLength={2000}
+            autoComplete="off"
           />
           <p className="text-xs text-muted-foreground">{reason.length} / 2000</p>
         </div>

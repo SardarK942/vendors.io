@@ -71,6 +71,11 @@ export function StepOnline({ initial, profileId, mode }: Props) {
             }}
             onBlur={handleInstagramBlur}
             placeholder="yourhandle"
+            autoComplete="off"
+            spellCheck={false}
+            autoCapitalize="none"
+            autoCorrect="off"
+            inputMode="text"
           />
         </div>
         <p className="text-xs text-muted-foreground">
@@ -92,6 +97,10 @@ export function StepOnline({ initial, profileId, mode }: Props) {
             clearField('websiteUrl');
           }}
           placeholder="https://yourwebsite.com"
+          autoComplete="url"
+          inputMode="url"
+          spellCheck={false}
+          autoCapitalize="none"
         />
         {getError('websiteUrl') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('websiteUrl')}</p>

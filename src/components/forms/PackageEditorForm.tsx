@@ -136,6 +136,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               maxLength={120}
               defaultValue={initial?.name}
               placeholder="e.g. Full-Day Wedding Coverage"
+              autoComplete="off"
             />
           </div>
 
@@ -150,6 +151,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               rows={4}
               defaultValue={initial?.description}
               placeholder="What’s included, your style, what makes this package special…"
+              autoComplete="off"
             />
           </div>
 
@@ -162,10 +164,12 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 name="base_price"
                 type="number"
                 min={1}
-                step={1}
+                step={0.01}
                 required
                 defaultValue={initial ? initial.base_price_cents / 100 : ''}
                 placeholder="1500"
+                inputMode="decimal"
+                autoComplete="off"
               />
             </div>
             <div className="space-y-2">
@@ -178,6 +182,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 required
                 defaultValue={initial?.max_guests}
                 placeholder="200"
+                inputMode="numeric"
+                autoComplete="off"
               />
             </div>
           </div>
@@ -195,6 +201,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 required
                 defaultValue={initial?.duration_hours}
                 placeholder="8"
+                inputMode="decimal"
+                autoComplete="off"
               />
             </div>
             <div className="space-y-2">
@@ -206,6 +214,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 min={1}
                 max={5}
                 defaultValue={initial?.events_count ?? 1}
+                inputMode="numeric"
+                autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
                 Set to 3 for a Mehndi + Shaadi + Walima bundle

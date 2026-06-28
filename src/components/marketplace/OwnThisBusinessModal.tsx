@@ -150,6 +150,10 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -159,6 +163,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -168,6 +173,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
+                  autoComplete="off"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -215,6 +221,10 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   value={ig}
                   onChange={(e) => setIg(e.target.value)}
                   placeholder="@yourhandle"
+                  autoComplete="off"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  autoCorrect="off"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -225,6 +235,10 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -234,6 +248,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>

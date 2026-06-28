@@ -89,12 +89,15 @@ export function CounterModal({ open, onClose, bookingId, currentTotalCents, onSu
               </span>
               <input
                 id="counter-total"
+                name="counter-total"
                 type="number"
-                step="1"
+                step="0.01"
                 min="1"
                 required
                 value={total}
                 onChange={(e) => setTotal(Number(e.target.value))}
+                inputMode="decimal"
+                autoComplete="off"
                 className="w-full rounded-md border bg-background py-2 pl-7 pr-3 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
               />
             </div>
@@ -112,6 +115,7 @@ export function CounterModal({ open, onClose, bookingId, currentTotalCents, onSu
               value={note}
               onChange={(e) => setNote(e.target.value)}
               placeholder="Explain your counter-offer…"
+              autoComplete="off"
               className="w-full resize-none rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
             <p className="text-right text-xs text-muted-foreground">{note.length}/200</p>

@@ -86,12 +86,15 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
         <Label htmlFor="new_total">New Total ($)</Label>
         <Input
           id="new_total"
+          name="new_total"
           type="number"
           min={1}
           step={0.01}
           value={newTotal}
           onChange={(e) => setNewTotal(e.target.value)}
           required
+          inputMode="decimal"
+          autoComplete="off"
         />
         <p className="text-xs text-muted-foreground">
           Current: ${(currentTotalCents / 100).toFixed(2)}
@@ -125,6 +128,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
             maxLength={1000}
             placeholder="Describe the reason for your adjustment…"
             required
+            autoComplete="off"
           />
         </div>
       )}
@@ -139,6 +143,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
             rows={2}
             maxLength={1000}
             placeholder="Any additional context…"
+            autoComplete="off"
           />
         </div>
       )}

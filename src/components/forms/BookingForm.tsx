@@ -251,6 +251,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 placeholder="e.g. Aisha & Ahmed Khan"
                 value={coupleFullName}
                 onChange={(e) => setCoupleFullName(e.target.value)}
+                autoComplete="name"
               />
             </div>
             <div>
@@ -262,6 +263,8 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 placeholder="+1 (555) 000-0000"
                 value={couplePhone}
                 onChange={(e) => setCouplePhone(e.target.value)}
+                autoComplete="tel"
+                inputMode="tel"
               />
             </div>
             {/* Bucket B T6: per-event guest count inputs */}
@@ -275,6 +278,8 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                   type="number"
                   required
                   min={1}
+                  inputMode="numeric"
+                  autoComplete="off"
                   className="w-full rounded border p-2 text-sm"
                   value={guestCounts[1]}
                   onChange={(e) =>
@@ -296,6 +301,8 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                       type="number"
                       required
                       min={1}
+                      inputMode="numeric"
+                      autoComplete="off"
                       className="w-full rounded border p-2 text-sm"
                       value={guestCounts[seq]}
                       onChange={(e) =>
@@ -316,6 +323,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 placeholder="Any special needs, dietary restrictions, setup requests…"
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
+                autoComplete="off"
               />
             </div>
           </CardContent>

@@ -70,8 +70,12 @@ export function NewsletterForm() {
       </label>
       <input
         id="footer-newsletter-email"
+        name="email"
         type="email"
         autoComplete="email"
+        inputMode="email"
+        spellCheck={false}
+        autoCapitalize="none"
         placeholder={success ? 'Subscribed — keep an eye out.' : 'you@email.com'}
         value={success ? '' : email}
         onChange={(e) => {
