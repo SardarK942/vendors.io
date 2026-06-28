@@ -87,10 +87,14 @@ export async function semanticSearch(
 ): Promise<(VendorRow & { similarity: number })[]> {
   const embedding = await generateEmbedding(query);
 
+  // Threshold = 0.15. Short user queries (one or two words) typically cosine at
+  // ~0.15-0.25 against vendor embeddings that encode (business_name | category |
+  // bio) — even when topically perfect. Doc-to-doc same-category sits at ~0.6,
+  // so 0.15 is a safe floor for "topically related". Tune up if recall is noisy.
   const { data, error } = await supabase.rpc('search_vendors_semantic', {
     query_embedding: JSON.stringify(embedding),
     match_count: matchCount,
-    similarity_threshold: 0.3,
+    similarity_threshold: 0.15,
   });
 
   if (error) {
