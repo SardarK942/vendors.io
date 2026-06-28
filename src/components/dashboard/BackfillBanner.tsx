@@ -32,7 +32,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
     <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hairline bg-cream-soft px-5 py-3">
       <div className="flex min-w-0 items-center gap-3">
         <span className="inline-flex size-9 flex-shrink-0 items-center justify-center rounded-full border border-hairline bg-cream">
-          <SlidersHorizontal className="size-4 stroke-ink" strokeWidth={2} />
+          <SlidersHorizontal className="size-4 stroke-ink" strokeWidth={2} aria-hidden="true" />
         </span>
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">Complete your profile</p>
@@ -54,7 +54,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
           aria-label="Dismiss"
           className="inline-flex size-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink"
         >
-          <X className="size-4" strokeWidth={2} />
+          <X className="size-4" strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
     </div>

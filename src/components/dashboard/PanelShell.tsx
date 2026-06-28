@@ -32,11 +32,7 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
 
   return (
     <>
-      <div
-        aria-hidden
-        onClick={close}
-        className="fixed inset-0 z-30 hidden bg-black/30 md:block"
-      />
+      <div aria-hidden onClick={close} className="fixed inset-0 z-30 hidden bg-black/30 md:block" />
       <aside
         role="dialog"
         aria-modal="true"
@@ -44,12 +40,8 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
       >
         <header className="flex items-center justify-between border-b px-4 py-3">
           <h2 className="text-sm font-semibold">Booking details</h2>
-          <button
-            onClick={close}
-            aria-label="Close panel"
-            className="rounded p-1 hover:bg-accent"
-          >
-            <X className="h-4 w-4" />
+          <button onClick={close} aria-label="Close panel" className="rounded p-1 hover:bg-accent">
+            <X className="h-4 w-4" aria-hidden="true" />
           </button>
         </header>
         <div className="flex-1 overflow-y-auto px-4 py-4">{children}</div>

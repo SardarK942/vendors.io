@@ -62,7 +62,7 @@ export function BookingBottomBar({
                 className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-hot-pink"
               >
                 {selected.name}
-                {isFeatured ? ' · Most Popular' : ''} ▲
+                {isFeatured ? ' · Most Popular' : ''} <span aria-hidden="true">▲</span>
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="bg-cream">

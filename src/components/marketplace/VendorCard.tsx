@@ -95,7 +95,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-ink-muted">
-            <Camera className="size-8 stroke-current" strokeWidth={1.5} />
+            <Camera className="size-8 stroke-current" strokeWidth={1.5} aria-hidden="true" />
             <span className="text-xs">Photo coming soon</span>
           </div>
         )}

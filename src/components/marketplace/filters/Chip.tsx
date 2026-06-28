@@ -74,7 +74,9 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
 
     return (
       <button ref={ref} type="button" onClick={onClick} className={baseClasses} {...ariaProps}>
-        {variant === 'all-filters' && <SlidersHorizontal className="size-3.5" strokeWidth={2} />}
+        {variant === 'all-filters' && (
+          <SlidersHorizontal className="size-3.5" strokeWidth={2} aria-hidden="true" />
+        )}
         {children}
         {count !== undefined && count > 0 && (
           <span
@@ -121,7 +123,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
               'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo'
             )}
           >
-            <X className="size-3" strokeWidth={2.5} />
+            <X className="size-3" strokeWidth={2.5} aria-hidden="true" />
           </span>
         )}
       </button>

@@ -19,7 +19,7 @@ export function IdentityPanel({ vendor }: IdentityPanelProps) {
           <h1 className="font-spectral text-3xl font-bold text-ink">{vendor.business_name}</h1>
           {vendor.verified && (
             <Badge className="gap-1">
-              <CheckCircle className="h-3 w-3" /> Verified
+              <CheckCircle className="h-3 w-3" aria-hidden="true" /> Verified
             </Badge>
           )}
         </div>
@@ -28,18 +28,18 @@ export function IdentityPanel({ vendor }: IdentityPanelProps) {
             {VENDOR_CATEGORY_LABELS[vendor.category] || vendor.category}
           </Badge>
           <span className="flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-4 w-4" aria-hidden="true" />
             {location}
           </span>
           {vendor.languages && vendor.languages.length > 0 && (
             <span className="flex items-center gap-1">
-              <Languages className="h-4 w-4" />
+              <Languages className="h-4 w-4" aria-hidden="true" />
               {vendor.languages.join(', ')}
             </span>
           )}
           {vendor.years_in_business != null && (
             <span className="flex items-center gap-1">
-              <CalendarDays className="h-4 w-4" />
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
               {vendor.years_in_business} {vendor.years_in_business === 1 ? 'year' : 'years'} in
               business
             </span>

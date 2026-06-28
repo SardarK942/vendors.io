@@ -120,7 +120,7 @@ function Socials({ vendor }: { vendor: VendorRow }) {
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-ink/70 hover-pink-text"
         >
-          <Instagram className="h-3.5 w-3.5" />@{vendor.instagram_handle}
+          <Instagram className="h-3.5 w-3.5" aria-hidden="true" />@{vendor.instagram_handle}
         </a>
       )}
       {vendor.website_url && (
@@ -130,7 +130,7 @@ function Socials({ vendor }: { vendor: VendorRow }) {
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-ink/70 hover-pink-text"
         >
-          <ExternalLink className="h-3.5 w-3.5" /> Website
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Website
         </a>
       )}
     </div>
@@ -157,7 +157,9 @@ function TrustRow({ vendor }: { vendor: VendorRow }) {
       )}
       {vendor.total_bookings != null && vendor.total_bookings > 0 && (
         <div>
-          <div className="font-semibold">✓ {vendor.total_bookings.toLocaleString()}</div>
+          <div className="font-semibold">
+            <span aria-hidden="true">✓</span> {vendor.total_bookings.toLocaleString()}
+          </div>
           <div className="text-ink/60">Events</div>
         </div>
       )}

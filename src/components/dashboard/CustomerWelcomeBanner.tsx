@@ -56,7 +56,7 @@ export function CustomerWelcomeBanner({
           className="ml-4 text-ink/40 hover:text-ink"
           aria-label="Dismiss welcome banner"
         >
-          <X size={18} />
+          <X size={18} aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -39,7 +39,9 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
     <div className="space-y-6">
       {justOnboarded && (
         <div className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4">
-          <h3 className="font-semibold">🎉 Profile is live!</h3>
+          <h3 className="font-semibold">
+            <span aria-hidden="true">🎉</span> Profile is live!
+          </h3>
           <p className="text-sm">Create your first package to start receiving bookings.</p>
         </div>
       )}

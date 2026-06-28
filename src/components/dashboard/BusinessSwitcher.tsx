@@ -60,11 +60,11 @@ export function BusinessSwitcher({ activeBusinessId, businesses }: BusinessSwitc
           className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50"
           disabled={isPending}
         >
-          <Building2 className="h-4 w-4 text-muted-foreground" />
+          <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
           <span className="max-w-[180px] truncate">
             {active?.businessName ?? 'Switch business'}
           </span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">
@@ -79,7 +79,7 @@ export function BusinessSwitcher({ activeBusinessId, businesses }: BusinessSwitc
           >
             <span className="truncate">{b.businessName}</span>
             {b.id === activeBusinessId && (
-              <Check className="h-4 w-4 text-emerald-600" />
+              <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" />
             )}
           </DropdownMenuItem>
         ))}

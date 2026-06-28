@@ -67,7 +67,7 @@ function SortableThumbnail({
         aria-label="Reorder"
         className="absolute bottom-1 left-1 z-10 cursor-grab rounded-full bg-cream/80 p-1 text-ink opacity-0 transition-opacity group-hover:opacity-100"
       >
-        <GripVertical className="size-3" />
+        <GripVertical className="size-3" aria-hidden="true" />
       </button>
       <div className="absolute inset-0 flex items-center justify-center gap-2 bg-ink/60 opacity-0 transition-opacity group-hover:opacity-100">
         {showPrimarySelector && idx !== 0 && (
@@ -77,7 +77,7 @@ function SortableThumbnail({
             aria-label="Set as primary"
             className="rounded-full bg-cream p-2 text-ink hover:bg-cream/80"
           >
-            <Star className="size-4" />
+            <Star className="size-4" aria-hidden="true" />
           </button>
         )}
         <button
@@ -86,7 +86,7 @@ function SortableThumbnail({
           aria-label="Remove photo"
           className="rounded-full bg-cream p-2 text-hot-pink hover:bg-cream/80"
         >
-          <X className="size-4" />
+          <X className="size-4" aria-hidden="true" />
         </button>
       </div>
     </div>

@@ -60,7 +60,7 @@ export function MobileSearchSheet({
           )}
           aria-label="Open search"
         >
-          <Search className="h-4 w-4 stroke-ink" strokeWidth={2} />
+          <Search className="h-4 w-4 stroke-ink" strokeWidth={2} aria-hidden="true" />
           Search Chicago weddings
         </button>
       </Drawer.Trigger>

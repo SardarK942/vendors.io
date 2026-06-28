@@ -155,7 +155,9 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                <span className="block text-2xl">🎉</span>
+                <span className="block text-2xl" aria-hidden="true">
+                  🎉
+                </span>
                 <span className="mt-1 block text-sm font-medium">Planning an Event</span>
               </button>
               <button
@@ -167,7 +169,9 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                <span className="block text-2xl">🏪</span>
+                <span className="block text-2xl" aria-hidden="true">
+                  🏪
+                </span>
                 <span className="mt-1 block text-sm font-medium">I’m a Vendor</span>
               </button>
             </div>

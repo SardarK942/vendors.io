@@ -29,32 +29,32 @@ export function SidebarNav({ role }: { role: 'couple' | 'vendor' }) {
   return (
     <nav className="space-y-1">
       <Link href="/dashboard" className={cls('/dashboard')}>
-        <Home className="h-4 w-4" /> Home
+        <Home className="h-4 w-4" aria-hidden="true" /> Home
       </Link>
       <Link href="/dashboard/bookings" className={cls('/dashboard/bookings')}>
-        <BookOpen className="h-4 w-4" /> Bookings
+        <BookOpen className="h-4 w-4" aria-hidden="true" /> Bookings
       </Link>
       {role === 'couple' && (
         <Link href="/dashboard/saved" className={cls('/dashboard/saved')}>
-          <Heart className="h-4 w-4" /> Saved
+          <Heart className="h-4 w-4" aria-hidden="true" /> Saved
         </Link>
       )}
       <Link href="/dashboard/notifications" className={cls('/dashboard/notifications')}>
-        <Bell className="h-4 w-4" /> Notifications
+        <Bell className="h-4 w-4" aria-hidden="true" /> Notifications
       </Link>
       {role === 'vendor' && (
         <>
           <Link href="/dashboard/profile/calendar" className={cls('/dashboard/profile/calendar')}>
-            <Calendar className="h-4 w-4" /> Calendar
+            <Calendar className="h-4 w-4" aria-hidden="true" /> Calendar
           </Link>
           <Link href="/dashboard/profile/packages" className={cls('/dashboard/profile/packages')}>
-            <Package className="h-4 w-4" /> Packages
+            <Package className="h-4 w-4" aria-hidden="true" /> Packages
           </Link>
           <Link href="/dashboard/money" className={cls('/dashboard/money')}>
-            <BarChart3 className="h-4 w-4" /> Business Analytics
+            <BarChart3 className="h-4 w-4" aria-hidden="true" /> Business Analytics
           </Link>
           <Link href="/dashboard/profile" className={cls('/dashboard/profile')}>
-            <User className="h-4 w-4" /> Profile
+            <User className="h-4 w-4" aria-hidden="true" /> Profile
           </Link>
         </>
       )}
