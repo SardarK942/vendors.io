@@ -44,7 +44,7 @@ export function PhotoCarouselHero({
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
-        className="flex h-full snap-x snap-mandatory overflow-x-auto scroll-smooth"
+        className="flex h-full snap-x snap-mandatory overflow-x-auto scroll-smooth motion-reduce:scroll-auto"
         style={{ scrollbarWidth: 'none' }}
       >
         {images.map((img, i) => (

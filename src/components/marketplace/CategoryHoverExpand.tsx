@@ -130,7 +130,9 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                       className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
                       onClick={(e) => {
                         e.preventDefault();
-                        document.querySelector('footer')?.scrollIntoView({ behavior: 'smooth' });
+                        document.querySelector('footer')?.scrollIntoView({
+                          behavior: reducedMotion ? 'auto' : 'smooth',
+                        });
                       }}
                     >
                       Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
