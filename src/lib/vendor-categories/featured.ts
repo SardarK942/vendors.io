@@ -100,9 +100,8 @@ export const CATEGORIES_FEATURED: readonly FeaturedCategory[] = [
     slug: 'photobooth',
     label: 'Photo Booth',
     kicker: 'Entertainment',
-    // TODO: replace placeholder photo before merging the PR
-    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPOFxoUEHZicD1KWg6MSjTLJnYR98myEdeAlNo',
-    alt: 'Photobooth placeholder — replace before merge',
+    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TP6IaGcF4Sxhs2J9jKVnO63GiH1AYaf5mPqTIW',
+    alt: 'Vintage photo booth with a draped curtain backdrop',
     comingSoon: false,
   },
   {
@@ -125,9 +124,8 @@ export const CATEGORIES_FEATURED: readonly FeaturedCategory[] = [
     slug: 'invitations',
     label: 'Invitations',
     kicker: 'Stationery',
-    // TODO: replace placeholder photo before merging the PR
-    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPkVe7ZgIjlX45n7sT0u2NhOobr3e1W98Fyxip',
-    alt: 'Invitations placeholder — replace before merge',
+    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPMv9lRdmgjcGt0Y28Ud3veWMADNfQ7oKupbIC',
+    alt: 'Wedding invitation suite styled with ribbon and floral details',
     comingSoon: true,
   },
 ];
