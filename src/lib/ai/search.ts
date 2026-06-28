@@ -3,6 +3,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import { generateEmbedding } from './embeddings';
 import { getCached, setCached } from './search-cache';
+import { logger } from '@/lib/logger';
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
 
@@ -98,7 +99,13 @@ export async function semanticSearch(
   });
 
   if (error) {
-    console.error('[semanticSearch] Error:', error);
+    // Forward to Sentry — a silent console.error here cost us ~2 months of
+    // dead AI search after migration 00028 dropped a column the RPC still
+    // referenced. Empty results AND a Sentry alert beats empty results alone.
+    logger.error('[ai.search] search_vendors_semantic RPC failed', error, {
+      query,
+      matchCount,
+    });
     return [];
   }
 
@@ -120,7 +127,10 @@ export async function fullTextSearch(
   });
 
   if (error) {
-    console.error('[fullTextSearch] Error:', error);
+    logger.error('[ai.search] search_vendors_fulltext RPC failed', error, {
+      query,
+      matchCount,
+    });
     return [];
   }
 
