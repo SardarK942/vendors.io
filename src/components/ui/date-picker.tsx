@@ -96,9 +96,9 @@ export function DatePicker({
           weekday:
             'w-9 text-center text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-soft py-2',
           week: 'flex',
-          day: 'w-9 h-9 text-center text-[12px] p-0',
+          day: 'w-9 h-9 text-center text-[12px] tabular-nums p-0',
           day_button:
-            'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink hover:bg-cream-soft transition-colors',
+            'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink tabular-nums hover:bg-cream-soft transition-colors',
           selected: 'bg-ink !text-cream hover:bg-ink',
           today: '',
           outside: 'text-ink-soft opacity-50',

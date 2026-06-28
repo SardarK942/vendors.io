@@ -35,7 +35,7 @@ export function PriceDropdown({ selected, onSelect }: PriceDropdownProps) {
               )}
             >
               <span>{band.label}</span>
-              <span className="font-mono text-[12px] text-ink-muted">{band.shorthand}</span>
+              <span className="text-[12px] tabular-nums text-ink-muted">{band.shorthand}</span>
             </button>
           </li>
         );

@@ -104,7 +104,7 @@ export function BookingsArchive({
             }`}
           >
             {TAB_LABELS[tab]}{' '}
-            <span className="ml-1 text-xs text-muted-foreground">{counts[tab]}</span>
+            <span className="ml-1 text-xs tabular-nums text-muted-foreground">{counts[tab]}</span>
           </button>
         ))}
       </div>

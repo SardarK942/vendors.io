@@ -105,7 +105,7 @@ export function NotificationsPageClient({ initial }: Props) {
             >
               {t === 'action' ? 'Action needed' : t === 'updates' ? 'Updates' : 'Archived'}
               {tabCounts[t] > 0 && (
-                <span className="ml-1.5 text-xs opacity-80">({tabCounts[t]})</span>
+                <span className="ml-1.5 text-xs tabular-nums opacity-80">({tabCounts[t]})</span>
               )}
             </button>
           ))}

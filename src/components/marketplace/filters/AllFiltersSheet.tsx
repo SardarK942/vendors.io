@@ -12,6 +12,7 @@ import { PriceSection } from './sections/PriceSection';
 import { LanguagesSection } from './sections/LanguagesSection';
 import { ExperienceSection } from './sections/ExperienceSection';
 import { CategorySpecificSection } from './sections/CategorySpecificSection';
+import { fmtCount } from '@/lib/intl';
 
 interface AllFiltersSheetProps {
   open: boolean;
@@ -125,7 +126,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
                 ? 'Counting…'
                 : count === 0
                   ? 'No matches'
-                  : `Show ${count ?? '—'} vendors`}
+                  : `Show ${count == null ? '—' : fmtCount(count)} vendors`}
             </Button>
           </div>
         </Drawer.Content>

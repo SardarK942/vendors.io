@@ -5,6 +5,7 @@ import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filter
 import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
 import type { VendorCardProps } from '@/components/marketplace/VendorCard';
 import type { Metadata } from 'next';
+import { fmtCount } from '@/lib/intl';
 
 type VendorWithEnrichments = VendorCardProps['vendor'];
 
@@ -108,8 +109,8 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
       <div className="py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Browse Vendors</h1>
-          <p className="text-muted-foreground">
-            {totalCount} vendor{totalCount !== 1 ? 's' : ''}
+          <p className="tabular-nums text-muted-foreground">
+            {fmtCount(totalCount)} vendor{totalCount !== 1 ? 's' : ''}
           </p>
         </div>
 

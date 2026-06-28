@@ -1,6 +1,7 @@
 'use client';
 import { AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
+import { fmtCount } from '@/lib/intl';
 
 interface Props {
   overlapCount: number;
@@ -15,8 +16,9 @@ export function ConflictWarning({ overlapCount, capacity }: Props) {
         <div>
           <h3 className="font-semibold">Heads up — this conflicts with an existing booking.</h3>
           <p className="mt-1 text-sm">
-            Accepting will put you over your concurrent capacity ({overlapCount} overlapping, you
-            allow {capacity}).{' '}
+            Accepting will put you over your concurrent capacity (
+            <span className="tabular-nums">{fmtCount(overlapCount)}</span> overlapping, you allow{' '}
+            <span className="tabular-nums">{fmtCount(capacity)}</span>).{' '}
             <Link href="/dashboard/profile/calendar" className="underline">
               View calendar →
             </Link>
