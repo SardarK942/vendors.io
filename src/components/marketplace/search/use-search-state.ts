@@ -1,7 +1,8 @@
 'use client';
 
 import { useCallback, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useQueryStates, parseAsString } from 'nuqs';
 
 export type SearchSegment = 'when' | 'category' | 'what' | null;
 
@@ -32,42 +33,47 @@ export interface UseSearchStateReturn {
 }
 
 /**
- * Hook for the SearchBar's local state + URL-param submission.
+ * Hook for the SearchBar's URL-synced state + URL-param submission.
  *
- * Submission always navigates to /vendors with URL params; the page reads them
- * via useSearchParams() (server-side: searchParams in page.tsx props).
- *
- * Pre-fill from URL is the consumer's responsibility — pass `initial` derived
- * from useSearchParams() in /vendors/page.tsx, or omit on the homepage.
+ * In-progress edits sync to the current URL via nuqs (`date`, `category`, `q`),
+ * so deep links + shareable URLs + browser back/forward all work. Submission
+ * navigates to /vendors with the same params; the page reads them server-side
+ * via searchParams in page.tsx props.
  */
 export function useSearchState(options: UseSearchStateOptions = {}): UseSearchStateReturn {
   const router = useRouter();
-  // useSearchParams runs every render (App Router is fine with that); we only use the
-  // value during initial useState seeding below. State is seeded once, never re-synced
-  // from URL, so in-progress edits aren't clobbered by URL changes during typing.
-  const searchParams = useSearchParams();
+  const [params, setParams] = useQueryStates(
+    {
+      date: parseAsString.withDefault(''),
+      category: parseAsString.withDefault(''),
+      q: parseAsString.withDefault(''),
+    },
+    { clearOnDefault: true, throttleMs: 200 }
+  );
 
-  const initial: SearchState = {
-    date: options.initial?.date ?? searchParams.get('date') ?? '',
-    category: options.initial?.category ?? searchParams.get('category') ?? '',
-    query: options.initial?.query ?? searchParams.get('q') ?? '',
+  // Allow caller-provided `initial` to override URL on first render (used by the
+  // sticky-header variant on /vendors when it wants to honor server props rather
+  // than current URL — a rare path).
+  const state: SearchState = {
+    date: options.initial?.date ?? params.date,
+    category: options.initial?.category ?? params.category,
+    query: options.initial?.query ?? params.q,
   };
 
-  const [state, setState] = useState<SearchState>(initial);
   const [activeSegment, setActiveSegment] = useState<SearchSegment>(null);
 
-  const setDate = useCallback((d: string) => setState((s) => ({ ...s, date: d })), []);
-  const setCategory = useCallback((c: string) => setState((s) => ({ ...s, category: c })), []);
-  const setQuery = useCallback((q: string) => setState((s) => ({ ...s, query: q })), []);
+  const setDate = useCallback((d: string) => void setParams({ date: d }), [setParams]);
+  const setCategory = useCallback((c: string) => void setParams({ category: c }), [setParams]);
+  const setQuery = useCallback((q: string) => void setParams({ q }), [setParams]);
 
   const submit = useCallback(
     (overrides?: Partial<SearchState>) => {
       const final: SearchState = { ...state, ...(overrides ?? {}) };
-      const params = new URLSearchParams();
-      if (final.date) params.set('date', final.date);
-      if (final.category && final.category !== 'all') params.set('category', final.category);
-      if (final.query.trim()) params.set('q', final.query.trim());
-      const qs = params.toString();
+      const search = new URLSearchParams();
+      if (final.date) search.set('date', final.date);
+      if (final.category && final.category !== 'all') search.set('category', final.category);
+      if (final.query.trim()) search.set('q', final.query.trim());
+      const qs = search.toString();
       router.push(`/vendors${qs ? `?${qs}` : ''}`);
       setActiveSegment(null);
     },
