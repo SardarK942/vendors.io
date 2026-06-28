@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/select';
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS, generateSlug } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
+import { SubcategoryMultiSelect } from '@/components/onboarding/SubcategoryMultiSelect';
+import { getSubcategoriesForCategory } from '@/lib/vendor-subcategories';
 import type { Database } from '@/types/database.types';
 import {
   GooglePlacesAutocomplete,
@@ -36,6 +38,8 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
+  const [category, setCategory] = useState<string>(vendorProfile?.category ?? '');
+  const [subcategories, setSubcategories] = useState<string[]>(vendorProfile?.subcategories ?? []);
   const [baseAddress, setBaseAddress] = useState<Partial<PlaceData>>({
     address_line_1: (vendorProfile as Record<string, unknown> | null)?.base_address_line_1 as
       | string
@@ -78,6 +82,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
       base_postal_code: baseAddress.postal_code || null,
       base_google_place_id: baseAddress.google_place_id || null,
       base_address_public: baseAddressPublic,
+      subcategories: getSubcategoriesForCategory(category).length > 0 ? subcategories : null,
     };
 
     if (vendorProfile) {
@@ -142,7 +147,15 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
 
             <div className="space-y-2">
               <Label htmlFor="category">Category</Label>
-              <Select name="category" defaultValue={vendorProfile?.category || undefined} required>
+              <Select
+                name="category"
+                value={category}
+                onValueChange={(v) => {
+                  setCategory(v);
+                  setSubcategories([]);
+                }}
+                required
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
@@ -156,6 +169,17 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               </Select>
             </div>
           </div>
+
+          {getSubcategoriesForCategory(category).length > 0 && (
+            <div className="space-y-2">
+              <Label>Cart types you offer</Label>
+              <SubcategoryMultiSelect
+                category={category}
+                selected={subcategories}
+                onChange={setSubcategories}
+              />
+            </div>
+          )}
 
           <div className="space-y-2">
             <Label htmlFor="bio">Bio / Description</Label>

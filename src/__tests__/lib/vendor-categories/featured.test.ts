@@ -3,8 +3,8 @@ import { CATEGORIES_FEATURED, type FeaturedCategory } from '@/lib/vendor-categor
 import { VENDOR_CATEGORIES } from '@/lib/utils';
 
 describe('CATEGORIES_FEATURED', () => {
-  it('has exactly 11 entries', () => {
-    expect(CATEGORIES_FEATURED).toHaveLength(11);
+  it('has exactly 13 entries', () => {
+    expect(CATEGORIES_FEATURED).toHaveLength(13);
   });
 
   it('matches the locked bride-journey order', () => {
@@ -18,14 +18,16 @@ describe('CATEGORIES_FEATURED', () => {
       'carts',
       'dj',
       'live_music',
+      'photobooth',
       'decor',
       'venue',
+      'invitations',
     ]);
   });
 
-  it('marks bridal_wear, decor, and venue as comingSoon: true Day 1', () => {
+  it('marks bridal_wear, decor, venue, and invitations as comingSoon: true Day 1', () => {
     const comingSoonSlugs = CATEGORIES_FEATURED.filter((c) => c.comingSoon).map((c) => c.slug);
-    expect(comingSoonSlugs).toEqual(['bridal_wear', 'decor', 'venue']);
+    expect(comingSoonSlugs).toEqual(['bridal_wear', 'decor', 'venue', 'invitations']);
   });
 
   it('every slug exists in the canonical VENDOR_CATEGORIES constant', () => {
@@ -58,5 +60,17 @@ describe('CATEGORIES_FEATURED', () => {
       comingSoon: false,
     };
     expect(sample.slug).toBe('photography');
+  });
+
+  it('includes photobooth as a real (not coming-soon) tile', () => {
+    const pb = CATEGORIES_FEATURED.find((c) => c.slug === 'photobooth');
+    expect(pb).toBeDefined();
+    expect(pb!.comingSoon).toBe(false);
+  });
+
+  it('includes invitations as a coming-soon tile', () => {
+    const inv = CATEGORIES_FEATURED.find((c) => c.slug === 'invitations');
+    expect(inv).toBeDefined();
+    expect(inv!.comingSoon).toBe(true);
   });
 });
