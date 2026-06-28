@@ -57,11 +57,21 @@ export default async function HomePage() {
       {/* Skiper UI attribution */}
       <p className="mx-auto max-w-[1280px] px-6 pb-8 text-center text-[10px] text-ink-soft lg:px-14">
         Category browser pattern adapted from{' '}
-        <a href="https://skiper-ui.com" target="_blank" rel="noopener" className="hover:text-ink">
+        <a
+          href="https://skiper-ui.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-ink"
+        >
           Skiper UI
         </a>{' '}
         · Original by{' '}
-        <a href="https://x.com/Gur__vi" target="_blank" rel="noopener" className="hover:text-ink">
+        <a
+          href="https://x.com/Gur__vi"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="hover:text-ink"
+        >
           @Gur__vi
         </a>
       </p>

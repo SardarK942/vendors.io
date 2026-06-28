@@ -226,11 +226,11 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
             />
             <label htmlFor="agree" className="text-xs text-muted-foreground">
               I agree to the{' '}
-              <Link href="/terms" target="_blank" className="underline">
+              <Link href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" target="_blank" className="underline">
+              <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
                 Privacy Policy
               </Link>
               .
