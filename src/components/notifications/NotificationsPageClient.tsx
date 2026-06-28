@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useQueryState, parseAsStringEnum, parseAsArrayOf, parseAsString } from 'nuqs';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { Database, NotificationType } from '@/types/database.types';
 import { isHighPriority } from '@/lib/notifications/high-priority-types';
@@ -52,8 +53,17 @@ function groupByBooking(notifications: NotificationRow[]): Map<string, Notificat
 
 export function NotificationsPageClient({ initial }: Props) {
   const [notifications, setNotifications] = useState<NotificationRow[]>(initial);
-  const [tab, setTab] = useState<Tab>('action');
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useQueryState<Tab>(
+    'tab',
+    parseAsStringEnum<Tab>(['action', 'updates', 'archived'])
+      .withDefault('action')
+      .withOptions({ clearOnDefault: true })
+  );
+  const [collapsedList, setCollapsedList] = useQueryState(
+    'collapsed',
+    parseAsArrayOf(parseAsString).withDefault([]).withOptions({ clearOnDefault: true })
+  );
+  const collapsedGroups = useMemo(() => new Set(collapsedList), [collapsedList]);
 
   const buckets = useMemo(() => partition(notifications), [notifications]);
   const current = buckets[tab === 'action' ? 'action' : tab === 'updates' ? 'updates' : 'archived'];
@@ -74,12 +84,10 @@ export function NotificationsPageClient({ initial }: Props) {
   }
 
   function toggleGroup(key: string) {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    const next = new Set(collapsedGroups);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    void setCollapsedList(Array.from(next));
   }
 
   const tabCounts = {
@@ -99,7 +107,7 @@ export function NotificationsPageClient({ initial }: Props) {
             <button
               key={t}
               type="button"
-              onClick={() => setTab(t)}
+              onClick={() => void setTab(t)}
               className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                 tab === t
                   ? 'bg-primary text-primary-foreground'

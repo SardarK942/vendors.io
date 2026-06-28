@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
 import { Button } from '@/components/ui/button';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -23,7 +24,12 @@ const RANGES: { id: AttributionRange; label: string }[] = [
 ];
 
 export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
-  const [range, setRange] = useState<AttributionRange>('month');
+  const [range, setRange] = useQueryState<AttributionRange>(
+    'range',
+    parseAsStringEnum<AttributionRange>(['month', 'quarter', 'year', 'all'])
+      .withDefault('month')
+      .withOptions({ clearOnDefault: true })
+  );
   const [data, setData] = useState<Attribution | null>(null);
 
   useEffect(() => {
@@ -60,7 +66,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
           <button
             key={r.id}
             type="button"
-            onClick={() => setRange(r.id)}
+            onClick={() => void setRange(r.id)}
             className={
               range === r.id
                 ? 'rounded-full bg-ink px-3 py-1 text-xs font-medium text-cream transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'

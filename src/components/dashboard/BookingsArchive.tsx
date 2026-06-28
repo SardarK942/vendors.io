@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { BookingCard } from './BookingCard';
@@ -40,7 +41,10 @@ export function BookingsArchive({
 
   const [rows, setRows] = useState<BookingRow[]>(initialRows);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useQueryState(
+    'q',
+    parseAsString.withDefault('').withOptions({ clearOnDefault: true, throttleMs: 300 })
+  );
   const [isPending, startTransition] = useTransition();
 
   // Client-side filter on top of loaded rows.
@@ -83,7 +87,7 @@ export function BookingsArchive({
           type="search"
           placeholder="Search customer name…"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => void setQ(e.target.value)}
           inputMode="search"
           autoComplete="off"
           spellCheck={false}
@@ -115,7 +119,7 @@ export function BookingsArchive({
           <Button
             variant="link"
             onClick={() => {
-              setQ('');
+              void setQ('');
               setTab('all');
             }}
           >
