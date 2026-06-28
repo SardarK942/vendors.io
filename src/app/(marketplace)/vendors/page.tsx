@@ -3,6 +3,7 @@ import { VendorGrid } from '@/components/marketplace/VendorGrid';
 import { FilterShell } from '@/components/marketplace/filters/FilterShell';
 import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filters';
 import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
+import { hybridSearch } from '@/lib/ai/search';
 import type { VendorCardProps } from '@/components/marketplace/VendorCard';
 import type { Metadata } from 'next';
 
@@ -21,11 +22,41 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const params = await searchParams;
   const supabase = await createServerSupabaseClient();
 
+  // AI search: when ?q= is present, run hybrid search first to get a ranked
+  // vendor-id set, then intersect with the regular filter pipeline.
+  const rawQuery = typeof params.q === 'string' ? params.q.trim() : '';
+  let aiVendorIds: string[] | null = null;
+  let aiCategoryHint: string | undefined;
+  if (rawQuery) {
+    const { vendors: aiVendors, parsedQuery } = await hybridSearch(supabase, rawQuery);
+    aiVendorIds = aiVendors.map((v) => v.id);
+    aiCategoryHint = parsedQuery.category;
+  }
+
+  // URL filters (explicit user choices win over AI category hint).
   const filters = parseVendorFilterParams(params as Record<string, string | string[] | undefined>);
-  const category = filters.category; // for FilterShell prop
+  if (!filters.category && aiCategoryHint) filters.category = aiCategoryHint;
+  const category = filters.category;
   const page = typeof params.page === 'string' ? Number(params.page) : 1;
   const limit = 20;
   const offset = (page - 1) * limit;
+
+  // If AI search returned no matches, short-circuit to an empty-state page.
+  if (aiVendorIds !== null && aiVendorIds.length === 0) {
+    return (
+      <SavedVendorsProvider>
+        <div className="py-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">Browse Vendors</h1>
+            <p className="text-muted-foreground">
+              No matches for &ldquo;{rawQuery}&rdquo;. Try a broader query or clear filters.
+            </p>
+          </div>
+          <FilterShell initialQuery={rawQuery} />
+        </div>
+      </SavedVendorsProvider>
+    );
+  }
 
   // NOTE: vendor_packages_price_band is a VIEW — PostgREST cannot resolve FK joins
   // to views. Price band is fetched in a separate parallel query and merged by vendor id.
@@ -36,6 +67,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     .eq('onboarding_complete', true);
 
   query = applyVendorFilters(query, filters);
+  if (aiVendorIds !== null) query = query.in('id', aiVendorIds);
 
   query = query
     .order('verified', { ascending: false })
@@ -47,8 +79,6 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     typeof params.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : null;
 
   // Run vendors + enrichments + price band in parallel.
-  // Unclaimed (scraped) vendors are hidden from public browse for now — we'll
-  // be onboarding vendors manually until first-batch claim flow settles.
   const [{ data: vendors, count }, { data: enrichments }, { data: priceBands }] = await Promise.all(
     [
       query,
@@ -61,7 +91,6 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
 
   const totalPages = Math.ceil((count ?? 0) / limit);
 
-  // Build enrichment lookup map.
   const enrichmentMap = new Map<
     string,
     { confirmed_wedding_count: number; is_available_for_date: boolean | null }
@@ -79,7 +108,6 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     }
   );
 
-  // Build price band lookup map.
   const priceBandMap = new Map<
     string,
     { min_price_cents: number | null; max_price_cents: number | null }
@@ -92,7 +120,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
     });
   });
 
-  const enrichedVendors = (vendors ?? []).map((v) => ({
+  let enrichedVendors = (vendors ?? []).map((v) => ({
     ...v,
     vendor_packages_price_band: priceBandMap.get(v.id) ?? null,
     ...(enrichmentMap.get(v.id) ?? {
@@ -100,6 +128,14 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
       is_available_for_date: null,
     }),
   })) as VendorWithEnrichments[];
+
+  // Preserve AI ranking when ?q= was provided.
+  if (aiVendorIds !== null) {
+    const orderIndex = new Map(aiVendorIds.map((id, i) => [id, i]));
+    enrichedVendors = enrichedVendors
+      .slice()
+      .sort((a, b) => (orderIndex.get(a.id) ?? 1e9) - (orderIndex.get(b.id) ?? 1e9));
+  }
 
   const totalCount = count ?? 0;
 
@@ -110,10 +146,16 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
           <h1 className="text-2xl font-bold">Browse Vendors</h1>
           <p className="text-muted-foreground">
             {totalCount} vendor{totalCount !== 1 ? 's' : ''}
+            {rawQuery && (
+              <>
+                {' '}
+                for &ldquo;<span className="text-ink">{rawQuery}</span>&rdquo;
+              </>
+            )}
           </p>
         </div>
 
-        <FilterShell initialCategory={category} />
+        <FilterShell initialQuery={rawQuery} />
         <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
 
         {/* Pagination */}
@@ -123,6 +165,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
               <a
                 key={p}
                 href={`/vendors?${new URLSearchParams({
+                  ...(rawQuery ? { q: rawQuery } : {}),
                   ...(category ? { category } : {}),
                   page: String(p),
                 }).toString()}`}

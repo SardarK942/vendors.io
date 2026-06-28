@@ -4,10 +4,12 @@ import * as React from 'react';
 import { createPortal } from 'react-dom';
 import { cn } from '@/lib/utils';
 import { Chip } from './Chip';
+import { CategoryDropdown } from './CategoryDropdown';
 import { PriceDropdown } from './PriceDropdown';
 import { LanguagesDropdown } from './LanguagesDropdown';
 import { PRICE_BANDS } from './constants';
 import { useFilterState, type FilterDropdown } from './use-filter-state';
+import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 
 export interface FilterChipRowProps {
   /** Optional className override on the row wrapper. */
@@ -24,6 +26,7 @@ export interface FilterChipRowProps {
 export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const { state, patch, activeDropdown, setActiveDropdown, apply } = useFilterState();
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const categoryChipRef = React.useRef<HTMLButtonElement>(null);
   const priceChipRef = React.useRef<HTMLButtonElement>(null);
   const languagesChipRef = React.useRef<HTMLButtonElement>(null);
 
@@ -72,6 +75,9 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const priceBandLabel = state.priceBand
     ? `Price · ${PRICE_BANDS.find((b) => b.slug === state.priceBand)?.shorthand ?? ''}`
     : 'Price';
+  const categoryLabel = state.category
+    ? `Category · ${VENDOR_CATEGORY_LABELS[state.category] ?? state.category}`
+    : 'Category';
 
   return (
     <div
@@ -80,6 +86,30 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
       role="toolbar"
       aria-label="Filter vendors"
     >
+      {/* Category — first chip, per product direction */}
+      <div className="relative">
+        <Chip
+          ref={categoryChipRef}
+          variant="dropdown"
+          isActive={activeDropdown === 'category' || !!state.category}
+          panelId="filter-panel-category"
+          onClick={() => toggleDropdown('category')}
+        >
+          {categoryLabel}
+        </Chip>
+        {activeDropdown === 'category' && (
+          <AnchoredPanel id="filter-panel-category" anchorRef={categoryChipRef}>
+            <CategoryDropdown
+              selected={state.category}
+              onSelect={(c) => {
+                apply({ category: c });
+                setActiveDropdown(null);
+              }}
+            />
+          </AnchoredPanel>
+        )}
+      </div>
+
       {/* Verified */}
       <Chip
         variant="toggle"
