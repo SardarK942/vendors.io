@@ -2,7 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import { useQueryState, parseAsStringEnum, parseAsArrayOf, parseAsString } from 'nuqs';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import type { Database, NotificationType } from '@/types/database.types';
 import { isHighPriority } from '@/lib/notifications/high-priority-types';
 import { NotificationCard } from './NotificationCard';
@@ -68,6 +69,10 @@ export function NotificationsPageClient({ initial }: Props) {
   const buckets = useMemo(() => partition(notifications), [notifications]);
   const current = buckets[tab === 'action' ? 'action' : tab === 'updates' ? 'updates' : 'archived'];
   const groups = useMemo(() => groupByBooking(current), [current]);
+  const reducedMotion = useReducedMotion();
+  const chevronTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.22, bounce: 0 };
 
   async function markRead(id: string) {
     setNotifications((prev) =>
@@ -159,11 +164,14 @@ export function NotificationsPageClient({ initial }: Props) {
                       ({items.length})
                     </span>
                   </span>
-                  {collapsed ? (
-                    <ChevronRight className="h-4 w-4" />
-                  ) : (
+                  <motion.span
+                    className="inline-flex"
+                    animate={{ rotate: collapsed ? -90 : 0 }}
+                    transition={chevronTransition}
+                    aria-hidden="true"
+                  >
                     <ChevronDown className="h-4 w-4" />
-                  )}
+                  </motion.span>
                 </button>
                 {!collapsed && (
                   <ul className="m-0 list-none divide-y p-0">
