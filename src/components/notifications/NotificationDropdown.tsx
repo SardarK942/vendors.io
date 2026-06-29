@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { Database } from '@/types/database.types';
 import { NotificationCard } from './NotificationCard';
 
@@ -16,6 +17,10 @@ interface Props {
 
 export function NotificationDropdown({ notifications, onClose, onMarkRead, onMarkAllRead }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const enterSpring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.22, bounce: 0 };
 
   // Click outside closes
   useEffect(() => {
@@ -40,13 +45,21 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
   }
 
   return (
-    <div
+    <motion.div
       ref={ref}
       className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border bg-popover shadow-lg"
       role="dialog"
       aria-label="Notifications"
+      initial={{ y: -4, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={enterSpring}
     >
-      <div className="flex items-center justify-between border-b px-3 py-2">
+      <motion.div
+        className="flex items-center justify-between border-b px-3 py-2"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...enterSpring, delay: reducedMotion ? 0 : 0.06 }}
+      >
         <h3 className="text-sm font-semibold">Notifications</h3>
         {anyUnread && (
           <button
@@ -57,9 +70,14 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
             Mark All Read
           </button>
         )}
-      </div>
+      </motion.div>
 
-      <div className="max-h-96 overflow-y-auto">
+      <motion.div
+        className="max-h-96 overflow-y-auto"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...enterSpring, delay: reducedMotion ? 0 : 0.06 }}
+      >
         {notifications.length === 0 ? (
           <p className="px-3 py-8 text-center text-sm text-muted-foreground">
             No notifications yet.
@@ -75,9 +93,14 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
             ))}
           </ul>
         )}
-      </div>
+      </motion.div>
 
-      <div className="border-t">
+      <motion.div
+        className="border-t"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...enterSpring, delay: reducedMotion ? 0 : 0.12 }}
+      >
         <Link
           href="/dashboard/notifications"
           onClick={onClose}
@@ -85,7 +108,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
         >
           See all →
         </Link>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }
