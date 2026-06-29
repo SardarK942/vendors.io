@@ -62,6 +62,7 @@ export function HeartConfetti({ x, y, onComplete }: Props): React.JSX.Element | 
               borderRadius: '50%',
               backgroundColor: dot.color,
               animation: `heart-confetti ${DURATION_MS}ms ease-out ${dot.delay}ms forwards`,
+              willChange: 'transform, opacity',
               '--dx': `${dot.dx}px`,
               '--dy': `${dot.dy}px`,
             } as React.CSSProperties

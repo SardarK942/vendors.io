@@ -30,7 +30,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
 
   return (
     <div
-      className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hairline bg-cream-soft px-5 py-3"
+      className="mb-6 flex items-center justify-between gap-4 rounded-lg bg-cream-soft px-5 py-3 shadow-[0_1px_0_rgba(0,0,0,0.04),0_4px_12px_-4px_rgba(0,0,0,0.06)]"
       role="status"
       aria-live="polite"
     >
@@ -39,8 +39,8 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
           <SlidersHorizontal className="size-4 stroke-ink" strokeWidth={2} aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-ink">Complete your profile</p>
-          <p className="text-xs text-ink-muted">
+          <p className="text-balance text-sm font-medium text-ink">Complete your profile</p>
+          <p className="text-pretty text-xs text-ink-muted">
             Add languages, years in business, and response time so customers can find you.
           </p>
         </div>
@@ -56,7 +56,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="inline-flex size-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          className="inline-flex size-10 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           <X className="size-4" strokeWidth={2} aria-hidden="true" />
         </button>

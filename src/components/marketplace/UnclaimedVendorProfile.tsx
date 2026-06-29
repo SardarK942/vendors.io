@@ -41,7 +41,7 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
               width={400}
               height={500}
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">
@@ -51,14 +51,14 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
         </div>
 
         <div className="space-y-3">
-          <h1 className="text-2xl font-semibold" translate="no">
+          <h1 className="text-balance text-2xl font-semibold" translate="no">
             {vendor.business_name}
           </h1>
           <p className="text-sm text-muted-foreground">
             {categoryLabel}
             {vendor.city ? ` · ${vendor.city}, ${vendor.state}` : ''}
           </p>
-          {vendor.bio && <p className="text-sm">{vendor.bio}</p>}
+          {vendor.bio && <p className="text-pretty text-sm">{vendor.bio}</p>}
 
           {vendor.instagram_handle && (
             <div>
@@ -75,7 +75,7 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
                 <button
                   type="button"
                   onClick={handleIgClick}
-                  className="rounded-md border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                  className="rounded-md border bg-background px-3 py-1.5 text-sm font-medium transition-[transform,background-color] hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
                 >
                   Show on Instagram
                 </button>
@@ -90,7 +90,7 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
         <button
           type="button"
           onClick={onOpenOwnership}
-          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:opacity-90"
+          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-[transform,opacity] hover:opacity-90 active:scale-[0.96] motion-reduce:active:scale-100"
         >
           I own this business
         </button>

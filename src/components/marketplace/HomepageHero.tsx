@@ -33,7 +33,7 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
           <em className="font-medium italic text-hot-pink">One bazaar.</em>
         </h1>
 
-        <p className="m-0 mb-8 max-w-[520px] text-lg leading-[1.55] text-ink-muted">
+        <p className="m-0 mb-8 max-w-[520px] text-pretty text-lg leading-[1.55] text-ink-muted">
           Chicago&rsquo;s marketplace for{' '}
           <span className="bg-haldi box-decoration-clone px-2 pb-1 pt-0 text-ink">Cultural</span>{' '}
           wedding vendors. Discover, compare, and book with confidence.

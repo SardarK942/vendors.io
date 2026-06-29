@@ -66,7 +66,7 @@ export function DepositDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-md bg-muted/40 p-3 text-sm tabular-nums">
+          <div className="rounded-lg bg-muted/40 p-3 text-sm tabular-nums">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Deposit (5%)</span>
               <span className="font-medium">{formatPrice(depositCents)}</span>
@@ -77,14 +77,14 @@ export function DepositDialog({
             </div>
           </div>
 
-          <p className="mb-3 text-xs text-ink/70">
+          <p className="mb-3 text-pretty text-xs text-ink/70">
             Baazar charges a 5% deposit at booking. We keep that 5% as our platform fee. You pay the
             remaining 95% directly to the vendor per their payment terms.
           </p>
 
           <div className="my-3 rounded-md border border-ink/10 bg-cream/50 p-3 text-xs">
             <p className="font-semibold text-ink">Cancellation policy</p>
-            <p className="mt-1 text-ink/80">
+            <p className="mt-1 text-pretty text-ink/80">
               Your 5% deposit is fully refundable within 24 hours of booking. After that, it’s
               non-refundable. If the vendor cancels, you get a full refund.
             </p>

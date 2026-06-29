@@ -113,7 +113,7 @@ export function VendorProfile({
                 <h2 className="font-spectral text-xl font-semibold text-ink">
                   Choose your package
                 </h2>
-                <p className="mt-1 text-xs text-ink/70">
+                <p className="mt-1 text-pretty text-xs text-ink/70">
                   Compare side-by-side. All prices include setup, breakdown, and one attendant.
                 </p>
                 <div className="mt-4">
@@ -146,11 +146,11 @@ export function VendorProfile({
               <IdentityPanel vendor={vendor} />
 
               {packages.length > 0 && (
-                <div id="packages-section" className="border-t border-ink/10 pt-8">
+                <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
                   <h2 className="font-spectral text-xl font-semibold text-ink">
                     Choose your package
                   </h2>
-                  <p className="mt-1 text-xs text-ink/70">
+                  <p className="mt-1 text-pretty text-xs text-ink/70">
                     Compare side-by-side. All prices include setup, breakdown, and one attendant.
                   </p>
                   <div className="mt-4">
@@ -187,10 +187,10 @@ export function VendorProfile({
 
         {/* Reviews — full-width below everything on both layouts */}
         {hasReviews && (
-          <div id="reviews-section" className="mt-12 border-t border-ink/10 pt-8">
+          <div id="reviews-section" className="mt-12 pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
             <div className="mb-6 flex items-center gap-3">
               <h2 className="font-spectral text-xl font-semibold text-ink">Reviews</h2>
-              <span className="text-2xl font-bold text-ink">
+              <span className="text-2xl font-bold tabular-nums text-ink">
                 {vendor.average_rating!.toFixed(1)}
               </span>
               <span className="flex text-amber-400">
@@ -203,7 +203,9 @@ export function VendorProfile({
                   />
                 ))}
               </span>
-              <span className="text-sm text-ink/60">({vendor.review_count} reviews)</span>
+              <span className="text-sm tabular-nums text-ink/60">
+                ({vendor.review_count} reviews)
+              </span>
             </div>
 
             <div className="space-y-4">

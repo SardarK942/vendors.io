@@ -80,8 +80,8 @@ export function StepReview({ profile, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Review your profile</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-balance text-2xl font-bold">Review your profile</h1>
+        <p className="text-pretty text-sm text-muted-foreground">
           Step 6 of 6 — check everything looks right before publishing.
         </p>
       </div>
@@ -89,10 +89,13 @@ export function StepReview({ profile, profileId, mode }: Props) {
       {/* Summary cards */}
       <div className="space-y-4">
         {/* Basics */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Basics</h2>
-            <Link href="/dashboard/profile/setup/basics" className="text-xs text-primary underline">
+            <Link
+              href="/dashboard/profile/setup/basics"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
+            >
               Edit
             </Link>
           </div>
@@ -115,12 +118,12 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
 
         {/* Location */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Location</h2>
             <Link
               href="/dashboard/profile/setup/location"
-              className="text-xs text-primary underline"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
             >
               Edit
             </Link>
@@ -144,10 +147,13 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
 
         {/* Online */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Online presence</h2>
-            <Link href="/dashboard/profile/setup/online" className="text-xs text-primary underline">
+            <Link
+              href="/dashboard/profile/setup/online"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
+            >
               Edit
             </Link>
           </div>
@@ -181,12 +187,12 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
 
         {/* Portfolio */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Portfolio</h2>
             <Link
               href="/dashboard/profile/setup/portfolio"
-              className="text-xs text-primary underline"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
             >
               Edit
             </Link>
@@ -200,7 +206,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
                   alt="Portfolio"
                   width={80}
                   height={80}
-                  className="h-20 w-20 rounded-md object-cover"
+                  className="h-20 w-20 rounded object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                 />
               ))}
             </div>
@@ -211,7 +217,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       </div>
 
       {/* Fee disclosure */}
-      <p className="text-sm text-muted-foreground">
+      <p className="text-pretty text-sm text-muted-foreground">
         Baazar takes a 5% deposit at booking. Everything else you collect directly from the
         customer.
       </p>
@@ -219,7 +225,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       {/* Live preview */}
       <div className="space-y-2">
         <h2 className="font-semibold">Preview</h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-pretty text-xs text-muted-foreground">
           This is how your listing will appear in the marketplace. Click to see the full profile.
         </p>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
@@ -264,7 +270,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       {publishError && (
         <div
-          className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+          className="rounded-md bg-destructive/10 p-4 text-sm text-destructive shadow-sm"
           role="alert"
           aria-live="assertive"
         >
@@ -280,8 +286,8 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
       )}
 
-      <div className="rounded-md border border-ink/15 bg-cream/60 p-3">
-        <p className="text-xs text-ink/80">
+      <div className="rounded-md bg-cream/60 p-3 shadow-sm">
+        <p className="text-pretty text-xs text-ink/80">
           By publishing your profile, you agree to Baazar’s terms. Customers pay a 5% deposit
           through Baazar at booking — that’s our platform fee. You collect the 95% balance directly
           from them. If you cancel a confirmed booking, the customer’s deposit is refunded in full.

@@ -44,23 +44,26 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
     ref
   ) => {
     const baseClasses = cn(
-      'inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-full',
+      'inline-flex items-center justify-center gap-1.5 h-8 rounded-full',
       'font-sans text-[12px] font-medium leading-none whitespace-nowrap',
-      'transition-[background-color,border-color,color] duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)]',
+      'transition-[background-color,border-color,color,transform] duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)]',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
       'disabled:opacity-40 disabled:pointer-events-none',
+      // Press affordance — skipped on 'applied' (its inner X has its own hit
+      // zone via stopPropagation; scaling the outer would scale the X too).
+      variant !== 'applied' && 'active:scale-[0.96] motion-reduce:active:scale-100',
       // Variant-specific
       variant === 'toggle' && [
-        'border bg-cream text-ink',
+        'border bg-cream text-ink px-3.5',
         isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover-pink-border',
       ],
       variant === 'dropdown' && [
-        'border bg-cream text-ink',
+        'border bg-cream text-ink pl-3.5 pr-3',
         isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover-pink-border',
       ],
       variant === 'applied' && ['border border-ink bg-cream-soft text-ink pr-1'],
       variant === 'all-filters' && [
-        'border border-ink bg-cream text-ink font-semibold hover-pink-border',
+        'border border-ink bg-cream text-ink font-semibold hover-pink-border pl-3 pr-3.5',
       ],
       className
     );
@@ -93,7 +96,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
               <span
                 className={cn(
                   'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1',
-                  'text-[10px] font-bold leading-none',
+                  'text-[10px] font-bold tabular-nums leading-none',
                   isActive ? 'bg-cream text-ink' : 'bg-indigo text-cream'
                 )}
               >
@@ -109,7 +112,8 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
             }}
             aria-label={`Remove ${labelText}`}
             className={cn(
-              'ml-1 inline-flex size-4 items-center justify-center rounded-full',
+              'relative ml-1 inline-flex size-4 items-center justify-center rounded-full',
+              'before:absolute before:-inset-2 before:content-[""]',
               'text-ink-muted transition-colors hover:bg-ink hover:text-cream',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-1 focus-visible:ring-offset-cream'
             )}
@@ -130,7 +134,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
           <span
             className={cn(
               'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1',
-              'text-[10px] font-bold leading-none',
+              'text-[10px] font-bold tabular-nums leading-none',
               isActive ? 'bg-cream text-ink' : 'bg-indigo text-cream'
             )}
           >

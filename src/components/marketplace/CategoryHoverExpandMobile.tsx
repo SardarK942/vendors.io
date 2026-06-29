@@ -46,7 +46,7 @@ export function CategoryHoverExpandMobile({ categories, counts }: CategoryHoverE
               alt={cat.alt}
               fill
               sizes="(max-width: 640px) 100vw, 320px"
-              className="object-cover"
+              className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/[0.78] to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4 text-cream">

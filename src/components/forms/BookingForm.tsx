@@ -174,7 +174,12 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           <CardContent className="space-y-3">
             <div className="flex items-start gap-4">
               <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded">
-                <Image src={pkg.featured_image_url} alt={pkg.name} fill className="object-cover" />
+                <Image
+                  src={pkg.featured_image_url}
+                  alt={pkg.name}
+                  fill
+                  className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                />
               </div>
               <div>
                 <p className="font-semibold" translate="no">
@@ -258,7 +263,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 id={fullNameId}
                 type="text"
                 required
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded-md border p-2 text-sm"
                 placeholder="e.g. Aisha & Ahmed Khan"
                 value={coupleFullName}
                 onChange={(e) => setCoupleFullName(e.target.value)}
@@ -273,7 +278,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 id={phoneId}
                 type="tel"
                 required
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded-md border p-2 text-sm"
                 placeholder="+1 (555) 000-0000"
                 value={couplePhone}
                 onChange={(e) => setCouplePhone(e.target.value)}
@@ -294,7 +299,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                   min={1}
                   inputMode="numeric"
                   autoComplete="off"
-                  className="w-full rounded border p-2 text-sm"
+                  className="w-full rounded-md border p-2 text-sm"
                   value={guestCounts[1]}
                   onChange={(e) =>
                     setGuestCounts({ ...guestCounts, 1: parseInt(e.target.value, 10) || 1 })
@@ -317,7 +322,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                       min={1}
                       inputMode="numeric"
                       autoComplete="off"
-                      className="w-full rounded border p-2 text-sm"
+                      className="w-full rounded-md border p-2 text-sm"
                       value={guestCounts[seq]}
                       onChange={(e) =>
                         setGuestCounts({
@@ -336,7 +341,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               </label>
               <textarea
                 id={specialRequestsId}
-                className="min-h-[80px] w-full rounded border p-2 text-sm"
+                className="min-h-[80px] w-full rounded-md border p-2 text-sm"
                 placeholder="Any special needs, dietary restrictions, setup requests…"
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
@@ -350,7 +355,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           <div
             role="alert"
             aria-live="assertive"
-            className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+            className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive shadow-[0_1px_2px_rgba(225,29,72,0.10),0_4px_12px_rgba(225,29,72,0.06)]"
           >
             {error}
           </div>
@@ -386,7 +391,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               <span>Estimated Total</span>
               <span>{fmtUSD(estimatedTotal)}</span>
             </div>
-            <p className="pt-1 text-xs text-muted-foreground">
+            <p className="text-pretty pt-1 text-xs text-muted-foreground">
               Vendor may adjust the final price before deposit.
             </p>
           </CardContent>

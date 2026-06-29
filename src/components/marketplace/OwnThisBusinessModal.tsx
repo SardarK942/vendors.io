@@ -80,7 +80,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
             >
               Close
             </button>
@@ -126,7 +126,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
               <button
                 type="button"
                 onClick={() => setView(intent)}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
               >
                 Continue
               </button>
@@ -190,7 +190,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                 type="button"
                 onClick={() => submit('remove')}
                 disabled={!email || submitting}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] disabled:opacity-60 motion-reduce:active:scale-100"
               >
                 {submitting ? 'Sending…' : 'Send removal request'}
               </button>
@@ -265,7 +265,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                 type="button"
                 onClick={() => submit('claim_request')}
                 disabled={!email || !ig || submitting}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-colors hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] disabled:opacity-60 motion-reduce:active:scale-100"
               >
                 {submitting ? 'Sending…' : 'Request claim link'}
               </button>

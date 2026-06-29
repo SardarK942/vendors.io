@@ -1,6 +1,7 @@
 'use client';
 import { useState } from 'react';
 import Link from 'next/link';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
 import styles from './EventCard.module.css';
 import { countdown } from '@/lib/dashboard/countdown';
 import { fmtDate as fmtDateIntl, fmtTime } from '@/lib/intl';
@@ -80,7 +81,7 @@ export function EventCard({ data }: Props) {
               width={320}
               height={420}
               loading="lazy"
-              className={styles.frontImg}
+              className={`${styles.frontImg} outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10`}
               aria-hidden
             />
           )}
@@ -119,9 +120,17 @@ export function EventCard({ data }: Props) {
             </p>
             <Link
               href={`/dashboard/bookings/${data.bookingId}`}
-              style={{ color: '#ff9966', fontSize: '11px', textDecoration: 'underline' }}
+              style={{
+                color: '#ff9966',
+                fontSize: '11px',
+                textDecoration: 'underline',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}
             >
-              Open booking →
+              Open booking
+              <ArrowRight aria-hidden="true" className="translate-y-px" size={12} strokeWidth={2} />
             </Link>
             <button
               type="button"
@@ -136,9 +145,13 @@ export function EventCard({ data }: Props) {
                 cursor: 'pointer',
                 padding: 0,
                 alignSelf: 'flex-start',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
               }}
             >
-              ← Back to card
+              <ArrowLeft aria-hidden="true" className="translate-y-px" size={12} strokeWidth={2} />
+              Back to card
             </button>
           </div>
         </div>

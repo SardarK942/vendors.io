@@ -44,7 +44,7 @@ export function BlockDateForm() {
   }
 
   return (
-    <form onSubmit={submit} className="space-y-3 rounded-md border p-4">
+    <form onSubmit={submit} className="space-y-3 rounded-md p-4 shadow-sm">
       <h2 className="font-semibold">Block a Date</h2>
       <div>
         <Label htmlFor="block-date">Date</Label>

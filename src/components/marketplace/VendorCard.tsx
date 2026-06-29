@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Heart, ArrowRight, Camera } from 'lucide-react';
 import { cn, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { formatShortDate, formatWeddingCount, formatPriceFromCents } from './vendor-card-helpers';
@@ -46,6 +47,10 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const { savedIds, toggle } = useSavedVendors();
   const isSaved = savedIds.has(vendor.id);
   const heartRef = React.useRef<HTMLButtonElement>(null);
+  const reducedMotion = useReducedMotion();
+  const heartTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
@@ -71,8 +76,9 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
       href={`/vendors/${vendor.slug}`}
       data-vendor-slug={vendor.slug}
       className={cn(
-        'group relative block overflow-hidden rounded-lg border border-hairline bg-cream',
-        'hover-lift-card'
+        'group relative block overflow-hidden rounded-2xl border border-hairline bg-cream',
+        'hover-lift-card',
+        'transition-transform active:scale-[0.98] motion-reduce:active:scale-100'
       )}
     >
       {/* Photo */}
@@ -90,6 +96,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={cn(
               'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] object-cover transition-transform',
+              'outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10',
               'md:group-hover:scale-[1.04] motion-reduce:md:group-hover:scale-100'
             )}
           />
@@ -138,13 +145,30 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           aria-pressed={isSaved}
           className={cn(
             'absolute right-3 top-3 inline-flex size-[34px] items-center justify-center rounded-full',
+            'before:absolute before:-inset-1 before:content-[""]',
             'border border-ink/10 bg-cream/95 backdrop-blur',
-            'transition-colors',
+            'transition-[transform,background-color,color]',
+            'active:scale-[0.96] motion-reduce:active:scale-100',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
             isSaved ? 'text-red-500' : 'text-ink/50 hover-pink-text'
           )}
         >
-          <Heart className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')} strokeWidth={2} />
+          <AnimatePresence initial={false} mode="popLayout">
+            <motion.span
+              key={isSaved ? 'filled' : 'outline'}
+              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              transition={heartTransition}
+              className="inline-flex"
+              aria-hidden="true"
+            >
+              <Heart
+                className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')}
+                strokeWidth={2}
+              />
+            </motion.span>
+          </AnimatePresence>
         </button>
 
         {/* HV-B arrow orb — hover only, hidden in compact */}
@@ -152,7 +176,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           <span
             aria-hidden="true"
             className={cn(
-              'absolute bottom-3.5 right-3.5 inline-flex size-10 items-center justify-center rounded-full',
+              'absolute bottom-3.5 right-3.5 inline-flex size-10 items-center justify-center rounded-full pl-0.5',
               'bg-indigo text-cream',
               'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] -translate-x-2 opacity-0 transition-[transform,opacity]',
               'md:group-hover:translate-x-0 md:group-hover:opacity-100',

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { CULTURAL_EVENT_TYPES, GENERAL_EVENT_TYPES } from '@/types';
@@ -51,7 +52,9 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
-          <h2 className="text-2xl font-semibold text-ink">What types of events do you serve?</h2>
+          <h2 className="text-balance text-2xl font-semibold text-ink">
+            What types of events do you serve?
+          </h2>
           <p className="mt-2 text-sm text-ink/70">Pick 1-5. You can change this later.</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -84,16 +87,19 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
             type="button"
             disabled={!canContinue}
             onClick={() => setStep(2)}
-            className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink disabled:opacity-50"
+            className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
           >
-            Continue →
+            <span className="inline-flex items-center gap-1.5">
+              Continue
+              <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+            </span>
           </button>
 
           <button
             type="button"
             onClick={() => submitOnboarding(true)}
             disabled={submitting}
-            className="mt-3 w-full text-center text-xs text-ink/60 hover:text-hot-pink"
+            className="mt-3 w-full text-center text-xs text-ink/60 transition-[transform,color] hover:text-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
           >
             Skip for now
           </button>
@@ -105,13 +111,13 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <h2 className="text-2xl font-semibold text-ink">
+        <h2 className="text-balance text-2xl font-semibold text-ink">
           Here’s what customer requests look like:
         </h2>
 
         <div className="mt-4 space-y-3">
           {SAMPLE_VENDOR_REQUESTS.map((req, i) => (
-            <div key={i} className="rounded-md border border-ink/15 bg-cream p-4">
+            <div key={i} className="rounded-md bg-cream p-4 shadow-sm">
               <p className="text-sm font-medium text-ink">{req.event_type}</p>
               <p className="mt-1 text-xs text-ink/70">
                 {req.date} · {req.guest_count} guests · {req.budget_range}
@@ -124,9 +130,12 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
           type="button"
           onClick={() => submitOnboarding(false)}
           disabled={submitting}
-          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink"
+          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
         >
-          Set up your profile →
+          <span className="inline-flex items-center gap-1.5">
+            Set up your profile
+            <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+          </span>
         </button>
       </DialogContent>
     </Dialog>

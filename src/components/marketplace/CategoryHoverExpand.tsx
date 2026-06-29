@@ -1,9 +1,17 @@
 'use client';
 
+/**
+ * HoverExpand pattern adapted from Skiper UI 52 HoverExpand_001 (https://skiper-ui.com).
+ * Original by @gurvinder-singh02 / @Gur__vi.
+ * Adapted to M+ design tokens + Baazar's 11 featured vendor categories.
+ *
+ * Renders only at lg: breakpoint and up. Mobile uses CategoryHoverExpandMobile.
+ */
+
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { motion, useReducedMotion } from 'framer-motion';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import type { FeaturedCategory } from '@/lib/vendor-categories/featured';
 import { fmtCount } from '@/lib/intl';
@@ -68,7 +76,7 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                 alt={cat.alt}
                 fill
                 sizes="(min-width: 1024px) 26rem, 100vw"
-                className="object-cover"
+                className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                 priority={i < 3}
               />
 
@@ -96,58 +104,104 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
               </span>
 
               {/* Active-state content overlay */}
-              <div
-                className={`duration-[320ms] absolute bottom-0 left-0 right-0 p-6 text-cream transition-opacity delay-100 ${
-                  isActive ? 'opacity-100' : 'opacity-0'
-                }`}
-              >
-                {isComingSoon ? (
-                  <>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-                        {cat.kicker}
-                      </span>
-                      <span className="rounded-full bg-ink-soft/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-cream">
-                        Joining soon
-                      </span>
-                    </div>
-                    <h3 className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]">
-                      {cat.label}
-                    </h3>
-                    <p className="m-0 mb-3 text-sm text-cream/85">
-                      Vendors are joining the platform.
-                    </p>
-                    <a
-                      href="#newsletter"
-                      className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
-                      onClick={(e) => {
-                        e.preventDefault();
-                        document.querySelector('footer')?.scrollIntoView({
-                          behavior: reducedMotion ? 'auto' : 'smooth',
-                        });
-                      }}
-                    >
-                      Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </a>
-                  </>
-                ) : (
-                  <>
-                    <p className="m-0 mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-haldi">
-                      {cat.kicker}
-                    </p>
-                    <h3 className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]">
-                      {cat.label}
-                    </h3>
-                    <p className="m-0 mb-3 text-sm tabular-nums text-cream/85">
-                      {fmtCount(count)} {plural(cat.label.toLowerCase())} in Chicago
-                    </p>
-                    <span className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm">
-                      Browse {cat.label.toLowerCase()}{' '}
-                      <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </span>
-                  </>
+              <AnimatePresence initial={false}>
+                {isActive && (
+                  <div className="absolute bottom-0 left-0 right-0 p-6 text-cream">
+                    {isComingSoon ? (
+                      <>
+                        <motion.div
+                          className="mb-2 flex items-center gap-2"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.1 }}
+                        >
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+                            {cat.kicker}
+                          </span>
+                          <span className="rounded-full bg-ink-soft/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-cream">
+                            Joining soon
+                          </span>
+                        </motion.div>
+                        <motion.h3
+                          className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.2 }}
+                        >
+                          {cat.label}
+                        </motion.h3>
+                        <motion.p
+                          className="m-0 mb-3 text-sm text-cream/85"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.3 }}
+                        >
+                          Vendors are joining the platform.
+                        </motion.p>
+                        <motion.a
+                          href="#newsletter"
+                          className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.4 }}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            document.querySelector('footer')?.scrollIntoView({
+                              behavior: reducedMotion ? 'auto' : 'smooth',
+                            });
+                          }}
+                        >
+                          Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                        </motion.a>
+                      </>
+                    ) : (
+                      <>
+                        <motion.p
+                          className="m-0 mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-haldi"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.1 }}
+                        >
+                          {cat.kicker}
+                        </motion.p>
+                        <motion.h3
+                          className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.2 }}
+                        >
+                          {cat.label}
+                        </motion.h3>
+                        <motion.p
+                          className="m-0 mb-3 text-sm tabular-nums text-cream/85"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.3 }}
+                        >
+                          {fmtCount(count)} {plural(cat.label.toLowerCase())} in Chicago
+                        </motion.p>
+                        <motion.span
+                          className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm"
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.4 }}
+                        >
+                          Browse {cat.label.toLowerCase()}{' '}
+                          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                        </motion.span>
+                      </>
+                    )}
+                  </div>
                 )}
-              </div>
+              </AnimatePresence>
             </Link>
           </motion.div>
         );

@@ -76,7 +76,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Where are you based?</h1>
+        <h1 className="text-balance text-2xl font-bold">Where are you based?</h1>
         <p className="text-sm text-muted-foreground">Step 2 of 6</p>
       </div>
 
@@ -137,7 +137,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
           I don’t have a fixed address (I travel to clients)
         </label>
         {!skipAddress && !place.address_line_1 && (
-          <p className="mt-1 text-xs text-ink/60">
+          <p className="mt-1 text-pretty text-xs text-ink/60">
             Adding an address helps customers find you in local searches.
           </p>
         )}
@@ -150,7 +150,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
             Make my full address publicly visible
           </Label>
         </div>
-        <p className="pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
+        <p className="text-pretty pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
           Customers see your city + state always. Full address shown only after they pay the
           deposit, unless you make it public here.
         </p>

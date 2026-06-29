@@ -44,7 +44,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Show your work</h1>
+        <h1 className="text-balance text-2xl font-bold">Show your work</h1>
         <p className="text-sm text-muted-foreground">Step 5 of 6</p>
       </div>
 
@@ -62,7 +62,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
 
       {images.length > 0 && images.length < 3 && (
         <div
-          className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300"
+          className="rounded-md bg-amber-500/10 px-4 py-3 text-sm text-amber-800 shadow-[0_1px_2px_rgba(180,83,9,0.10),0_4px_12px_rgba(180,83,9,0.06)] dark:text-amber-300"
           role="status"
           aria-live="polite"
         >

@@ -39,7 +39,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
 
   if (!data) {
     return (
-      <div className="rounded-lg border border-ink/15 bg-cream p-6">
+      <div className="rounded-2xl border border-ink/15 bg-cream p-6">
         <p className="text-sm text-ink/60">Loading…</p>
       </div>
     );
@@ -47,7 +47,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
 
   if (data.bookingCount === 0) {
     return (
-      <div className="rounded-lg border border-ink/15 bg-cream p-6 text-center">
+      <div className="rounded-2xl border border-ink/15 bg-cream p-6 text-center">
         <p className="text-sm text-ink">You haven’t received any Baazar bookings yet.</p>
         <p className="mt-1 text-xs text-ink/60">
           When customers confirm bookings with you, you’ll see them here.
@@ -60,7 +60,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
   }
 
   return (
-    <div className="rounded-lg border border-ink/15 bg-cream p-6">
+    <div className="rounded-2xl border border-ink/15 bg-cream p-6">
       <div className="mb-4 flex flex-wrap gap-2">
         {RANGES.map((r) => (
           <button
@@ -69,8 +69,8 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
             onClick={() => void setRange(r.id)}
             className={
               range === r.id
-                ? 'rounded-full bg-ink px-3 py-1 text-xs font-medium text-cream transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
-                : 'rounded-full border border-ink/20 px-3 py-1 text-xs font-medium text-ink transition-colors hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+                ? 'rounded-full bg-ink px-3 py-1 text-xs font-medium text-cream transition-[transform,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100'
+                : 'rounded-full border border-ink/20 px-3 py-1 text-xs font-medium text-ink transition-[transform,background-color] hover:bg-ink/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100'
             }
           >
             {r.label}
@@ -97,7 +97,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 border-t border-ink/10 pt-4">
+      <div className="mt-4 rounded-md bg-cream-soft p-4">
         <p className="text-sm text-ink">
           Net to you: <span className="font-semibold tabular-nums">{fmtUSD(data.netCents)}</span>{' '}
           (95% of bookings driven)

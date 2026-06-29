@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { CULTURAL_EVENT_TYPES, GENERAL_EVENT_TYPES } from '@/types';
@@ -76,7 +77,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
             <button
               type="button"
               onClick={() => setState({ step: 1, hasEvent: true, date: '', categories: [] })}
-              className="w-full rounded-md border-2 border-ink p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+              className="w-full rounded-md border-2 border-ink p-4 text-left transition-[transform,border-color,color] hover:border-hot-pink hover:text-hot-pink active:scale-[0.98] motion-reduce:active:scale-100"
             >
               <p className="font-medium">Yes, I have an event coming up</p>
               <p className="mt-1 text-xs text-ink/60">We’ll personalize your recommendations.</p>
@@ -84,7 +85,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
             <button
               type="button"
               onClick={() => setState({ step: 2, hasEvent: false, categories: [] })}
-              className="w-full rounded-md border border-ink/30 p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+              className="w-full rounded-md border border-ink/30 p-4 text-left transition-[transform,border-color,color] hover:border-hot-pink hover:text-hot-pink active:scale-[0.98] motion-reduce:active:scale-100"
             >
               <p className="font-medium">Just browsing for now</p>
               <p className="mt-1 text-xs text-ink/60">We’ll show you what’s popular.</p>
@@ -102,7 +103,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
-          <h2 className="text-2xl font-semibold text-ink">Tell us about your event</h2>
+          <h2 className="text-balance text-2xl font-semibold text-ink">Tell us about your event</h2>
 
           <div className="mt-4 space-y-4">
             <label className="block">
@@ -160,9 +161,12 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               type="button"
               disabled={!canContinue}
               onClick={() => setState({ step: 2, hasEvent: true, categories: state.categories })}
-              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:bg-hot-pink disabled:opacity-50"
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
             >
-              Continue →
+              <span className="inline-flex items-center gap-1.5">
+                Continue
+                <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+              </span>
             </button>
           </div>
         </DialogContent>
@@ -175,7 +179,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
-        <h2 className="text-2xl font-semibold text-ink">Here’s what we found</h2>
+        <h2 className="text-balance text-2xl font-semibold text-ink">Here’s what we found</h2>
         <p className="mt-2 text-sm text-ink/70">
           Heart your favorites — they’ll be saved to your shortlist.
         </p>
@@ -195,9 +199,12 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
           type="button"
           onClick={() => submitOnboarding(false)}
           disabled={submitting}
-          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink"
+          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
         >
-          Start exploring →
+          <span className="inline-flex items-center gap-1.5">
+            Start exploring
+            <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+          </span>
         </button>
       </DialogContent>
     </Dialog>

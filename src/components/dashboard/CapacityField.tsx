@@ -30,9 +30,9 @@ export function CapacityField({ initial }: Props) {
   }
 
   return (
-    <div className="space-y-2 rounded-md border p-4">
+    <div className="space-y-2 rounded-md p-4 shadow-sm">
       <h2 className="font-semibold">Concurrent Capacity</h2>
-      <p className="text-sm text-muted-foreground">
+      <p className="text-pretty text-sm text-muted-foreground">
         Increase this if you run multiple teams. Default 1.
       </p>
       <div className="flex items-end gap-3">
@@ -49,7 +49,7 @@ export function CapacityField({ initial }: Props) {
             onChange={(e) => setValue(Number(e.target.value))}
             inputMode="numeric"
             autoComplete="off"
-            className="w-20"
+            className="w-20 tabular-nums"
           />
           <span className="ml-2 text-sm">events at the same time.</span>
         </div>

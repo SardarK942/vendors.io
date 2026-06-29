@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { Database, NotificationType } from '@/types/database.types';
 import { getActionsFor } from './actions';
 import { fmtRelative } from '@/lib/intl';
@@ -36,6 +37,11 @@ interface Props {
 
 export function NotificationCard({ notification, onClick, showAllActions = false }: Props) {
   const isUnread = !notification.read_at;
+  const reducedMotion = useReducedMotion();
+  const spring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+  const dotExit = reducedMotion ? { duration: 0 } : { duration: 0.15 };
 
   const allActions = getActionsFor(notification);
   const visibleActions = showAllActions ? allActions : allActions.slice(0, 1);
@@ -43,32 +49,45 @@ export function NotificationCard({ notification, onClick, showAllActions = false
   // Wrapper is a non-interactive list item. The primary click target is a
   // single stretched <Link> (or <button>) overlaid on the title/body so action
   // buttons can sit as SIBLINGS without nesting interactive elements.
+  // Wrap-vs-truncate: on the dedicated Notifications page (`showAllActions`),
+  // full title + body are valuable, so wrap them cleanly with `text-pretty`.
+  // In the dropdown (default), keep `truncate` so each row stays one-line tall.
+  const wrapClass = showAllActions ? 'text-pretty break-words' : 'truncate';
   const titleAndBody = (
     <>
-      <p className={`text-sm ${isUnread ? 'font-semibold' : 'font-normal'} truncate`}>
+      <p className={`text-sm ${isUnread ? 'font-semibold' : 'font-normal'} ${wrapClass}`}>
         {notification.title}
-        {notification.email_status === 'failed' && (
-          <span title="Email delivery failed" className="ml-1 text-hot-pink">
-            ⚠
-          </span>
-        )}
+        <AnimatePresence initial={false} mode="popLayout">
+          {notification.email_status === 'failed' && (
+            <motion.span
+              key="email-failed"
+              title="Email delivery failed"
+              className="ml-1 inline-flex text-hot-pink"
+              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: spring }}
+              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)', transition: dotExit }}
+            >
+              ⚠
+            </motion.span>
+          )}
+        </AnimatePresence>
       </p>
-      <p className="truncate text-xs text-muted-foreground">{notification.body}</p>
-      <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+      <p className={`text-xs text-muted-foreground ${wrapClass}`}>{notification.body}</p>
+      <p className="mt-0.5 text-[10px] uppercase tabular-nums tracking-wide text-muted-foreground">
         {timeAgo(notification.created_at)}
       </p>
     </>
   );
 
   const primaryClass =
-    'absolute inset-0 z-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
+    'absolute inset-0 z-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
   const srLabel = `${notification.title}${isUnread ? ' (unread)' : ''}`;
 
   return (
     <li
-      className={`relative flex items-start gap-3 px-3 py-2 transition-colors focus-within:bg-accent hover:bg-accent ${
-        isUnread ? 'bg-blue-50/50' : ''
-      }`}
+      className={`relative flex items-start gap-3 px-3 py-2 transition-[transform,background-color] focus-within:bg-accent hover:bg-accent active:scale-[0.98] motion-reduce:active:scale-100 ${
+        showAllActions ? 'rounded-xl' : ''
+      } ${isUnread ? 'bg-blue-50/50' : ''}`}
     >
       {/* Stretched primary action — sits behind action buttons via z-index. */}
       {notification.link ? (
@@ -98,7 +117,8 @@ export function NotificationCard({ notification, onClick, showAllActions = false
                 href={action.href(notification)}
                 onClick={onClick}
                 className={[
-                  'inline-flex items-center rounded px-3 py-1.5 text-sm',
+                  'inline-flex min-h-10 items-center rounded-md px-3 py-2 text-sm',
+                  'transition-transform active:scale-[0.96] motion-reduce:active:scale-100',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
                   action.variant === 'primary' && 'bg-ink text-cream',
                   action.variant === 'secondary' && 'border border-ink bg-cream text-ink',
@@ -113,14 +133,20 @@ export function NotificationCard({ notification, onClick, showAllActions = false
           </div>
         )}
       </div>
-      {isUnread && (
-        <span
-          className="relative z-10 h-2 w-2 shrink-0 rounded-full bg-blue-500"
-          aria-hidden="true"
-        >
-          <span className="sr-only">Unread</span>
-        </span>
-      )}
+      <AnimatePresence initial={false}>
+        {isUnread && (
+          <motion.span
+            key="unread-dot"
+            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: spring }}
+            exit={{ scale: 0.8, opacity: 0, transition: dotExit }}
+            className="relative z-10 h-2 w-2 shrink-0 rounded-full bg-blue-500"
+            aria-hidden="true"
+          >
+            <span className="sr-only">Unread</span>
+          </motion.span>
+        )}
+      </AnimatePresence>
     </li>
   );
 }

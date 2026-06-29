@@ -2,16 +2,13 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
-import { useSearchParams } from 'next/navigation';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Chip } from './Chip';
-import { CategoryDropdown } from './CategoryDropdown';
 import { PriceDropdown } from './PriceDropdown';
 import { LanguagesDropdown } from './LanguagesDropdown';
 import { PRICE_BANDS } from './constants';
 import { useFilterState, type FilterDropdown } from './use-filter-state';
-import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
-import { getSubcategoriesForCategory, SUBCATEGORY_SECTION_LABEL } from '@/lib/vendor-subcategories';
 
 export interface FilterChipRowProps {
   /** Optional className override on the row wrapper. */
@@ -27,12 +24,7 @@ export interface FilterChipRowProps {
  */
 export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const { state, patch, activeDropdown, setActiveDropdown, apply } = useFilterState();
-  const searchParams = useSearchParams();
-  const activeCategory = searchParams.get('category');
-  const categoryHasSubs = getSubcategoriesForCategory(activeCategory).length > 0;
-  const subcatCount = state.subcategories.length;
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const categoryChipRef = React.useRef<HTMLButtonElement>(null);
   const priceChipRef = React.useRef<HTMLButtonElement>(null);
   const languagesChipRef = React.useRef<HTMLButtonElement>(null);
 
@@ -81,9 +73,6 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const priceBandLabel = state.priceBand
     ? `Price · ${PRICE_BANDS.find((b) => b.slug === state.priceBand)?.shorthand ?? ''}`
     : 'Price';
-  const categoryLabel = state.category
-    ? `Category · ${VENDOR_CATEGORY_LABELS[state.category] ?? state.category}`
-    : 'Category';
 
   return (
     <div
@@ -92,30 +81,6 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
       role="toolbar"
       aria-label="Filter vendors"
     >
-      {/* Category — first chip, per product direction */}
-      <div className="relative">
-        <Chip
-          ref={categoryChipRef}
-          variant="dropdown"
-          isActive={activeDropdown === 'category' || !!state.category}
-          panelId="filter-panel-category"
-          onClick={() => toggleDropdown('category')}
-        >
-          {categoryLabel}
-        </Chip>
-        {activeDropdown === 'category' && (
-          <AnchoredPanel id="filter-panel-category" anchorRef={categoryChipRef}>
-            <CategoryDropdown
-              selected={state.category}
-              onSelect={(c) => {
-                apply({ category: c, subcategories: [] });
-                setActiveDropdown(null);
-              }}
-            />
-          </AnchoredPanel>
-        )}
-      </div>
-
       {/* Verified */}
       <Chip
         variant="toggle"
@@ -145,17 +110,19 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
         >
           {priceBandLabel}
         </Chip>
-        {activeDropdown === 'price' && (
-          <AnchoredPanel id="filter-panel-price" anchorRef={priceChipRef}>
-            <PriceDropdown
-              selected={state.priceBand}
-              onSelect={(b) => {
-                apply({ priceBand: b });
-                setActiveDropdown(null);
-              }}
-            />
-          </AnchoredPanel>
-        )}
+        <AnimatePresence initial={false}>
+          {activeDropdown === 'price' && (
+            <AnchoredPanel id="filter-panel-price" anchorRef={priceChipRef}>
+              <PriceDropdown
+                selected={state.priceBand}
+                onSelect={(b) => {
+                  apply({ priceBand: b });
+                  setActiveDropdown(null);
+                }}
+              />
+            </AnchoredPanel>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Languages */}
@@ -170,27 +137,17 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
         >
           Languages
         </Chip>
-        {activeDropdown === 'languages' && (
-          <AnchoredPanel id="filter-panel-languages" anchorRef={languagesChipRef}>
-            <LanguagesDropdown
-              selected={state.languages}
-              onChange={(next) => patch({ languages: next })}
-            />
-          </AnchoredPanel>
-        )}
+        <AnimatePresence initial={false}>
+          {activeDropdown === 'languages' && (
+            <AnchoredPanel id="filter-panel-languages" anchorRef={languagesChipRef}>
+              <LanguagesDropdown
+                selected={state.languages}
+                onChange={(next) => patch({ languages: next })}
+              />
+            </AnchoredPanel>
+          )}
+        </AnimatePresence>
       </div>
-
-      {/* Active subcategory chip */}
-      {categoryHasSubs && subcatCount > 0 && (
-        <Chip
-          variant="applied"
-          count={subcatCount}
-          onClick={onOpenSheet}
-          onRemove={() => apply({ subcategories: [] })}
-        >
-          {(activeCategory && SUBCATEGORY_SECTION_LABEL[activeCategory]) || 'Type'}
-        </Chip>
-      )}
 
       {/* All filters trigger */}
       <Chip variant="all-filters" onClick={onOpenSheet}>
@@ -215,6 +172,9 @@ interface AnchoredPanelProps {
 function AnchoredPanel({ id, anchorRef, children }: AnchoredPanelProps) {
   const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = React.useState(false);
+  const reducedMotion = useReducedMotion();
+  const enterTransition = reducedMotion ? { duration: 0 } : { duration: 0.1 };
+  const exitTransition = reducedMotion ? { duration: 0 } : { duration: 0.1 };
 
   const updatePos = React.useCallback(() => {
     if (anchorRef.current) {
@@ -241,21 +201,23 @@ function AnchoredPanel({ id, anchorRef, children }: AnchoredPanelProps) {
   if (!mounted || !coords) return null;
 
   return createPortal(
-    <div
+    <motion.div
       id={id}
       role="dialog"
       aria-modal="false"
       data-filter-panel="true"
       style={{ top: coords.top, left: coords.left }}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0, transition: enterTransition }}
+      exit={{ opacity: 0, y: -8, transition: exitTransition }}
       className={cn(
         'fixed z-[100]',
         'rounded-lg border border-hairline bg-cream p-2',
-        'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]',
-        'duration-200 animate-in fade-in-0 motion-reduce:animate-none'
+        'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]'
       )}
     >
       {children}
-    </div>,
+    </motion.div>,
     document.body
   );
 }

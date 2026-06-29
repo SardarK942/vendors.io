@@ -78,7 +78,10 @@ function ForgotPasswordInner() {
                 href="/login"
                 className="font-medium underline underline-offset-4 hover-pink-text"
               >
-                ← Back to sign in
+                <span aria-hidden="true" className="inline-block -translate-x-0.5">
+                  ←
+                </span>{' '}
+                Back to sign in
               </Link>
             </div>
           </CardContent>

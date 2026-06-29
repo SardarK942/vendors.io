@@ -78,18 +78,18 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
 
         <div className="space-y-5">
           {/* Featured image */}
-          <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-muted">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-muted">
             <Image
               src={pkg.featured_image_url}
               alt={pkg.name}
               fill
-              className="object-cover"
+              className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
               sizes="(max-width: 768px) 100vw, 672px"
             />
           </div>
 
           {/* Summary line */}
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm tabular-nums text-muted-foreground">
             {pkg.duration_hours}
             {' '}h · up to {pkg.max_guests} guests
             {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
@@ -114,12 +114,15 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           {pkg.gallery_image_urls.length > 0 && (
             <div className="grid grid-cols-2 gap-2">
               {pkg.gallery_image_urls.map((url, idx) => (
-                <div key={idx} className="relative aspect-[4/3] overflow-hidden rounded bg-muted">
+                <div
+                  key={idx}
+                  className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted"
+                >
                   <Image
                     src={url}
                     alt={`Gallery ${idx + 1}`}
                     fill
-                    className="object-cover"
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                     sizes="50vw"
                   />
                 </div>
@@ -135,7 +138,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
                 {pkg.addons.map((addon) => (
                   <label
                     key={addon.id}
-                    className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent"
+                    className="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
                   >
                     <span className="flex items-center gap-3">
                       <input

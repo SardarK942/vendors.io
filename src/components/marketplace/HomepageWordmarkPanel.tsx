@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion';
 
 /**
@@ -51,40 +52,74 @@ export function HomepageWordmarkPanel() {
 
   const current = SCRIPTS[index];
 
+  // Reduced motion: skip the first-mount stagger entirely — render content
+  // statically. Tokens identical so layout doesn't shift.
+  const stagger = (delay: number) =>
+    prefersReducedMotion
+      ? undefined
+      : {
+          type: 'spring' as const,
+          duration: 0.3,
+          bounce: 0,
+          delay,
+        };
+  const motionInitial = prefersReducedMotion ? false : { opacity: 0, y: 8 };
+  const motionAnimate = prefersReducedMotion ? undefined : { opacity: 1, y: 0 };
+
   return (
     <div className="relative hidden border-l border-hairline pl-16 lg:block">
-      <p className="m-0 mb-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+      <motion.p
+        className="m-0 mb-5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft"
+        initial={motionInitial}
+        animate={motionAnimate}
+        transition={stagger(0)}
+      >
         MADE IN <span className="text-haldi">CHICAGO</span>
-      </p>
+      </motion.p>
 
       {/* Cycling wordmark — stacked positions so each script fades in over the previous */}
-      <div
+      <motion.div
         className="relative"
         style={{ fontSize: 'clamp(72px, 9vw, 130px)', minHeight: '0.85em', lineHeight: '0.85' }}
         aria-label="Baazar"
         translate="no"
+        initial={motionInitial}
+        animate={motionAnimate}
+        transition={stagger(0.1)}
       >
-        {SCRIPTS.map((s, i) => (
-          <h2
-            key={s.label}
-            aria-hidden="true"
-            className={`duration-[600ms] absolute left-0 top-0 m-0 tracking-[-0.03em] text-ink transition-opacity ${
-              i === index ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{
-              fontFamily: s.font,
-              fontSize: 'inherit',
-              fontWeight: 400,
-              lineHeight: 'inherit',
-            }}
-          >
-            <span>{s.text}</span>
-            <span className="text-hot-pink">.</span>
-          </h2>
-        ))}
-      </div>
+        {SCRIPTS.map((s, i) => {
+          const isCurrent = i === index;
+          // Asymmetric crossfade: incoming layer fades in over 600ms,
+          // outgoing layer fades out over 400ms so the new script anchors the
+          // transition rather than the old one lingering.
+          return (
+            <h2
+              key={s.label}
+              aria-hidden="true"
+              className={`absolute left-0 top-0 m-0 tracking-[-0.03em] text-ink transition-opacity ${
+                isCurrent ? 'duration-[600ms] opacity-100' : 'duration-[400ms] opacity-0'
+              }`}
+              style={{
+                fontFamily: s.font,
+                fontSize: 'inherit',
+                fontWeight: 400,
+                lineHeight: 'inherit',
+              }}
+            >
+              <span>{s.text}</span>
+              <span className="text-hot-pink">.</span>
+            </h2>
+          );
+        })}
+      </motion.div>
 
-      <div className="mt-5 flex items-baseline gap-4" aria-label="Scripts">
+      <motion.div
+        className="mt-5 flex items-baseline gap-4"
+        aria-label="Scripts"
+        initial={motionInitial}
+        animate={motionAnimate}
+        transition={stagger(0.2)}
+      >
         {SCRIPTS.map((s, i) => (
           <span
             key={s.label}
@@ -97,7 +132,7 @@ export function HomepageWordmarkPanel() {
             {s.text}
           </span>
         ))}
-      </div>
+      </motion.div>
     </div>
   );
 }

@@ -50,7 +50,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Your online presence</h1>
+        <h1 className="text-balance text-2xl font-bold">Your online presence</h1>
         <p className="text-sm text-muted-foreground">Step 3 of 6</p>
       </div>
 

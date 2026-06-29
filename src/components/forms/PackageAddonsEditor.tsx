@@ -64,7 +64,7 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
                   inputMode="decimal"
                   step="0.01"
                   min="0"
-                  className="w-24"
+                  className="w-24 tabular-nums"
                   value={a.price_delta_cents === 0 ? '' : a.price_delta_cents / 100}
                   placeholder="0"
                   onChange={(e) => handlePriceChange(i, e.target.value)}
@@ -74,7 +74,7 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="default"
                 onClick={() => removeAddon(i)}
                 aria-label="Remove add-on"
               >

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import type { Database } from '@/types/database.types';
 import { NotificationCard } from './NotificationCard';
 
@@ -16,6 +17,11 @@ interface Props {
 
 export function NotificationDropdown({ notifications, onClose, onMarkRead, onMarkAllRead }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const reducedMotion = useReducedMotion();
+  const enterSpring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.22, bounce: 0 };
+  const exitTransition = reducedMotion ? { duration: 0 } : { duration: 0.12 };
 
   // Click outside closes
   useEffect(() => {
@@ -40,26 +46,40 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
   }
 
   return (
-    <div
+    <motion.div
       ref={ref}
       className="absolute right-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border bg-popover shadow-lg"
       role="dialog"
       aria-label="Notifications"
+      initial={{ y: -4, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -2, opacity: 0, transition: exitTransition }}
+      transition={enterSpring}
     >
-      <div className="flex items-center justify-between border-b px-3 py-2">
+      <motion.div
+        className="flex items-center justify-between border-b px-3 py-2"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...enterSpring, delay: reducedMotion ? 0 : 0.06 }}
+      >
         <h3 className="text-sm font-semibold">Notifications</h3>
         {anyUnread && (
           <button
             type="button"
             onClick={handleMarkAll}
-            className="rounded text-xs text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+            className="inline-flex min-h-10 items-center rounded px-3 text-xs text-primary transition-[transform,color] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
           >
             Mark All Read
           </button>
         )}
-      </div>
+      </motion.div>
 
-      <div className="max-h-96 overflow-y-auto">
+      <motion.div
+        className="max-h-96 overflow-y-auto"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...enterSpring, delay: reducedMotion ? 0 : 0.06 }}
+      >
         {notifications.length === 0 ? (
           <p className="px-3 py-8 text-center text-sm text-muted-foreground">
             No notifications yet.
@@ -75,17 +95,22 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
             ))}
           </ul>
         )}
-      </div>
+      </motion.div>
 
-      <div className="border-t">
+      <motion.div
+        className="border-t"
+        initial={{ opacity: 0, y: 4 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ ...enterSpring, delay: reducedMotion ? 0 : 0.12 }}
+      >
         <Link
           href="/dashboard/notifications"
           onClick={onClose}
-          className="block px-3 py-2 text-center text-xs font-medium text-primary hover:bg-accent"
+          className="block min-h-10 px-3 py-2 text-center text-xs font-medium leading-6 text-primary transition-[transform,background-color] hover:bg-accent active:scale-[0.96] motion-reduce:active:scale-100"
         >
           See all →
         </Link>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 }

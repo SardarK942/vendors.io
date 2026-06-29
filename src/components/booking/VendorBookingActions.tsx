@@ -105,7 +105,7 @@ export function VendorBookingActions({
   }
 
   return (
-    <Card className="border-primary/20">
+    <Card className="shadow-md">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">
           {isPending
@@ -137,7 +137,7 @@ export function VendorBookingActions({
               >
                 {showAdjustForm ? 'Cancel' : 'Adjust quote'}
               </Button>
-              <span className="text-xs text-ink/60">
+              <span className="text-xs tabular-nums text-ink/60">
                 {adjustsLeft === 0
                   ? 'No more adjustments available'
                   : `${adjustsLeft} adjustment${adjustsLeft === 1 ? '' : 's'} remaining`}
@@ -168,7 +168,7 @@ export function VendorBookingActions({
             >
               {showAdjustForm ? 'Cancel' : 'Adjust quote'}
             </Button>
-            <span className="text-xs text-ink/60">
+            <span className="text-xs tabular-nums text-ink/60">
               {adjustsLeft === 0
                 ? 'No more adjustments available'
                 : `${adjustsLeft} adjustment${adjustsLeft === 1 ? '' : 's'} remaining`}

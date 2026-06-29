@@ -69,7 +69,7 @@ export function PackageActiveToggle({ packageId, isActive }: Props) {
           {optimisticActive ? 'Active' : 'Hidden'}
         </Label>
       </div>
-      <p id={helperId} className="text-xs text-ink/60">
+      <p id={helperId} className="text-pretty text-xs text-ink/60">
         Hides the package from couples; existing bookings unaffected.
       </p>
       {error && (

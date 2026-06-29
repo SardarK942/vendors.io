@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { newsletterSubscribeSchema } from '@/lib/newsletter/validation';
 
@@ -60,6 +61,16 @@ export function NewsletterForm() {
   const isError = state.kind === 'error-format' || state.kind === 'error-server';
   const errorMessage = isError ? state.message : '';
 
+  const reducedMotion = useReducedMotion();
+  const iconTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+  const iconKey: 'submitting' | 'success' | 'idle' = submitting
+    ? 'submitting'
+    : success
+      ? 'success'
+      : 'idle';
+
   return (
     <form
       className="relative flex max-w-[480px] flex-1 items-center gap-2.5 md:ml-auto"
@@ -106,13 +117,25 @@ export function NewsletterForm() {
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hot-pink focus-visible:ring-offset-2 focus-visible:ring-offset-ink',
         ].join(' ')}
       >
-        {submitting ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-        ) : success ? (
-          <Check className="h-4 w-4" aria-hidden="true" />
-        ) : (
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        )}
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span
+            key={iconKey}
+            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+            exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            transition={iconTransition}
+            className="inline-flex"
+            aria-hidden="true"
+          >
+            {iconKey === 'submitting' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : iconKey === 'success' ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <ArrowRight className="h-4 w-4" />
+            )}
+          </motion.span>
+        </AnimatePresence>
       </button>
       <p
         id="footer-newsletter-error"

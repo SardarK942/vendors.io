@@ -75,9 +75,9 @@ export function VendorNotesEditor({
       <div className="flex items-center justify-between text-xs">
         <span
           aria-live="polite"
-          className={
+          className={`tabular-nums ${
             tooLong ? 'text-red-600' : warning ? 'text-yellow-600' : 'text-muted-foreground'
-          }
+          }`}
         >
           {notes.length} / {MAX}
         </span>

@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
@@ -54,6 +56,10 @@ export function PackageGrid({
   featuredPackageId,
 }: Props) {
   const [selected, setSelected] = useState<PackageWithAddons | null>(null);
+  const reducedMotion = useReducedMotion();
+  const badgeSpring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   if (packages.length === 0) return null;
 
@@ -75,8 +81,8 @@ export function PackageGrid({
               }
               className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft bg-cream-soft text-left transition-shadow hover:shadow-md"
             >
-              <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft">
-                <span className="font-display text-5xl font-bold tracking-[-0.02em] text-ink-soft">
+              <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
+                <span className="pl-1 font-display text-5xl font-bold tracking-[-0.02em] text-ink-soft">
                   ?
                 </span>
               </div>
@@ -95,8 +101,9 @@ export function PackageGrid({
                       — price after vendor responds
                     </span>
                   </span>
-                  <span className="text-sm text-indigo group-hover:underline">
-                    Request a quote →
+                  <span className="inline-flex items-center gap-1 text-sm text-indigo group-hover:underline">
+                    Request a quote
+                    <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
                   </span>
                 </div>
               </div>
@@ -107,11 +114,20 @@ export function PackageGrid({
               className="relative"
               data-pkg-featured={p.id === featuredPackageId ? 'true' : undefined}
             >
-              {p.id === featuredPackageId && (
-                <span className="absolute -top-2.5 left-4 z-10 rounded-full bg-hot-pink px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cream">
-                  Most popular
-                </span>
-              )}
+              <AnimatePresence initial={false}>
+                {p.id === featuredPackageId && (
+                  <motion.span
+                    key="most-popular"
+                    initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                    animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    transition={badgeSpring}
+                    className="absolute -top-2.5 left-4 z-10 rounded-full bg-hot-pink px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cream"
+                  >
+                    Most popular
+                  </motion.span>
+                )}
+              </AnimatePresence>
               <button
                 type="button"
                 onClick={() => {
@@ -121,8 +137,10 @@ export function PackageGrid({
                   }
                   setSelected(p);
                 }}
-                className={`group w-full overflow-hidden rounded-xl text-left transition-shadow hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
-                  p.id === featuredPackageId ? 'border-2 border-ink' : 'border border-border'
+                className={`group w-full overflow-hidden rounded-xl text-left transition-[transform,box-shadow] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.98] motion-reduce:active:scale-100 ${
+                  p.id === featuredPackageId
+                    ? 'shadow-[0_0_0_2px_rgb(27_20_20),0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]'
+                    : 'border border-border'
                 }`}
               >
                 <div className="relative aspect-[4/3] bg-muted">
@@ -130,7 +148,7 @@ export function PackageGrid({
                     src={p.featured_image_url}
                     alt={p.name}
                     fill
-                    className="object-cover"
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 </div>
@@ -138,7 +156,7 @@ export function PackageGrid({
                   <h3 className="text-base font-semibold leading-tight" translate="no">
                     {p.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm tabular-nums text-muted-foreground">
                     {p.duration_hours}
                     {' '}h · up to {p.max_guests} guests
                     {p.events_count > 1 && ` · ${p.events_count} events`}
@@ -147,8 +165,9 @@ export function PackageGrid({
                     <span className="text-lg font-bold tabular-nums">
                       {fmtUSD(p.base_price_cents)}
                     </span>
-                    <span className="text-sm text-primary group-hover:underline">
-                      Book <span translate="no">{p.name}</span> →
+                    <span className="inline-flex items-center gap-1 text-sm text-primary group-hover:underline">
+                      Book <span translate="no">{p.name}</span>
+                      <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
                     </span>
                   </div>
                 </div>

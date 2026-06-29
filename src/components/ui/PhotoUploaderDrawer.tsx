@@ -1,5 +1,6 @@
 'use client';
 import { createContext, useContext, useRef, useState, useEffect } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Upload, Plus } from 'lucide-react';
 import {
   FamilyDrawerRoot,
@@ -169,7 +170,7 @@ function ManageView() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="inline-flex items-center gap-1 rounded-md border border-ink/15 bg-cream px-2 py-1 text-xs font-medium text-ink hover:bg-ink/5"
+              className="inline-flex items-center gap-1 rounded-md border border-ink/15 bg-cream px-2 py-1 text-xs font-medium text-ink transition-[transform,background-color] hover:bg-ink/5 active:scale-[0.96] motion-reduce:active:scale-100"
             >
               <Plus className="size-3" /> Add more
             </button>
@@ -199,7 +200,7 @@ function ManageView() {
           setView('default');
           close();
         }}
-        className="mt-4 w-full rounded-lg bg-ink py-2.5 text-sm font-medium text-cream hover:bg-ink/90"
+        className="mt-4 w-full rounded-lg bg-ink py-2.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 active:scale-[0.96] motion-reduce:active:scale-100"
       >
         Done
       </button>
@@ -222,6 +223,8 @@ export function PhotoUploaderDrawer({
   triggerLabel = { empty: 'Upload photos', manage: 'Manage photos' },
 }: PhotoUploaderDrawerProps) {
   const ctxValue = { value, onChange, endpoint, maxFiles, maxSizeMb, showPrimarySelector };
+  const reducedMotion = useReducedMotion();
+  const stripExit = reducedMotion ? { duration: 0 } : { duration: 0.15 };
 
   return (
     <UploaderContext.Provider value={ctxValue}>
@@ -230,38 +233,43 @@ export function PhotoUploaderDrawer({
         defaultView={value.length === 0 ? 'default' : 'manage'}
       >
         {/* Closed-state representation (thumbnail strip + button) */}
-        {value.length > 0 && (
-          <div className="mb-2 flex gap-1.5 overflow-x-auto">
-            {value.slice(0, 5).map((url, i) => (
-              <div
-                key={`${url}-${i}`}
-                className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element -- 56px thumb strip; explicit w/h prevents CLS during upload */}
-                <img
-                  src={url}
-                  alt=""
-                  width={56}
-                  height={56}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-                {showPrimarySelector && i === 0 && (
-                  <span className="absolute left-0 top-0 rounded-br-md bg-hot-pink px-1 py-0.5 text-[8px] font-medium text-cream">
-                    Primary
-                  </span>
-                )}
-              </div>
-            ))}
-            {value.length > 5 && (
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-ink/10 text-xs text-ink">
-                +{value.length - 5}
-              </div>
-            )}
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {value.length > 0 && (
+            <motion.div
+              className="mb-2 flex gap-1.5 overflow-x-auto"
+              exit={{ opacity: 0, y: 8, transition: stripExit }}
+            >
+              {value.slice(0, 5).map((url, i) => (
+                <div
+                  key={`${url}-${i}`}
+                  className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element -- 56px thumb strip; explicit w/h prevents CLS during upload */}
+                  <img
+                    src={url}
+                    alt=""
+                    width={56}
+                    height={56}
+                    loading="lazy"
+                    className="h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                  />
+                  {showPrimarySelector && i === 0 && (
+                    <span className="absolute left-0 top-0 rounded-br-md bg-hot-pink px-1 py-0.5 text-[8px] font-medium text-cream">
+                      Primary
+                    </span>
+                  )}
+                </div>
+              ))}
+              {value.length > 5 && (
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-ink/10 text-xs text-ink">
+                  +{value.length - 5}
+                </div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        <FamilyDrawerTrigger className="inline-flex items-center gap-1.5 rounded-md border border-ink bg-cream px-3 py-2 text-sm font-medium text-ink hover:bg-ink/5">
+        <FamilyDrawerTrigger className="inline-flex items-center gap-1.5 rounded-md border border-ink bg-cream px-3 py-2 text-sm font-medium text-ink transition-[transform,background-color] hover:bg-ink/5 active:scale-[0.96] motion-reduce:active:scale-100">
           <Upload className="size-4" />
           {value.length === 0 ? triggerLabel.empty : `${triggerLabel.manage} (${value.length})`}
         </FamilyDrawerTrigger>
