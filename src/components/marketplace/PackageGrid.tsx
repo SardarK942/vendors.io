@@ -75,7 +75,7 @@ export function PackageGrid({
               }
               className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft bg-cream-soft text-left transition-shadow hover:shadow-md"
             >
-              <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft">
+              <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
                 <span className="font-display text-5xl font-bold tracking-[-0.02em] text-ink-soft">
                   ?
                 </span>
@@ -130,7 +130,7 @@ export function PackageGrid({
                     src={p.featured_image_url}
                     alt={p.name}
                     fill
-                    className="object-cover"
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                   />
                 </div>

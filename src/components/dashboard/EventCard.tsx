@@ -80,7 +80,7 @@ export function EventCard({ data }: Props) {
               width={320}
               height={420}
               loading="lazy"
-              className={styles.frontImg}
+              className={`${styles.frontImg} outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10`}
               aria-hidden
             />
           )}

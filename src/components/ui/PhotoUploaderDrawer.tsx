@@ -244,7 +244,7 @@ export function PhotoUploaderDrawer({
                   width={56}
                   height={56}
                   loading="lazy"
-                  className="h-full w-full object-cover"
+                  className="h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                 />
                 {showPrimarySelector && i === 0 && (
                   <span className="absolute left-0 top-0 rounded-br-md bg-hot-pink px-1 py-0.5 text-[8px] font-medium text-cream">

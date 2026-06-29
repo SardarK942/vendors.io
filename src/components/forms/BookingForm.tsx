@@ -174,7 +174,12 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           <CardContent className="space-y-3">
             <div className="flex items-start gap-4">
               <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded">
-                <Image src={pkg.featured_image_url} alt={pkg.name} fill className="object-cover" />
+                <Image
+                  src={pkg.featured_image_url}
+                  alt={pkg.name}
+                  fill
+                  className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                />
               </div>
               <div>
                 <p className="font-semibold" translate="no">

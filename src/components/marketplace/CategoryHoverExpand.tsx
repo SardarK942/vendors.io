@@ -76,7 +76,7 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                 alt={cat.alt}
                 fill
                 sizes="(min-width: 1024px) 26rem, 100vw"
-                className="object-cover"
+                className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                 priority={i < 3}
               />
 

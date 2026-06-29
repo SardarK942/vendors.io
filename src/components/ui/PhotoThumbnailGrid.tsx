@@ -63,7 +63,7 @@ function SortableThumbnail({
         width={200}
         height={200}
         loading="lazy"
-        className="h-full w-full object-cover"
+        className="h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
       />
       {showPrimarySelector && idx === 0 && (
         <span className="absolute left-1 top-1 z-10 rounded-full bg-hot-pink px-2 py-0.5 text-[10px] font-medium text-cream">

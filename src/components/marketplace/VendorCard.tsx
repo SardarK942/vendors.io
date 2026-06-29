@@ -90,6 +90,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={cn(
               'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] object-cover transition-transform',
+              'outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10',
               'md:group-hover:scale-[1.04] motion-reduce:md:group-hover:scale-100'
             )}
           />

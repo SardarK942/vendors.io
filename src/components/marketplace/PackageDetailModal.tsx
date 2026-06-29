@@ -83,7 +83,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
               src={pkg.featured_image_url}
               alt={pkg.name}
               fill
-              className="object-cover"
+              className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
               sizes="(max-width: 768px) 100vw, 672px"
             />
           </div>
@@ -119,7 +119,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
                     src={url}
                     alt={`Gallery ${idx + 1}`}
                     fill
-                    className="object-cover"
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                     sizes="50vw"
                   />
                 </div>

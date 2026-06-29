@@ -41,7 +41,7 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
               width={400}
               height={500}
               loading="lazy"
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-sm text-muted-foreground">

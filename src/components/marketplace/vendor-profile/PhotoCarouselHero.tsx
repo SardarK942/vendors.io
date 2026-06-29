@@ -54,7 +54,7 @@ export function PhotoCarouselHero({
               alt={`${businessName} portfolio ${i + 1}`}
               fill
               sizes="100vw"
-              className="object-cover"
+              className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
               priority={i === 0}
             />
           </div>
