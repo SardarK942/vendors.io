@@ -29,10 +29,14 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
   };
 
   return (
-    <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hairline bg-cream-soft px-5 py-3">
+    <div
+      className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hairline bg-cream-soft px-5 py-3"
+      role="status"
+      aria-live="polite"
+    >
       <div className="flex min-w-0 items-center gap-3">
         <span className="inline-flex size-9 flex-shrink-0 items-center justify-center rounded-full border border-hairline bg-cream">
-          <SlidersHorizontal className="size-4 stroke-ink" strokeWidth={2} />
+          <SlidersHorizontal className="size-4 stroke-ink" strokeWidth={2} aria-hidden="true" />
         </span>
         <div className="min-w-0">
           <p className="text-sm font-medium text-ink">Complete your profile</p>
@@ -44,7 +48,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
       <div className="flex flex-shrink-0 items-center gap-2">
         <Link
           href="/dashboard/profile/setup/details?backfill=true"
-          className="inline-flex h-9 items-center rounded-md bg-ink px-4 text-[13px] font-medium text-cream transition-colors hover:bg-[#2A1E1E]"
+          className="inline-flex h-9 items-center rounded-md bg-ink px-4 text-[13px] font-medium text-cream transition-colors hover:bg-[#2A1E1E] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           Add details
         </Link>
@@ -52,9 +56,9 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="inline-flex size-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink"
+          className="inline-flex size-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
-          <X className="size-4" strokeWidth={2} />
+          <X className="size-4" strokeWidth={2} aria-hidden="true" />
         </button>
       </div>
     </div>

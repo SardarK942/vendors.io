@@ -20,8 +20,6 @@ export interface DatePickerProps {
   className?: string;
 }
 
-const DEFAULT_DISABLED: Matcher = { before: new Date() };
-
 const DEFAULT_MODIFIERS_CLASSNAMES: Record<string, string> = {
   unavailable: 'text-ink-soft line-through opacity-50 cursor-not-allowed',
   partial: 'bg-haldi/15 text-ink hover:bg-haldi/25',
@@ -47,7 +45,11 @@ export function DatePicker({
   modifiersClassNames,
   className,
 }: DatePickerProps) {
-  const selectedDate = selected ? new Date(`${selected}T00:00:00`) : undefined;
+  // Memoize so `new Date(...)` is stable across renders (avoids hydration drift).
+  const selectedDate = React.useMemo(
+    () => (selected ? new Date(`${selected}T00:00:00`) : undefined),
+    [selected]
+  );
 
   const handleSelect = (date: Date | undefined) => {
     if (!date) return;
@@ -58,8 +60,12 @@ export function DatePicker({
     onSelect(`${y}-${m}-${d}`);
   };
 
+  // Today is computed lazily so it's stable for the first commit pass and
+  // doesn't drift if the picker re-renders mid-session.
+  const [defaultDisabled] = React.useState<Matcher>(() => ({ before: new Date() }));
+
   const mergedDisabled: Matcher[] = [
-    DEFAULT_DISABLED,
+    defaultDisabled,
     ...(Array.isArray(disabled) ? disabled : disabled ? [disabled] : []),
   ];
 
@@ -90,9 +96,9 @@ export function DatePicker({
           weekday:
             'w-9 text-center text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-soft py-2',
           week: 'flex',
-          day: 'w-9 h-9 text-center text-[12px] p-0',
+          day: 'w-9 h-9 text-center text-[12px] tabular-nums p-0',
           day_button:
-            'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink hover:bg-cream-soft transition-colors',
+            'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink tabular-nums hover:bg-cream-soft transition-colors',
           selected: 'bg-ink !text-cream hover:bg-ink',
           today: '',
           outside: 'text-ink-soft opacity-50',

@@ -1,14 +1,19 @@
 import type { Metadata } from 'next';
+import { fmtDate } from '@/lib/intl';
 
 export const metadata: Metadata = {
   title: 'Terms of Service — Baazar.io',
 };
 
+const LAST_UPDATED = '2026-04-18';
+
 export default function TermsPage() {
   return (
     <article className="prose prose-headings:font-semibold mx-auto max-w-3xl py-10">
       <h1>Terms of Service</h1>
-      <p className="text-sm text-muted-foreground">Last updated: 2026-04-18</p>
+      <p className="text-sm text-muted-foreground">
+        Last updated: {fmtDate(`${LAST_UPDATED}T12:00:00`, { dateStyle: 'long' })}
+      </p>
 
       <p className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
         [LAWYER REVIEW] This is placeholder language drafted for MVP launch. A licensed Illinois
@@ -17,30 +22,30 @@ export default function TermsPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        Baazar.io (&quot;the Platform&quot;, &quot;we&quot;) is a marketplace that connects
-        customers planning Desi weddings with independent service vendors in the Chicago area. We
-        are not a vendor ourselves; we facilitate introductions, quotes, and hold deposits.
+        Baazar.io (“the Platform”, “we”) is a marketplace that connects customers planning Desi
+        weddings with independent service vendors in the Chicago area. We are not a vendor
+        ourselves; we facilitate introductions, quotes, and hold deposits.
       </p>
 
       <h2>2. Platform fee</h2>
       <p className="mt-2 text-sm">
-        Baazar charges a 5% deposit at booking. We keep that 5% as our platform fee. You pay the
+        Baazar charges a 5% deposit at booking. We keep that 5% as our platform fee. You pay the
         remaining 95% directly to the vendor per their payment terms.
       </p>
 
       <h2>3. Cancellations</h2>
       <div className="mt-2 space-y-3 text-sm">
         <p>
-          <strong>Customer cancellation.</strong> Your 5% deposit is fully refundable within 24
+          <strong>Customer cancellation.</strong> Your 5% deposit is fully refundable within 24
           hours of booking. After that, the deposit confirms your reservation and is non-refundable.
         </p>
         <p>
           <strong>Vendor cancellation.</strong> If the vendor cancels at any time, you receive a
-          full refund of your 5% deposit.
+          full refund of your 5% deposit.
         </p>
         <p>
-          The 95% balance you pay directly to the vendor is between you and them; Baazar
-          doesn&apos;t process or hold those funds.
+          The 95% balance you pay directly to the vendor is between you and them; Baazar doesn’t
+          process or hold those funds.
         </p>
       </div>
 
@@ -49,7 +54,7 @@ export default function TermsPage() {
         Either party may dispute an event outcome within 48 hours of the event date. Filing a
         dispute pauses automatic completion. Our team reviews each dispute within 3 business days.
         We may adjust the refund split, retain funds in escrow pending resolution, or take action on
-        either party&apos;s account.
+        either party’s account.
       </p>
 
       <h2>5. Vendor obligations</h2>
@@ -58,15 +63,15 @@ export default function TermsPage() {
         solely responsible for the quality, timing, and legality of the services they deliver.
       </p>
       <p>
-        Two strikes (no-shows or same-day cancellations classified as &quot;vendor fault&quot;) in a
-        calendar year result in a temporary freeze of the vendor&apos;s account.
+        Two strikes (no-shows or same-day cancellations classified as “vendor fault”) in a calendar
+        year result in a temporary freeze of the vendor’s account.
       </p>
 
       <h2>6. Customer obligations</h2>
       <p>
         By paying a deposit, customers agree to pay the remaining balance directly to the vendor
-        before or after the event per the vendor&apos;s terms. Remaining balance is not collected or
-        held by the Platform.
+        before or after the event per the vendor’s terms. Remaining balance is not collected or held
+        by the Platform.
       </p>
 
       <h2>7. Platform liability</h2>

@@ -6,6 +6,7 @@ import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvi
 import { hybridSearch } from '@/lib/ai/search';
 import type { VendorCardProps } from '@/components/marketplace/VendorCard';
 import type { Metadata } from 'next';
+import { fmtCount } from '@/lib/intl';
 
 type VendorWithEnrichments = VendorCardProps['vendor'];
 
@@ -144,8 +145,8 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
       <div className="py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Browse Vendors</h1>
-          <p className="text-muted-foreground">
-            {totalCount} vendor{totalCount !== 1 ? 's' : ''}
+          <p className="tabular-nums text-muted-foreground" aria-live="polite" aria-atomic="true">
+            {fmtCount(totalCount)} vendor{totalCount !== 1 ? 's' : ''}
             {rawQuery && (
               <>
                 {' '}
@@ -169,7 +170,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
                   ...(category ? { category } : {}),
                   page: String(p),
                 }).toString()}`}
-                className={`rounded border px-3 py-1 text-sm ${
+                className={`rounded border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   p === page
                     ? 'border-primary bg-primary text-primary-foreground'
                     : 'hover:bg-muted'

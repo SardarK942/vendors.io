@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import type { FeaturedCategory } from '@/lib/vendor-categories/featured';
+import { fmtCount } from '@/lib/intl';
 
 export interface CategoryHoverExpandProps {
   categories: readonly FeaturedCategory[];
@@ -121,7 +122,9 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                       className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
                       onClick={(e) => {
                         e.preventDefault();
-                        document.querySelector('footer')?.scrollIntoView({ behavior: 'smooth' });
+                        document.querySelector('footer')?.scrollIntoView({
+                          behavior: reducedMotion ? 'auto' : 'smooth',
+                        });
                       }}
                     >
                       Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
@@ -135,8 +138,8 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                     <h3 className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]">
                       {cat.label}
                     </h3>
-                    <p className="m-0 mb-3 text-sm text-cream/85">
-                      {count} {plural(cat.label.toLowerCase())} in Chicago
+                    <p className="m-0 mb-3 text-sm tabular-nums text-cream/85">
+                      {fmtCount(count)} {plural(cat.label.toLowerCase())} in Chicago
                     </p>
                     <span className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm">
                       Browse {cat.label.toLowerCase()}{' '}

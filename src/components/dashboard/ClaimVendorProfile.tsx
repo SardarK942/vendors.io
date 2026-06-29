@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,7 @@ interface ClaimVendorProfileProps {
 export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
   const router = useRouter();
   const supabase = createClient();
+  const searchId = useId();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UnclaimedVendor[]>([]);
   const [searching, setSearching] = useState(false);
@@ -79,25 +80,34 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
   return (
     <div className="space-y-6">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Search for your business</label>
+        <label htmlFor={searchId} className="text-sm font-medium">
+          Search for your business
+        </label>
         <Input
+          id={searchId}
+          type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Start typing your business name..."
+          placeholder="Start typing your business name…"
+          autoComplete="off"
+          spellCheck={false}
+          inputMode="search"
         />
         <p className="text-xs text-muted-foreground">
           We pre-populated a directory of Chicago Desi wedding vendors. Find yours to claim it.
         </p>
       </div>
 
-      {searching && <p className="text-sm text-muted-foreground">Searching...</p>}
+      {searching && (
+        <p className="text-sm text-muted-foreground" role="status" aria-live="polite">
+          Searching…
+        </p>
+      )}
 
       {!searching && query.trim().length >= 2 && results.length === 0 && (
         <Card>
           <CardContent className="space-y-3 pt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              No unclaimed listing matches &quot;{query}&quot;.
-            </p>
+            <p className="text-sm text-muted-foreground">No unclaimed listing matches “{query}”.</p>
             <Button onClick={onCreateNew} variant="outline">
               Create a new profile instead
             </Button>
@@ -111,17 +121,23 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
             <Card key={v.id}>
               <CardContent className="flex items-center justify-between gap-4 pt-6">
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium">{v.business_name}</p>
+                  <p className="font-medium" translate="no">
+                    {v.business_name}
+                  </p>
                   <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <Badge variant="outline">
                       {VENDOR_CATEGORY_LABELS[v.category] || v.category}
                     </Badge>
                     {v.service_area?.length > 0 && <span>{v.service_area.join(', ')}</span>}
-                    {v.instagram_handle && <span>@{v.instagram_handle}</span>}
+                    {v.instagram_handle && (
+                      <span>
+                        <span translate="no">@{v.instagram_handle}</span>
+                      </span>
+                    )}
                   </div>
                 </div>
                 <Button onClick={() => handleClaim(v.id)} disabled={claimingId === v.id} size="sm">
-                  {claimingId === v.id ? 'Claiming...' : 'This is me'}
+                  {claimingId === v.id ? 'Claiming…' : 'This is me'}
                 </Button>
               </CardContent>
             </Card>
@@ -130,7 +146,7 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
       )}
 
       <div className="border-t pt-4 text-center text-sm text-muted-foreground">
-        Don&apos;t see your business?{' '}
+        Don’t see your business?{' '}
         <Button onClick={onCreateNew} variant="link" className="h-auto p-0 align-baseline">
           Create a new profile
         </Button>

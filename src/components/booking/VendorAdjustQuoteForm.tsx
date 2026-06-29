@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { fmtUSDWithCents } from '@/lib/intl';
 
 const ADJUSTMENT_REASONS = [
   { value: 'travel', label: 'Travel distance' },
@@ -32,6 +33,7 @@ interface Props {
 }
 
 export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess }: Props) {
+  const reasonId = useId();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [newTotal, setNewTotal] = useState((currentTotalCents / 100).toFixed(2));
@@ -86,23 +88,26 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
         <Label htmlFor="new_total">New Total ($)</Label>
         <Input
           id="new_total"
+          name="new_total"
           type="number"
           min={1}
           step={0.01}
           value={newTotal}
           onChange={(e) => setNewTotal(e.target.value)}
           required
+          inputMode="decimal"
+          autoComplete="off"
         />
-        <p className="text-xs text-muted-foreground">
-          Current: ${(currentTotalCents / 100).toFixed(2)}
+        <p className="text-xs tabular-nums text-muted-foreground">
+          Current: {fmtUSDWithCents(currentTotalCents)}
         </p>
       </div>
 
       <div className="space-y-2">
-        <Label>Reason</Label>
+        <Label htmlFor={reasonId}>Reason</Label>
         <Select value={reason} onValueChange={setReason} required>
-          <SelectTrigger>
-            <SelectValue placeholder="Select a reason..." />
+          <SelectTrigger id={reasonId}>
+            <SelectValue placeholder="Select a reason…" />
           </SelectTrigger>
           <SelectContent>
             {ADJUSTMENT_REASONS.map((r) => (
@@ -123,8 +128,9 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
             onChange={(e) => setExplanation(e.target.value)}
             rows={3}
             maxLength={1000}
-            placeholder="Describe the reason for your adjustment..."
+            placeholder="Describe the reason for your adjustment…"
             required
+            autoComplete="off"
           />
         </div>
       )}
@@ -138,13 +144,14 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
             onChange={(e) => setExplanation(e.target.value)}
             rows={2}
             maxLength={1000}
-            placeholder="Any additional context..."
+            placeholder="Any additional context…"
+            autoComplete="off"
           />
         </div>
       )}
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Sending...' : 'Send Adjusted Quote'}
+        {loading ? 'Sending…' : 'Send Adjusted Quote'}
       </Button>
     </form>
   );

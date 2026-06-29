@@ -26,7 +26,7 @@ export default async function MoneyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Business Analytics</h1>
+        <h1 className="text-pretty text-2xl font-bold">Business Analytics</h1>
         <p className="text-sm text-muted-foreground">Booking earnings attributed to Baazar.</p>
       </div>
       <EarningsCard vendorProfileId={vendorProfileRaw.id} />

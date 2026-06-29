@@ -8,6 +8,7 @@ import {
   Amiri,
   Markazi_Text,
 } from 'next/font/google';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
@@ -95,8 +96,10 @@ export default function RootLayout({
       <body
         className={`${spectral.variable} ${schibstedGrotesk.variable} ${dmMono.variable} ${tiroDevanagari.variable} ${notoNastaliqUrdu.variable} ${amiri.variable} ${markaziText.variable} antialiased`}
       >
-        {children}
-        <Toaster richColors position="top-right" />
+        <NuqsAdapter>
+          {children}
+          <Toaster richColors position="top-right" />
+        </NuqsAdapter>
       </body>
     </html>
   );

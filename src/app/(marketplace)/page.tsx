@@ -38,13 +38,13 @@ export default async function HomePage() {
           Browse by category
         </p>
         <h2
-          className="m-0 mb-2 font-serif font-bold leading-[0.96] tracking-[-0.020em] text-ink"
+          className="m-0 mb-2 text-balance font-serif font-bold leading-[0.96] tracking-[-0.020em] text-ink"
           style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}
         >
           Every vendor your celebration needs.
         </h2>
-        <p className="m-0 mx-auto max-w-[540px] text-base text-ink-muted">
-          Photography, mehndi, catering, and eight more. Hover to peek; click to browse.
+        <p className="m-0 mx-auto max-w-[540px] text-balance text-base text-ink-muted">
+          Photography, mehndi, catering, and 8 more. Hover to peek; click to browse.
         </p>
       </header>
 
@@ -69,14 +69,14 @@ export default async function HomePage() {
             <Shield className="mx-auto h-10 w-10 text-primary" />
             <h3 className="mt-3 font-semibold">Secure Deposits</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Small hold deposits powered by Stripe. Full refund if vendor doesn&apos;t confirm.
+              Small hold deposits powered by Stripe. Full refund if vendor doesn’t confirm.
             </p>
           </div>
           <div className="text-center">
             <Clock className="mx-auto h-10 w-10 text-primary" />
             <h3 className="mt-3 font-semibold">Fast Response</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              Vendors must respond within 72 hours. No more waiting weeks for quotes.
+              Vendors must respond within 72 hours. No more waiting weeks for quotes.
             </p>
           </div>
         </div>

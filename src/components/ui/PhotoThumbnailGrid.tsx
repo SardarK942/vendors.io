@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { Star, X, GripVertical } from 'lucide-react';
 import {
   DndContext,
@@ -17,6 +18,7 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 interface Props {
   urls: string[];
@@ -54,7 +56,15 @@ function SortableThumbnail({
       style={style}
       className="group relative aspect-square overflow-hidden rounded-md"
     >
-      <img src={url} alt="" className="h-full w-full object-cover" />
+      {/* eslint-disable-next-line @next/next/no-img-element -- thumb grid; w/h reserves an aspect-square box to prevent CLS */}
+      <img
+        src={url}
+        alt=""
+        width={200}
+        height={200}
+        loading="lazy"
+        className="h-full w-full object-cover"
+      />
       {showPrimarySelector && idx === 0 && (
         <span className="absolute left-1 top-1 z-10 rounded-full bg-hot-pink px-2 py-0.5 text-[10px] font-medium text-cream">
           Primary
@@ -67,7 +77,7 @@ function SortableThumbnail({
         aria-label="Reorder"
         className="absolute bottom-1 left-1 z-10 cursor-grab rounded-full bg-cream/80 p-1 text-ink opacity-0 transition-opacity group-hover:opacity-100"
       >
-        <GripVertical className="size-3" />
+        <GripVertical className="size-3" aria-hidden="true" />
       </button>
       <div className="absolute inset-0 flex items-center justify-center gap-2 bg-ink/60 opacity-0 transition-opacity group-hover:opacity-100">
         {showPrimarySelector && idx !== 0 && (
@@ -77,7 +87,7 @@ function SortableThumbnail({
             aria-label="Set as primary"
             className="rounded-full bg-cream p-2 text-ink hover:bg-cream/80"
           >
-            <Star className="size-4" />
+            <Star className="size-4" aria-hidden="true" />
           </button>
         )}
         <button
@@ -86,7 +96,7 @@ function SortableThumbnail({
           aria-label="Remove photo"
           className="rounded-full bg-cream p-2 text-hot-pink hover:bg-cream/80"
         >
-          <X className="size-4" />
+          <X className="size-4" aria-hidden="true" />
         </button>
       </div>
     </div>
@@ -100,6 +110,7 @@ export function PhotoThumbnailGrid({
   onSetPrimary,
   onReorder,
 }: Props) {
+  const [pendingRemoveIdx, setPendingRemoveIdx] = useState<number | null>(null);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
@@ -125,12 +136,29 @@ export function PhotoThumbnailGrid({
               url={url}
               idx={i}
               showPrimarySelector={showPrimarySelector}
-              onRemove={onRemove}
+              onRemove={(idx) => setPendingRemoveIdx(idx)}
               onSetPrimary={onSetPrimary}
             />
           ))}
         </div>
       </SortableContext>
+
+      <ConfirmDialog
+        open={pendingRemoveIdx !== null}
+        onOpenChange={(o) => {
+          if (!o) setPendingRemoveIdx(null);
+        }}
+        title="Remove This Photo?"
+        description="You'll lose any caption you've added."
+        confirmLabel="Remove Photo"
+        destructive
+        onConfirm={() => {
+          if (pendingRemoveIdx !== null) {
+            onRemove(pendingRemoveIdx);
+            setPendingRemoveIdx(null);
+          }
+        }}
+      />
     </DndContext>
   );
 }

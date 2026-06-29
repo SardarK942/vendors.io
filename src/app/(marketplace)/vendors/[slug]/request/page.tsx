@@ -36,7 +36,7 @@ export default async function CustomRequestPage({ params }: RequestPageProps) {
       <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-hot-pink">
         Custom request
       </p>
-      <h1 className="font-display text-3xl font-bold tracking-[-0.018em] text-ink">
+      <h1 className="text-balance font-display text-3xl font-bold tracking-[-0.018em] text-ink">
         Tell {vendor.business_name} what you need
       </h1>
       <p className="mt-3 text-sm text-ink-muted">

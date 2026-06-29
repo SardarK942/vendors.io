@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 
 export interface AddonDraft {
   name: string;
@@ -44,8 +43,8 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
   }
 
   return (
-    <div className="space-y-3">
-      <Label>Add-ons (optional, max {max})</Label>
+    <fieldset className="space-y-3">
+      <legend className="text-sm font-medium">Add-ons (optional, max {max})</legend>
       {addons.length > 0 && (
         <div className="space-y-2">
           {addons.map((a, i) => (
@@ -55,19 +54,21 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
                 placeholder="Add-on name (e.g. Drone footage)"
                 value={a.name}
                 onChange={(e) => handleNameChange(i, e.target.value)}
+                autoComplete="off"
                 className="flex-1"
               />
               <div className="flex shrink-0 items-center gap-1">
                 <span className="text-sm text-muted-foreground">$</span>
                 <Input
                   type="number"
-                  inputMode="numeric"
-                  step="1"
+                  inputMode="decimal"
+                  step="0.01"
                   min="0"
                   className="w-24"
                   value={a.price_delta_cents === 0 ? '' : a.price_delta_cents / 100}
                   placeholder="0"
                   onChange={(e) => handlePriceChange(i, e.target.value)}
+                  autoComplete="off"
                 />
               </div>
               <Button
@@ -88,6 +89,6 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
           + Add-on
         </Button>
       )}
-    </div>
+    </fieldset>
   );
 }

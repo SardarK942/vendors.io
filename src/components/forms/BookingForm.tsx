@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { EventRow, type EventRowData } from './EventRow';
 import Image from 'next/image';
+import { fmtUSD } from '@/lib/intl';
 
 interface Addon {
   id: string;
@@ -57,8 +58,10 @@ function makeBlankEvent(seq: number): EventRowData {
   return {
     sequence: seq,
     event_date: today,
-    event_start_time: `${today}T16:00:00Z`,
-    event_end_time: `${today}T22:00:00Z`,
+    // No trailing `Z`: keep these as local time-of-day defaults so the
+    // <input type="datetime-local"> reads them without a TZ shift.
+    event_start_time: `${today}T16:00:00`,
+    event_end_time: `${today}T22:00:00`,
     event_type_label: '',
     location_name: null,
     address_line_1: '',
@@ -73,7 +76,9 @@ function makeBlankEvent(seq: number): EventRowData {
 
 export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
   const router = useRouter();
-  const [events, setEvents] = useState<EventRowData[]>([makeBlankEvent(1)]);
+  // Lazy init so makeBlankEvent's `new Date()` runs once at mount instead of
+  // every render — avoids SSR/hydration date drift.
+  const [events, setEvents] = useState<EventRowData[]>(() => [makeBlankEvent(1)]);
   const [coupleFullName, setCoupleFullName] = useState('');
   const [couplePhone, setCouplePhone] = useState('');
   // Bucket B T6: per-event guest counts keyed by event sequence (1-indexed)
@@ -83,6 +88,9 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
   const [specialRequests, setSpecialRequests] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fullNameId = useId();
+  const phoneId = useId();
+  const specialRequestsId = useId();
 
   const isSingleEvent = pkg.events_count === 1;
 
@@ -169,31 +177,34 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 <Image src={pkg.featured_image_url} alt={pkg.name} fill className="object-cover" />
               </div>
               <div>
-                <p className="font-semibold">{pkg.name}</p>
+                <p className="font-semibold" translate="no">
+                  {pkg.name}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {pkg.duration_hours}h · up to {pkg.max_guests} guests
+                  {pkg.duration_hours}
+                  {' '}h · up to {pkg.max_guests} guests
                   {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
                 </p>
               </div>
             </div>
-            <div className="space-y-1 text-sm">
+            <div className="space-y-1 text-sm tabular-nums">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Package base</span>
-                <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+                <span>{fmtUSD(pkg.base_price_cents)}</span>
               </div>
               {selectedAddons.map((addon) => (
                 <div key={addon.addon_id} className="flex justify-between">
                   <span className="text-muted-foreground">+ {addon.name}</span>
                   <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
-                    {addon.price_delta_cents >= 0 ? '+' : ''}$
-                    {(addon.price_delta_cents / 100).toLocaleString()}
+                    {addon.price_delta_cents >= 0 ? '+' : ''}
+                    {fmtUSD(addon.price_delta_cents)}
                   </span>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between font-semibold">
                 <span>Subtotal</span>
-                <span>${(estimatedTotal / 100).toLocaleString()}</span>
+                <span>{fmtUSD(estimatedTotal)}</span>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -240,25 +251,34 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Full Name</label>
+              <label htmlFor={fullNameId} className="mb-1 block text-sm font-medium">
+                Full Name
+              </label>
               <input
+                id={fullNameId}
                 type="text"
                 required
                 className="w-full rounded border p-2 text-sm"
                 placeholder="e.g. Aisha & Ahmed Khan"
                 value={coupleFullName}
                 onChange={(e) => setCoupleFullName(e.target.value)}
+                autoComplete="name"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Contact Phone</label>
+              <label htmlFor={phoneId} className="mb-1 block text-sm font-medium">
+                Contact Phone
+              </label>
               <input
+                id={phoneId}
                 type="tel"
                 required
                 className="w-full rounded border p-2 text-sm"
                 placeholder="+1 (555) 000-0000"
                 value={couplePhone}
                 onChange={(e) => setCouplePhone(e.target.value)}
+                autoComplete="tel"
+                inputMode="tel"
               />
             </div>
             {/* Bucket B T6: per-event guest count inputs */}
@@ -272,6 +292,8 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                   type="number"
                   required
                   min={1}
+                  inputMode="numeric"
+                  autoComplete="off"
                   className="w-full rounded border p-2 text-sm"
                   value={guestCounts[1]}
                   onChange={(e) =>
@@ -293,6 +315,8 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                       type="number"
                       required
                       min={1}
+                      inputMode="numeric"
+                      autoComplete="off"
                       className="w-full rounded border p-2 text-sm"
                       value={guestCounts[seq]}
                       onChange={(e) =>
@@ -307,25 +331,33 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               })
             )}
             <div>
-              <label className="mb-1 block text-sm font-medium">Special Requests (optional)</label>
+              <label htmlFor={specialRequestsId} className="mb-1 block text-sm font-medium">
+                Special Requests (optional)
+              </label>
               <textarea
+                id={specialRequestsId}
                 className="min-h-[80px] w-full rounded border p-2 text-sm"
-                placeholder="Any special needs, dietary restrictions, setup requests..."
+                placeholder="Any special needs, dietary restrictions, setup requests…"
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
+                autoComplete="off"
               />
             </div>
           </CardContent>
         </Card>
 
         {error && (
-          <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+          >
             {error}
           </div>
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit Booking Request'}
+          {submitting ? 'Submitting…' : 'Submit Booking Request'}
         </Button>
       </div>
 
@@ -335,24 +367,24 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           <CardHeader>
             <CardTitle className="text-base">Price Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2 text-sm tabular-nums">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{pkg.name}</span>
-              <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+              <span>{fmtUSD(pkg.base_price_cents)}</span>
             </div>
             {selectedAddons.map((addon) => (
               <div key={addon.addon_id} className="flex justify-between">
                 <span className="text-muted-foreground">{addon.name}</span>
                 <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
-                  {addon.price_delta_cents >= 0 ? '+' : ''}$
-                  {(addon.price_delta_cents / 100).toLocaleString()}
+                  {addon.price_delta_cents >= 0 ? '+' : ''}
+                  {fmtUSD(addon.price_delta_cents)}
                 </span>
               </div>
             ))}
             <Separator />
             <div className="flex justify-between text-base font-bold">
               <span>Estimated Total</span>
-              <span>${(estimatedTotal / 100).toLocaleString()}</span>
+              <span>{fmtUSD(estimatedTotal)}</span>
             </div>
             <p className="pt-1 text-xs text-muted-foreground">
               Vendor may adjust the final price before deposit.

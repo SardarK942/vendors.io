@@ -3,14 +3,15 @@ import { useState } from 'react';
 import Link from 'next/link';
 import styles from './EventCard.module.css';
 import { countdown } from '@/lib/dashboard/countdown';
+import { fmtDate as fmtDateIntl, fmtTime } from '@/lib/intl';
 
 export interface EventCardData {
   eventId: string;
   bookingId: string;
   eventTypeLabel: string;
   eventDate: string;
-  eventStartTime: string;  // ISO timestamp
-  eventEndTime: string;    // ISO timestamp
+  eventStartTime: string; // ISO timestamp
+  eventEndTime: string; // ISO timestamp
   addressLine1: string;
   city: string;
   state: string;
@@ -27,22 +28,19 @@ interface Props {
   data: EventCardData;
 }
 
+// Noon-anchored (no `Z`) so the YYYY-MM-DD is interpreted in the viewer's
+// timezone — avoids the "off-by-one day" UTC drift on the front of the card.
 function fmtDate(iso: string): string {
-  return new Date(iso + 'T12:00:00Z').toLocaleDateString('en-US', {
-    month: 'short', day: 'numeric', year: 'numeric',
-  });
+  return fmtDateIntl(`${iso}T12:00:00`, { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function fmtTimeRange(startIso: string, endIso: string): string {
-  const s = new Date(startIso);
-  const e = new Date(endIso);
-  const f = (d: Date) =>
-    d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
-  return `${f(s)} – ${f(e)}`;
+  return `${fmtTime(startIso)} – ${fmtTime(endIso)}`;
 }
 
 function statusBadge(status: string): { label: string; color: string } {
-  if (status === 'deposit_paid' || status === 'completed') return { label: 'Confirmed', color: '#34d399' };
+  if (status === 'deposit_paid' || status === 'completed')
+    return { label: 'Confirmed', color: '#34d399' };
   if (status === 'pending') return { label: 'Awaiting vendor', color: '#fbbf24' };
   if (status === 'accepted') return { label: 'Awaiting deposit', color: '#fbbf24' };
   if (status === 'adjusted_quote_sent') return { label: 'Adjusted quote', color: '#60a5fa' };
@@ -63,18 +61,28 @@ export function EventCard({ data }: Props) {
   const sb = statusBadge(data.status);
 
   return (
-    <div
-      className={`${styles.card} ${flipped ? styles.flipped : ''}`}
-      aria-label={`${data.eventTypeLabel} with ${data.vendor.businessName} on ${fmtDate(data.eventDate)} — ${cd}`}
-      onClick={() => setFlipped((v) => !v)}
-      role="button"
-      tabIndex={0}
-    >
+    <div className={`${styles.card} ${flipped ? styles.flipped : ''}`}>
       <div className={styles.content}>
-        {/* FRONT */}
-        <div className={styles.front}>
+        {/* FRONT — real <button> so Enter/Space toggle and SR users hear it */}
+        <button
+          type="button"
+          className={styles.front}
+          onClick={() => setFlipped(true)}
+          aria-pressed={flipped}
+          aria-label={`${data.eventTypeLabel} with ${data.vendor.businessName} on ${fmtDate(data.eventDate)} — ${cd}. Activate to see booking details.`}
+          inert={flipped}
+        >
           {data.vendor.portfolioImage && (
-            <img src={data.vendor.portfolioImage} alt="" className={styles.frontImg} aria-hidden />
+            // eslint-disable-next-line @next/next/no-img-element -- card is sized via parent + object-fit; width/height attrs reserve a layout box
+            <img
+              src={data.vendor.portfolioImage}
+              alt=""
+              width={320}
+              height={420}
+              loading="lazy"
+              className={styles.frontImg}
+              aria-hidden
+            />
           )}
           <div className={styles.frontContent}>
             <div className={styles.titleRow}>
@@ -86,25 +94,52 @@ export function EventCard({ data }: Props) {
               <p className={styles.cardFooter}>{fmtDate(data.eventDate)}</p>
             </div>
           </div>
-        </div>
+        </button>
 
-        {/* BACK */}
-        <div className={styles.back}>
+        {/* BACK — non-interactive container; Link is the primary action */}
+        <div className={styles.back} inert={!flipped}>
           <div className={styles.backContent}>
             <p style={{ fontSize: '16px', fontWeight: 700 }}>{data.eventTypeLabel}</p>
-            <p style={{ fontSize: '12px' }}>{fmtTimeRange(data.eventStartTime, data.eventEndTime)}</p>
+            <p style={{ fontSize: '12px' }}>
+              {fmtTimeRange(data.eventStartTime, data.eventEndTime)}
+            </p>
             <p style={{ fontSize: '11px', opacity: 0.8 }}>{addressLine}</p>
             <p style={{ fontSize: '11px' }}>
-              <span style={{ display: 'inline-block', width: 6, height: 6, borderRadius: '50%', background: sb.color, marginRight: 6 }} />
+              <span
+                style={{
+                  display: 'inline-block',
+                  width: 6,
+                  height: 6,
+                  borderRadius: '50%',
+                  background: sb.color,
+                  marginRight: 6,
+                }}
+              />
               {sb.label}
             </p>
             <Link
               href={`/dashboard/bookings/${data.bookingId}`}
               style={{ color: '#ff9966', fontSize: '11px', textDecoration: 'underline' }}
-              onClick={(e) => e.stopPropagation()}
             >
               Open booking →
             </Link>
+            <button
+              type="button"
+              onClick={() => setFlipped(false)}
+              style={{
+                marginTop: 8,
+                fontSize: '11px',
+                color: 'rgba(255,255,255,0.7)',
+                textDecoration: 'underline',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                padding: 0,
+                alignSelf: 'flex-start',
+              }}
+            >
+              ← Back to card
+            </button>
           </div>
         </div>
       </div>

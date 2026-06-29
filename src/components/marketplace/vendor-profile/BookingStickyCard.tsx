@@ -11,6 +11,7 @@ import {
   formatPrice,
   scrollToPackages,
 } from './helpers';
+import { fmtCount } from '@/lib/intl';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -37,7 +38,7 @@ export function BookingStickyCard({
         className="sticky top-6 z-30 rounded-lg border-2 border-ink bg-white p-5 shadow-md"
       >
         <p className="text-sm text-ink">
-          This vendor hasn&apos;t listed packages yet. Send them a custom request to ask about
+          This vendor hasn’t listed packages yet. Send them a custom request to ask about
           availability and pricing.
         </p>
         <Button
@@ -68,16 +69,20 @@ export function BookingStickyCard({
       </span>
       <h3 className="mt-3 text-base font-semibold text-ink">{featured.name}</h3>
       {featured.duration_hours != null && (
-        <p className="text-xs text-ink/70">{featured.duration_hours} hours</p>
+        <p className="text-xs text-ink/70">
+          {featured.duration_hours}
+          {' '}hours
+        </p>
       )}
 
-      <p className="mt-6 text-3xl font-bold text-ink">{formatPrice(total)}</p>
+      <p className="mt-6 text-3xl font-bold tabular-nums text-ink">{formatPrice(total)}</p>
       <p className="text-xs text-ink/60">Total cost (everything included)</p>
 
       <div className="my-4 rounded-md bg-cream p-3 text-center text-xs text-ink">
-        Pay <b className="text-hot-pink">{formatPrice(deposit)}</b> deposit today.{' '}
+        Pay <b className="tabular-nums text-hot-pink">{formatPrice(deposit)}</b> deposit today.{' '}
         <span className="text-ink/80">
-          Vendor will arrange the remaining {formatPrice(remaining)} with you.
+          Vendor will arrange the remaining{' '}
+          <span className="tabular-nums">{formatPrice(remaining)}</span> with you.
         </span>
       </div>
 
@@ -94,7 +99,7 @@ export function BookingStickyCard({
         <button
           type="button"
           onClick={scrollToPackages}
-          className="mt-3 block w-full text-center text-xs text-ink underline hover-pink-text"
+          className="mt-3 block w-full rounded text-center text-xs text-ink underline transition-colors hover-pink-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           or compare all {packages.length} packages ↓
         </button>
@@ -115,9 +120,10 @@ function Socials({ vendor }: { vendor: VendorRow }) {
           href={`https://instagram.com/${vendor.instagram_handle}`}
           target="_blank"
           rel="noopener noreferrer"
+          translate="no"
           className="flex items-center gap-1 text-ink/70 hover-pink-text"
         >
-          <Instagram className="h-3.5 w-3.5" />@{vendor.instagram_handle}
+          <Instagram className="h-3.5 w-3.5" aria-hidden="true" />@{vendor.instagram_handle}
         </a>
       )}
       {vendor.website_url && (
@@ -127,7 +133,7 @@ function Socials({ vendor }: { vendor: VendorRow }) {
           rel="noopener noreferrer"
           className="flex items-center gap-1 text-ink/70 hover-pink-text"
         >
-          <ExternalLink className="h-3.5 w-3.5" /> Website
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Website
         </a>
       )}
     </div>
@@ -136,22 +142,27 @@ function Socials({ vendor }: { vendor: VendorRow }) {
 
 function TrustRow({ vendor }: { vendor: VendorRow }) {
   return (
-    <div className="mt-4 flex items-start justify-around border-t border-ink/10 pt-4 text-center text-xs text-ink">
+    <div className="mt-4 flex items-start justify-around border-t border-ink/10 pt-4 text-center text-xs tabular-nums text-ink">
       {vendor.average_rating != null && vendor.review_count != null && vendor.review_count > 0 && (
         <div>
           <div className="font-semibold">★ {vendor.average_rating.toFixed(1)}</div>
-          <div className="text-ink/60">{vendor.review_count} reviews</div>
+          <div className="text-ink/60">{fmtCount(vendor.review_count)} reviews</div>
         </div>
       )}
       {vendor.response_sla_hours != null && (
         <div>
-          <div className="font-semibold">⚡ {vendor.response_sla_hours}h</div>
+          <div className="font-semibold">
+            ⚡ {vendor.response_sla_hours}
+            {' '}h
+          </div>
           <div className="text-ink/60">Response time</div>
         </div>
       )}
       {vendor.total_bookings != null && vendor.total_bookings > 0 && (
         <div>
-          <div className="font-semibold">✓ {vendor.total_bookings.toLocaleString()}</div>
+          <div className="font-semibold">
+            <span aria-hidden="true">✓</span> {fmtCount(vendor.total_bookings)}
+          </div>
           <div className="text-ink/60">Events</div>
         </div>
       )}

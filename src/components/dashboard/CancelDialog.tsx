@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useId, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import {
@@ -11,6 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import {
@@ -27,7 +28,11 @@ interface CancelDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
+  /** Optional context for the title (vendor name or event date). */
+  bookingContext?: string;
 }
+
+const TYPED_CONFIRM = 'CANCEL';
 
 type Fault = 'none' | 'vendor_fault' | 'force_majeure';
 
@@ -55,10 +60,21 @@ export function CancelDialog({
   open,
   onOpenChange,
   onSuccess,
+  bookingContext,
 }: CancelDialogProps) {
+  const faultId = useId();
   const [reason, setReason] = useState('');
   const [fault, setFault] = useState<Fault>('none');
   const [loading, setLoading] = useState(false);
+  const [typed, setTyped] = useState('');
+
+  // Reset typed-confirm + reason whenever the dialog closes so a reopen starts
+  // from a clean state.
+  useEffect(() => {
+    if (!open) {
+      setTyped('');
+    }
+  }, [open]);
 
   const handleSubmit = async () => {
     setLoading(true);
@@ -94,11 +110,15 @@ export function CancelDialog({
 
   const selectedOption = VENDOR_FAULT_OPTIONS.find((o) => o.value === fault);
 
+  const typedOk = typed === TYPED_CONFIRM;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="[overscroll-behavior:contain] sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Cancel booking</DialogTitle>
+          <DialogTitle>
+            {bookingContext ? `Cancel Booking — ${bookingContext}?` : 'Cancel Booking?'}
+          </DialogTitle>
           <DialogDescription>
             {role === 'couple'
               ? 'Refund amount is determined by our cancellation policy and how close to the event you are.'
@@ -109,9 +129,9 @@ export function CancelDialog({
         <div className="space-y-4 py-2">
           {role === 'vendor' && (
             <div className="space-y-2">
-              <Label>Reason type</Label>
+              <Label htmlFor={faultId}>Reason type</Label>
               <Select value={fault} onValueChange={(v) => setFault(v as Fault)}>
-                <SelectTrigger>
+                <SelectTrigger id={faultId}>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -137,25 +157,47 @@ export function CancelDialog({
               placeholder="Any details you want to share"
               rows={3}
               maxLength={1000}
+              autoComplete="off"
             />
           </div>
 
           {role === 'vendor' && (
             <div className="mb-3 rounded-md border border-hot-pink/30 bg-cream p-3">
               <p className="text-xs text-ink">
-                If you cancel, the customer receives a full refund of their 5% deposit and you lose
+                If you cancel, the customer receives a full refund of their 5% deposit and you lose
                 this booking.
               </p>
             </div>
           )}
+
+          <div className="space-y-2">
+            <Label htmlFor="cancel-typed-confirm" className="text-sm">
+              Type <span className="font-mono font-semibold">{TYPED_CONFIRM}</span> to confirm.
+            </Label>
+            <Input
+              id="cancel-typed-confirm"
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              autoComplete="off"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              disabled={loading}
+            />
+          </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={loading}>
-            Keep booking
+            Keep Booking
           </Button>
-          <Button variant="destructive" onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Cancelling...' : 'Cancel booking'}
+          <Button
+            variant="destructive"
+            onClick={handleSubmit}
+            disabled={loading || !typedOk}
+            aria-busy={loading || undefined}
+          >
+            {loading ? 'Cancelling…' : 'Cancel Booking'}
           </Button>
         </DialogFooter>
       </DialogContent>

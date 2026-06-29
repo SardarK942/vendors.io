@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
 import { Label } from '@/components/ui/label';
@@ -29,6 +29,7 @@ interface Props {
 
 export function StepLocation({ initial, profileId, mode }: Props) {
   const router = useRouter();
+  const baseAddressId = useId();
   const [place, setPlace] = useState<Partial<PlaceData>>({
     address_line_1: initial.baseAddressLine1,
     city: initial.baseCity,
@@ -80,12 +81,15 @@ export function StepLocation({ initial, profileId, mode }: Props) {
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       <div className="space-y-2">
-        <Label>Base address</Label>
+        <Label htmlFor={baseAddressId}>Base address</Label>
         <GooglePlacesAutocomplete
+          id={baseAddressId}
           value={place}
           onChange={(p) => {
             setPlace(p);
@@ -95,7 +99,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
             clearField('basePostalCode');
             clearField('baseGooglePlaceId');
           }}
-          placeholder={skipAddress ? 'Skipped' : 'Start typing your address...'}
+          placeholder={skipAddress ? 'Skipped' : 'Start typing your address…'}
           disabled={skipAddress}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         />
@@ -111,6 +115,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
           <input
             type="checkbox"
             checked={skipAddress}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             onChange={(e) => {
               setSkipAddress(e.target.checked);
               if (e.target.checked) {
@@ -129,7 +134,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
               }
             }}
           />
-          I don&apos;t have a fixed address (I travel to clients)
+          I don’t have a fixed address (I travel to clients)
         </label>
         {!skipAddress && !place.address_line_1 && (
           <p className="mt-1 text-xs text-ink/60">
@@ -151,7 +156,11 @@ export function StepLocation({ initial, profileId, mode }: Props) {
         </p>
       </div>
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

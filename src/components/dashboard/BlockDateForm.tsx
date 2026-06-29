@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -8,7 +9,12 @@ import { useRouter } from 'next/navigation';
 
 export function BlockDateForm() {
   const router = useRouter();
-  const [date, setDate] = useState('');
+  // Date is URL-synced so deep links / shareable URLs prefill the block form
+  // (e.g. the calendar grid links here with ?date=YYYY-MM-DD).
+  const [date, setDate] = useQueryState(
+    'date',
+    parseAsString.withDefault('').withOptions({ clearOnDefault: true })
+  );
   const [fullDay, setFullDay] = useState(true);
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
@@ -33,20 +39,20 @@ export function BlockDateForm() {
       setError(errData.error);
       return;
     }
-    setDate('');
+    void setDate('');
     router.refresh();
   }
 
   return (
     <form onSubmit={submit} className="space-y-3 rounded-md border p-4">
-      <h2 className="font-semibold">Block a date</h2>
+      <h2 className="font-semibold">Block a Date</h2>
       <div>
         <Label htmlFor="block-date">Date</Label>
         <Input
           id="block-date"
           type="date"
           value={date}
-          onChange={(e) => setDate(e.target.value)}
+          onChange={(e) => void setDate(e.target.value)}
           required
         />
       </div>
@@ -78,7 +84,11 @@ export function BlockDateForm() {
           </div>
         </div>
       )}
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {error}
+        </p>
+      )}
       <Button type="submit" disabled={submitting || !date}>
         {submitting ? 'Blocking…' : 'Block this date'}
       </Button>

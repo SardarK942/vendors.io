@@ -153,7 +153,7 @@ function ResetPasswordInner() {
         <CardHeader>
           <CardTitle className="font-spectral text-2xl text-ink">Choose a new password</CardTitle>
           <CardDescription className="text-ink/70">
-            At least 8 characters. Don&apos;t reuse an old one.
+            At least 8 characters. Don’t reuse an old one.
           </CardDescription>
         </CardHeader>
         <CardContent>

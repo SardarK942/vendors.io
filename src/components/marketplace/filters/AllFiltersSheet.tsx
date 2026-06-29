@@ -12,6 +12,7 @@ import { PriceSection } from './sections/PriceSection';
 import { LanguagesSection } from './sections/LanguagesSection';
 import { ExperienceSection } from './sections/ExperienceSection';
 import { CategorySpecificSection } from './sections/CategorySpecificSection';
+import { fmtCount } from '@/lib/intl';
 
 interface AllFiltersSheetProps {
   open: boolean;
@@ -65,7 +66,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
         <Drawer.Overlay className="fixed inset-0 z-40 bg-ink/50" />
         <Drawer.Content
           className={cn(
-            'fixed bottom-0 right-0 top-0 z-50 w-full bg-cream sm:w-[480px]',
+            'fixed bottom-0 right-0 top-0 z-50 w-full overscroll-contain bg-cream sm:w-[480px]',
             'flex flex-col border-l border-hairline shadow-[-12px_0_28px_rgba(27,20,20,0.10)]'
           )}
         >
@@ -86,7 +87,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
               aria-label="Close filters"
               className="inline-flex size-8 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:border-ink"
             >
-              <X className="size-4" strokeWidth={2} />
+              <X className="size-4" strokeWidth={2} aria-hidden="true" />
             </button>
           </div>
 
@@ -104,7 +105,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
           </div>
 
           {/* Sticky footer */}
-          <div className="flex items-center justify-between border-t border-hairline bg-cream px-7 py-4">
+          <div className="flex items-center justify-between border-t border-hairline bg-cream px-7 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
               onClick={handleClear}
@@ -125,7 +126,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
                 ? 'Counting…'
                 : count === 0
                   ? 'No matches'
-                  : `Show ${count ?? '—'} vendors`}
+                  : `Show ${count == null ? '—' : fmtCount(count)} vendors`}
             </Button>
           </div>
         </Drawer.Content>

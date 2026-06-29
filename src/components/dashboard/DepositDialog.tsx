@@ -66,7 +66,7 @@ export function DepositDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="rounded-md bg-muted/40 p-3 text-sm">
+          <div className="rounded-md bg-muted/40 p-3 text-sm tabular-nums">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Deposit (5%)</span>
               <span className="font-medium">{formatPrice(depositCents)}</span>
@@ -85,7 +85,7 @@ export function DepositDialog({
           <div className="my-3 rounded-md border border-ink/10 bg-cream/50 p-3 text-xs">
             <p className="font-semibold text-ink">Cancellation policy</p>
             <p className="mt-1 text-ink/80">
-              Your 5% deposit is fully refundable within 24 hours of booking. After that, it&apos;s
+              Your 5% deposit is fully refundable within 24 hours of booking. After that, it’s
               non-refundable. If the vendor cancels, you get a full refund.
             </p>
             <Link
@@ -123,7 +123,7 @@ export function DepositDialog({
             Not now
           </Button>
           <Button onClick={handleSubmit} disabled={!agreed || loading}>
-            {loading ? 'Processing...' : `Pay ${formatPrice(depositCents)}`}
+            {loading ? 'Processing…' : `Pay ${formatPrice(depositCents)}`}
           </Button>
         </DialogFooter>
       </DialogContent>

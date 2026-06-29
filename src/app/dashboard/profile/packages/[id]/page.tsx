@@ -27,7 +27,7 @@ export default async function EditPackagePage({ params }: { params: { id: string
 
   return (
     <div className="max-w-2xl">
-      <h1 className="text-2xl font-bold mb-6">Edit Package</h1>
+      <h1 className="mb-6 text-pretty text-2xl font-bold">Edit Package</h1>
       <PackageEditorForm
         mode="edit"
         initial={{

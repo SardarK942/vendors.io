@@ -1,20 +1,31 @@
 'use client';
 import { useState } from 'react';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import { fmtDate } from '@/lib/intl';
 
 interface Hold {
   id: string;
   hold_type: 'booking' | 'vendor_blocked';
   hold_range: string;
   booking_event_id: string | null;
-  booking_events?: { event_type_label: string; bookings: { couple_full_name: string | null } } | null;
+  booking_events?: {
+    event_type_label: string;
+    bookings: { couple_full_name: string | null };
+  } | null;
 }
 
 interface Props {
   holds: Hold[];
 }
 
-function parseRange(range: string): { date: string; startTime: string; endTime: string; fullDay: boolean } {
+function parseRange(range: string): {
+  date: string;
+  startTime: string;
+  endTime: string;
+  fullDay: boolean;
+} {
   // Parse '["2026-08-15T10:00:00+00:00","2026-08-15T12:00:00+00:00")'
   const m = range.match(/^\["([^"]+)","([^"]+)"\)$/);
   if (!m) return { date: '?', startTime: '?', endTime: '?', fullDay: false };
@@ -29,10 +40,25 @@ function parseRange(range: string): { date: string; startTime: string; endTime: 
 
 export function CalendarHoldsList({ holds }: Props) {
   const [items, setItems] = useState(holds);
+  const [pendingUnblockId, setPendingUnblockId] = useState<string | null>(null);
+  const [unblockBusy, setUnblockBusy] = useState(false);
 
   async function unblock(id: string) {
-    const res = await fetch(`/api/vendor-calendar/block/${id}`, { method: 'DELETE' });
-    if (res.ok) setItems((prev) => prev.filter((h) => h.id !== id));
+    setUnblockBusy(true);
+    try {
+      const res = await fetch(`/api/vendor-calendar/block/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setItems((prev) => prev.filter((h) => h.id !== id));
+        toast.success('Date unblocked.');
+        setPendingUnblockId(null);
+      } else {
+        toast.error('Failed to unblock date.');
+      }
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setUnblockBusy(false);
+    }
   }
 
   if (items.length === 0) {
@@ -42,6 +68,9 @@ export function CalendarHoldsList({ holds }: Props) {
   return (
     <div className="space-y-2">
       <h2 className="font-semibold">Upcoming (next 90 days)</h2>
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {items.length} upcoming hold{items.length === 1 ? '' : 's'}
+      </p>
       <ul className="space-y-1 text-sm">
         {items.map((h) => {
           const { date, startTime, endTime, fullDay } = parseRange(h.hold_range);
@@ -51,9 +80,12 @@ export function CalendarHoldsList({ holds }: Props) {
               : 'Personal block';
           const timeStr = fullDay ? '(full day)' : `${startTime} – ${endTime}`;
           return (
-            <li key={h.id} className="flex items-center justify-between rounded-md border px-3 py-2">
-              <span>
-                <span className="font-medium">{date}</span>
+            <li
+              key={h.id}
+              className="flex items-center justify-between rounded-md border px-3 py-2"
+            >
+              <span className="tabular-nums">
+                <span className="font-medium">{fmtDate(`${date}T12:00:00`)}</span>
                 <span className="ml-2 text-muted-foreground">{timeStr}</span>
                 <span className="ml-2">— {label}</span>
                 <span
@@ -63,7 +95,7 @@ export function CalendarHoldsList({ holds }: Props) {
                 </span>
               </span>
               {h.hold_type === 'vendor_blocked' && (
-                <Button variant="ghost" size="sm" onClick={() => unblock(h.id)}>
+                <Button variant="ghost" size="sm" onClick={() => setPendingUnblockId(h.id)}>
                   Unblock
                 </Button>
               )}
@@ -71,6 +103,21 @@ export function CalendarHoldsList({ holds }: Props) {
           );
         })}
       </ul>
+
+      <ConfirmDialog
+        open={pendingUnblockId !== null}
+        onOpenChange={(o) => {
+          if (!o) setPendingUnblockId(null);
+        }}
+        title="Unblock This Date?"
+        description="The date returns to available. Couples can book it again."
+        confirmLabel="Unblock Date"
+        destructive
+        busy={unblockBusy}
+        onConfirm={() => {
+          if (pendingUnblockId) void unblock(pendingUnblockId);
+        }}
+      />
     </div>
   );
 }

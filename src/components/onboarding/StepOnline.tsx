@@ -55,7 +55,9 @@ export function StepOnline({ initial, profileId, mode }: Props) {
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       <div className="space-y-2">
@@ -71,6 +73,11 @@ export function StepOnline({ initial, profileId, mode }: Props) {
             }}
             onBlur={handleInstagramBlur}
             placeholder="yourhandle"
+            autoComplete="off"
+            spellCheck={false}
+            autoCapitalize="none"
+            autoCorrect="off"
+            inputMode="text"
           />
         </div>
         <p className="text-xs text-muted-foreground">
@@ -92,13 +99,21 @@ export function StepOnline({ initial, profileId, mode }: Props) {
             clearField('websiteUrl');
           }}
           placeholder="https://yourwebsite.com"
+          autoComplete="url"
+          inputMode="url"
+          spellCheck={false}
+          autoCapitalize="none"
         />
         {getError('websiteUrl') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('websiteUrl')}</p>
         )}
       </div>
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

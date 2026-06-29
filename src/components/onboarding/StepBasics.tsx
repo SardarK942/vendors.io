@@ -106,7 +106,9 @@ export function StepBasics({ initial, profileId, mode }: Props) {
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       <div className="space-y-2">
@@ -119,6 +121,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
             clearField('businessName');
           }}
           placeholder="Mehndi by Priya"
+          autoComplete="organization"
         />
         {getError('businessName') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('businessName')}</p>
@@ -182,7 +185,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
               type="button"
               onClick={() => setShowPrefillBanner(false)}
               aria-label="Dismiss notice"
-              className="text-ink/40 hover:text-ink"
+              className="rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             >
               <X className="size-3" />
             </button>
@@ -198,7 +201,9 @@ export function StepBasics({ initial, profileId, mode }: Props) {
           }}
           placeholder="What do you do, who do you serve, and what makes you different?"
         />
-        <p className="mt-1 text-xs text-muted-foreground">{data.bio.length} / 500</p>
+        <p className="mt-1 text-xs tabular-nums text-muted-foreground" aria-live="polite">
+          {data.bio.length} / 500
+        </p>
         {getError('bio') && <p className="mt-1 text-xs text-hot-pink">{getError('bio')}</p>}
         {data.bio.length > 0 && data.bio.length < 50 && (
           <p className="mt-1 text-xs text-ink/60">

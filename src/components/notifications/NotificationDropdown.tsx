@@ -14,12 +14,7 @@ interface Props {
   onMarkAllRead: () => void;
 }
 
-export function NotificationDropdown({
-  notifications,
-  onClose,
-  onMarkRead,
-  onMarkAllRead,
-}: Props) {
+export function NotificationDropdown({ notifications, onClose, onMarkRead, onMarkAllRead }: Props) {
   const ref = useRef<HTMLDivElement>(null);
 
   // Click outside closes
@@ -57,9 +52,9 @@ export function NotificationDropdown({
           <button
             type="button"
             onClick={handleMarkAll}
-            className="text-xs text-primary hover:underline"
+            className="rounded text-xs text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
           >
-            Mark all read
+            Mark All Read
           </button>
         )}
       </div>
@@ -70,13 +65,15 @@ export function NotificationDropdown({
             No notifications yet.
           </p>
         ) : (
-          notifications.slice(0, 10).map((n) => (
-            <NotificationCard
-              key={n.id}
-              notification={n}
-              onClick={() => handleRowClick(n.id, !n.read_at)}
-            />
-          ))
+          <ul className="m-0 list-none p-0">
+            {notifications.slice(0, 10).map((n) => (
+              <NotificationCard
+                key={n.id}
+                notification={n}
+                onClick={() => handleRowClick(n.id, !n.read_at)}
+              />
+            ))}
+          </ul>
         )}
       </div>
 

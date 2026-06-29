@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useQueryState, parseAsString } from 'nuqs';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { BookingCard } from './BookingCard';
@@ -40,7 +41,10 @@ export function BookingsArchive({
 
   const [rows, setRows] = useState<BookingRow[]>(initialRows);
   const [nextCursor, setNextCursor] = useState<string | null>(initialNextCursor);
-  const [q, setQ] = useState('');
+  const [q, setQ] = useQueryState(
+    'q',
+    parseAsString.withDefault('').withOptions({ clearOnDefault: true, throttleMs: 300 })
+  );
   const [isPending, startTransition] = useTransition();
 
   // Client-side filter on top of loaded rows.
@@ -80,9 +84,13 @@ export function BookingsArchive({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Input
+          type="search"
           placeholder="Search customer name…"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => void setQ(e.target.value)}
+          inputMode="search"
+          autoComplete="off"
+          spellCheck={false}
           className="max-w-xs"
         />
       </div>
@@ -93,14 +101,14 @@ export function BookingsArchive({
             key={tab}
             onClick={() => setTab(tab)}
             disabled={isPending}
-            className={`border-b-2 px-3 py-2 text-sm font-medium transition ${
+            className={`border-b-2 px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
               activeTab === tab
                 ? 'border-indigo-600 text-indigo-700'
                 : 'border-transparent text-muted-foreground hover:text-foreground'
             }`}
           >
             {TAB_LABELS[tab]}{' '}
-            <span className="ml-1 text-xs text-muted-foreground">{counts[tab]}</span>
+            <span className="ml-1 text-xs tabular-nums text-muted-foreground">{counts[tab]}</span>
           </button>
         ))}
       </div>
@@ -111,11 +119,11 @@ export function BookingsArchive({
           <Button
             variant="link"
             onClick={() => {
-              setQ('');
+              void setQ('');
               setTab('all');
             }}
           >
-            Show all
+            Show All
           </Button>
         </div>
       ) : (

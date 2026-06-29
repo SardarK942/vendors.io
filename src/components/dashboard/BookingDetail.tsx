@@ -266,7 +266,7 @@ export async function BookingDetail({
       {/* Pending status banner for couple */}
       {role === 'couple' && booking.status === 'pending' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          Waiting for vendor response. The vendor has 72 hours to accept or send an adjusted quote.
+          Waiting for vendor response. The vendor has 72 hours to accept or send an adjusted quote.
         </div>
       )}
 
@@ -275,8 +275,8 @@ export async function BookingDetail({
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <p className="mb-2 font-medium text-emerald-800">Quote accepted!</p>
           <p className="mb-3 text-sm text-emerald-700">
-            Pay your deposit to confirm the booking. The vendor&apos;s full address and instructions
-            will appear after payment.
+            Pay your deposit to confirm the booking. The vendor’s full address and instructions will
+            appear after payment.
           </p>
         </div>
       )}
@@ -285,30 +285,30 @@ export async function BookingDetail({
       {role === 'vendor' && booking.status === 'pending' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
           <strong>Action needed:</strong> Accept this booking at the package price or send an
-          adjusted quote. You have 72 hours.
+          adjusted quote. You have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'accepted' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Waiting for the customer to pay the deposit. They have 72 hours; you&apos;ll get an email
-          when they pay.
+          Waiting for the customer to pay the deposit. They have 72 hours; you’ll get an email when
+          they pay.
         </div>
       )}
       {role === 'vendor' && booking.status === 'adjusted_quote_sent' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Waiting for the customer to accept or decline your adjusted quote. They have 72 hours.
+          Waiting for the customer to accept or decline your adjusted quote. They have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'adjusted_quote_declined' && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
-          <strong>Action needed:</strong> The customer declined your last quote. You have 72 hours
+          <strong>Action needed:</strong> The customer declined your last quote. You have 72 hours
           to send a revised quote — otherwise the booking will auto-cancel.
         </div>
       )}
       {role === 'vendor' && booking.status === 'couple_countered' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
           <strong>Action needed:</strong> The customer sent a counter-offer. You can adjust the
-          quote or accept their counter directly. You have 72 hours.
+          quote or accept their counter directly. You have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'deposit_paid' && (

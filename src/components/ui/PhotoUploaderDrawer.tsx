@@ -102,10 +102,13 @@ function DefaultView() {
           className={`mx-auto mb-3 size-10 ${isDragging ? 'text-hot-pink' : 'text-ink/60'}`}
         />
         <p className="mb-1 text-sm font-medium text-ink">
-          {isUploading ? 'Uploading…' : isDragging ? 'Drop photos here' : 'Drag photos here'}
+          {isUploading ? 'Uploading…' : isDragging ? 'Drop Photos Here' : 'Drag photos here'}
         </p>
-        <p className="text-xs text-ink/60">or click to browse</p>
-        <p className="mt-4 text-xs text-ink/50">JPG, PNG, or WebP · max {maxSizeMb} MB</p>
+        <p className="text-xs text-ink/60">or Click to Browse</p>
+        <p className="mt-4 text-xs text-ink/50">
+          JPG, PNG, or WebP · max {maxSizeMb}
+          {' '}MB
+        </p>
         <input
           ref={fileInputRef}
           type="file"
@@ -234,7 +237,15 @@ export function PhotoUploaderDrawer({
                 key={`${url}-${i}`}
                 className="relative h-14 w-14 shrink-0 overflow-hidden rounded-md"
               >
-                <img src={url} alt="" className="h-full w-full object-cover" />
+                {/* eslint-disable-next-line @next/next/no-img-element -- 56px thumb strip; explicit w/h prevents CLS during upload */}
+                <img
+                  src={url}
+                  alt=""
+                  width={56}
+                  height={56}
+                  loading="lazy"
+                  className="h-full w-full object-cover"
+                />
                 {showPrimarySelector && i === 0 && (
                   <span className="absolute left-0 top-0 rounded-br-md bg-hot-pink px-1 py-0.5 text-[8px] font-medium text-cream">
                     Primary

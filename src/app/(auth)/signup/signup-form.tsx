@@ -104,7 +104,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
   };
 
   const submitLabel = loading
-    ? 'Creating account...'
+    ? 'Creating account…'
     : !role
       ? 'Choose an account type'
       : !agreed
@@ -149,26 +149,32 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               <button
                 type="button"
                 onClick={() => setRole('couple')}
-                className={`rounded-lg border-2 p-4 text-center transition-colors ${
+                aria-pressed={role === 'couple'}
+                className={`rounded-lg border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   role === 'couple'
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                <span className="block text-2xl">🎉</span>
+                <span className="block text-2xl" aria-hidden="true">
+                  🎉
+                </span>
                 <span className="mt-1 block text-sm font-medium">Planning an Event</span>
               </button>
               <button
                 type="button"
                 onClick={() => setRole('vendor')}
-                className={`rounded-lg border-2 p-4 text-center transition-colors ${
+                aria-pressed={role === 'vendor'}
+                className={`rounded-lg border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   role === 'vendor'
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
                 }`}
               >
-                <span className="block text-2xl">🏪</span>
-                <span className="mt-1 block text-sm font-medium">I&apos;m a Vendor</span>
+                <span className="block text-2xl" aria-hidden="true">
+                  🏪
+                </span>
+                <span className="mt-1 block text-sm font-medium">I’m a Vendor</span>
               </button>
             </div>
           </div>
@@ -195,11 +201,27 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="fullName">Full Name</Label>
-            <Input id="fullName" name="fullName" required placeholder="Your full name" />
+            <Input
+              id="fullName"
+              name="fullName"
+              required
+              placeholder="Your full name"
+              autoComplete="name"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" required placeholder="you@example.com" />
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              required
+              placeholder="you@example.com"
+              autoComplete="email"
+              inputMode="email"
+              spellCheck={false}
+              autoCapitalize="none"
+            />
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
@@ -210,6 +232,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               required
               minLength={8}
               placeholder="Min 8 characters"
+              autoComplete="new-password"
             />
           </div>
           <div className="flex items-start gap-2">
@@ -218,15 +241,15 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               type="checkbox"
               checked={agreed}
               onChange={(e) => setAgreed(e.target.checked)}
-              className="mt-1 h-4 w-4 rounded border-input"
+              className="mt-1 h-4 w-4 rounded border-input focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             />
             <label htmlFor="agree" className="text-xs text-muted-foreground">
               I agree to the{' '}
-              <Link href="/terms" target="_blank" className="underline">
+              <Link href="/terms" target="_blank" rel="noopener noreferrer" className="underline">
                 Terms of Service
               </Link>{' '}
               and{' '}
-              <Link href="/privacy" target="_blank" className="underline">
+              <Link href="/privacy" target="_blank" rel="noopener noreferrer" className="underline">
                 Privacy Policy
               </Link>
               .

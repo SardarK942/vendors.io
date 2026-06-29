@@ -134,7 +134,7 @@ export default async function BookingsPage({ searchParams }: PageProps) {
       {actionableRows.length > 0 && tab === 'all' && (
         <div className="space-y-3">
           <h2 className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-            Quick actions
+            Quick Actions
           </h2>
           {actionableRows.map((b) => (
             <VendorBookingActions

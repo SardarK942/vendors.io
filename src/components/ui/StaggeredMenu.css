@@ -370,3 +370,11 @@
     font-size: 2.5rem;
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .sm-socials-link,
+  .sm-panel-item,
+  .staggered-menu-panel .sm-socials-list .sm-socials-link {
+    transition: none;
+  }
+}

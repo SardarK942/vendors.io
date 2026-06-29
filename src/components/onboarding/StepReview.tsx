@@ -99,7 +99,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
           <dl className="space-y-1 text-sm">
             <div className="flex gap-2">
               <dt className="w-32 font-medium text-muted-foreground">Business name</dt>
-              <dd>{profile.business_name}</dd>
+              <dd translate="no">{profile.business_name}</dd>
             </div>
             <div className="flex gap-2">
               <dt className="w-32 font-medium text-muted-foreground">Category</dt>
@@ -156,7 +156,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
               <dt className="w-32 font-medium text-muted-foreground">Instagram</dt>
               <dd>
                 {profile.instagram_handle ? (
-                  `@${profile.instagram_handle}`
+                  <span translate="no">@{profile.instagram_handle}</span>
                 ) : (
                   <span className="text-destructive">Missing</span>
                 )}
@@ -212,7 +212,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       {/* Fee disclosure */}
       <p className="text-sm text-muted-foreground">
-        Baazar takes a 5% deposit at booking. Everything else you collect directly from the
+        Baazar takes a 5% deposit at booking. Everything else you collect directly from the
         customer.
       </p>
 
@@ -231,7 +231,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
               <VendorCard vendor={previewVendor} />
             </button>
           </DialogTrigger>
-          <DialogContent className="m-0 h-screen w-screen max-w-none rounded-none border-0 p-0">
+          <DialogContent className="m-0 h-[100dvh] w-screen max-w-none rounded-none border-0 p-0 pb-[env(safe-area-inset-bottom)] pt-[env(safe-area-inset-top)]">
             {/* Top banner */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-ink/15 bg-cream px-4 py-3">
               <p className="flex items-center gap-2 text-sm text-ink">
@@ -257,11 +257,17 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       {/* Publish error */}
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       {publishError && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
+        <div
+          className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+          role="alert"
+          aria-live="assertive"
+        >
           <p>{publishError}</p>
           {publishErrorStep && (
             <Link
@@ -276,16 +282,15 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       <div className="rounded-md border border-ink/15 bg-cream/60 p-3">
         <p className="text-xs text-ink/80">
-          By publishing your profile, you agree to Baazar&apos;s terms. Customers pay a 5% deposit
-          through Baazar at booking — that&apos;s our platform fee. You collect the 95% balance
-          directly from them. If you cancel a confirmed booking, the customer&apos;s deposit is
-          refunded in full.
+          By publishing your profile, you agree to Baazar’s terms. Customers pay a 5% deposit
+          through Baazar at booking — that’s our platform fee. You collect the 95% balance directly
+          from them. If you cancel a confirmed booking, the customer’s deposit is refunded in full.
         </p>
       </div>
 
       <div className="flex justify-end">
         <Button onClick={onPublish} disabled={publishing} size="lg">
-          {publishing ? 'Publishing…' : 'Publish profile'}
+          {publishing ? 'Publishing…' : 'Publish Profile'}
         </Button>
       </div>
     </div>

@@ -12,6 +12,7 @@ import { AnalyticsTeaser } from '@/components/dashboard/AnalyticsTeaser';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { BackfillBanner } from '@/components/dashboard/BackfillBanner';
 import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBanner';
+import { fmtDate } from '@/lib/intl';
 import { DashboardCalendarNudge } from '@/components/dashboard/calendar/DashboardCalendarNudge';
 import { getFeedStatus } from '@/services/calendar-feed.service';
 
@@ -56,11 +57,7 @@ export default async function DashboardPage() {
       : null;
 
     const formattedDate = onboardingData.event_date
-      ? new Date(onboardingData.event_date).toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        })
+      ? fmtDate(onboardingData.event_date, { month: 'long', day: 'numeric', year: 'numeric' })
       : null;
 
     // Read from booking_events_public (excludes vendor_notes — Sub-project E §8).
@@ -135,7 +132,7 @@ export default async function DashboardPage() {
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link href="/vendors">Browse vendors →</Link>
+            <Link href="/vendors">Browse Vendors →</Link>
           </Button>
         </div>
 
@@ -210,7 +207,7 @@ export default async function DashboardPage() {
       {/* Onboarding gate (retained from A2) */}
       {activePackageCount === 0 && (
         <Card className="border-yellow-200 bg-yellow-50 p-6">
-          <h2 className="font-semibold text-yellow-900">Add a package to go live</h2>
+          <h2 className="font-semibold text-yellow-900">Add a Package to Go Live</h2>
           <p className="mt-1 text-sm text-yellow-800">
             Customers can only book vendors with at least one active package.
           </p>

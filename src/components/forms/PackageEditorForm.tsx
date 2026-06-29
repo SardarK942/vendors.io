@@ -136,6 +136,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               maxLength={120}
               defaultValue={initial?.name}
               placeholder="e.g. Full-Day Wedding Coverage"
+              autoComplete="off"
             />
           </div>
 
@@ -149,7 +150,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
               maxLength={2000}
               rows={4}
               defaultValue={initial?.description}
-              placeholder="What's included, your style, what makes this package special..."
+              placeholder="What’s included, your style, what makes this package special…"
+              autoComplete="off"
             />
           </div>
 
@@ -162,10 +164,12 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 name="base_price"
                 type="number"
                 min={1}
-                step={1}
+                step={0.01}
                 required
                 defaultValue={initial ? initial.base_price_cents / 100 : ''}
                 placeholder="1500"
+                inputMode="decimal"
+                autoComplete="off"
               />
             </div>
             <div className="space-y-2">
@@ -178,6 +182,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 required
                 defaultValue={initial?.max_guests}
                 placeholder="200"
+                inputMode="numeric"
+                autoComplete="off"
               />
             </div>
           </div>
@@ -195,6 +201,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 required
                 defaultValue={initial?.duration_hours}
                 placeholder="8"
+                inputMode="decimal"
+                autoComplete="off"
               />
             </div>
             <div className="space-y-2">
@@ -206,6 +214,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 min={1}
                 max={5}
                 defaultValue={initial?.events_count ?? 1}
+                inputMode="numeric"
+                autoComplete="off"
               />
               <p className="text-xs text-muted-foreground">
                 Set to 3 for a Mehndi + Shaadi + Walima bundle
@@ -214,8 +224,8 @@ export function PackageEditorForm({ mode, initial }: Props) {
           </div>
 
           {/* Featured Image */}
-          <div className="space-y-2">
-            <Label>Featured Image *</Label>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Featured Image *</legend>
             <PhotoUploaderDrawer
               value={featuredImageUrl ? [featuredImageUrl] : []}
               onChange={(urls) => setFeaturedImageUrl(urls[0] ?? '')}
@@ -224,11 +234,11 @@ export function PackageEditorForm({ mode, initial }: Props) {
               maxSizeMb={4}
               triggerLabel={{ empty: 'Upload feature image', manage: 'Change feature image' }}
             />
-          </div>
+          </fieldset>
 
           {/* Location Mode */}
-          <div className="space-y-2">
-            <Label>Location</Label>
+          <fieldset className="space-y-2">
+            <legend className="text-sm font-medium">Location</legend>
             <div className="flex gap-4">
               <label className="flex cursor-pointer items-center gap-2">
                 <input
@@ -251,7 +261,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 <span className="text-sm">At my location</span>
               </label>
             </div>
-          </div>
+          </fieldset>
 
           {/* Included Items */}
           <div className="space-y-2">
@@ -275,7 +285,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               rows={3}
               maxLength={1000}
               defaultValue={initial?.vendor_notes_template ?? ''}
-              placeholder="I'll arrive 30 min early to set up. Please have..."
+              placeholder="I’ll arrive 30 min early to set up. Please have…"
             />
             <p className="text-xs text-muted-foreground">
               Sent to customers automatically when you accept a booking.
@@ -287,7 +297,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
 
           <div className="flex gap-3">
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : mode === 'create' ? 'Create Package' : 'Update Package'}
+              {loading ? 'Saving…' : mode === 'create' ? 'Create Package' : 'Update Package'}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.back()}>
               Cancel

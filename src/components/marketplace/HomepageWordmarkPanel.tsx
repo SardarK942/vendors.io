@@ -1,11 +1,15 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion';
 
 /**
  * Right-side brand panel of the V2 asymmetric homepage hero.
  * Main wordmark cycles through the supported scripts on a 2.5s loop with
  * crossfade. Glyph row at the bottom remains static for at-a-glance reference.
+ * Reduce-motion: locks to the first script (Devanagari), no interval, no
+ * crossfade. The transition-opacity classes remain inert because the
+ * static index never changes.
  */
 
 const SCRIPTS = [
@@ -35,12 +39,7 @@ const CYCLE_MS = 2500;
 
 export function HomepageWordmarkPanel() {
   const [index, setIndex] = useState(0);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    setPrefersReducedMotion(window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  }, []);
+  const prefersReducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
     if (prefersReducedMotion) return;
@@ -63,6 +62,7 @@ export function HomepageWordmarkPanel() {
         className="relative"
         style={{ fontSize: 'clamp(72px, 9vw, 130px)', minHeight: '0.85em', lineHeight: '0.85' }}
         aria-label="Baazar"
+        translate="no"
       >
         {SCRIPTS.map((s, i) => (
           <h2

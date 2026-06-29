@@ -70,8 +70,12 @@ export function NewsletterForm() {
       </label>
       <input
         id="footer-newsletter-email"
+        name="email"
         type="email"
         autoComplete="email"
+        inputMode="email"
+        spellCheck={false}
+        autoCapitalize="none"
         placeholder={success ? 'Subscribed — keep an eye out.' : 'you@email.com'}
         value={success ? '' : email}
         onChange={(e) => {
@@ -93,6 +97,7 @@ export function NewsletterForm() {
       <button
         type="submit"
         aria-label="Subscribe to The Bazaar Letter"
+        translate="no"
         disabled={submitting || success}
         className={[
           'flex h-10 w-10 flex-none items-center justify-center rounded-full bg-hot-pink text-cream',

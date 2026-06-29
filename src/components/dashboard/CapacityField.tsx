@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useRouter } from 'next/navigation';
@@ -10,6 +10,7 @@ interface Props {
 
 export function CapacityField({ initial }: Props) {
   const router = useRouter();
+  const capacityId = useId();
   const [value, setValue] = useState(initial);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,20 +30,25 @@ export function CapacityField({ initial }: Props) {
   }
 
   return (
-    <div className="rounded-md border p-4 space-y-2">
-      <h2 className="font-semibold">Concurrent capacity</h2>
+    <div className="space-y-2 rounded-md border p-4">
+      <h2 className="font-semibold">Concurrent Capacity</h2>
       <p className="text-sm text-muted-foreground">
         Increase this if you run multiple teams. Default 1.
       </p>
       <div className="flex items-end gap-3">
         <div>
-          <label className="text-sm">I can handle</label>
+          <label htmlFor={capacityId} className="text-sm">
+            I can handle
+          </label>
           <Input
+            id={capacityId}
             type="number"
             min={1}
             max={50}
             value={value}
             onChange={(e) => setValue(Number(e.target.value))}
+            inputMode="numeric"
+            autoComplete="off"
             className="w-20"
           />
           <span className="ml-2 text-sm">events at the same time.</span>
@@ -51,7 +57,11 @@ export function CapacityField({ initial }: Props) {
           Save
         </Button>
       </div>
-      {error && <p className="text-sm text-destructive">{error}</p>}
+      {error && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

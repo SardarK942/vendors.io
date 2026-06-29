@@ -52,7 +52,7 @@ function ForgotPasswordInner() {
 
   if (sent) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" role="status" aria-live="polite">
         <Card className="border-ink/10 shadow-sm">
           <CardHeader>
             <CardTitle className="font-spectral text-2xl text-ink">Check your email</CardTitle>
@@ -63,11 +63,11 @@ function ForgotPasswordInner() {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Didn&apos;t get the email? Check your spam folder, or{' '}
+              Didn’t get the email? Check your spam folder, or{' '}
               <button
                 type="button"
                 onClick={() => setSent(null)}
-                className="font-medium text-ink underline underline-offset-4 hover-pink-text"
+                className="rounded font-medium text-ink underline underline-offset-4 hover-pink-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 try a different address
               </button>
@@ -93,7 +93,7 @@ function ForgotPasswordInner() {
         <CardHeader>
           <CardTitle className="font-spectral text-2xl text-ink">Forgot your password?</CardTitle>
           <CardDescription className="text-ink/70">
-            Enter the email you signed up with and we&apos;ll send you a link to choose a new one.
+            Enter the email you signed up with and we’ll send you a link to choose a new one.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -109,6 +109,9 @@ function ForgotPasswordInner() {
                   required
                   disabled={loading}
                   autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>

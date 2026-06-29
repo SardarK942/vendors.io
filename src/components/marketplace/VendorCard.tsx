@@ -50,7 +50,9 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
   const neighborhood = vendor.base_city ?? vendor.service_area?.[0] ?? 'Chicago';
-  const respondsIn = vendor.response_sla_hours ? `Responds in ${vendor.response_sla_hours}h` : null;
+  const respondsIn = vendor.response_sla_hours
+    ? `Responds in ${vendor.response_sla_hours} h`
+    : null;
   const weddingCount = formatWeddingCount(vendor.confirmed_wedding_count);
   const minPrice = formatPriceFromCents(vendor.vendor_packages_price_band?.min_price_cents);
   const showAvailablePill = !!searchDate && vendor.is_available_for_date === true;
@@ -93,7 +95,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-ink-muted">
-            <Camera className="size-8 stroke-current" strokeWidth={1.5} />
+            <Camera className="size-8 stroke-current" strokeWidth={1.5} aria-hidden="true" />
             <span className="text-xs">Photo coming soon</span>
           </div>
         )}
@@ -152,7 +154,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             className={cn(
               'absolute bottom-3.5 right-3.5 inline-flex size-10 items-center justify-center rounded-full',
               'bg-indigo text-cream',
-              'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] -translate-x-2 opacity-0 transition-all',
+              'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] -translate-x-2 opacity-0 transition-[transform,opacity]',
               'md:group-hover:translate-x-0 md:group-hover:opacity-100',
               'motion-reduce:md:group-hover:translate-x-0'
             )}
@@ -174,6 +176,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             'font-display font-bold leading-[1.18] tracking-[-0.014em] text-ink',
             compact ? 'text-[15px]' : 'mb-2 text-[21px]'
           )}
+          translate="no"
         >
           {vendor.business_name}
         </h3>
@@ -211,7 +214,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           </div>
         )}
         {minPrice && !compact && (
-          <p className="mt-3 text-[14px] font-semibold text-ink">
+          <p className="mt-3 text-[14px] font-semibold tabular-nums text-ink">
             <span className="text-[12px] font-normal text-ink-muted">From </span>
             {minPrice}
           </p>

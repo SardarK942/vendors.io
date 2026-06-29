@@ -7,6 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { listPackagesForVendor } from '@/services/packages.service';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
+import { fmtUSD } from '@/lib/intl';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,15 +39,21 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
   return (
     <div className="space-y-6">
       {justOnboarded && (
-        <div className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4">
-          <h3 className="font-semibold">🎉 Profile is live!</h3>
+        <div
+          className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4"
+          role="status"
+          aria-live="polite"
+        >
+          <h3 className="font-semibold">
+            <span aria-hidden="true">🎉</span> Profile is live!
+          </h3>
           <p className="text-sm">Create your first package to start receiving bookings.</p>
         </div>
       )}
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Your Packages</h1>
+          <h1 className="text-pretty text-2xl font-bold">Your Packages</h1>
           <p className="text-muted-foreground">
             Customers can only book vendors with at least one active package.
           </p>
@@ -111,11 +118,10 @@ function PackageCard({ pkg }: { pkg: PackageItem }) {
             <span className="shrink-0 text-xs uppercase text-muted-foreground">Inactive</span>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
-          ${(pkg.base_price_cents / 100).toLocaleString()}
-        </p>
+        <p className="text-sm tabular-nums text-muted-foreground">{fmtUSD(pkg.base_price_cents)}</p>
         <p className="text-xs text-muted-foreground">
-          {pkg.duration_hours}h &middot; up to {pkg.max_guests} guests
+          {pkg.duration_hours}
+          {' '}h &middot; up to {pkg.max_guests} guests
         </p>
         <div className="flex items-center gap-2 pt-2">
           <Button size="sm" variant="outline" asChild>

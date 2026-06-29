@@ -104,7 +104,7 @@ export function CustomRequestForm({
         <h2 className="font-display text-2xl font-bold tracking-[-0.012em]">Request sent.</h2>
         <p className="mt-3 text-sm text-ink-muted">
           {vendorBusinessName} will respond
-          {vendorResponseSlaHours ? ` within ${vendorResponseSlaHours} hours` : ' soon'} with a
+          {vendorResponseSlaHours ? ` within ${vendorResponseSlaHours} hours` : ' soon'} with a
           quote. We&rsquo;ll send you a notification — check your dashboard inbox.
         </p>
         <div className="mt-6 flex gap-3">
@@ -132,24 +132,28 @@ export function CustomRequestForm({
       {state.kind === 'error' && (
         <div
           role="alert"
+          aria-live="assertive"
           className="rounded-md border border-haldi/40 bg-haldi/10 p-3 text-sm text-ink"
         >
           {state.message}
         </div>
       )}
 
-      <section>
-        <label className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+      <fieldset>
+        <legend className="mb-3 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
           Events
-        </label>
+        </legend>
 
         {events.map((event) => (
           <div key={event.id} className="mb-3 rounded-md border border-ink/15 p-4">
             <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+              <div role="group" aria-labelledby={`date-label-${event.id}`}>
+                <span
+                  id={`date-label-${event.id}`}
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                >
                   Date
-                </label>
+                </span>
                 <DatePicker
                   selected={event.date}
                   onSelect={(v) => updateEvent(event.id, { date: v })}
@@ -169,7 +173,7 @@ export function CustomRequestForm({
                   value={event.startTime}
                   onChange={(e) => updateEvent(event.id, { startTime: e.target.value })}
                   disabled={submitting}
-                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 />
               </div>
 
@@ -191,14 +195,17 @@ export function CustomRequestForm({
                     updateEvent(event.id, { guestCount: Number(e.target.value) || 1 })
                   }
                   disabled={submitting}
-                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                  className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 />
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+              <div role="group" aria-labelledby={`event-type-label-${event.id}`}>
+                <span
+                  id={`event-type-label-${event.id}`}
+                  className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                >
                   Event type
-                </label>
+                </span>
                 <EventTypePicker
                   value={event.eventTypeId}
                   onValueChange={(v) => updateEvent(event.id, { eventTypeId: v })}
@@ -228,7 +235,7 @@ export function CustomRequestForm({
         >
           + Add another event
         </button>
-      </section>
+      </fieldset>
 
       <div>
         <label
@@ -245,11 +252,12 @@ export function CustomRequestForm({
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           disabled={submitting}
-          placeholder="Tell the vendor what makes your event special — guest count breakdown, dietary needs, location, anything outside their standard packages."
+          placeholder="Tell the vendor what makes your event special — guest count breakdown, dietary needs, location, anything outside their standard packages…"
           required
-          className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+          autoComplete="off"
+          className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         />
-        <p className="mt-1 text-xs text-ink-soft">
+        <p className="mt-1 text-xs text-ink-soft" aria-live="polite">
           {description.length} / 1000 · minimum 50 characters
         </p>
       </div>

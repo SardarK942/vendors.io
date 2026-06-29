@@ -20,6 +20,7 @@ import { PhotoCarouselHero } from './PhotoCarouselHero';
 import { BookingStickyCard } from './BookingStickyCard';
 import { BookingBottomBar } from './BookingBottomBar';
 import { getFeaturedPackage } from './helpers';
+import { fmtDate } from '@/lib/intl';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -94,7 +95,7 @@ export function VendorProfile({
           <span className="mx-1">·</span>
           <span>{vendor.service_area?.[0] || 'Chicago'}</span>
           <span className="mx-1">·</span>
-          <span>{vendor.business_name}</span>
+          <span translate="no">{vendor.business_name}</span>
         </nav>
 
         {/* Mobile carousel + bio + packages (single column) */}
@@ -124,7 +125,7 @@ export function VendorProfile({
                   />
                 </div>
                 <p className="mt-4 text-center text-xs">
-                  Don&apos;t see what you need?{' '}
+                  Don’t see what you need?{' '}
                   <Link
                     href={`/vendors/${vendor.slug}/request`}
                     className="text-ink underline hover-pink-text"
@@ -161,7 +162,7 @@ export function VendorProfile({
                     />
                   </div>
                   <p className="mt-4 text-center text-xs">
-                    Don&apos;t see what you need?{' '}
+                    Don’t see what you need?{' '}
                     <Link
                       href={`/vendors/${vendor.slug}/request`}
                       className="text-ink underline hover-pink-text"
@@ -220,9 +221,7 @@ export function VendorProfile({
                       </span>
                       {reviewerName(r.users)}
                     </span>
-                    <span className="text-xs text-ink/50">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </span>
+                    <span className="text-xs text-ink/50">{fmtDate(r.created_at)}</span>
                   </div>
                   {r.comment && (
                     <p className="mt-2 whitespace-pre-wrap text-sm text-ink/85">{r.comment}</p>

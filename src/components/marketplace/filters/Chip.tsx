@@ -46,7 +46,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
     const baseClasses = cn(
       'inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-full',
       'font-sans text-[12px] font-medium leading-none whitespace-nowrap',
-      'transition-all duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)]',
+      'transition-[background-color,border-color,color] duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)]',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
       'disabled:opacity-40 disabled:pointer-events-none',
       // Variant-specific
@@ -72,9 +72,59 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
           ? { 'aria-expanded': isActive, 'aria-controls': panelId }
           : {};
 
+    // 'applied' variant: two sibling buttons (label + X) wrapped in a chip-
+    // shaped div so removing the filter doesn't nest a <button> inside another.
+    if (variant === 'applied') {
+      const labelText =
+        typeof children === 'string' || typeof children === 'number' ? String(children) : 'filter';
+      return (
+        <div className={cn(baseClasses, 'gap-1 p-0 pl-3.5 pr-1')}>
+          <button
+            ref={ref}
+            type="button"
+            onClick={onClick}
+            className={cn(
+              'inline-flex h-full items-center gap-1.5 bg-transparent text-inherit',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+            )}
+          >
+            {children}
+            {count !== undefined && count > 0 && (
+              <span
+                className={cn(
+                  'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1',
+                  'text-[10px] font-bold leading-none',
+                  isActive ? 'bg-cream text-ink' : 'bg-indigo text-cream'
+                )}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove?.();
+            }}
+            aria-label={`Remove ${labelText}`}
+            className={cn(
+              'ml-1 inline-flex size-4 items-center justify-center rounded-full',
+              'text-ink-muted transition-colors hover:bg-ink hover:text-cream',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-1 focus-visible:ring-offset-cream'
+            )}
+          >
+            <X className="size-3" strokeWidth={2.5} aria-hidden="true" />
+          </button>
+        </div>
+      );
+    }
+
     return (
       <button ref={ref} type="button" onClick={onClick} className={baseClasses} {...ariaProps}>
-        {variant === 'all-filters' && <SlidersHorizontal className="size-3.5" strokeWidth={2} />}
+        {variant === 'all-filters' && (
+          <SlidersHorizontal className="size-3.5" strokeWidth={2} aria-hidden="true" />
+        )}
         {children}
         {count !== undefined && count > 0 && (
           <span
@@ -98,31 +148,6 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
           >
             <path d="m3 4.5 3 3 3-3" />
           </svg>
-        )}
-        {variant === 'applied' && (
-          <span
-            role="button"
-            tabIndex={0}
-            aria-label="Remove filter"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove?.();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                onRemove?.();
-              }
-            }}
-            className={cn(
-              'ml-1 inline-flex size-4 items-center justify-center rounded-full',
-              'text-ink-muted transition-colors hover:bg-ink hover:text-cream',
-              'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo'
-            )}
-          >
-            <X className="size-3" strokeWidth={2.5} />
-          </span>
         )}
       </button>
     );

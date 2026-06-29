@@ -54,7 +54,7 @@ function MockSwitcherPill() {
       className="flex items-center gap-1.5 rounded-full border border-ink/15 bg-cream-soft/70 px-3 py-1.5 text-sm font-medium text-ink hover:bg-cream-soft"
     >
       <span className="h-2 w-2 rounded-full bg-indigo" />
-      Sardar&apos;s Studio
+      Sardar’s Studio
       <ChevronDown className="h-3.5 w-3.5 opacity-60" />
     </button>
   );
@@ -87,7 +87,7 @@ export default function StaggeredMenuDemoPage() {
 
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-cream">
-      <div className="pointer-events-auto fixed left-1/2 top-4 z-[60] flex -translate-x-1/2 items-center gap-2 rounded-full border border-ink/15 bg-cream-soft/95 px-2 py-1.5 text-xs font-medium shadow-sm backdrop-blur">
+      <div className="pointer-events-auto fixed left-1/2 top-[max(1rem,env(safe-area-inset-top))] z-[60] flex -translate-x-1/2 items-center gap-2 rounded-full border border-ink/15 bg-cream-soft/95 px-2 py-1.5 text-xs font-medium shadow-sm backdrop-blur">
         <span className="px-1 text-ink/60">View as:</span>
         {(['anon', 'couple', 'vendor'] as const).map((s) => (
           <button
@@ -109,8 +109,8 @@ export default function StaggeredMenuDemoPage() {
           baazar<span className="text-hot-pink">.</span>
         </h1>
         <p className="mt-4 max-w-md text-base text-ink/70">
-          Tap &quot;Menu&quot; in the top right to see the StaggeredMenu cascade. Switch demo state
-          to preview the anonymous, couple, and vendor variants.
+          Tap “Menu” in the top right to see the StaggeredMenu cascade. Switch demo state to preview
+          the anonymous, couple, and vendor variants.
         </p>
       </main>
 

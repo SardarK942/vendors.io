@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,7 @@ interface VendorProfileFormProps {
 export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
   const router = useRouter();
   const supabase = createClient();
+  const streetAddressId = useId();
   const [loading, setLoading] = useState(false);
   const [category, setCategory] = useState<string>(vendorProfile?.category ?? '');
   const [subcategories, setSubcategories] = useState<string[]>(vendorProfile?.subcategories ?? []);
@@ -142,6 +143,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 required
                 defaultValue={vendorProfile?.business_name}
                 placeholder="Mehndi by Priya"
+                autoComplete="organization"
               />
             </div>
 
@@ -188,7 +190,8 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               name="bio"
               rows={4}
               defaultValue={vendorProfile?.bio || ''}
-              placeholder="Tell customers about your services, style, and experience..."
+              placeholder="Tell customers about your services, style, and experience…"
+              autoComplete="off"
             />
           </div>
 
@@ -200,6 +203,11 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 name="instagram"
                 defaultValue={vendorProfile?.instagram_handle || ''}
                 placeholder="mehndibypriya"
+                autoComplete="off"
+                spellCheck={false}
+                autoCapitalize="none"
+                autoCorrect="off"
+                inputMode="text"
               />
             </div>
             <div className="space-y-2">
@@ -209,7 +217,11 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
                 name="website"
                 type="url"
                 defaultValue={vendorProfile?.website_url || ''}
-                placeholder="https://..."
+                placeholder="https://…"
+                autoComplete="url"
+                inputMode="url"
+                spellCheck={false}
+                autoCapitalize="none"
               />
             </div>
           </div>
@@ -223,6 +235,8 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               min={1}
               max={168}
               defaultValue={vendorProfile?.response_sla_hours || 48}
+              inputMode="numeric"
+              autoComplete="off"
             />
           </div>
 
@@ -236,11 +250,12 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               </p>
             </div>
             <div className="space-y-2">
-              <Label>Street Address</Label>
+              <Label htmlFor={streetAddressId}>Street Address</Label>
               <GooglePlacesAutocomplete
+                id={streetAddressId}
                 value={baseAddress}
                 onChange={(place) => setBaseAddress(place)}
-                placeholder="Start typing your address..."
+                placeholder="Start typing your address…"
                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               />
               {baseAddress.city && (
@@ -252,7 +267,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
             <label className="flex cursor-pointer items-start gap-2">
               <input
                 type="checkbox"
-                className="mt-0.5"
+                className="mt-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                 checked={baseAddressPublic}
                 onChange={(e) => setBaseAddressPublic(e.target.checked)}
               />
@@ -267,7 +282,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
           </div>
 
           <Button type="submit" disabled={loading}>
-            {loading ? 'Saving...' : vendorProfile ? 'Update Profile' : 'Create Profile'}
+            {loading ? 'Saving…' : vendorProfile ? 'Update Profile' : 'Create Profile'}
           </Button>
         </form>
       </CardContent>

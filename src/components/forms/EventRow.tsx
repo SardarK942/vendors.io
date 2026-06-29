@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { Button } from '@/components/ui/button';
 import { EventTypeAutocomplete } from './EventTypeAutocomplete';
 import { GooglePlacesAutocomplete } from './GooglePlacesAutocomplete';
@@ -53,6 +54,12 @@ export function EventRow({
   event1Data,
 }: Props) {
   const isAtVendor = locationMode === 'at_vendor' && !data.location_overridden;
+  const eventTypeId = useId();
+  const dateId = useId();
+  const startTimeId = useId();
+  const endTimeId = useId();
+  const locationId = useId();
+  const venueNameId = useId();
 
   function handlePlaceChange(place: PlaceData) {
     onChange(index, {
@@ -96,8 +103,11 @@ export function EventRow({
 
       {/* Event Type */}
       <div>
-        <label className="mb-1 block text-xs text-muted-foreground">Event Type</label>
+        <label htmlFor={eventTypeId} className="mb-1 block text-xs text-muted-foreground">
+          Event Type
+        </label>
         <EventTypeAutocomplete
+          inputId={eventTypeId}
           value={data.event_type_label}
           onChange={(v) => onChange(index, { event_type_label: v })}
         />
@@ -105,7 +115,9 @@ export function EventRow({
 
       {/* Date */}
       <div>
-        <label className="mb-1 block text-xs text-muted-foreground">Date</label>
+        <label htmlFor={dateId} className="mb-1 block text-xs text-muted-foreground">
+          Date
+        </label>
         {vendorSlug ? (
           <AvailabilityCalendar
             vendorSlug={vendorSlug}
@@ -116,6 +128,7 @@ export function EventRow({
           />
         ) : (
           <input
+            id={dateId}
             type="date"
             className="w-full rounded border p-2 text-sm"
             value={data.event_date}
@@ -128,29 +141,37 @@ export function EventRow({
       {/* Time range */}
       <div className="grid grid-cols-2 gap-2">
         <div>
-          <label className="mb-1 block text-xs text-muted-foreground">Start Time</label>
+          <label htmlFor={startTimeId} className="mb-1 block text-xs text-muted-foreground">
+            Start Time
+          </label>
           <input
+            id={startTimeId}
             type="time"
             className="w-full rounded border p-2 text-sm"
             value={data.event_start_time.slice(11, 16)}
             onChange={(e) => {
               const [h, m] = e.target.value.split(':');
               const base = data.event_date || new Date().toISOString().slice(0, 10);
-              onChange(index, { event_start_time: `${base}T${h}:${m}:00Z` });
+              // No trailing `Z` — keep the time as the user typed it, in local TZ.
+              onChange(index, { event_start_time: `${base}T${h}:${m}:00` });
             }}
             required
           />
         </div>
         <div>
-          <label className="mb-1 block text-xs text-muted-foreground">End Time</label>
+          <label htmlFor={endTimeId} className="mb-1 block text-xs text-muted-foreground">
+            End Time
+          </label>
           <input
+            id={endTimeId}
             type="time"
             className="w-full rounded border p-2 text-sm"
             value={data.event_end_time.slice(11, 16)}
             onChange={(e) => {
               const [h, m] = e.target.value.split(':');
               const base = data.event_date || new Date().toISOString().slice(0, 10);
-              onChange(index, { event_end_time: `${base}T${h}:${m}:00Z` });
+              // No trailing `Z` — keep the time as the user typed it, in local TZ.
+              onChange(index, { event_end_time: `${base}T${h}:${m}:00` });
             }}
             required
           />
@@ -159,7 +180,9 @@ export function EventRow({
 
       {/* Location */}
       <div>
-        <label className="mb-1 block text-xs text-muted-foreground">Location</label>
+        <label htmlFor={locationId} className="mb-1 block text-xs text-muted-foreground">
+          Location
+        </label>
 
         {isAtVendor ? (
           <div className="space-y-1 rounded border bg-muted/50 p-2 text-sm">
@@ -189,6 +212,7 @@ export function EventRow({
               </Button>
             )}
             <GooglePlacesAutocomplete
+              id={locationId}
               value={{
                 address_line_1: data.address_line_1,
                 city: data.city,
@@ -210,8 +234,11 @@ export function EventRow({
       {/* Optional location name */}
       {!isAtVendor && (
         <div>
-          <label className="mb-1 block text-xs text-muted-foreground">Venue Name (optional)</label>
+          <label htmlFor={venueNameId} className="mb-1 block text-xs text-muted-foreground">
+            Venue Name (optional)
+          </label>
           <input
+            id={venueNameId}
             type="text"
             className="w-full rounded border p-2 text-sm"
             placeholder="e.g. The Drake Hotel"

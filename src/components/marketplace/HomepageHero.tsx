@@ -18,14 +18,14 @@ export interface HomepageHeroProps {
  */
 export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
   return (
-    <section className="pb-22 lg:gap-18 grid grid-cols-1 gap-10 px-6 pt-16 lg:grid-cols-[1.5fr_1fr] lg:px-14 lg:pb-24 lg:pt-24">
+    <section className="pb-22 lg:gap-18 grid grid-cols-1 gap-10 px-6 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-16 lg:grid-cols-[1.5fr_1fr] lg:px-14 lg:pb-24 lg:pt-24">
       <div className="text-left">
         <p className="m-0 mb-6 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
           Baazar · Chicago weddings
         </p>
 
         <h1
-          className="m-0 mb-7 font-serif font-extrabold leading-[0.92] tracking-[-0.025em] text-ink"
+          className="m-0 mb-7 text-balance font-serif font-extrabold leading-[0.92] tracking-[-0.025em] text-ink"
           style={{ fontSize: 'clamp(44px, 6vw, 76px)' }}
         >
           All your vendors.

@@ -8,15 +8,17 @@
 import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Check, ChevronDown, Building2 } from 'lucide-react';
+import { Check, ChevronDown, Building2, Plus } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
+} from '@/components/ui/command';
 
 export interface SwitcherBusiness {
   id: string;
@@ -54,40 +56,60 @@ export function BusinessSwitcher({ activeBusinessId, businesses }: BusinessSwitc
   };
 
   return (
-    <DropdownMenu open={open} onOpenChange={setOpen}>
-      <DropdownMenuTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <button
-          className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm font-medium hover:bg-accent disabled:opacity-50"
+          type="button"
+          role="combobox"
+          aria-expanded={open}
+          aria-label="Switch business"
+          className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-50"
           disabled={isPending}
         >
-          <Building2 className="h-4 w-4 text-muted-foreground" />
-          <span className="max-w-[180px] truncate">
+          <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <span className="max-w-[180px] truncate" translate="no">
             {active?.businessName ?? 'Switch business'}
           </span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
         </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
-        <DropdownMenuLabel className="text-xs uppercase tracking-wide text-muted-foreground">
-          Your businesses
-        </DropdownMenuLabel>
-        {businesses.map((b) => (
-          <DropdownMenuItem
-            key={b.id}
-            onClick={() => switchTo(b.id)}
-            className="flex items-center justify-between"
-          >
-            <span className="truncate">{b.businessName}</span>
-            {b.id === activeBusinessId && (
-              <Check className="h-4 w-4 text-emerald-600" />
-            )}
-          </DropdownMenuItem>
-        ))}
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/dashboard/profile/setup?next=true">Add another business</Link>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverTrigger>
+      <PopoverContent align="end" className="w-64 p-0">
+        <Command label="Your businesses">
+          <CommandInput placeholder="Search businesses…" />
+          <CommandList>
+            <CommandEmpty>No businesses match.</CommandEmpty>
+            <CommandGroup heading="Your businesses">
+              {businesses.map((b) => (
+                <CommandItem
+                  key={b.id}
+                  value={b.businessName}
+                  onSelect={() => switchTo(b.id)}
+                  className="flex items-center justify-between"
+                >
+                  <span className="truncate" translate="no">
+                    {b.businessName}
+                  </span>
+                  {b.id === activeBusinessId && (
+                    <Check className="h-4 w-4 text-emerald-600" aria-hidden="true" />
+                  )}
+                </CommandItem>
+              ))}
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup>
+              {/* The "Add" affordance is a navigation, not a selectable command —
+                  so we wrap a Link inside a CommandItem and stop the cmdk select
+                  cycle from firing fetch logic. */}
+              <CommandItem asChild>
+                <Link href="/dashboard/profile/setup?next=true" className="flex items-center gap-2">
+                  <Plus className="h-4 w-4" aria-hidden="true" />
+                  Add another business
+                </Link>
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
   );
 }
