@@ -12,6 +12,8 @@ import { AnalyticsTeaser } from '@/components/dashboard/AnalyticsTeaser';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { BackfillBanner } from '@/components/dashboard/BackfillBanner';
 import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBanner';
+import { DashboardCalendarNudge } from '@/components/dashboard/calendar/DashboardCalendarNudge';
+import { getFeedStatus } from '@/services/calendar-feed.service';
 import { fmtDate } from '@/lib/intl';
 
 export const dynamic = 'force-dynamic';
@@ -159,6 +161,18 @@ export default async function DashboardPage() {
     );
   }
 
+  const feedStatus = await getFeedStatus(
+    supabase,
+    vendorProfile.id,
+    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  );
+  const { data: vpFlags } = await supabase
+    .from('vendor_profiles')
+    .select('calendar_feed_nudge_dismissed_at')
+    .eq('id', vendorProfile.id)
+    .single();
+  const nudgeDismissed = !!vpFlags?.calendar_feed_nudge_dismissed_at;
+
   const vendorIsActive = vendorProfile.is_active !== false;
 
   // Backfill banner: show when any of the 3 new filter fields is missing AND
@@ -182,6 +196,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <DashboardCalendarNudge feedStatus={feedStatus} nudgeDismissed={nudgeDismissed} />
       <BackfillBanner show={showBackfill} />
 
       <div>
