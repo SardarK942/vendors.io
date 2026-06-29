@@ -149,7 +149,7 @@ export function BioAssistCard({
               type="button"
               onClick={dismiss}
               aria-label="Dismiss suggestion"
-              className="text-ink/40 hover:text-ink"
+              className="inline-flex size-10 items-center justify-center text-ink/40 hover:text-ink"
             >
               <X className="size-4" />
             </button>

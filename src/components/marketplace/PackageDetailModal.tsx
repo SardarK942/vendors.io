@@ -138,7 +138,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
                 {pkg.addons.map((addon) => (
                   <label
                     key={addon.id}
-                    className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent"
+                    className="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
                   >
                     <span className="flex items-center gap-3">
                       <input

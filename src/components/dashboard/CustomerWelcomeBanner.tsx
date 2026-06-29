@@ -59,7 +59,7 @@ export function CustomerWelcomeBanner({
         <button
           type="button"
           onClick={handleDismiss}
-          className="ml-4 rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          className="ml-4 inline-flex size-10 items-center justify-center rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
           aria-label="Dismiss welcome banner"
         >
           <X size={18} aria-hidden="true" />

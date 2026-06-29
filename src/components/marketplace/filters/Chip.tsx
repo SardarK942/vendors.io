@@ -112,7 +112,8 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
             }}
             aria-label={`Remove ${labelText}`}
             className={cn(
-              'ml-1 inline-flex size-4 items-center justify-center rounded-full',
+              'relative ml-1 inline-flex size-4 items-center justify-center rounded-full',
+              'before:absolute before:-inset-2 before:content-[""]',
               'text-ink-muted transition-colors hover:bg-ink hover:text-cream',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-1 focus-visible:ring-offset-cream'
             )}

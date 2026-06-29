@@ -65,7 +65,7 @@ export function PanelShell({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={close}
             aria-label="Close panel"
-            className="rounded p-1 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+            className="inline-flex size-10 items-center justify-center rounded transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
           >
             <X className="h-4 w-4" aria-hidden="true" />
           </button>

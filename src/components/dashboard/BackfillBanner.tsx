@@ -56,7 +56,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
           type="button"
           onClick={dismiss}
           aria-label="Dismiss"
-          className="inline-flex size-9 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          className="inline-flex size-10 items-center justify-center rounded-md text-ink-muted transition-colors hover:bg-cream hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           <X className="size-4" strokeWidth={2} aria-hidden="true" />
         </button>

@@ -140,6 +140,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           aria-pressed={isSaved}
           className={cn(
             'absolute right-3 top-3 inline-flex size-[34px] items-center justify-center rounded-full',
+            'before:absolute before:-inset-1 before:content-[""]',
             'border border-ink/10 bg-cream/95 backdrop-blur',
             'transition-[transform,background-color,color]',
             'active:scale-[0.96] motion-reduce:active:scale-100',

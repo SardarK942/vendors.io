@@ -85,7 +85,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
               type="button"
               onClick={() => onOpenChange(false)}
               aria-label="Close filters"
-              className="inline-flex size-8 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:border-ink"
+              className="inline-flex size-10 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:border-ink"
             >
               <X className="size-4" strokeWidth={2} aria-hidden="true" />
             </button>
