@@ -94,7 +94,7 @@ export function EventRow({
           <button
             type="button"
             onClick={() => onRemove(index)}
-            className="text-xs text-destructive hover:underline"
+            className="relative px-2 py-1 text-xs text-destructive before:absolute before:-inset-1.5 before:content-[''] hover:underline"
           >
             Remove
           </button>

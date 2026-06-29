@@ -125,7 +125,7 @@ export function NotificationsPageClient({ initial }: Props) {
           <button
             type="button"
             onClick={markAllRead}
-            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+            className="inline-flex min-h-10 items-center px-2 text-sm text-muted-foreground hover:text-foreground hover:underline"
           >
             Mark all read
           </button>

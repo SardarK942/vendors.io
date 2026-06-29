@@ -219,7 +219,7 @@ export function CustomRequestForm({
                 type="button"
                 onClick={() => removeEvent(event.id)}
                 disabled={submitting}
-                className="mt-2 text-xs text-hot-pink hover:underline disabled:opacity-50"
+                className="relative mt-2 px-2 py-1 text-xs text-hot-pink before:absolute before:-inset-1.5 before:content-[''] hover:underline disabled:opacity-50"
               >
                 Remove this event
               </button>
@@ -231,7 +231,7 @@ export function CustomRequestForm({
           type="button"
           onClick={addEvent}
           disabled={submitting}
-          className="text-sm font-medium text-ink hover:text-hot-pink disabled:opacity-50"
+          className="relative px-2 py-1 text-sm font-medium text-ink before:absolute before:-inset-1.5 before:content-[''] hover:text-hot-pink disabled:opacity-50"
         >
           + Add another event
         </button>

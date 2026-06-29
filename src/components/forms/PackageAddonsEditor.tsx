@@ -74,7 +74,7 @@ export function PackageAddonsEditor({ initial = [], onChange, max = 8 }: Props) 
               <Button
                 type="button"
                 variant="ghost"
-                size="sm"
+                size="default"
                 onClick={() => removeAddon(i)}
                 aria-label="Remove add-on"
               >

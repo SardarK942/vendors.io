@@ -92,7 +92,10 @@ export function StepReview({ profile, profileId, mode }: Props) {
         <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Basics</h2>
-            <Link href="/dashboard/profile/setup/basics" className="text-xs text-primary underline">
+            <Link
+              href="/dashboard/profile/setup/basics"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
+            >
               Edit
             </Link>
           </div>
@@ -120,7 +123,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
             <h2 className="font-semibold">Location</h2>
             <Link
               href="/dashboard/profile/setup/location"
-              className="text-xs text-primary underline"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
             >
               Edit
             </Link>
@@ -147,7 +150,10 @@ export function StepReview({ profile, profileId, mode }: Props) {
         <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Online presence</h2>
-            <Link href="/dashboard/profile/setup/online" className="text-xs text-primary underline">
+            <Link
+              href="/dashboard/profile/setup/online"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
+            >
               Edit
             </Link>
           </div>
@@ -186,7 +192,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
             <h2 className="font-semibold">Portfolio</h2>
             <Link
               href="/dashboard/profile/setup/portfolio"
-              className="text-xs text-primary underline"
+              className="inline-flex h-10 items-center px-2 text-xs text-primary underline"
             >
               Edit
             </Link>
