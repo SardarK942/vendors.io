@@ -105,7 +105,7 @@ export function VendorBookingActions({
   }
 
   return (
-    <Card className="border-primary/20">
+    <Card className="shadow-md">
       <CardHeader className="pb-2">
         <CardTitle className="text-base">
           {isPending

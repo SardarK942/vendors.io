@@ -71,7 +71,7 @@ export function CalendarHoldsList({ holds }: Props) {
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {items.length} upcoming hold{items.length === 1 ? '' : 's'}
       </p>
-      <ul className="space-y-1 text-sm">
+      <ul className="divide-y divide-ink/10 text-sm">
         {items.map((h) => {
           const { date, startTime, endTime, fullDay } = parseRange(h.hold_range);
           const label =
@@ -80,10 +80,7 @@ export function CalendarHoldsList({ holds }: Props) {
               : 'Personal block';
           const timeStr = fullDay ? '(full day)' : `${startTime} – ${endTime}`;
           return (
-            <li
-              key={h.id}
-              className="flex items-center justify-between rounded-md border px-3 py-2"
-            >
+            <li key={h.id} className="flex items-center justify-between px-3 py-2">
               <span className="tabular-nums">
                 <span className="font-medium">{fmtDate(`${date}T12:00:00`)}</span>
                 <span className="ml-2 text-muted-foreground">{timeStr}</span>

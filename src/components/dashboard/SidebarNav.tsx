@@ -23,7 +23,9 @@ export function SidebarNav({ role }: { role: 'couple' | 'vendor' }) {
 
   const cls = (href: string) =>
     `flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
-      isActive(href) ? 'bg-accent text-accent-foreground' : 'hover:bg-accent'
+      isActive(href)
+        ? 'bg-accent text-accent-foreground shadow-[inset_0_0_0_1px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]'
+        : 'hover:bg-accent'
     }`;
 
   return (

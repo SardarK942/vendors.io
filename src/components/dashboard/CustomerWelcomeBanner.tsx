@@ -28,7 +28,7 @@ export function CustomerWelcomeBanner({
 
   return (
     <div
-      className="mb-6 rounded-lg border border-ink/10 bg-cream p-6"
+      className="mb-6 rounded-lg bg-cream p-6 shadow-[0_1px_0_rgba(0,0,0,0.04),0_4px_12px_-4px_rgba(0,0,0,0.06)]"
       role="region"
       aria-label="Welcome"
       aria-live="polite"

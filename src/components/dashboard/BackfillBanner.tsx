@@ -30,7 +30,7 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
 
   return (
     <div
-      className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-hairline bg-cream-soft px-5 py-3"
+      className="mb-6 flex items-center justify-between gap-4 rounded-lg bg-cream-soft px-5 py-3 shadow-[0_1px_0_rgba(0,0,0,0.04),0_4px_12px_-4px_rgba(0,0,0,0.06)]"
       role="status"
       aria-live="polite"
     >

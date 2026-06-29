@@ -97,7 +97,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
         </div>
       </div>
 
-      <div className="mt-4 border-t border-ink/10 pt-4">
+      <div className="mt-4 rounded-md bg-cream-soft p-4">
         <p className="text-sm text-ink">
           Net to you: <span className="font-semibold tabular-nums">{fmtUSD(data.netCents)}</span>{' '}
           (95% of bookings driven)
