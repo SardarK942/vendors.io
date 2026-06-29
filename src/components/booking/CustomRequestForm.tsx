@@ -110,13 +110,13 @@ export function CustomRequestForm({
         <div className="mt-6 flex gap-3">
           <a
             href={`/dashboard/bookings/${state.bookingId}`}
-            className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-cream hover:bg-ink/90"
+            className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-cream transition-[transform,background-color] hover:bg-ink/90 active:scale-[0.96] motion-reduce:active:scale-100"
           >
             View in dashboard
           </a>
           <a
             href="/vendors"
-            className="rounded-md border border-hairline px-4 py-2 text-sm font-semibold text-ink hover:border-ink"
+            className="rounded-md border border-hairline px-4 py-2 text-sm font-semibold text-ink transition-[transform,border-color] hover:border-ink active:scale-[0.96] motion-reduce:active:scale-100"
           >
             Browse other vendors
           </a>

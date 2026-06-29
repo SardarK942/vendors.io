@@ -86,7 +86,7 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
             type="button"
             disabled={!canContinue}
             onClick={() => setStep(2)}
-            className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink disabled:opacity-50"
+            className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
           >
             Continue →
           </button>
@@ -95,7 +95,7 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
             type="button"
             onClick={() => submitOnboarding(true)}
             disabled={submitting}
-            className="mt-3 w-full text-center text-xs text-ink/60 hover:text-hot-pink"
+            className="mt-3 w-full text-center text-xs text-ink/60 transition-[transform,color] hover:text-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
           >
             Skip for now
           </button>
@@ -126,7 +126,7 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
           type="button"
           onClick={() => submitOnboarding(false)}
           disabled={submitting}
-          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink"
+          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
         >
           Set up your profile →
         </button>

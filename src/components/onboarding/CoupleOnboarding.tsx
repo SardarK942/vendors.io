@@ -76,7 +76,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
             <button
               type="button"
               onClick={() => setState({ step: 1, hasEvent: true, date: '', categories: [] })}
-              className="w-full rounded-md border-2 border-ink p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+              className="w-full rounded-md border-2 border-ink p-4 text-left transition-[transform,border-color,color] hover:border-hot-pink hover:text-hot-pink active:scale-[0.98] motion-reduce:active:scale-100"
             >
               <p className="font-medium">Yes, I have an event coming up</p>
               <p className="mt-1 text-xs text-ink/60">We’ll personalize your recommendations.</p>
@@ -84,7 +84,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
             <button
               type="button"
               onClick={() => setState({ step: 2, hasEvent: false, categories: [] })}
-              className="w-full rounded-md border border-ink/30 p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+              className="w-full rounded-md border border-ink/30 p-4 text-left transition-[transform,border-color,color] hover:border-hot-pink hover:text-hot-pink active:scale-[0.98] motion-reduce:active:scale-100"
             >
               <p className="font-medium">Just browsing for now</p>
               <p className="mt-1 text-xs text-ink/60">We’ll show you what’s popular.</p>
@@ -160,7 +160,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               type="button"
               disabled={!canContinue}
               onClick={() => setState({ step: 2, hasEvent: true, categories: state.categories })}
-              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:bg-hot-pink disabled:opacity-50"
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
             >
               Continue →
             </button>
@@ -195,7 +195,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
           type="button"
           onClick={() => submitOnboarding(false)}
           disabled={submitting}
-          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink"
+          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
         >
           Start exploring →
         </button>
