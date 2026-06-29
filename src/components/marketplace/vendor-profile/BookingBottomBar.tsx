@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
@@ -33,7 +34,10 @@ export function BookingBottomBar({
         <div className="flex items-center justify-between gap-3">
           <p className="text-xs text-ink/70">Vendor hasn’t listed packages yet.</p>
           <Button size="sm" onClick={() => onRequestBooking(null)} disabled={!interactive}>
-            Custom request →
+            <span className="inline-flex items-center gap-1.5">
+              Custom request
+              <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+            </span>
           </Button>
         </div>
       </div>
@@ -118,7 +122,10 @@ export function BookingBottomBar({
           disabled={!interactive}
           className="shrink-0"
         >
-          Request Booking →
+          <span className="inline-flex items-center gap-1.5">
+            Request Booking
+            <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+          </span>
         </Button>
       </div>
     </div>

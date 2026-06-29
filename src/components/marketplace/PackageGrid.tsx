@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
@@ -81,7 +82,7 @@ export function PackageGrid({
               className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft bg-cream-soft text-left transition-shadow hover:shadow-md"
             >
               <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
-                <span className="font-display text-5xl font-bold tracking-[-0.02em] text-ink-soft">
+                <span className="pl-1 font-display text-5xl font-bold tracking-[-0.02em] text-ink-soft">
                   ?
                 </span>
               </div>
@@ -100,8 +101,9 @@ export function PackageGrid({
                       — price after vendor responds
                     </span>
                   </span>
-                  <span className="text-sm text-indigo group-hover:underline">
-                    Request a quote →
+                  <span className="inline-flex items-center gap-1 text-sm text-indigo group-hover:underline">
+                    Request a quote
+                    <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
                   </span>
                 </div>
               </div>
@@ -163,8 +165,9 @@ export function PackageGrid({
                     <span className="text-lg font-bold tabular-nums">
                       {fmtUSD(p.base_price_cents)}
                     </span>
-                    <span className="text-sm text-primary group-hover:underline">
-                      Book <span translate="no">{p.name}</span> →
+                    <span className="inline-flex items-center gap-1 text-sm text-primary group-hover:underline">
+                      Book <span translate="no">{p.name}</span>
+                      <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
                     </span>
                   </div>
                 </div>

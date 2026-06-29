@@ -1,7 +1,7 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ExternalLink, Instagram } from 'lucide-react';
+import { ArrowRight, ChevronDown, ExternalLink, Instagram } from 'lucide-react';
 import type { Database } from '@/types/database.types';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
 import {
@@ -47,7 +47,10 @@ export function BookingStickyCard({
           onClick={() => onRequestBooking(null)}
           disabled={!interactive}
         >
-          Send a custom request →
+          <span className="inline-flex items-center gap-1.5">
+            Send a custom request
+            <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
+          </span>
         </Button>
         <TrustRow vendor={vendor} />
         <Socials vendor={vendor} />
@@ -92,16 +95,20 @@ export function BookingStickyCard({
         onClick={() => onRequestBooking(featured.id)}
         disabled={!interactive}
       >
-        Request Booking →
+        <span className="inline-flex items-center gap-1.5">
+          Request Booking
+          <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
+        </span>
       </Button>
 
       {packages.length > 1 && (
         <button
           type="button"
           onClick={scrollToPackages}
-          className="mt-3 block w-full rounded text-center text-xs text-ink underline transition-colors hover-pink-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          className="mt-3 inline-flex w-full items-center justify-center gap-1.5 rounded text-center text-xs text-ink underline transition-colors hover-pink-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
-          or compare all {packages.length} packages ↓
+          or compare all {packages.length} packages
+          <ChevronDown className="size-4 translate-y-px" aria-hidden="true" />
         </button>
       )}
 

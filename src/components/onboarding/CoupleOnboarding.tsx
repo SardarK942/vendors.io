@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { CULTURAL_EVENT_TYPES, GENERAL_EVENT_TYPES } from '@/types';
@@ -162,7 +163,10 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               onClick={() => setState({ step: 2, hasEvent: true, categories: state.categories })}
               className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
             >
-              Continue →
+              <span className="inline-flex items-center gap-1.5">
+                Continue
+                <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+              </span>
             </button>
           </div>
         </DialogContent>
@@ -197,7 +201,10 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
           disabled={submitting}
           className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
         >
-          Start exploring →
+          <span className="inline-flex items-center gap-1.5">
+            Start exploring
+            <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+          </span>
         </button>
       </DialogContent>
     </Dialog>

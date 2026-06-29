@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { CULTURAL_EVENT_TYPES, GENERAL_EVENT_TYPES } from '@/types';
@@ -88,7 +89,10 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
             onClick={() => setStep(2)}
             className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
           >
-            Continue →
+            <span className="inline-flex items-center gap-1.5">
+              Continue
+              <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+            </span>
           </button>
 
           <button
@@ -128,7 +132,10 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
           disabled={submitting}
           className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
         >
-          Set up your profile →
+          <span className="inline-flex items-center gap-1.5">
+            Set up your profile
+            <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+          </span>
         </button>
       </DialogContent>
     </Dialog>
