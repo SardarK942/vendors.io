@@ -70,7 +70,10 @@ export function BusinessSwitcher({ activeBusinessId, businesses }: BusinessSwitc
           <span className="max-w-[180px] truncate" translate="no">
             {active?.businessName ?? 'Switch business'}
           </span>
-          <ChevronDown className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <ChevronDown
+            className="relative top-px h-4 w-4 text-muted-foreground"
+            aria-hidden="true"
+          />
         </button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64 p-0">

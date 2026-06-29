@@ -113,7 +113,7 @@ export function NotificationBell({ userId }: Props) {
               initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
               animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: badgeEnter }}
               exit={{ scale: 0.8, opacity: 0, transition: badgeExit }}
-              className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold tabular-nums text-white"
+              className="absolute -right-1.5 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-center text-[10px] font-semibold tabular-nums leading-none text-white"
               aria-live="polite"
               aria-atomic="true"
             >
