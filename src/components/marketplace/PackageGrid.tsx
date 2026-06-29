@@ -138,7 +138,7 @@ export function PackageGrid({
                   <h3 className="text-base font-semibold leading-tight" translate="no">
                     {p.name}
                   </h3>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm tabular-nums text-muted-foreground">
                     {p.duration_hours}
                     {' '}h · up to {p.max_guests} guests
                     {p.events_count > 1 && ` · ${p.events_count} events`}

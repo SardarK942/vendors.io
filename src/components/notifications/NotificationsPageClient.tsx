@@ -155,7 +155,9 @@ export function NotificationsPageClient({ initial }: Props) {
                 >
                   <span>
                     {headerLabel}{' '}
-                    <span className="text-xs text-muted-foreground">({items.length})</span>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      ({items.length})
+                    </span>
                   </span>
                   {collapsed ? (
                     <ChevronRight className="h-4 w-4" />

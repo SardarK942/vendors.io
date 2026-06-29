@@ -170,6 +170,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 placeholder="1500"
                 inputMode="decimal"
                 autoComplete="off"
+                className="tabular-nums"
               />
             </div>
             <div className="space-y-2">
@@ -184,6 +185,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 placeholder="200"
                 inputMode="numeric"
                 autoComplete="off"
+                className="tabular-nums"
               />
             </div>
           </div>
@@ -203,6 +205,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 placeholder="8"
                 inputMode="decimal"
                 autoComplete="off"
+                className="tabular-nums"
               />
             </div>
             <div className="space-y-2">
@@ -216,6 +219,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 defaultValue={initial?.events_count ?? 1}
                 inputMode="numeric"
                 autoComplete="off"
+                className="tabular-nums"
               />
               <p className="text-xs text-muted-foreground">
                 Set to 3 for a Mehndi + Shaadi + Walima bundle

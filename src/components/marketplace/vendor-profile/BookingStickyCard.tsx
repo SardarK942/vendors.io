@@ -69,7 +69,7 @@ export function BookingStickyCard({
       </span>
       <h3 className="mt-3 text-base font-semibold text-ink">{featured.name}</h3>
       {featured.duration_hours != null && (
-        <p className="text-xs text-ink/70">
+        <p className="text-xs tabular-nums text-ink/70">
           {featured.duration_hours}
           {' '}hours
         </p>

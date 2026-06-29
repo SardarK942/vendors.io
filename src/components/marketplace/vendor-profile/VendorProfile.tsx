@@ -190,7 +190,7 @@ export function VendorProfile({
           <div id="reviews-section" className="mt-12 border-t border-ink/10 pt-8">
             <div className="mb-6 flex items-center gap-3">
               <h2 className="font-spectral text-xl font-semibold text-ink">Reviews</h2>
-              <span className="text-2xl font-bold text-ink">
+              <span className="text-2xl font-bold tabular-nums text-ink">
                 {vendor.average_rating!.toFixed(1)}
               </span>
               <span className="flex text-amber-400">
@@ -203,7 +203,9 @@ export function VendorProfile({
                   />
                 ))}
               </span>
-              <span className="text-sm text-ink/60">({vendor.review_count} reviews)</span>
+              <span className="text-sm tabular-nums text-ink/60">
+                ({vendor.review_count} reviews)
+              </span>
             </div>
 
             <div className="space-y-4">

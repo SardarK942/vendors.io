@@ -93,7 +93,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
               <span
                 className={cn(
                   'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1',
-                  'text-[10px] font-bold leading-none',
+                  'text-[10px] font-bold tabular-nums leading-none',
                   isActive ? 'bg-cream text-ink' : 'bg-indigo text-cream'
                 )}
               >
@@ -130,7 +130,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
           <span
             className={cn(
               'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1',
-              'text-[10px] font-bold leading-none',
+              'text-[10px] font-bold tabular-nums leading-none',
               isActive ? 'bg-cream text-ink' : 'bg-indigo text-cream'
             )}
           >

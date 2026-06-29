@@ -140,7 +140,7 @@ export function BookingActions({
               <Button variant="secondary" onClick={() => setCounterOpen(true)} disabled={loading}>
                 Counter
               </Button>
-              <span className="text-xs text-ink/60">
+              <span className="text-xs tabular-nums text-ink/60">
                 {countersLeft} counter-offer{countersLeft === 1 ? '' : 's'} remaining
               </span>
             </div>

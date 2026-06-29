@@ -54,7 +54,7 @@ export function NotificationCard({ notification, onClick, showAllActions = false
         )}
       </p>
       <p className="truncate text-xs text-muted-foreground">{notification.body}</p>
-      <p className="mt-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+      <p className="mt-0.5 text-[10px] uppercase tabular-nums tracking-wide text-muted-foreground">
         {timeAgo(notification.created_at)}
       </p>
     </>

@@ -147,7 +147,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
           }}
           inputMode="numeric"
           autoComplete="off"
-          className="w-32 rounded-md border border-hairline bg-cream px-3 py-2 font-mono text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
+          className="w-32 rounded-md border border-hairline bg-cream px-3 py-2 font-mono text-base tabular-nums text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
         />
         {getError('years_in_business') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('years_in_business')}</p>

@@ -89,7 +89,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           </div>
 
           {/* Summary line */}
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm tabular-nums text-muted-foreground">
             {pkg.duration_hours}
             {' '}h · up to {pkg.max_guests} guests
             {pkg.events_count > 1 && ` · ${pkg.events_count} events`}

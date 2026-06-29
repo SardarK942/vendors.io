@@ -118,7 +118,7 @@ export function CounterModal({ open, onClose, bookingId, currentTotalCents, onSu
               autoComplete="off"
               className="w-full resize-none rounded-md border bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
             />
-            <p className="text-right text-xs text-muted-foreground" aria-live="polite">
+            <p className="text-right text-xs tabular-nums text-muted-foreground" aria-live="polite">
               {note.length}/200
             </p>
           </div>

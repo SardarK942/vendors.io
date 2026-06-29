@@ -49,7 +49,7 @@ export function CapacityField({ initial }: Props) {
             onChange={(e) => setValue(Number(e.target.value))}
             inputMode="numeric"
             autoComplete="off"
-            className="w-20"
+            className="w-20 tabular-nums"
           />
           <span className="ml-2 text-sm">events at the same time.</span>
         </div>

@@ -122,11 +122,13 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
               disabled={count === 0}
               aria-live="polite"
             >
-              {countLoading
-                ? 'Counting…'
-                : count === 0
-                  ? 'No matches'
-                  : `Show ${count == null ? '—' : fmtCount(count)} vendors`}
+              <span className="tabular-nums">
+                {countLoading
+                  ? 'Counting…'
+                  : count === 0
+                    ? 'No matches'
+                    : `Show ${count == null ? '—' : fmtCount(count)} vendors`}
+              </span>
             </Button>
           </div>
         </Drawer.Content>
