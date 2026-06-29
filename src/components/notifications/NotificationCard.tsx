@@ -57,11 +57,20 @@ export function NotificationCard({ notification, onClick, showAllActions = false
     <>
       <p className={`text-sm ${isUnread ? 'font-semibold' : 'font-normal'} ${wrapClass}`}>
         {notification.title}
-        {notification.email_status === 'failed' && (
-          <span title="Email delivery failed" className="ml-1 text-hot-pink">
-            ⚠
-          </span>
-        )}
+        <AnimatePresence initial={false} mode="popLayout">
+          {notification.email_status === 'failed' && (
+            <motion.span
+              key="email-failed"
+              title="Email delivery failed"
+              className="ml-1 inline-flex text-hot-pink"
+              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: spring }}
+              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)', transition: dotExit }}
+            >
+              ⚠
+            </motion.span>
+          )}
+        </AnimatePresence>
       </p>
       <p className={`text-xs text-muted-foreground ${wrapClass}`}>{notification.body}</p>
       <p className="mt-0.5 text-[10px] uppercase tabular-nums tracking-wide text-muted-foreground">

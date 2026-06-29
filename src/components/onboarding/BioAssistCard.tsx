@@ -2,7 +2,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Sparkles, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BioAssistCardProps {
@@ -28,8 +29,8 @@ export function BioAssistCard({
   const abortRef = useRef<AbortController | null>(null);
 
   const mode = currentBio.length < 20 ? 'draft' : 'polish';
-  const idleLabel = mode === 'draft' ? '✨ Draft with AI' : '✨ Polish with AI';
-  const loadingLabel = mode === 'draft' ? '⋯ Drafting…' : '⋯ Polishing…';
+  const idleLabel = mode === 'draft' ? 'Draft with AI' : 'Polish with AI';
+  const loadingLabel = mode === 'draft' ? 'Drafting…' : 'Polishing…';
 
   async function start() {
     abortRef.current = new AbortController();
@@ -126,6 +127,11 @@ export function BioAssistCard({
   const showCard = state.kind !== 'idle';
   const isLoading = state.kind === 'streaming';
 
+  const reducedMotion = useReducedMotion();
+  const iconTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+
   return (
     <div className="space-y-2">
       <Button
@@ -133,10 +139,27 @@ export function BioAssistCard({
         variant="secondary"
         onClick={start}
         disabled={isLoading}
-        className="w-fit"
+        className="inline-flex w-fit items-center gap-1.5"
         aria-live="polite"
       >
-        {isLoading ? loadingLabel : idleLabel}
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span
+            key={isLoading ? 'loading' : 'idle'}
+            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+            exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            transition={iconTransition}
+            className="inline-flex"
+            aria-hidden="true"
+          >
+            {isLoading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Sparkles className="size-4" />
+            )}
+          </motion.span>
+        </AnimatePresence>
+        <span>{isLoading ? loadingLabel : idleLabel}</span>
       </Button>
 
       {showCard && (
