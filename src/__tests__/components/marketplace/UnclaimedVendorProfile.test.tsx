@@ -30,7 +30,7 @@ describe('<UnclaimedVendorProfile>', () => {
     render(
       <UnclaimedVendorProfile vendor={fakeVendor} onOpenOwnership={vi.fn()} onIgClick={vi.fn()} />
     );
-    expect(screen.getByText(/hasn't joined Baazar/i)).toBeInTheDocument();
+    expect(screen.getByText(/hasn['’]t joined Baazar/i)).toBeInTheDocument();
   });
 
   it('hides IG handle until click; reveals + calls onIgClick when revealed', () => {
