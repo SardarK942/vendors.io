@@ -21,6 +21,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
   const enterSpring = reducedMotion
     ? { duration: 0 }
     : { type: 'spring' as const, duration: 0.22, bounce: 0 };
+  const exitTransition = reducedMotion ? { duration: 0 } : { duration: 0.12 };
 
   // Click outside closes
   useEffect(() => {
@@ -52,6 +53,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
       aria-label="Notifications"
       initial={{ y: -4, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
+      exit={{ y: -2, opacity: 0, transition: exitTransition }}
       transition={enterSpring}
     >
       <motion.div

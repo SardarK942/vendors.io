@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Search } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { findCategory } from './search/categories';
@@ -137,11 +138,13 @@ export function SearchBar({
                 panelId="search-panel-when"
                 onClick={() => toggleSegment('when')}
               />
-              {activeSegment === 'when' && (
-                <Panel id="search-panel-when">
-                  <WhenPicker selected={state.date} onSelect={handleDatePicked} />
-                </Panel>
-              )}
+              <AnimatePresence initial={false}>
+                {activeSegment === 'when' && (
+                  <Panel id="search-panel-when">
+                    <WhenPicker selected={state.date} onSelect={handleDatePicked} />
+                  </Panel>
+                )}
+              </AnimatePresence>
             </div>
             <div className="relative flex">
               <SegmentButton
@@ -153,11 +156,13 @@ export function SearchBar({
                 panelId="search-panel-category"
                 onClick={() => toggleSegment('category')}
               />
-              {activeSegment === 'category' && (
-                <Panel id="search-panel-category" widthClass="w-[260px]">
-                  <CategoryPicker selected={state.category} onSelect={handleCategoryPicked} />
-                </Panel>
-              )}
+              <AnimatePresence initial={false}>
+                {activeSegment === 'category' && (
+                  <Panel id="search-panel-category" widthClass="w-[260px]">
+                    <CategoryPicker selected={state.category} onSelect={handleCategoryPicked} />
+                  </Panel>
+                )}
+              </AnimatePresence>
             </div>
             {/* What segment: inline input (not a button) — type directly into the segment. */}
             {/* Panel below shows suggestions only, no second input. */}
@@ -202,11 +207,13 @@ export function SearchBar({
                   state.query ? 'font-medium text-ink' : 'text-ink-muted'
                 )}
               />
-              {activeSegment === 'what' && (
-                <Panel id="search-panel-what" widthClass="w-[340px]">
-                  <WhatSuggestions query={state.query} onSubmit={handleQuerySubmit} />
-                </Panel>
-              )}
+              <AnimatePresence initial={false}>
+                {activeSegment === 'what' && (
+                  <Panel id="search-panel-what" widthClass="w-[340px]">
+                    <WhatSuggestions query={state.query} onSubmit={handleQuerySubmit} />
+                  </Panel>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -253,23 +260,28 @@ interface PanelProps {
 /**
  * Docked picker panel. Anchored to its parent segment wrapper via `left-0`;
  * the wrapper must be position:relative. Width defaults to 320px (WhenPicker).
+ * Wrapped in `<AnimatePresence>` at each call site to drive exit on close.
  */
 function Panel({ id, widthClass = 'w-[320px]', children }: PanelProps) {
+  const reducedMotion = useReducedMotion();
+  const enterTransition = reducedMotion ? { duration: 0 } : { duration: 0.1 };
+  const exitTransition = reducedMotion ? { duration: 0 } : { duration: 0.1 };
   return (
-    <div
+    <motion.div
       id={id}
       role="dialog"
       aria-modal="false"
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0, transition: enterTransition }}
+      exit={{ opacity: 0, y: -8, transition: exitTransition }}
       className={cn(
         'absolute left-0 top-[calc(100%+12px)] z-30',
         'rounded-lg border border-hairline bg-cream p-5',
         'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]',
-        'duration-200 animate-in fade-in-0',
-        'motion-reduce:animate-none',
         widthClass
       )}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

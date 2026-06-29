@@ -87,24 +87,30 @@ export function HomepageWordmarkPanel() {
         animate={motionAnimate}
         transition={stagger(0.1)}
       >
-        {SCRIPTS.map((s, i) => (
-          <h2
-            key={s.label}
-            aria-hidden="true"
-            className={`duration-[600ms] absolute left-0 top-0 m-0 tracking-[-0.03em] text-ink transition-opacity ${
-              i === index ? 'opacity-100' : 'opacity-0'
-            }`}
-            style={{
-              fontFamily: s.font,
-              fontSize: 'inherit',
-              fontWeight: 400,
-              lineHeight: 'inherit',
-            }}
-          >
-            <span>{s.text}</span>
-            <span className="text-hot-pink">.</span>
-          </h2>
-        ))}
+        {SCRIPTS.map((s, i) => {
+          const isCurrent = i === index;
+          // Asymmetric crossfade: incoming layer fades in over 600ms,
+          // outgoing layer fades out over 400ms so the new script anchors the
+          // transition rather than the old one lingering.
+          return (
+            <h2
+              key={s.label}
+              aria-hidden="true"
+              className={`absolute left-0 top-0 m-0 tracking-[-0.03em] text-ink transition-opacity ${
+                isCurrent ? 'duration-[600ms] opacity-100' : 'duration-[400ms] opacity-0'
+              }`}
+              style={{
+                fontFamily: s.font,
+                fontSize: 'inherit',
+                fontWeight: 400,
+                lineHeight: 'inherit',
+              }}
+            >
+              <span>{s.text}</span>
+              <span className="text-hot-pink">.</span>
+            </h2>
+          );
+        })}
       </motion.div>
 
       <motion.div

@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import { Chip } from './Chip';
 import { PriceDropdown } from './PriceDropdown';
@@ -109,17 +110,19 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
         >
           {priceBandLabel}
         </Chip>
-        {activeDropdown === 'price' && (
-          <AnchoredPanel id="filter-panel-price" anchorRef={priceChipRef}>
-            <PriceDropdown
-              selected={state.priceBand}
-              onSelect={(b) => {
-                apply({ priceBand: b });
-                setActiveDropdown(null);
-              }}
-            />
-          </AnchoredPanel>
-        )}
+        <AnimatePresence initial={false}>
+          {activeDropdown === 'price' && (
+            <AnchoredPanel id="filter-panel-price" anchorRef={priceChipRef}>
+              <PriceDropdown
+                selected={state.priceBand}
+                onSelect={(b) => {
+                  apply({ priceBand: b });
+                  setActiveDropdown(null);
+                }}
+              />
+            </AnchoredPanel>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Languages */}
@@ -134,14 +137,16 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
         >
           Languages
         </Chip>
-        {activeDropdown === 'languages' && (
-          <AnchoredPanel id="filter-panel-languages" anchorRef={languagesChipRef}>
-            <LanguagesDropdown
-              selected={state.languages}
-              onChange={(next) => patch({ languages: next })}
-            />
-          </AnchoredPanel>
-        )}
+        <AnimatePresence initial={false}>
+          {activeDropdown === 'languages' && (
+            <AnchoredPanel id="filter-panel-languages" anchorRef={languagesChipRef}>
+              <LanguagesDropdown
+                selected={state.languages}
+                onChange={(next) => patch({ languages: next })}
+              />
+            </AnchoredPanel>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* All filters trigger */}
@@ -167,6 +172,9 @@ interface AnchoredPanelProps {
 function AnchoredPanel({ id, anchorRef, children }: AnchoredPanelProps) {
   const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null);
   const [mounted, setMounted] = React.useState(false);
+  const reducedMotion = useReducedMotion();
+  const enterTransition = reducedMotion ? { duration: 0 } : { duration: 0.1 };
+  const exitTransition = reducedMotion ? { duration: 0 } : { duration: 0.1 };
 
   const updatePos = React.useCallback(() => {
     if (anchorRef.current) {
@@ -193,21 +201,23 @@ function AnchoredPanel({ id, anchorRef, children }: AnchoredPanelProps) {
   if (!mounted || !coords) return null;
 
   return createPortal(
-    <div
+    <motion.div
       id={id}
       role="dialog"
       aria-modal="false"
       data-filter-panel="true"
       style={{ top: coords.top, left: coords.left }}
+      initial={{ opacity: 0, y: -8 }}
+      animate={{ opacity: 1, y: 0, transition: enterTransition }}
+      exit={{ opacity: 0, y: -8, transition: exitTransition }}
       className={cn(
         'fixed z-[100]',
         'rounded-lg border border-hairline bg-cream p-2',
-        'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]',
-        'duration-200 animate-in fade-in-0 motion-reduce:animate-none'
+        'shadow-[0_12px_28px_rgba(27,20,20,0.10),_0_4px_8px_rgba(27,20,20,0.06)]'
       )}
     >
       {children}
-    </div>,
+    </motion.div>,
     document.body
   );
 }

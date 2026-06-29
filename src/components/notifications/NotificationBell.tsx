@@ -123,22 +123,24 @@ export function NotificationBell({ userId }: Props) {
         </AnimatePresence>
       </button>
 
-      {open && (
-        <NotificationDropdown
-          notifications={notifications}
-          onClose={() => setOpen(false)}
-          onMarkRead={(id) => {
-            setNotifications((prev) =>
-              prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
-            );
-          }}
-          onMarkAllRead={() => {
-            setNotifications((prev) =>
-              prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() }))
-            );
-          }}
-        />
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <NotificationDropdown
+            notifications={notifications}
+            onClose={() => setOpen(false)}
+            onMarkRead={(id) => {
+              setNotifications((prev) =>
+                prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
+              );
+            }}
+            onMarkAllRead={() => {
+              setNotifications((prev) =>
+                prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() }))
+              );
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
