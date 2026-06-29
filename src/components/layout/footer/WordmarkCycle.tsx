@@ -106,6 +106,7 @@ export function WordmarkCycle({ className }: WordmarkCycleProps) {
           transitionTimingFunction: 'cubic-bezier(.22,1,.36,1)',
           fontFamily: script.cssFamily,
           fontSize: `${script.scaleMultiplier}em`,
+          willChange: 'opacity',
         }}
       >
         {script.glyph}
