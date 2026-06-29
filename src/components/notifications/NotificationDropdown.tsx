@@ -52,7 +52,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
           <button
             type="button"
             onClick={handleMarkAll}
-            className="rounded text-xs text-primary transition-colors hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+            className="inline-flex min-h-10 items-center rounded px-3 text-xs text-primary transition-[transform,color] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
           >
             Mark All Read
           </button>
@@ -81,7 +81,7 @@ export function NotificationDropdown({ notifications, onClose, onMarkRead, onMar
         <Link
           href="/dashboard/notifications"
           onClick={onClose}
-          className="block px-3 py-2 text-center text-xs font-medium text-primary hover:bg-accent"
+          className="block min-h-10 px-3 py-2 text-center text-xs font-medium leading-6 text-primary transition-[transform,background-color] hover:bg-accent active:scale-[0.96] motion-reduce:active:scale-100"
         >
           See all →
         </Link>

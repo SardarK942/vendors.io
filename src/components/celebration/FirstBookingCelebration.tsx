@@ -58,7 +58,7 @@ export function FirstBookingCelebration({
         <button
           type="button"
           onClick={handleDismiss}
-          className="w-full rounded-md bg-ink py-3 font-medium text-cream transition hover:-translate-y-px hover:bg-hot-pink hover:shadow-pink motion-reduce:transform-none motion-reduce:transition-none motion-reduce:hover:translate-y-0"
+          className="w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color,box-shadow] hover:-translate-y-px hover:bg-hot-pink hover:shadow-pink active:scale-[0.96] motion-reduce:transform-none motion-reduce:transition-none motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
         >
           Got it →
         </button>

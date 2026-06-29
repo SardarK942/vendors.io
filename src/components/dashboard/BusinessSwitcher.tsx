@@ -63,7 +63,7 @@ export function BusinessSwitcher({ activeBusinessId, businesses }: BusinessSwitc
           role="combobox"
           aria-expanded={open}
           aria-label="Switch business"
-          className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-50"
+          className="flex items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-sm font-medium transition-[transform,background-color] hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
           disabled={isPending}
         >
           <Building2 className="h-4 w-4 text-muted-foreground" aria-hidden="true" />
