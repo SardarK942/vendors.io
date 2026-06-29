@@ -232,7 +232,11 @@ export function SearchBar({
               orbSize
             )}
           >
-            <Search className="h-[18px] w-[18px] stroke-cream" strokeWidth={2} aria-hidden="true" />
+            <Search
+              className="h-[18px] w-[18px] translate-x-[0.5px] stroke-cream"
+              strokeWidth={2}
+              aria-hidden="true"
+            />
           </button>
         </form>
       </div>
