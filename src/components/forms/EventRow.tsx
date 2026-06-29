@@ -130,7 +130,7 @@ export function EventRow({
           <input
             id={dateId}
             type="date"
-            className="w-full rounded border p-2 text-sm"
+            className="w-full rounded-md border p-2 text-sm"
             value={data.event_date}
             onChange={(e) => onChange(index, { event_date: e.target.value })}
             required
@@ -147,7 +147,7 @@ export function EventRow({
           <input
             id={startTimeId}
             type="time"
-            className="w-full rounded border p-2 text-sm"
+            className="w-full rounded-md border p-2 text-sm"
             value={data.event_start_time.slice(11, 16)}
             onChange={(e) => {
               const [h, m] = e.target.value.split(':');
@@ -165,7 +165,7 @@ export function EventRow({
           <input
             id={endTimeId}
             type="time"
-            className="w-full rounded border p-2 text-sm"
+            className="w-full rounded-md border p-2 text-sm"
             value={data.event_end_time.slice(11, 16)}
             onChange={(e) => {
               const [h, m] = e.target.value.split(':');
@@ -185,7 +185,7 @@ export function EventRow({
         </label>
 
         {isAtVendor ? (
-          <div className="space-y-1 rounded border bg-muted/50 p-2 text-sm">
+          <div className="space-y-1 rounded-md border bg-muted/50 p-2 text-sm">
             <p className="text-muted-foreground">
               Service at {vendor?.business_name ? `${vendor.business_name} — ` : ''}
               {vendor?.base_city}, {vendor?.base_state}
@@ -240,7 +240,7 @@ export function EventRow({
           <input
             id={venueNameId}
             type="text"
-            className="w-full rounded border p-2 text-sm"
+            className="w-full rounded-md border p-2 text-sm"
             placeholder="e.g. The Drake Hotel"
             value={data.location_name ?? ''}
             onChange={(e) => onChange(index, { location_name: e.target.value || null })}

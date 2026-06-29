@@ -150,7 +150,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
                 type="button"
                 onClick={() => setRole('couple')}
                 aria-pressed={role === 'couple'}
-                className={`rounded-lg border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
+                className={`rounded-md border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   role === 'couple'
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'
@@ -165,7 +165,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
                 type="button"
                 onClick={() => setRole('vendor')}
                 aria-pressed={role === 'vendor'}
-                className={`rounded-lg border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
+                className={`rounded-md border-2 p-4 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   role === 'vendor'
                     ? 'border-primary bg-primary/5'
                     : 'border-border hover:border-primary/50'

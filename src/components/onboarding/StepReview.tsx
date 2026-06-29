@@ -200,7 +200,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
                   alt="Portfolio"
                   width={80}
                   height={80}
-                  className="h-20 w-20 rounded-md object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                  className="h-20 w-20 rounded object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                 />
               ))}
             </div>

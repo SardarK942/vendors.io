@@ -263,7 +263,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 id={fullNameId}
                 type="text"
                 required
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded-md border p-2 text-sm"
                 placeholder="e.g. Aisha & Ahmed Khan"
                 value={coupleFullName}
                 onChange={(e) => setCoupleFullName(e.target.value)}
@@ -278,7 +278,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 id={phoneId}
                 type="tel"
                 required
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded-md border p-2 text-sm"
                 placeholder="+1 (555) 000-0000"
                 value={couplePhone}
                 onChange={(e) => setCouplePhone(e.target.value)}
@@ -299,7 +299,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                   min={1}
                   inputMode="numeric"
                   autoComplete="off"
-                  className="w-full rounded border p-2 text-sm"
+                  className="w-full rounded-md border p-2 text-sm"
                   value={guestCounts[1]}
                   onChange={(e) =>
                     setGuestCounts({ ...guestCounts, 1: parseInt(e.target.value, 10) || 1 })
@@ -322,7 +322,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                       min={1}
                       inputMode="numeric"
                       autoComplete="off"
-                      className="w-full rounded border p-2 text-sm"
+                      className="w-full rounded-md border p-2 text-sm"
                       value={guestCounts[seq]}
                       onChange={(e) =>
                         setGuestCounts({
@@ -341,7 +341,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               </label>
               <textarea
                 id={specialRequestsId}
-                className="min-h-[80px] w-full rounded border p-2 text-sm"
+                className="min-h-[80px] w-full rounded-md border p-2 text-sm"
                 placeholder="Any special needs, dietary restrictions, setup requests…"
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
