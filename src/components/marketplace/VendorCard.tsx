@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Heart, ArrowRight, Camera } from 'lucide-react';
 import { cn, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { formatShortDate, formatWeddingCount, formatPriceFromCents } from './vendor-card-helpers';
@@ -46,6 +47,10 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const { savedIds, toggle } = useSavedVendors();
   const isSaved = savedIds.has(vendor.id);
   const heartRef = React.useRef<HTMLButtonElement>(null);
+  const reducedMotion = useReducedMotion();
+  const heartTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
@@ -148,7 +153,22 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             isSaved ? 'text-red-500' : 'text-ink/50 hover-pink-text'
           )}
         >
-          <Heart className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')} strokeWidth={2} />
+          <AnimatePresence initial={false} mode="popLayout">
+            <motion.span
+              key={isSaved ? 'filled' : 'outline'}
+              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              transition={heartTransition}
+              className="inline-flex"
+              aria-hidden="true"
+            >
+              <Heart
+                className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')}
+                strokeWidth={2}
+              />
+            </motion.span>
+          </AnimatePresence>
         </button>
 
         {/* HV-B arrow orb — hover only, hidden in compact */}

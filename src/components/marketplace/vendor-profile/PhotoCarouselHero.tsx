@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Heart } from 'lucide-react';
 import { useSavedVendors } from '@/components/marketplace/SavedVendorsProvider';
 
@@ -22,6 +23,10 @@ export function PhotoCarouselHero({
   const scrollerRef = useRef<HTMLDivElement>(null);
   const { savedIds, toggle } = useSavedVendors();
   const isSaved = savedIds.has(vendorId);
+  const reducedMotion = useReducedMotion();
+  const heartTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   if (images.length === 0) return null;
 
@@ -68,10 +73,19 @@ export function PhotoCarouselHero({
         aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
         className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink/70 backdrop-blur transition-[transform,background-color] hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
       >
-        <Heart
-          className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-white'}`}
-          aria-hidden="true"
-        />
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span
+            key={isSaved ? 'filled' : 'outline'}
+            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+            exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            transition={heartTransition}
+            className="inline-flex"
+            aria-hidden="true"
+          >
+            <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-white'}`} />
+          </motion.span>
+        </AnimatePresence>
       </button>
 
       <div
