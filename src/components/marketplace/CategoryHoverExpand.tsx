@@ -1,13 +1,5 @@
 'use client';
 
-/**
- * HoverExpand pattern adapted from Skiper UI 52 HoverExpand_001 (https://skiper-ui.com).
- * Original by @gurvinder-singh02 / @Gur__vi.
- * Adapted to M+ design tokens + Baazar's 11 featured vendor categories.
- *
- * Renders only at lg: breakpoint and up. Mobile uses CategoryHoverExpandMobile.
- */
-
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';

@@ -101,7 +101,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
                 column is wired into applyVendorFilters (currently a no-op).
                 Vendors do have data in served_event_types per Bucket J — what's
                 missing is the query-side filter. Re-enable once that ships. */}
-            <CategorySpecificSection category={category} />
+            <CategorySpecificSection category={category} state={state} patch={patch} />
           </div>
 
           {/* Sticky footer */}

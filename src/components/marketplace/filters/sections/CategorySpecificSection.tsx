@@ -1,25 +1,40 @@
 'use client';
-import * as React from 'react';
+
+import { getSubcategoriesForCategory, SUBCATEGORY_SECTION_LABEL } from '@/lib/vendor-subcategories';
+import { SubcategoryMultiSelect } from '@/components/onboarding/SubcategoryMultiSelect';
+import type { FilterState } from '../use-filter-state';
 
 interface Props {
   category: string | null;
+  state: FilterState;
+  patch: (changes: Partial<FilterState>) => void;
 }
 
 /**
- * Conditional section — only renders when search pill has a Category set.
- * UI placeholder for Day-1; per-category content (Photography style, Mehndi style,
- * etc.) ships as follow-up PRs as backing data lands.
+ * Conditional section — renders only when the active category has a
+ * subcategory taxonomy registered in SUBCATEGORIES_BY_CATEGORY. Day 1:
+ * carts only. Selection is staged into local FilterState via patch() and
+ * commits when the sheet's Apply footer fires (existing flow).
+ *
+ * Reuses SubcategoryMultiSelect (the wizard + dashboard chip group) so the
+ * chip styling stays in one place. Sorts on update for stable URL output.
  */
-export function CategorySpecificSection({ category }: Props) {
-  if (!category || category === 'all') return null;
+export function CategorySpecificSection({ category, state, patch }: Props) {
+  const options = getSubcategoriesForCategory(category);
+  if (options.length === 0) return null;
+
+  const heading = (category && SUBCATEGORY_SECTION_LABEL[category]) || 'Type';
+
   return (
     <section className="border-b border-hairline px-7 py-5">
-      <h5 className="mb-1 font-display text-[14px] font-bold tracking-[-0.005em] text-ink">
-        More about {category}
+      <h5 className="mb-3 font-display text-[14px] font-bold tracking-[-0.005em] text-ink">
+        {heading}
       </h5>
-      <p className="text-[11px] text-ink-soft">
-        Style, dietary options, music genres, and other category-specific filters coming soon.
-      </p>
+      <SubcategoryMultiSelect
+        category={category}
+        selected={state.subcategories ?? []}
+        onChange={(next) => patch({ subcategories: [...next].sort() })}
+      />
     </section>
   );
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
 
 const patchVendorProfileSchema = z.object({
   business_name: z.string().min(2).max(100).optional(),
@@ -20,6 +21,7 @@ const patchVendorProfileSchema = z.object({
   base_address_public: z.boolean().optional(),
   // pause toggle
   is_active: z.boolean().optional(),
+  subcategories: z.array(z.string()).optional(),
 });
 
 export const PATCH = withErrorBoundary(async (request: NextRequest) => {
@@ -54,6 +56,22 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
     }
   }
 
+  if (parsed.subcategories !== undefined) {
+    // Re-load the row's category so validation isn't trusting client input.
+    const { data: row } = await supabase
+      .from('vendor_profiles')
+      .select('category')
+      .eq('id', existing.id)
+      .single();
+    const valid = validSubcategorySlugs((row?.category as string) ?? '');
+    if (valid.size === 0 && parsed.subcategories.length > 0) {
+      throw new HttpError(400, 'This category does not support subcategories');
+    }
+    if (!parsed.subcategories.every((s) => valid.has(s))) {
+      throw new HttpError(400, 'Invalid subcategory slug');
+    }
+  }
+
   const { data, error } = await supabase
     .from('vendor_profiles')
     .update({ ...parsed, updated_at: new Date().toISOString() })
@@ -62,7 +80,10 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: { code: 'UPDATE_FAILED', message: error.message } }, { status: 500 });
+    return NextResponse.json(
+      { error: { code: 'UPDATE_FAILED', message: error.message } },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ data }, { status: 200 });

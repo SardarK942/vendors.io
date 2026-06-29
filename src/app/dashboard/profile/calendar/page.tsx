@@ -3,7 +3,9 @@ import { redirect } from 'next/navigation';
 import { CalendarHoldsList } from '@/components/dashboard/CalendarHoldsList';
 import { BlockDateForm } from '@/components/dashboard/BlockDateForm';
 import { CapacityField } from '@/components/dashboard/CapacityField';
+import { ExternalCalendarSyncCard } from '@/components/dashboard/calendar/ExternalCalendarSyncCard';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
+import { getFeedStatus } from '@/services/calendar-feed.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +20,12 @@ export default async function CalendarPage() {
   const { profile: vendor } = await getActiveVendorProfile(supabase, user.id);
   if (!vendor) redirect('/dashboard/profile/setup');
   if (!vendor.onboarding_complete) redirect('/dashboard/profile/setup');
+
+  const feedStatus = await getFeedStatus(
+    supabase,
+    vendor.id,
+    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  );
 
   // Fetch all holds ordered by range; drop any without a booking_event for booking-type holds
   // that have stale data. For MVP, return all holds (no 90-day filter via tstzrange).
@@ -44,11 +52,12 @@ export default async function CalendarPage() {
 
   const holds = (rawHolds ?? []).map((h: RawHold) => {
     const be = h.booking_events;
-    let bookingEventsNorm:
-      | { event_type_label: string; bookings: { couple_full_name: string | null } }
-      | null = null;
+    let bookingEventsNorm: {
+      event_type_label: string;
+      bookings: { couple_full_name: string | null };
+    } | null = null;
     if (be) {
-      const b = Array.isArray(be.bookings) ? be.bookings[0] ?? null : be.bookings;
+      const b = Array.isArray(be.bookings) ? (be.bookings[0] ?? null) : be.bookings;
       bookingEventsNorm = {
         event_type_label: be.event_type_label,
         bookings: { couple_full_name: b?.couple_full_name ?? null },
@@ -71,6 +80,7 @@ export default async function CalendarPage() {
           Manage your availability and concurrent capacity.
         </p>
       </div>
+      <ExternalCalendarSyncCard initialStatus={feedStatus} />
       <CapacityField initial={vendor.concurrent_capacity} />
       <BlockDateForm />
       <CalendarHoldsList holds={holds} />
