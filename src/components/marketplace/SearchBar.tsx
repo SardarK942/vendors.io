@@ -219,6 +219,7 @@ export function SearchBar({
               'inline-flex flex-shrink-0 items-center justify-center',
               'duration-[220ms] ease-[cubic-bezier(.22,1,.36,1)] transition-[background-color,box-shadow,transform]',
               'hover:-translate-y-[1px] hover:bg-[#2A1E1E] hover:shadow-[0_6px_14px_rgba(27,20,20,0.18)]',
+              'active:scale-[0.96] motion-reduce:active:scale-100',
               'motion-reduce:transition-none motion-reduce:hover:transform-none',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
               orbSize

@@ -18,13 +18,13 @@ export function OwnerBanner({ onPreview, editHref }: OwnerBannerProps) {
         <button
           type="button"
           onClick={onPreview}
-          className="rounded-md border border-ink px-3 py-1.5 text-sm font-medium text-ink transition-colors hover-pink-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+          className="rounded-md border border-ink px-3 py-1.5 text-sm font-medium text-ink transition-[transform,border-color,color] hover-pink-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
         >
           View as Customer
         </button>
         <Link
           href={editHref}
-          className="duration-[180ms] rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[background-color,box-shadow,transform] ease-out hover:-translate-y-px hover:bg-hot-pink hover:shadow-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream motion-reduce:hover:translate-y-0"
+          className="duration-[180ms] rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[background-color,box-shadow,transform] ease-out hover:-translate-y-px hover:bg-hot-pink hover:shadow-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100"
         >
           Edit Profile
         </Link>
