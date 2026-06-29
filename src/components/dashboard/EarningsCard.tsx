@@ -39,7 +39,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
 
   if (!data) {
     return (
-      <div className="rounded-lg border border-ink/15 bg-cream p-6">
+      <div className="rounded-2xl border border-ink/15 bg-cream p-6">
         <p className="text-sm text-ink/60">Loading…</p>
       </div>
     );
@@ -47,7 +47,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
 
   if (data.bookingCount === 0) {
     return (
-      <div className="rounded-lg border border-ink/15 bg-cream p-6 text-center">
+      <div className="rounded-2xl border border-ink/15 bg-cream p-6 text-center">
         <p className="text-sm text-ink">You haven’t received any Baazar bookings yet.</p>
         <p className="mt-1 text-xs text-ink/60">
           When customers confirm bookings with you, you’ll see them here.
@@ -60,7 +60,7 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
   }
 
   return (
-    <div className="rounded-lg border border-ink/15 bg-cream p-6">
+    <div className="rounded-2xl border border-ink/15 bg-cream p-6">
       <div className="mb-4 flex flex-wrap gap-2">
         {RANGES.map((r) => (
           <button

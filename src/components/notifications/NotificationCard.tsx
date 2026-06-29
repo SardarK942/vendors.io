@@ -65,14 +65,14 @@ export function NotificationCard({ notification, onClick, showAllActions = false
   );
 
   const primaryClass =
-    'absolute inset-0 z-0 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
+    'absolute inset-0 z-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
   const srLabel = `${notification.title}${isUnread ? ' (unread)' : ''}`;
 
   return (
     <li
       className={`relative flex items-start gap-3 px-3 py-2 transition-colors focus-within:bg-accent hover:bg-accent ${
-        isUnread ? 'bg-blue-50/50' : ''
-      }`}
+        showAllActions ? 'rounded-xl' : ''
+      } ${isUnread ? 'bg-blue-50/50' : ''}`}
     >
       {/* Stretched primary action — sits behind action buttons via z-index. */}
       {notification.link ? (
@@ -102,7 +102,7 @@ export function NotificationCard({ notification, onClick, showAllActions = false
                 href={action.href(notification)}
                 onClick={onClick}
                 className={[
-                  'inline-flex items-center rounded px-3 py-1.5 text-sm',
+                  'inline-flex items-center rounded-md px-3 py-1.5 text-sm',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
                   action.variant === 'primary' && 'bg-ink text-cream',
                   action.variant === 'secondary' && 'border border-ink bg-cream text-ink',
