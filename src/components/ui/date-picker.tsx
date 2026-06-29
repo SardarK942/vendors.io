@@ -88,9 +88,9 @@ export function DatePicker({
           caption_label: 'font-display font-bold text-[15px] tracking-[-0.012em] text-ink',
           nav: 'flex items-center gap-1',
           button_previous:
-            'inline-flex items-center justify-center w-7 h-7 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors',
+            "relative inline-flex items-center justify-center w-9 h-9 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors before:absolute before:-inset-1 before:content-['']",
           button_next:
-            'inline-flex items-center justify-center w-7 h-7 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors',
+            "relative inline-flex items-center justify-center w-9 h-9 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors before:absolute before:-inset-1 before:content-['']",
           month_grid: 'w-full border-collapse',
           weekdays: 'flex',
           weekday:
