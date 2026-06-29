@@ -43,9 +43,13 @@ export function NotificationCard({ notification, onClick, showAllActions = false
   // Wrapper is a non-interactive list item. The primary click target is a
   // single stretched <Link> (or <button>) overlaid on the title/body so action
   // buttons can sit as SIBLINGS without nesting interactive elements.
+  // Wrap-vs-truncate: on the dedicated Notifications page (`showAllActions`),
+  // full title + body are valuable, so wrap them cleanly with `text-pretty`.
+  // In the dropdown (default), keep `truncate` so each row stays one-line tall.
+  const wrapClass = showAllActions ? 'text-pretty break-words' : 'truncate';
   const titleAndBody = (
     <>
-      <p className={`text-sm ${isUnread ? 'font-semibold' : 'font-normal'} truncate`}>
+      <p className={`text-sm ${isUnread ? 'font-semibold' : 'font-normal'} ${wrapClass}`}>
         {notification.title}
         {notification.email_status === 'failed' && (
           <span title="Email delivery failed" className="ml-1 text-hot-pink">
@@ -53,7 +57,7 @@ export function NotificationCard({ notification, onClick, showAllActions = false
           </span>
         )}
       </p>
-      <p className="truncate text-xs text-muted-foreground">{notification.body}</p>
+      <p className={`text-xs text-muted-foreground ${wrapClass}`}>{notification.body}</p>
       <p className="mt-0.5 text-[10px] uppercase tabular-nums tracking-wide text-muted-foreground">
         {timeAgo(notification.created_at)}
       </p>

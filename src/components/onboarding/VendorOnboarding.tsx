@@ -51,7 +51,9 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
-          <h2 className="text-2xl font-semibold text-ink">What types of events do you serve?</h2>
+          <h2 className="text-balance text-2xl font-semibold text-ink">
+            What types of events do you serve?
+          </h2>
           <p className="mt-2 text-sm text-ink/70">Pick 1-5. You can change this later.</p>
 
           <div className="mt-4 flex flex-wrap gap-2">
@@ -105,7 +107,7 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
-        <h2 className="text-2xl font-semibold text-ink">
+        <h2 className="text-balance text-2xl font-semibold text-ink">
           Here’s what customer requests look like:
         </h2>
 

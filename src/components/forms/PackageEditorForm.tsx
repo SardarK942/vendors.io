@@ -221,7 +221,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 autoComplete="off"
                 className="tabular-nums"
               />
-              <p className="text-xs text-muted-foreground">
+              <p className="text-pretty text-xs text-muted-foreground">
                 Set to 3 for a Mehndi + Shaadi + Walima bundle
               </p>
             </div>
@@ -291,7 +291,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
               defaultValue={initial?.vendor_notes_template ?? ''}
               placeholder="I’ll arrive 30 min early to set up. Please have…"
             />
-            <p className="text-xs text-muted-foreground">
+            <p className="text-pretty text-xs text-muted-foreground">
               Sent to customers automatically when you accept a booking.
             </p>
           </div>

@@ -102,7 +102,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
     return (
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
-          <h2 className="text-2xl font-semibold text-ink">Tell us about your event</h2>
+          <h2 className="text-balance text-2xl font-semibold text-ink">Tell us about your event</h2>
 
           <div className="mt-4 space-y-4">
             <label className="block">
@@ -175,7 +175,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
-        <h2 className="text-2xl font-semibold text-ink">Here’s what we found</h2>
+        <h2 className="text-balance text-2xl font-semibold text-ink">Here’s what we found</h2>
         <p className="mt-2 text-sm text-ink/70">
           Heart your favorites — they’ll be saved to your shortlist.
         </p>

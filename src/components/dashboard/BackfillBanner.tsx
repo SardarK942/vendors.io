@@ -39,8 +39,8 @@ export function BackfillBanner({ show: initialShow }: BackfillBannerProps) {
           <SlidersHorizontal className="size-4 stroke-ink" strokeWidth={2} aria-hidden="true" />
         </span>
         <div className="min-w-0">
-          <p className="text-sm font-medium text-ink">Complete your profile</p>
-          <p className="text-xs text-ink-muted">
+          <p className="text-balance text-sm font-medium text-ink">Complete your profile</p>
+          <p className="text-pretty text-xs text-ink-muted">
             Add languages, years in business, and response time so customers can find you.
           </p>
         </div>

@@ -33,7 +33,7 @@ export function FirstBookingCelebration({
   return (
     <Dialog open={open} onOpenChange={(o) => !o && handleDismiss()}>
       <DialogContent className="max-w-md">
-        <h2 className="text-2xl font-bold text-ink">
+        <h2 className="text-balance text-2xl font-bold text-ink">
           <span aria-hidden="true">🎉</span> Your first booking request is in!
         </h2>
         <p className="mt-2 text-sm text-ink/70">

@@ -99,7 +99,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
     <div className="max-w-2xl space-y-6">
       {pendingMatches && <ScrapedVendorMatchPrompt matches={pendingMatches} />}
       <div>
-        <h1 className="text-2xl font-bold">Tell us about your business</h1>
+        <h1 className="text-balance text-2xl font-bold">Tell us about your business</h1>
         <p className="text-sm text-muted-foreground">Step 1 of 6</p>
       </div>
 
@@ -190,7 +190,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         </p>
         {getError('bio') && <p className="mt-1 text-xs text-hot-pink">{getError('bio')}</p>}
         {data.bio.length > 0 && data.bio.length < 50 && (
-          <p className="mt-1 text-xs text-ink/60">
+          <p className="mt-1 text-pretty text-xs text-ink/60">
             Bios under 50 chars usually feel rushed. Two or three sentences works well.
           </p>
         )}

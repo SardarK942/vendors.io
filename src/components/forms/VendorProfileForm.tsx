@@ -220,7 +220,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
           <div className="space-y-3 border-t pt-4">
             <div>
               <h3 className="font-medium">Base Address</h3>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-pretty text-xs text-muted-foreground">
                 Required if any of your packages have &ldquo;At my location&rdquo; set. Your city
                 and state are always public.
               </p>

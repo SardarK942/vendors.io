@@ -80,8 +80,8 @@ export function StepReview({ profile, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Review your profile</h1>
-        <p className="text-sm text-muted-foreground">
+        <h1 className="text-balance text-2xl font-bold">Review your profile</h1>
+        <p className="text-pretty text-sm text-muted-foreground">
           Step 6 of 6 — check everything looks right before publishing.
         </p>
       </div>
@@ -211,7 +211,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       </div>
 
       {/* Fee disclosure */}
-      <p className="text-sm text-muted-foreground">
+      <p className="text-pretty text-sm text-muted-foreground">
         Baazar takes a 5% deposit at booking. Everything else you collect directly from the
         customer.
       </p>
@@ -219,7 +219,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       {/* Live preview */}
       <div className="space-y-2">
         <h2 className="font-semibold">Preview</h2>
-        <p className="text-xs text-muted-foreground">
+        <p className="text-pretty text-xs text-muted-foreground">
           This is how your listing will appear in the marketplace. Click to see the full profile.
         </p>
         <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
@@ -281,7 +281,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       )}
 
       <div className="rounded-md border border-ink/15 bg-cream/60 p-3">
-        <p className="text-xs text-ink/80">
+        <p className="text-pretty text-xs text-ink/80">
           By publishing your profile, you agree to Baazar’s terms. Customers pay a 5% deposit
           through Baazar at booking — that’s our platform fee. You collect the 95% balance directly
           from them. If you cancel a confirmed booking, the customer’s deposit is refunded in full.

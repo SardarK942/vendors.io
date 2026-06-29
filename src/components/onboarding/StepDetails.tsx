@@ -86,7 +86,9 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <header>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink">Profile details</h1>
+        <h1 className="text-balance font-display text-3xl font-bold tracking-tight text-ink">
+          Profile details
+        </h1>
         <p className="mt-2 text-sm text-ink-muted">
           Three quick questions to help customers find you.
         </p>

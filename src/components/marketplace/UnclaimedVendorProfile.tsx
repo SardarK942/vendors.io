@@ -51,14 +51,14 @@ export function UnclaimedVendorProfile({ vendor, onOpenOwnership, onIgClick }: P
         </div>
 
         <div className="space-y-3">
-          <h1 className="text-2xl font-semibold" translate="no">
+          <h1 className="text-balance text-2xl font-semibold" translate="no">
             {vendor.business_name}
           </h1>
           <p className="text-sm text-muted-foreground">
             {categoryLabel}
             {vendor.city ? ` · ${vendor.city}, ${vendor.state}` : ''}
           </p>
-          {vendor.bio && <p className="text-sm">{vendor.bio}</p>}
+          {vendor.bio && <p className="text-pretty text-sm">{vendor.bio}</p>}
 
           {vendor.instagram_handle && (
             <div>

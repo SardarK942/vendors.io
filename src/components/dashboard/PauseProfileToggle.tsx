@@ -72,7 +72,7 @@ export function PauseProfileToggle({ isActive }: Props) {
           {optimisticActive ? 'Active — visible in search' : 'Paused'}
         </Label>
       </div>
-      <p id={helperId} className="text-xs text-ink/60">
+      <p id={helperId} className="text-pretty text-xs text-ink/60">
         Hides profile from marketplace; existing bookings unaffected.
       </p>
       {error && (

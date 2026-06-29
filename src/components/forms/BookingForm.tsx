@@ -391,7 +391,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
               <span>Estimated Total</span>
               <span>{fmtUSD(estimatedTotal)}</span>
             </div>
-            <p className="pt-1 text-xs text-muted-foreground">
+            <p className="text-pretty pt-1 text-xs text-muted-foreground">
               Vendor may adjust the final price before deposit.
             </p>
           </CardContent>

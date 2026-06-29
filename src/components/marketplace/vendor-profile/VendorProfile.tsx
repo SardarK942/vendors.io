@@ -113,7 +113,7 @@ export function VendorProfile({
                 <h2 className="font-spectral text-xl font-semibold text-ink">
                   Choose your package
                 </h2>
-                <p className="mt-1 text-xs text-ink/70">
+                <p className="mt-1 text-pretty text-xs text-ink/70">
                   Compare side-by-side. All prices include setup, breakdown, and one attendant.
                 </p>
                 <div className="mt-4">
@@ -150,7 +150,7 @@ export function VendorProfile({
                   <h2 className="font-spectral text-xl font-semibold text-ink">
                     Choose your package
                   </h2>
-                  <p className="mt-1 text-xs text-ink/70">
+                  <p className="mt-1 text-pretty text-xs text-ink/70">
                     Compare side-by-side. All prices include setup, breakdown, and one attendant.
                   </p>
                   <div className="mt-4">
