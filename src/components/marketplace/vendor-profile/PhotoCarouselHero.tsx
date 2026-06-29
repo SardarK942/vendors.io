@@ -75,7 +75,7 @@ export function PhotoCarouselHero({
       </button>
 
       <div
-        className="absolute bottom-3 right-3 rounded bg-ink/70 px-2 py-1 text-xs text-cream"
+        className="absolute bottom-3 right-3 rounded-md bg-ink/70 px-2 py-1 text-xs text-cream"
         aria-live="polite"
         aria-atomic="true"
       >

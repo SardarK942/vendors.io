@@ -78,7 +78,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
 
         <div className="space-y-5">
           {/* Featured image */}
-          <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-muted">
+          <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-muted">
             <Image
               src={pkg.featured_image_url}
               alt={pkg.name}
@@ -114,7 +114,10 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           {pkg.gallery_image_urls.length > 0 && (
             <div className="grid grid-cols-2 gap-2">
               {pkg.gallery_image_urls.map((url, idx) => (
-                <div key={idx} className="relative aspect-[4/3] overflow-hidden rounded bg-muted">
+                <div
+                  key={idx}
+                  className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted"
+                >
                   <Image
                     src={url}
                     alt={`Gallery ${idx + 1}`}

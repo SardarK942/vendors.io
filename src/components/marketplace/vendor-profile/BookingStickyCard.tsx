@@ -35,7 +35,7 @@ export function BookingStickyCard({
     return (
       <aside
         data-testid="vendor-sticky-card"
-        className="sticky top-6 z-30 rounded-lg border-2 border-ink bg-white p-5 shadow-md"
+        className="sticky top-6 z-30 rounded-2xl border-2 border-ink bg-white p-5 shadow-md"
       >
         <p className="text-sm text-ink">
           This vendor hasn’t listed packages yet. Send them a custom request to ask about

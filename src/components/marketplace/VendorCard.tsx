@@ -71,7 +71,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
       href={`/vendors/${vendor.slug}`}
       data-vendor-slug={vendor.slug}
       className={cn(
-        'group relative block overflow-hidden rounded-lg border border-hairline bg-cream',
+        'group relative block overflow-hidden rounded-2xl border border-hairline bg-cream',
         'hover-lift-card'
       )}
     >
