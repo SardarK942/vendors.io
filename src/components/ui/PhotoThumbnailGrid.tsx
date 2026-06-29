@@ -65,6 +65,13 @@ function SortableThumbnail({
         loading="lazy"
         className="h-full w-full object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
       />
+      {/* TODO: shared-layout pill via layoutId — defer to followup PR.
+          The pill lives inside the relative wrapper that dnd-kit mutates with
+          CSS transforms during drag. Framer's layoutId measures post-transform
+          bounding rects, which would race with dnd-kit's drag offset math and
+          break the reorder UX. Animating this needs a sibling pill rendered
+          outside the SortableContext children, positioned via getBoundingRect
+          of the active thumb. Deferred. */}
       {showPrimarySelector && idx === 0 && (
         <span className="absolute left-1 top-1 z-10 rounded-full bg-hot-pink px-2 py-0.5 text-[10px] font-medium text-cream">
           Primary
