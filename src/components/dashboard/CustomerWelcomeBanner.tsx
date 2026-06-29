@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 
 interface Props {
@@ -18,6 +19,10 @@ export function CustomerWelcomeBanner({
   formattedEventDate,
 }: Props): React.JSX.Element {
   const [dismissed, setDismissed] = React.useState(false);
+  const reducedMotion = useReducedMotion();
+  const spring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   async function handleDismiss() {
     setDismissed(true);
@@ -36,13 +41,23 @@ export function CustomerWelcomeBanner({
       <div className="flex items-start justify-between">
         <div className="flex-1">
           {eventDate && formattedEventDate && daysUntilEvent !== null && (
-            <p className="text-balance text-lg font-semibold text-ink">
+            <motion.p
+              className="text-balance text-lg font-semibold text-ink"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={spring}
+            >
               Your event is on {formattedEventDate} — that’s {daysUntilEvent} days away.
-            </p>
+            </motion.p>
           )}
 
           {categories.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-2">
+            <motion.div
+              className="mt-3 flex flex-wrap gap-2"
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ ...spring, delay: reducedMotion ? 0 : 0.1 }}
+            >
               {categories.map((c) => (
                 <Link
                   key={c}
@@ -53,7 +68,7 @@ export function CustomerWelcomeBanner({
                   Browse {c}
                 </Link>
               ))}
-            </div>
+            </motion.div>
           )}
         </div>
         <button
