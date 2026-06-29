@@ -70,7 +70,7 @@ export function NotificationCard({ notification, onClick, showAllActions = false
 
   return (
     <li
-      className={`relative flex items-start gap-3 px-3 py-2 transition-colors focus-within:bg-accent hover:bg-accent ${
+      className={`relative flex items-start gap-3 px-3 py-2 transition-[transform,background-color] focus-within:bg-accent hover:bg-accent active:scale-[0.98] motion-reduce:active:scale-100 ${
         showAllActions ? 'rounded-xl' : ''
       } ${isUnread ? 'bg-blue-50/50' : ''}`}
     >
@@ -102,7 +102,8 @@ export function NotificationCard({ notification, onClick, showAllActions = false
                 href={action.href(notification)}
                 onClick={onClick}
                 className={[
-                  'inline-flex items-center rounded-md px-3 py-1.5 text-sm',
+                  'inline-flex min-h-10 items-center rounded-md px-3 py-2 text-sm',
+                  'transition-transform active:scale-[0.96] motion-reduce:active:scale-100',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
                   action.variant === 'primary' && 'bg-ink text-cream',
                   action.variant === 'secondary' && 'border border-ink bg-cream text-ink',

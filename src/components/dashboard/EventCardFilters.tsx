@@ -37,7 +37,7 @@ export function EventCardFilters({
             key={t.key}
             type="button"
             onClick={() => onTimeChange(t.key)}
-            className={`rounded px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
+            className={`rounded px-4 py-1.5 text-sm font-medium transition-[transform,background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100 ${
               timeFilter === t.key
                 ? 'bg-background text-foreground shadow-sm'
                 : 'text-muted-foreground hover:text-foreground'

@@ -169,7 +169,7 @@ function ManageView() {
               type="button"
               onClick={() => fileInputRef.current?.click()}
               disabled={isUploading}
-              className="inline-flex items-center gap-1 rounded-md border border-ink/15 bg-cream px-2 py-1 text-xs font-medium text-ink hover:bg-ink/5"
+              className="inline-flex items-center gap-1 rounded-md border border-ink/15 bg-cream px-2 py-1 text-xs font-medium text-ink transition-[transform,background-color] hover:bg-ink/5 active:scale-[0.96] motion-reduce:active:scale-100"
             >
               <Plus className="size-3" /> Add more
             </button>
@@ -199,7 +199,7 @@ function ManageView() {
           setView('default');
           close();
         }}
-        className="mt-4 w-full rounded-lg bg-ink py-2.5 text-sm font-medium text-cream hover:bg-ink/90"
+        className="mt-4 w-full rounded-lg bg-ink py-2.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 active:scale-[0.96] motion-reduce:active:scale-100"
       >
         Done
       </button>
@@ -261,7 +261,7 @@ export function PhotoUploaderDrawer({
           </div>
         )}
 
-        <FamilyDrawerTrigger className="inline-flex items-center gap-1.5 rounded-md border border-ink bg-cream px-3 py-2 text-sm font-medium text-ink hover:bg-ink/5">
+        <FamilyDrawerTrigger className="inline-flex items-center gap-1.5 rounded-md border border-ink bg-cream px-3 py-2 text-sm font-medium text-ink transition-[transform,background-color] hover:bg-ink/5 active:scale-[0.96] motion-reduce:active:scale-100">
           <Upload className="size-4" />
           {value.length === 0 ? triggerLabel.empty : `${triggerLabel.manage} (${value.length})`}
         </FamilyDrawerTrigger>

@@ -83,7 +83,7 @@ export function BookingBottomBar({
                         setSelectedId(p.id);
                         setPickerOpen(false);
                       }}
-                      className={`flex w-full items-center justify-between rounded-md border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
+                      className={`flex w-full items-center justify-between rounded-md border p-3 text-left transition-[transform,border-color,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.98] motion-reduce:active:scale-100 ${
                         isSel
                           ? 'border-ink bg-white'
                           : 'border-ink/15 bg-white hover:border-hot-pink'

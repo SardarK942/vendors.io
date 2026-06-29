@@ -66,7 +66,7 @@ export function PhotoCarouselHero({
         onClick={handleHeart}
         disabled={!interactive}
         aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
-        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-ink/70 backdrop-blur transition-colors hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+        className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-ink/70 backdrop-blur transition-[transform,background-color] hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
       >
         <Heart
           className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-white'}`}

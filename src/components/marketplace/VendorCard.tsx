@@ -72,7 +72,8 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
       data-vendor-slug={vendor.slug}
       className={cn(
         'group relative block overflow-hidden rounded-2xl border border-hairline bg-cream',
-        'hover-lift-card'
+        'hover-lift-card',
+        'transition-transform active:scale-[0.98] motion-reduce:active:scale-100'
       )}
     >
       {/* Photo */}
@@ -140,7 +141,8 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           className={cn(
             'absolute right-3 top-3 inline-flex size-[34px] items-center justify-center rounded-full',
             'border border-ink/10 bg-cream/95 backdrop-blur',
-            'transition-colors',
+            'transition-[transform,background-color,color]',
+            'active:scale-[0.96] motion-reduce:active:scale-100',
             'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
             isSaved ? 'text-red-500' : 'text-ink/50 hover-pink-text'
           )}
