@@ -19,9 +19,11 @@ import { BioAssistCard } from './BioAssistCard';
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { ScrapedVendorMatchPrompt } from './ScrapedVendorMatchPrompt';
 import type { ScrapedVendorMatch } from '@/lib/scraped-vendor/match';
+import { SubcategoryMultiSelect } from './SubcategoryMultiSelect';
+import { getSubcategoriesForCategory } from '@/lib/vendor-subcategories';
 
 interface Props {
-  initial: { businessName: string; category: string; bio: string };
+  initial: { businessName: string; category: string; bio: string; subcategories: string[] };
   profileId: string;
   mode: 'first' | 'next';
 }
@@ -99,7 +101,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
     <div className="max-w-2xl space-y-6">
       {pendingMatches && <ScrapedVendorMatchPrompt matches={pendingMatches} />}
       <div>
-        <h1 className="text-balance text-2xl font-bold">Tell us about your business</h1>
+        <h1 className="text-2xl font-bold">Tell us about your business</h1>
         <p className="text-sm text-muted-foreground">Step 1 of 6</p>
       </div>
 
@@ -158,10 +160,24 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         )}
       </div>
 
+      {getSubcategoriesForCategory(data.category).length > 0 && (
+        <div className="space-y-2">
+          <Label>Cart types you offer</Label>
+          <p className="text-xs text-ink/60">
+            Pick the cart types your business runs. You can change this later.
+          </p>
+          <SubcategoryMultiSelect
+            category={data.category}
+            selected={data.subcategories}
+            onChange={(next) => setData({ ...data, subcategories: next })}
+          />
+        </div>
+      )}
+
       <div className="space-y-2">
         <Label htmlFor="bio">Bio</Label>
         {showPrefillBanner && (
-          <div className="mb-2 flex items-start justify-between gap-2 rounded-md bg-cream/60 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]">
+          <div className="mb-2 flex items-start justify-between gap-2 rounded-md border border-ink/15 bg-cream/60 px-3 py-2">
             <p className="text-xs text-ink">
               Pulled from your Instagram bio — edit or polish below.
             </p>
@@ -169,7 +185,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
               type="button"
               onClick={() => setShowPrefillBanner(false)}
               aria-label="Dismiss notice"
-              className="relative inline-flex h-10 w-10 items-center justify-center rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+              className="rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             >
               <X className="size-3" />
             </button>
@@ -190,7 +206,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         </p>
         {getError('bio') && <p className="mt-1 text-xs text-hot-pink">{getError('bio')}</p>}
         {data.bio.length > 0 && data.bio.length < 50 && (
-          <p className="mt-1 text-pretty text-xs text-ink/60">
+          <p className="mt-1 text-xs text-ink/60">
             Bios under 50 chars usually feel rushed. Two or three sentences works well.
           </p>
         )}

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { SearchBar } from '@/components/marketplace/SearchBar';
+import { AiSearchInput } from '@/components/marketplace/AiSearchInput';
 import { HomepageWordmarkPanel } from '@/components/marketplace/HomepageWordmarkPanel';
 
 export interface HomepageHeroProps {
@@ -10,7 +10,7 @@ export interface HomepageHeroProps {
 
 /**
  * V2 asymmetric homepage hero: left = type stack (kicker + headline + subhead +
- * SearchBar + dual CTAs), right = brand panel (static Devanagari wordmark + 4-
+ * AI search + dual CTAs), right = brand panel (static Devanagari wordmark + 4-
  * script glyph row). Stacks to single-column under lg: breakpoint (the right
  * panel hides on mobile per HomepageWordmarkPanel's `hidden lg:block` class).
  *
@@ -39,8 +39,8 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
           wedding vendors. Discover, compare, and book with confidence.
         </p>
 
-        <div className="mb-4">
-          <SearchBar />
+        <div className="mb-4 max-w-[520px]">
+          <AiSearchInput variant="hero" />
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">

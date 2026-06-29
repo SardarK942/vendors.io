@@ -39,7 +39,7 @@ describe('getCategoryVendorCounts', () => {
     expect(result.venue).toBe(0);
   });
 
-  it('ignores categories not in CATEGORIES_FEATURED (e.g., photobooth, invitations)', async () => {
+  it('counts photobooth + invitations now that they are featured', async () => {
     const sb = buildSupabase([
       { category: 'photography' },
       { category: 'photobooth' },
@@ -47,8 +47,8 @@ describe('getCategoryVendorCounts', () => {
     ]);
     const result = await getCategoryVendorCounts(sb);
     expect(result.photography).toBe(1);
-    expect(result).not.toHaveProperty('photobooth');
-    expect(result).not.toHaveProperty('invitations');
+    expect(result.photobooth).toBe(1);
+    expect(result.invitations).toBe(1);
   });
 
   it('returns all-zero map when query errors', async () => {
@@ -77,8 +77,10 @@ describe('getCategoryVendorCounts', () => {
         'decor',
         'dj',
         'hair_makeup',
+        'invitations',
         'live_music',
         'mehndi',
+        'photobooth',
         'photography',
         'venue',
         'videography',

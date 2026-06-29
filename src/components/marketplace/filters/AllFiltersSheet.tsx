@@ -67,7 +67,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
         <Drawer.Content
           className={cn(
             'fixed bottom-0 right-0 top-0 z-50 w-full overscroll-contain bg-cream sm:w-[480px]',
-            'flex flex-col shadow-[-12px_0_28px_rgba(27,20,20,0.10)]'
+            'flex flex-col border-l border-hairline shadow-[-12px_0_28px_rgba(27,20,20,0.10)]'
           )}
         >
           <Drawer.Title className="sr-only">All filters</Drawer.Title>
@@ -77,7 +77,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
           </Drawer.Description>
 
           {/* Header */}
-          <div className="flex items-center justify-between px-7 py-5 shadow-[0_1px_0_rgba(27,20,20,0.06),0_8px_12px_-12px_rgba(27,20,20,0.08)]">
+          <div className="flex items-center justify-between border-b border-hairline px-7 py-5">
             <h4 className="font-display text-[22px] font-bold tracking-[-0.012em] text-ink">
               All filters
             </h4>
@@ -85,7 +85,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
               type="button"
               onClick={() => onOpenChange(false)}
               aria-label="Close filters"
-              className="inline-flex size-10 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:border-ink"
+              className="inline-flex size-8 items-center justify-center rounded-full border border-hairline text-ink transition-colors hover:border-ink"
             >
               <X className="size-4" strokeWidth={2} aria-hidden="true" />
             </button>
@@ -101,11 +101,11 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
                 column is wired into applyVendorFilters (currently a no-op).
                 Vendors do have data in served_event_types per Bucket J — what's
                 missing is the query-side filter. Re-enable once that ships. */}
-            <CategorySpecificSection category={category} />
+            <CategorySpecificSection category={category} state={state} patch={patch} />
           </div>
 
           {/* Sticky footer */}
-          <div className="flex items-center justify-between bg-cream px-7 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-1px_0_rgba(27,20,20,0.06),0_-8px_12px_-12px_rgba(27,20,20,0.08)]">
+          <div className="flex items-center justify-between border-t border-hairline bg-cream px-7 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <button
               type="button"
               onClick={handleClear}
@@ -122,13 +122,11 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
               disabled={count === 0}
               aria-live="polite"
             >
-              <span className="tabular-nums">
-                {countLoading
-                  ? 'Counting…'
-                  : count === 0
-                    ? 'No matches'
-                    : `Show ${count == null ? '—' : fmtCount(count)} vendors`}
-              </span>
+              {countLoading
+                ? 'Counting…'
+                : count === 0
+                  ? 'No matches'
+                  : `Show ${count == null ? '—' : fmtCount(count)} vendors`}
             </Button>
           </div>
         </Drawer.Content>
