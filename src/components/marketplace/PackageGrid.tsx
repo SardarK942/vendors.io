@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
@@ -54,6 +55,10 @@ export function PackageGrid({
   featuredPackageId,
 }: Props) {
   const [selected, setSelected] = useState<PackageWithAddons | null>(null);
+  const reducedMotion = useReducedMotion();
+  const badgeSpring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   if (packages.length === 0) return null;
 
@@ -107,11 +112,20 @@ export function PackageGrid({
               className="relative"
               data-pkg-featured={p.id === featuredPackageId ? 'true' : undefined}
             >
-              {p.id === featuredPackageId && (
-                <span className="absolute -top-2.5 left-4 z-10 rounded-full bg-hot-pink px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cream">
-                  Most popular
-                </span>
-              )}
+              <AnimatePresence initial={false}>
+                {p.id === featuredPackageId && (
+                  <motion.span
+                    key="most-popular"
+                    initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                    animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                    exit={{ scale: 0.8, opacity: 0 }}
+                    transition={badgeSpring}
+                    className="absolute -top-2.5 left-4 z-10 rounded-full bg-hot-pink px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-cream"
+                  >
+                    Most popular
+                  </motion.span>
+                )}
+              </AnimatePresence>
               <button
                 type="button"
                 onClick={() => {

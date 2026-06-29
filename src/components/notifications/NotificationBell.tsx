@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
@@ -90,6 +91,11 @@ export function NotificationBell({ userId }: Props) {
   }, [userId, supabase]);
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const reducedMotion = useReducedMotion();
+  const badgeEnter = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+  const badgeExit = reducedMotion ? { duration: 0 } : { duration: 0.15 };
 
   return (
     <div className="relative">
@@ -100,15 +106,21 @@ export function NotificationBell({ userId }: Props) {
         aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
       >
         <Bell className="h-5 w-5" aria-hidden="true" />
-        {unreadCount > 0 && (
-          <span
-            className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold tabular-nums text-white"
-            aria-live="polite"
-            aria-atomic="true"
-          >
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
+        <AnimatePresence initial={false}>
+          {unreadCount > 0 && (
+            <motion.span
+              key="badge"
+              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: badgeEnter }}
+              exit={{ scale: 0.8, opacity: 0, transition: badgeExit }}
+              className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold tabular-nums text-white"
+              aria-live="polite"
+              aria-atomic="true"
+            >
+              {unreadCount > 9 ? '9+' : unreadCount}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </button>
 
       {open && (

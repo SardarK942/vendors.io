@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import type { Database, NotificationType } from '@/types/database.types';
 import { getActionsFor } from './actions';
 import { fmtRelative } from '@/lib/intl';
@@ -36,6 +37,11 @@ interface Props {
 
 export function NotificationCard({ notification, onClick, showAllActions = false }: Props) {
   const isUnread = !notification.read_at;
+  const reducedMotion = useReducedMotion();
+  const spring = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+  const dotExit = reducedMotion ? { duration: 0 } : { duration: 0.15 };
 
   const allActions = getActionsFor(notification);
   const visibleActions = showAllActions ? allActions : allActions.slice(0, 1);
@@ -118,14 +124,20 @@ export function NotificationCard({ notification, onClick, showAllActions = false
           </div>
         )}
       </div>
-      {isUnread && (
-        <span
-          className="relative z-10 h-2 w-2 shrink-0 rounded-full bg-blue-500"
-          aria-hidden="true"
-        >
-          <span className="sr-only">Unread</span>
-        </span>
-      )}
+      <AnimatePresence initial={false}>
+        {isUnread && (
+          <motion.span
+            key="unread-dot"
+            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: spring }}
+            exit={{ scale: 0.8, opacity: 0, transition: dotExit }}
+            className="relative z-10 h-2 w-2 shrink-0 rounded-full bg-blue-500"
+            aria-hidden="true"
+          >
+            <span className="sr-only">Unread</span>
+          </motion.span>
+        )}
+      </AnimatePresence>
     </li>
   );
 }
