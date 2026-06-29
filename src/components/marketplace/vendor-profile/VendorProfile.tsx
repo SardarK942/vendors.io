@@ -146,7 +146,7 @@ export function VendorProfile({
               <IdentityPanel vendor={vendor} />
 
               {packages.length > 0 && (
-                <div id="packages-section" className="border-t border-ink/10 pt-8">
+                <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
                   <h2 className="font-spectral text-xl font-semibold text-ink">
                     Choose your package
                   </h2>
@@ -187,7 +187,7 @@ export function VendorProfile({
 
         {/* Reviews — full-width below everything on both layouts */}
         {hasReviews && (
-          <div id="reviews-section" className="mt-12 border-t border-ink/10 pt-8">
+          <div id="reviews-section" className="mt-12 pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
             <div className="mb-6 flex items-center gap-3">
               <h2 className="font-spectral text-xl font-semibold text-ink">Reviews</h2>
               <span className="text-2xl font-bold tabular-nums text-ink">

@@ -35,7 +35,7 @@ export function BookingStickyCard({
     return (
       <aside
         data-testid="vendor-sticky-card"
-        className="sticky top-6 z-30 rounded-2xl border-2 border-ink bg-white p-5 shadow-md"
+        className="sticky top-6 z-30 rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]"
       >
         <p className="text-sm text-ink">
           This vendor hasn’t listed packages yet. Send them a custom request to ask about
@@ -62,7 +62,7 @@ export function BookingStickyCard({
   return (
     <aside
       data-testid="vendor-sticky-card"
-      className="sticky top-6 z-30 rounded-lg border-2 border-ink bg-white p-5 shadow-md"
+      className="sticky top-6 z-30 rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]"
     >
       <span className="inline-block rounded-full bg-hot-pink/10 px-2.5 py-1 text-xs font-medium text-hot-pink">
         Most popular
@@ -114,7 +114,7 @@ export function BookingStickyCard({
 function Socials({ vendor }: { vendor: VendorRow }) {
   if (!vendor.instagram_handle && !vendor.website_url) return null;
   return (
-    <div className="mt-3 flex items-center justify-center gap-4 border-t border-ink/10 pt-3 text-xs">
+    <div className="mt-3 flex items-center justify-center gap-4 pt-3 text-xs shadow-[inset_0_1px_0_rgba(0,0,0,0.04)]">
       {vendor.instagram_handle && (
         <a
           href={`https://instagram.com/${vendor.instagram_handle}`}
@@ -142,7 +142,7 @@ function Socials({ vendor }: { vendor: VendorRow }) {
 
 function TrustRow({ vendor }: { vendor: VendorRow }) {
   return (
-    <div className="mt-4 flex items-start justify-around border-t border-ink/10 pt-4 text-center text-xs tabular-nums text-ink">
+    <div className="mt-4 flex items-start justify-around pt-4 text-center text-xs tabular-nums text-ink shadow-[inset_0_1px_0_rgba(0,0,0,0.04)]">
       {vendor.average_rating != null && vendor.review_count != null && vendor.review_count > 0 && (
         <div>
           <div className="font-semibold">★ {vendor.average_rating.toFixed(1)}</div>

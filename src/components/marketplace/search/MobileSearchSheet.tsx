@@ -137,7 +137,7 @@ export function MobileSearchSheet({
           </div>
 
           {/* Sticky footer */}
-          <div className="border-t border-hairline bg-cream px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="bg-cream px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] shadow-[0_-1px_0_rgba(27,20,20,0.06),0_-8px_12px_-12px_rgba(27,20,20,0.08)]">
             <Button variant="primary" size="lg" className="w-full" onClick={handleSubmit}>
               Search
             </Button>

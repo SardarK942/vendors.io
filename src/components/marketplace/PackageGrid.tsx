@@ -122,7 +122,9 @@ export function PackageGrid({
                   setSelected(p);
                 }}
                 className={`group w-full overflow-hidden rounded-xl text-left transition-shadow hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
-                  p.id === featuredPackageId ? 'border-2 border-ink' : 'border border-border'
+                  p.id === featuredPackageId
+                    ? 'shadow-[0_0_0_2px_rgb(27_20_20),0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]'
+                    : 'border border-border'
                 }`}
               >
                 <div className="relative aspect-[4/3] bg-muted">
