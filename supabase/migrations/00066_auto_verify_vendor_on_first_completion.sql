@@ -48,3 +48,20 @@ END;
 $$ LANGUAGE plpgsql
    SECURITY DEFINER
    SET search_path = public, pg_catalog;
+
+-- ============================================================================
+-- Backfill: verify all vendors who already have ≥1 completed booking
+-- ============================================================================
+-- The trigger only fires forward — vendors who completed bookings before this
+-- migration ran would still be `verified = false` despite having delivered.
+-- Backfill once here. Idempotent — only touches currently-unverified vendors
+-- that match the criterion; safe to re-run if the migration is replayed.
+
+UPDATE public.vendor_profiles
+SET verified = true
+WHERE verified = false
+  AND id IN (
+    SELECT DISTINCT vendor_profile_id
+    FROM public.bookings
+    WHERE status = 'completed'
+  );
