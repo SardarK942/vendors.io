@@ -113,7 +113,7 @@ export function VendorOnboarding({ open, onOpenChange }: Props): React.JSX.Eleme
 
         <div className="mt-4 space-y-3">
           {SAMPLE_VENDOR_REQUESTS.map((req, i) => (
-            <div key={i} className="rounded-md border border-ink/15 bg-cream p-4">
+            <div key={i} className="rounded-md bg-cream p-4 shadow-sm">
               <p className="text-sm font-medium text-ink">{req.event_type}</p>
               <p className="mt-1 text-xs text-ink/70">
                 {req.date} · {req.guest_count} guests · {req.budget_range}

@@ -133,7 +133,7 @@ export function CustomRequestForm({
         <div
           role="alert"
           aria-live="assertive"
-          className="text-pretty rounded-md border border-haldi/40 bg-haldi/10 p-3 text-sm text-ink"
+          className="text-pretty rounded-md bg-haldi/10 p-3 text-sm text-ink shadow-[0_1px_2px_rgba(180,140,40,0.10),0_4px_12px_rgba(180,140,40,0.06)]"
         >
           {state.message}
         </div>

@@ -89,7 +89,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       {/* Summary cards */}
       <div className="space-y-4">
         {/* Basics */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Basics</h2>
             <Link href="/dashboard/profile/setup/basics" className="text-xs text-primary underline">
@@ -115,7 +115,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
 
         {/* Location */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Location</h2>
             <Link
@@ -144,7 +144,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
 
         {/* Online */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Online presence</h2>
             <Link href="/dashboard/profile/setup/online" className="text-xs text-primary underline">
@@ -181,7 +181,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
 
         {/* Portfolio */}
-        <div className="rounded-md border p-4">
+        <div className="rounded-md p-4 shadow-sm">
           <div className="mb-2 flex items-center justify-between">
             <h2 className="font-semibold">Portfolio</h2>
             <Link
@@ -264,7 +264,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
 
       {publishError && (
         <div
-          className="rounded-md border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
+          className="rounded-md bg-destructive/10 p-4 text-sm text-destructive shadow-sm"
           role="alert"
           aria-live="assertive"
         >
@@ -280,7 +280,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
       )}
 
-      <div className="rounded-md border border-ink/15 bg-cream/60 p-3">
+      <div className="rounded-md bg-cream/60 p-3 shadow-sm">
         <p className="text-pretty text-xs text-ink/80">
           By publishing your profile, you agree to Baazar’s terms. Customers pay a 5% deposit
           through Baazar at booking — that’s our platform fee. You collect the 95% balance directly

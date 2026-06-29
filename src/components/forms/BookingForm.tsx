@@ -355,7 +355,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           <div
             role="alert"
             aria-live="assertive"
-            className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive"
+            className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive shadow-[0_1px_2px_rgba(225,29,72,0.10),0_4px_12px_rgba(225,29,72,0.06)]"
           >
             {error}
           </div>

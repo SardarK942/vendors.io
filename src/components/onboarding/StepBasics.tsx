@@ -161,7 +161,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
       <div className="space-y-2">
         <Label htmlFor="bio">Bio</Label>
         {showPrefillBanner && (
-          <div className="mb-2 flex items-start justify-between gap-2 rounded-md border border-ink/15 bg-cream/60 px-3 py-2">
+          <div className="mb-2 flex items-start justify-between gap-2 rounded-md bg-cream/60 px-3 py-2 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]">
             <p className="text-xs text-ink">
               Pulled from your Instagram bio — edit or polish below.
             </p>

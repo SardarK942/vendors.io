@@ -140,7 +140,7 @@ export function BioAssistCard({
       </Button>
 
       {showCard && (
-        <div className="rounded-lg border border-ink/20 bg-cream p-3">
+        <div className="rounded-lg bg-cream p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]">
           <div className="flex items-start justify-between gap-2">
             <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-ink/60">
               <Sparkles className="size-3" /> AI Suggestion
