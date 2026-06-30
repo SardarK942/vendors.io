@@ -74,13 +74,11 @@ export const metadata: Metadata = {
     template: '%s | Baazar',
   },
   description:
-    'Discover, compare, and book verified South Asian wedding vendors in Chicago. Editorial curation, transparent pricing, and secure hold deposits.',
+    'Discover, compare, and book verified cultural wedding vendors in Chicago. Editorial curation, transparent pricing, and secure hold deposits.',
   keywords: [
     'baazar',
-    'south asian wedding',
+    'cultural wedding',
     'chicago wedding vendors',
-    'desi wedding',
-    'indian wedding',
     'mehndi',
     'wedding marketplace',
   ],
