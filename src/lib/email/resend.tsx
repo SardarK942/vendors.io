@@ -359,16 +359,21 @@ export async function sendExpirationEmail(
 export async function sendCompletionEmailToVendor(
   vendorEmail: string,
   vendorName: string,
-  vendorPayoutCents: number
+  // Kept for backward compat; under the current payment model this is always
+  // 0 because Baazar retains the entire 5% deposit and the vendor collects
+  // the 95% balance directly from the couple off-platform. The email no
+  // longer references it.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _vendorPayoutCents: number
 ): Promise<boolean> {
   return sendEmail({
     to: vendorEmail,
-    subject: `Booking complete — ${fmtUsd(vendorPayoutCents)} earned`,
+    subject: `Booking complete — ${vendorName}`,
     html: `
       <h2>Booking marked complete</h2>
       <p>Hi ${escapeHtml(vendorName)},</p>
-      <p>A booking you delivered has been marked complete. You&rsquo;ve earned <strong>${fmtUsd(vendorPayoutCents)}</strong> on this booking via Baazar. Collect the remaining 95% balance directly from your customer per your payment terms.</p>
-      <p><a href="${appUrl()}/dashboard">View your earnings</a></p>
+      <p>A booking you delivered has been marked complete. Baazar&rsquo;s 5% platform fee was already collected at booking — the remaining 95% balance is yours to collect directly from your customer per your payment terms.</p>
+      <p><a href="${appUrl()}/dashboard">View your bookings</a></p>
       ${FOOTER}
     `,
   });
