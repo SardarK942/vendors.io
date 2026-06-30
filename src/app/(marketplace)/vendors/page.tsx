@@ -48,7 +48,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
       <SavedVendorsProvider>
         <div className="py-8">
           <div className="mb-6">
-            <h1 className="text-2xl font-bold">Browse Vendors</h1>
+            <h1 className="text-balance text-2xl font-bold">Browse Vendors</h1>
             <p className="text-muted-foreground">
               No matches for &ldquo;{rawQuery}&rdquo;. Try a broader query or clear filters.
             </p>
