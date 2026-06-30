@@ -94,7 +94,7 @@ export function ClaimVendorProfile({ onCreateNew }: ClaimVendorProfileProps) {
           inputMode="search"
         />
         <p className="text-xs text-muted-foreground">
-          We pre-populated a directory of Chicago Desi wedding vendors. Find yours to claim it.
+          We pre-populated a directory of Chicago cultural wedding vendors. Find yours to claim it.
         </p>
       </div>
 

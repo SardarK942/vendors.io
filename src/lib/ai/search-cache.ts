@@ -4,7 +4,7 @@
  * get/set are no-ops and every search round-trips to OpenAI + pgvector.
  *
  * Why cache: parseSearchQuery + generateEmbedding cost ~$0.00017 per call AND
- * add ~500ms latency. Common queries ("south asian wedding photographer") hit
+ * add ~500ms latency. Common queries ("cultural wedding photographer") hit
  * the same parse → same embedding → same vendor set. 1h TTL.
  */
 

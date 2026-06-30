@@ -22,7 +22,7 @@ export default function TermsPage() {
 
       <h2>1. Who we are</h2>
       <p>
-        Baazar.io (“the Platform”, “we”) is a marketplace that connects customers planning Desi
+        Baazar.io (“the Platform”, “we”) is a marketplace that connects customers planning cultural
         weddings with independent service vendors in the Chicago area. We are not a vendor
         ourselves; we facilitate introductions, quotes, and hold deposits.
       </p>
