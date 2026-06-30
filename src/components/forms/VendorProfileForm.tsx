@@ -7,6 +7,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Info } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import {
   Select,
@@ -227,7 +229,24 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="sla">Response Time (hours)</Label>
+            <Label htmlFor="sla" className="inline-flex items-center gap-1.5">
+              Response Time (hours)
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    aria-label="What does this mean?"
+                    className="cursor-help text-ink/60 hover:text-ink"
+                  >
+                    <Info className="h-3.5 w-3.5" aria-hidden="true" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  How long couples should expect before your first reply. Shown on your card so they
+                  set realistic expectations.
+                </TooltipContent>
+              </Tooltip>
+            </Label>
             <Input
               id="sla"
               name="sla"

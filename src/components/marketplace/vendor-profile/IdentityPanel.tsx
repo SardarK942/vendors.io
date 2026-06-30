@@ -1,5 +1,6 @@
 // src/components/marketplace/vendor-profile/IdentityPanel.tsx
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CheckCircle, MapPin, Languages, CalendarDays } from 'lucide-react';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import type { Database } from '@/types/database.types';
@@ -20,9 +21,16 @@ export function IdentityPanel({ vendor }: IdentityPanelProps) {
             {vendor.business_name}
           </h1>
           {vendor.verified && (
-            <Badge className="gap-1">
-              <CheckCircle className="h-3 w-3" aria-hidden="true" /> Verified
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge className="cursor-help gap-1" tabIndex={0}>
+                  <CheckCircle className="h-3 w-3" aria-hidden="true" /> Verified
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                Identity, insurance, and references confirmed by Baazar.
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink/80">

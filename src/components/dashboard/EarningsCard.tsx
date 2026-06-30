@@ -11,6 +11,7 @@ import {
   type AttributionRange,
 } from '@/services/payment.attribution';
 import { fmtUSD, fmtCount } from '@/lib/intl';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface EarningsCardProps {
   vendorProfileId: string;
@@ -87,7 +88,19 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
           <p className="text-2xl font-semibold tabular-nums text-ink">
             {fmtCount(data.bookingCount)}
           </p>
-          <p className="text-xs text-ink/60">bookings confirmed</p>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <p
+                tabIndex={0}
+                className="cursor-help text-xs text-ink/60 underline decoration-dotted underline-offset-2"
+              >
+                bookings confirmed
+              </p>
+            </TooltipTrigger>
+            <TooltipContent>
+              Bookings where the vendor accepted and the deposit cleared.
+            </TooltipContent>
+          </Tooltip>
         </div>
         <div>
           <p className="text-2xl font-semibold tabular-nums text-ink">
@@ -100,10 +113,36 @@ export function EarningsCard({ vendorProfileId }: EarningsCardProps) {
       <div className="mt-4 rounded-md bg-cream-soft p-4">
         <p className="text-sm text-ink">
           Net to you: <span className="font-semibold tabular-nums">{fmtUSD(data.netCents)}</span>{' '}
-          (95% of bookings driven)
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                className="cursor-help underline decoration-dotted underline-offset-2"
+              >
+                (95% of total bookings)
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              You keep 95% of every booking — collected directly from the couple. Baazar&apos;s 5%
+              is the deposit couples pay through us.
+            </TooltipContent>
+          </Tooltip>
         </p>
         <p className="mt-2 text-base text-ink">
-          ROI: every $1 paid to Baazar →{' '}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                className="cursor-help underline decoration-dotted underline-offset-2"
+              >
+                ROI:
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Booking dollars confirmed for every $1 of platform fees paid this period.
+            </TooltipContent>
+          </Tooltip>{' '}
+          every $1 paid to Baazar →{' '}
           <span className="font-bold tabular-nums text-hot-pink">${data.roiMultiple}</span> in
           bookings
         </p>
