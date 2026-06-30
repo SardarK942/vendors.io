@@ -9,6 +9,7 @@ import { cn, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { formatShortDate, formatWeddingCount, formatPriceFromCents } from './vendor-card-helpers';
 import { useSavedVendors } from './SavedVendorsProvider';
 import { showHeartConfettiToast } from '@/components/celebration/HeartConfetti';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Database } from '@/types/database.types';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
@@ -109,16 +110,24 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
 
         {/* Verified pill — hidden in compact mode to save space */}
         {vendor.verified && !compact && (
-          <span
-            className={cn(
-              'absolute left-3 top-3 inline-flex items-center gap-1.5',
-              'rounded-full border border-ink/10 bg-cream/95 px-2.5 py-1 backdrop-blur',
-              'text-[11px] font-semibold tracking-wide text-ink'
-            )}
-          >
-            <span aria-hidden="true" className="size-[7px] rounded-full bg-indigo" />
-            Verified
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                className={cn(
+                  'absolute left-3 top-3 inline-flex cursor-help items-center gap-1.5',
+                  'rounded-full border border-ink/10 bg-cream/95 px-2.5 py-1 backdrop-blur',
+                  'text-[11px] font-semibold tracking-wide text-ink'
+                )}
+              >
+                <span aria-hidden="true" className="size-[7px] rounded-full bg-indigo" />
+                Verified
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Identity, insurance, and references confirmed by Baazar.
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* "Available {date}" haldi pill — conditional, hidden in compact */}
@@ -137,39 +146,44 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
         )}
 
         {/* Save heart */}
-        <button
-          ref={heartRef}
-          type="button"
-          onClick={handleSaveClick}
-          aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
-          aria-pressed={isSaved}
-          className={cn(
-            'absolute right-3 top-3 inline-flex size-[34px] items-center justify-center rounded-full',
-            'before:absolute before:-inset-1 before:content-[""]',
-            'border border-ink/10 bg-cream/95 backdrop-blur',
-            'transition-[transform,background-color,color]',
-            'active:scale-[0.96] motion-reduce:active:scale-100',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
-            isSaved ? 'text-red-500' : 'text-ink/50 hover-pink-text'
-          )}
-        >
-          <AnimatePresence initial={false} mode="popLayout">
-            <motion.span
-              key={isSaved ? 'filled' : 'outline'}
-              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
-              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-              exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
-              transition={heartTransition}
-              className="inline-flex"
-              aria-hidden="true"
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              ref={heartRef}
+              type="button"
+              onClick={handleSaveClick}
+              aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
+              aria-pressed={isSaved}
+              className={cn(
+                'absolute right-3 top-3 inline-flex size-[34px] items-center justify-center rounded-full',
+                'before:absolute before:-inset-1 before:content-[""]',
+                'border border-ink/10 bg-cream/95 backdrop-blur',
+                'transition-[transform,background-color,color]',
+                'active:scale-[0.96] motion-reduce:active:scale-100',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
+                isSaved ? 'text-red-500' : 'text-ink/50 hover-pink-text'
+              )}
             >
-              <Heart
-                className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')}
-                strokeWidth={2}
-              />
-            </motion.span>
-          </AnimatePresence>
-        </button>
+              <AnimatePresence initial={false} mode="popLayout">
+                <motion.span
+                  key={isSaved ? 'filled' : 'outline'}
+                  initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                  animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                  transition={heartTransition}
+                  className="inline-flex"
+                  aria-hidden="true"
+                >
+                  <Heart
+                    className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')}
+                    strokeWidth={2}
+                  />
+                </motion.span>
+              </AnimatePresence>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{isSaved ? 'Remove from saved' : 'Save vendor'}</TooltipContent>
+        </Tooltip>
 
         {/* HV-B arrow orb — hover only, hidden in compact */}
         {!compact && (
@@ -221,10 +235,18 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
                 <span aria-hidden="true" className="text-ink-soft">
                   ·
                 </span>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-                  <span aria-hidden="true" className="size-[6px] rounded-full bg-indigo" />
-                  {respondsIn}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      tabIndex={0}
+                      className="inline-flex cursor-help items-center gap-1.5 font-semibold text-ink"
+                    >
+                      <span aria-hidden="true" className="size-[6px] rounded-full bg-indigo" />
+                      {respondsIn}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Median time to first reply over the last 30 days.</TooltipContent>
+                </Tooltip>
               </>
             )}
             {weddingCount && (

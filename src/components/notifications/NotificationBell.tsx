@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/client';
 import type { Database, NotificationType } from '@/types/database.types';
 import { isHighPriority } from '@/lib/notifications/high-priority-types';
 import { NotificationDropdown } from './NotificationDropdown';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
@@ -99,29 +100,38 @@ export function NotificationBell({ userId }: Props) {
 
   return (
     <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="relative rounded-md p-2.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-      >
-        <Bell className="h-5 w-5" aria-hidden="true" />
-        <AnimatePresence initial={false}>
-          {unreadCount > 0 && (
-            <motion.span
-              key="badge"
-              initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
-              animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: badgeEnter }}
-              exit={{ scale: 0.8, opacity: 0, transition: badgeExit }}
-              className="absolute -right-1.5 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-center text-[10px] font-semibold tabular-nums leading-none text-white"
-              aria-live="polite"
-              aria-atomic="true"
-            >
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </motion.span>
-          )}
-        </AnimatePresence>
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="relative rounded-md p-2.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+          >
+            <Bell className="h-5 w-5" aria-hidden="true" />
+            <AnimatePresence initial={false}>
+              {unreadCount > 0 && (
+                <motion.span
+                  key="badge"
+                  initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                  animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: badgeEnter }}
+                  exit={{ scale: 0.8, opacity: 0, transition: badgeExit }}
+                  className="absolute -right-1.5 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-center text-[10px] font-semibold tabular-nums leading-none text-white"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {unreadCount > 0
+            ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
+            : 'Notifications'}
+        </TooltipContent>
+      </Tooltip>
 
       <AnimatePresence initial={false}>
         {open && (
