@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,8 @@ export function StepOnline({ initial, profileId, mode }: Props) {
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useUnsavedChangesGuard(JSON.stringify(data) !== JSON.stringify(initial));
 
   function handleInstagramBlur() {
     // Strip leading @ on blur

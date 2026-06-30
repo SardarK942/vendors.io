@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { X } from 'lucide-react';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -39,6 +40,8 @@ export function StepBasics({ initial, profileId, mode }: Props) {
   // (simplified heuristic — covers claimed vendors whose bio was pulled from IG;
   // false positive for vendors who previously wrote their own bio is low-risk since it's dismissible)
   const [showPrefillBanner, setShowPrefillBanner] = useState(() => Boolean(initial.bio));
+
+  useUnsavedChangesGuard(JSON.stringify(data) !== JSON.stringify(initial));
 
   const nextParam = mode === 'next' ? '?next=true' : '';
 

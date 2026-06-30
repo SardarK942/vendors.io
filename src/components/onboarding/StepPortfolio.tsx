@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Button } from '@/components/ui/button';
 import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 import { portfolioSchema } from '@/lib/onboarding/validation';
@@ -18,6 +19,8 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useUnsavedChangesGuard(JSON.stringify(images) !== JSON.stringify(initial.portfolioImages));
 
   async function onNext() {
     const parsed = portfolioSchema.safeParse({ portfolioImages: images });

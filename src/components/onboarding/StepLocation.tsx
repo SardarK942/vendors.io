@@ -2,6 +2,7 @@
 import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -42,6 +43,27 @@ export function StepLocation({ initial, profileId, mode }: Props) {
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useUnsavedChangesGuard(
+    JSON.stringify({
+      address_line_1: place.address_line_1 ?? '',
+      city: place.city ?? '',
+      state: place.state ?? '',
+      postal_code: place.postal_code ?? '',
+      google_place_id: place.google_place_id ?? '',
+      addressPublic,
+      skipAddress,
+    }) !==
+      JSON.stringify({
+        address_line_1: initial.baseAddressLine1,
+        city: initial.baseCity,
+        state: initial.baseState,
+        postal_code: initial.basePostalCode,
+        google_place_id: initial.baseGooglePlaceId,
+        addressPublic: initial.baseAddressPublic,
+        skipAddress: initial.baseAddressSkipped,
+      })
+  );
 
   async function onNext() {
     const parsed = locationSchema.safeParse({
