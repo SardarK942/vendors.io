@@ -70,7 +70,7 @@ const markaziText = Markazi_Text({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Baazar — South Asian wedding marketplace · Chicago',
+    default: 'Baazar — Cultural Wedding Marketplace · Chicago',
     template: '%s | Baazar',
   },
   description:
