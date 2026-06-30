@@ -6,8 +6,8 @@
  *   1. Couple sees a "Mark Complete" button on a deposit_paid booking whose
  *      events have all ended.
  *   2. Clicking it opens a ConfirmDialog titled "Mark Booking Complete?".
- *   3. The confirm button "Mark Complete & Release Funds" is disabled until
- *      the user types the literal string "COMPLETE" into the input.
+ *   3. The confirm button "Mark Booking Complete" is disabled until the user
+ *      types the literal string "COMPLETE" into the input.
  *   4. On confirm, the API flips:
  *        - bookings.status                  → completed
  *        - transactions.status              → earned (via on_booking_completed trigger)
@@ -64,8 +64,13 @@ test.describe('mark-complete flow — typed-confirm gate + auto-verify', () => {
     const sb = getServiceClient();
 
     // Push booking into deposit_paid (Stripe checkout would do this in prod).
+    // Payment model (Bucket F single-mode): Baazar retains the 5% deposit as
+    // the platform fee; the vendor collects the 95% balance directly from the
+    // couple off-platform. Platform never holds vendor funds.
+    //   amount         = 5% deposit (Stripe charged the couple this much)
+    //   platform_fee   = amount     (Baazar keeps all of it)
+    //   vendor_payout  = 0          (Baazar never owes the vendor anything)
     const depositCents = Math.round(pkg.basePriceCents * 0.05);
-    const vendorPayoutCents = pkg.basePriceCents - depositCents;
     await sb
       .from('bookings')
       .update({
@@ -77,14 +82,14 @@ test.describe('mark-complete flow — typed-confirm gate + auto-verify', () => {
       .eq('id', bookingId);
 
     // Insert a transactions row in 'authorized' so the trigger has something
-    // to flip to 'earned' on completion (mirrors what the Stripe webhook does
-    // on deposit checkout success).
+    // to flip to 'earned' on completion (mirrors what handlePaymentSuccess
+    // writes on deposit checkout success — see payment.service.ts).
     await sb.from('transactions').insert({
       booking_request_id: bookingId,
       stripe_payment_intent_id: `pi_e2e_${Date.now()}`,
-      amount: pkg.basePriceCents,
+      amount: depositCents,
       platform_fee: depositCents,
-      vendor_payout: vendorPayoutCents,
+      vendor_payout: 0,
       status: 'authorized',
     });
 
@@ -109,7 +114,7 @@ test.describe('mark-complete flow — typed-confirm gate + auto-verify', () => {
     const dialog = page.getByRole('dialog');
     await expect(dialog.getByRole('heading', { name: /Mark Booking Complete\?/i })).toBeVisible();
 
-    const confirmBtn = dialog.getByRole('button', { name: /Mark Complete & Release Funds/i });
+    const confirmBtn = dialog.getByRole('button', { name: /Mark Booking Complete/i });
 
     // Probe: confirm is disabled BEFORE typing the gate phrase.
     await expect(confirmBtn).toBeDisabled();

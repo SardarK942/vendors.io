@@ -224,14 +224,19 @@ export function BookingActions({
         />
       )}
 
-      {/* High-stakes confirmation: releases held funds to the vendor and is
-          irreversible. Requires the typed word COMPLETE before enabling. */}
+      {/* High-stakes confirmation: closes the booking, finalizes the
+          transaction record, and (since PR #77) auto-verifies the vendor on
+          their first completion. Irreversible. Requires the typed word
+          COMPLETE before enabling. NOTE on copy: Baazar retains the 5%
+          deposit as the platform fee — the vendor is paid the remaining 95%
+          directly by the couple off-platform — so this action does NOT
+          "release funds" to the vendor. Don't reintroduce that wording. */}
       <ConfirmDialog
         open={completeConfirmOpen}
         onOpenChange={setCompleteConfirmOpen}
         title="Mark Booking Complete?"
-        description="This releases the held balance to the vendor. You can't undo this."
-        confirmLabel="Mark Complete & Release Funds"
+        description="This confirms the event was delivered and closes the booking. You can't undo this."
+        confirmLabel="Mark Booking Complete"
         typedConfirm="COMPLETE"
         busy={loading}
         onConfirm={handleComplete}
