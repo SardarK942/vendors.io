@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LANGUAGES, RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
 import { detailsSchema } from '@/lib/onboarding/validation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
 interface ProfileShape {
   languages: string[] | null;
@@ -30,6 +31,15 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+
+  useUnsavedChangesGuard(
+    JSON.stringify({ languages, years, sla }) !==
+      JSON.stringify({
+        languages: profile.languages ?? [],
+        years: profile.years_in_business ?? '',
+        sla: profile.response_sla_hours ?? null,
+      })
+  );
 
   const toggleLang = (slug: string) => {
     setLanguages((prev) => {
