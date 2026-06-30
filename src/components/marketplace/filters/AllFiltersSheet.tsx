@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useFilterState, serializeFilterState } from './use-filter-state';
+import { CategorySection } from './sections/CategorySection';
 import { TrustSection } from './sections/TrustSection';
 import { PriceSection } from './sections/PriceSection';
 import { LanguagesSection } from './sections/LanguagesSection';
@@ -93,6 +94,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
 
           {/* Body */}
           <div className="flex-1 overflow-y-auto">
+            <CategorySection state={state} patch={patch} />
             <TrustSection state={state} patch={patch} />
             <PriceSection state={state} patch={patch} />
             <LanguagesSection state={state} patch={patch} />
