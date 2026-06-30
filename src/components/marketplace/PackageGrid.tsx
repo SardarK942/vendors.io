@@ -166,7 +166,7 @@ export function PackageGrid({
                       {fmtUSD(p.base_price_cents)}
                     </span>
                     <span className="inline-flex items-center gap-1 text-sm text-primary group-hover:underline">
-                      Book <span translate="no">{p.name}</span>
+                      Book
                       <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
                     </span>
                   </div>
