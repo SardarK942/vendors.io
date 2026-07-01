@@ -183,6 +183,7 @@ export function VendorBookingActions({
               bookingId={bookingId}
               currentTotalCents={totalPriceCents}
               onSuccess={() => setShowAdjustForm(false)}
+              isFirstQuote={isPendingQuote}
             />
           </>
         )}

@@ -89,20 +89,26 @@ export function CustomRequestForm({
       });
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        setState({ kind: 'error', message: "Couldn't send your request — try again." });
+        setState({ kind: 'error', message: 'We couldn’t send your request — please try again.' });
         return;
       }
       setState({ kind: 'success', bookingId: json.booking_id });
     } catch {
-      setState({ kind: 'error', message: "Couldn't send your request — try again." });
+      setState({ kind: 'error', message: 'We couldn’t send your request — please try again.' });
     }
   };
 
   if (state.kind === 'success') {
     return (
-      <div className="rounded-lg border border-hairline bg-cream p-8 text-ink">
-        <h2 className="font-display text-2xl font-bold tracking-[-0.012em]">Request sent.</h2>
-        <p className="mt-3 text-sm text-ink-muted">
+      <div
+        role="status"
+        aria-live="polite"
+        className="rounded-lg border border-hairline bg-cream p-8 text-ink"
+      >
+        <h2 className="text-balance font-display text-2xl font-bold tracking-[-0.012em]">
+          Request sent.
+        </h2>
+        <p className="mt-3 text-pretty text-sm text-ink-muted">
           {vendorBusinessName} will respond
           {vendorResponseSlaHours ? ` within ${vendorResponseSlaHours} hours` : ' soon'} with a
           quote. We&rsquo;ll send you a notification — check your dashboard inbox.
@@ -219,7 +225,7 @@ export function CustomRequestForm({
                 type="button"
                 onClick={() => removeEvent(event.id)}
                 disabled={submitting}
-                className="relative mt-2 px-2 py-1 text-xs text-hot-pink before:absolute before:-inset-1.5 before:content-[''] hover:underline disabled:opacity-50"
+                className="relative mt-2 rounded px-2 py-1 text-xs text-ink-muted transition-colors before:absolute before:-inset-1.5 before:content-[''] hover:text-ink hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-50"
               >
                 Remove this event
               </button>
@@ -231,7 +237,7 @@ export function CustomRequestForm({
           type="button"
           onClick={addEvent}
           disabled={submitting}
-          className="relative px-2 py-1 text-sm font-medium text-ink before:absolute before:-inset-1.5 before:content-[''] hover:text-hot-pink disabled:opacity-50"
+          className="relative rounded px-2 py-1 text-sm font-medium text-ink transition-colors before:absolute before:-inset-1.5 before:content-[''] hover:text-hot-pink focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-50"
         >
           + Add another event
         </button>
@@ -265,8 +271,25 @@ export function CustomRequestForm({
       <button
         type="submit"
         disabled={submitting}
-        className="rounded-md bg-ink px-6 py-3 text-sm font-semibold text-cream transition-colors hover:bg-ink/90 disabled:opacity-60"
+        aria-busy={submitting}
+        className="inline-flex items-center gap-2 rounded-md bg-ink px-6 py-3 text-sm font-semibold text-cream transition-[transform,background-color] hover:bg-ink/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100 disabled:opacity-60"
       >
+        {submitting && (
+          <svg
+            aria-hidden="true"
+            className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none"
+            viewBox="0 0 24 24"
+            fill="none"
+          >
+            <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="3" />
+            <path
+              d="M22 12a10 10 0 0 1-10 10"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+            />
+          </svg>
+        )}
         {submitting ? 'Sending request…' : 'Send request'}
       </button>
     </form>

@@ -30,13 +30,27 @@ interface Props {
   bookingId: string;
   currentTotalCents: number;
   onSuccess?: () => void;
+  /**
+   * When the booking has no existing quote (custom request from a couple — status
+   * 'pending_quote'), copy shifts from "adjust an existing quote" to "send a first
+   * quote". Also hides the misleading "Current: $0.00" caption and prefills the
+   * total field blank instead of "0.00".
+   */
+  isFirstQuote?: boolean;
 }
 
-export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess }: Props) {
+export function VendorAdjustQuoteForm({
+  bookingId,
+  currentTotalCents,
+  onSuccess,
+  isFirstQuote = false,
+}: Props) {
   const reasonId = useId();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [newTotal, setNewTotal] = useState((currentTotalCents / 100).toFixed(2));
+  const [newTotal, setNewTotal] = useState(
+    isFirstQuote ? '' : (currentTotalCents / 100).toFixed(2)
+  );
   const [reason, setReason] = useState('');
   const [explanation, setExplanation] = useState('');
 
@@ -67,12 +81,17 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
       });
 
       if (!res.ok) {
-        const json = await res.json();
-        toast.error(json.error?.message ?? 'Failed to send adjusted quote');
+        const json = await res.json().catch(() => ({}));
+        toast.error(
+          json.error?.message ??
+            (isFirstQuote
+              ? 'We couldn’t send your quote — please try again.'
+              : 'We couldn’t send your adjusted quote — please try again.')
+        );
         return;
       }
 
-      toast.success('Adjusted quote sent to customer');
+      toast.success(isFirstQuote ? 'Quote sent to customer' : 'Adjusted quote sent to customer');
       onSuccess?.();
       router.refresh();
     } catch {
@@ -85,7 +104,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="new_total">New Total ($)</Label>
+        <Label htmlFor="new_total">{isFirstQuote ? 'Quote total ($)' : 'New Total ($)'}</Label>
         <Input
           id="new_total"
           name="new_total"
@@ -97,10 +116,18 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
           required
           inputMode="decimal"
           autoComplete="off"
+          placeholder={isFirstQuote ? 'e.g. 1500.00' : undefined}
         />
-        <p className="text-xs tabular-nums text-muted-foreground">
-          Current: {fmtUSDWithCents(currentTotalCents)}
-        </p>
+        {isFirstQuote ? (
+          <p className="text-xs text-muted-foreground">
+            The couple pays a 5% deposit through Baazar to lock in the date. You&rsquo;ll settle the
+            remaining 95% with them directly.
+          </p>
+        ) : (
+          <p className="text-xs tabular-nums text-muted-foreground">
+            Current: {fmtUSDWithCents(currentTotalCents)}
+          </p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -151,7 +178,7 @@ export function VendorAdjustQuoteForm({ bookingId, currentTotalCents, onSuccess 
       )}
 
       <Button type="submit" disabled={loading} className="w-full">
-        {loading ? 'Sending…' : 'Send Adjusted Quote'}
+        {loading ? 'Sending…' : isFirstQuote ? 'Send quote' : 'Send Adjusted Quote'}
       </Button>
     </form>
   );
