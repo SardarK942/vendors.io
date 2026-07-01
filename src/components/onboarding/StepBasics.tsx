@@ -217,6 +217,7 @@ export function StepBasics({ initial, profileId, mode }: Props) {
           currentBio={data.bio}
           businessName={data.businessName}
           category={data.category}
+          subcategories={data.subcategories}
           onAccept={(newBio) => setData({ ...data, bio: newBio })}
         />
       </div>

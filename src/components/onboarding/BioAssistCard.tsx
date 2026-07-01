@@ -10,6 +10,9 @@ interface BioAssistCardProps {
   currentBio: string;
   businessName: string;
   category: string;
+  /** Cart-type subcategories (or other category-specific taxonomy) — passed to
+   *  the AI so the bio can name what the vendor actually serves. */
+  subcategories?: string[];
   onAccept: (newBio: string) => void;
 }
 
@@ -23,6 +26,7 @@ export function BioAssistCard({
   currentBio,
   businessName,
   category,
+  subcategories,
   onAccept,
 }: BioAssistCardProps) {
   const [state, setState] = useState<CardState>({ kind: 'idle' });
@@ -37,10 +41,17 @@ export function BioAssistCard({
     setState({ kind: 'streaming', suggestion: '' });
 
     try {
+      // Server side reads `draft` (not `currentBio`) to decide polish vs draft
+      // mode. Sending currentBio-as-draft is what unlocks the polish path.
       const res = await fetch('/api/ai/bio-assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, currentBio, businessName, category }),
+        body: JSON.stringify({
+          businessName,
+          category,
+          draft: currentBio,
+          subcategories: subcategories && subcategories.length > 0 ? subcategories : undefined,
+        }),
         signal: abortRef.current.signal,
       });
 
