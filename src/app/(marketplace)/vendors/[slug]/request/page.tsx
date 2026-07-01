@@ -39,7 +39,7 @@ export default async function CustomRequestPage({ params }: RequestPageProps) {
       <h1 className="text-balance font-display text-3xl font-bold tracking-[-0.018em] text-ink">
         Tell {vendor.business_name} what you need
       </h1>
-      <p className="mt-3 text-sm text-ink-muted">
+      <p className="mt-3 text-pretty text-sm text-ink-muted">
         Anything outside their standard packages — multi-day events, large guest counts, destination
         coverage. They&rsquo;ll respond with a custom quote.
       </p>

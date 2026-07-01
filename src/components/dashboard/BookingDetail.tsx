@@ -56,7 +56,8 @@ interface BookingDetailProps {
 
 function statusBadgeStyle(status: string) {
   if (status === 'deposit_paid' || status === 'completed') return 'bg-emerald-100 text-emerald-800';
-  if (status === 'pending' || status === 'accepted') return 'bg-yellow-100 text-yellow-800';
+  if (status === 'pending' || status === 'accepted' || status === 'pending_quote')
+    return 'bg-yellow-100 text-yellow-800';
   if (status === 'adjusted_quote_sent') return 'bg-blue-100 text-blue-800';
   if (status === 'adjusted_quote_declined') return 'bg-orange-100 text-orange-800';
   if (status === 'disputed') return 'bg-amber-100 text-amber-900';
@@ -269,6 +270,12 @@ export async function BookingDetail({
           Waiting for vendor response. The vendor has 72 hours to accept or send an adjusted quote.
         </div>
       )}
+      {role === 'couple' && booking.status === 'pending_quote' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          Custom request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond
+          with a quote — we’ll email you and post it here.
+        </div>
+      )}
 
       {/* Accepted status — pay deposit */}
       {role === 'couple' && booking.status === 'accepted' && (
@@ -286,6 +293,12 @@ export async function BookingDetail({
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
           <strong>Action needed:</strong> Accept this booking at the package price or send an
           adjusted quote. You have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'pending_quote' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <strong>Action needed:</strong> A couple sent a custom request. Read their notes below,
+          then send them a quote to lock in the date.
         </div>
       )}
       {role === 'vendor' && booking.status === 'accepted' && (
