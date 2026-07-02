@@ -3,23 +3,18 @@ import { createPackage } from '@/services/packages.service';
 import { createPackageSchema } from '@/types';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { getActiveVendorProfileId } from '@/lib/vendor/active';
 
 export const POST = withErrorBoundary(async (request: NextRequest) => {
   const { user, supabase } = await requireUser();
 
-  // Find vendor profile for this user
-  const { data: vendorProfile } = await supabase
-    .from('vendor_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!vendorProfile) throw new HttpError(403, 'No vendor profile found for this user');
+  const vendorProfileId = await getActiveVendorProfileId(supabase, user.id);
+  if (!vendorProfileId) throw new HttpError(403, 'No vendor profile found for this user');
 
   const body = await request.json();
   const parsed = createPackageSchema.parse(body);
 
-  const result = await createPackage(supabase, vendorProfile.id, parsed);
+  const result = await createPackage(supabase, vendorProfileId, parsed);
 
   if (result.error) {
     return NextResponse.json({ error: result.error }, { status: 400 });
