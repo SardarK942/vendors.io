@@ -445,7 +445,7 @@ export interface Database {
           max_guests: number;
           duration_hours: number;
           events_count: number;
-          featured_image_url: string;
+          featured_image_url: string | null;
           gallery_image_urls: string[];
           vendor_notes_template: string | null;
           location_mode: PackageLocationMode;
@@ -464,7 +464,7 @@ export interface Database {
           max_guests: number;
           duration_hours: number;
           events_count?: number;
-          featured_image_url: string;
+          featured_image_url?: string | null;
           gallery_image_urls?: string[];
           vendor_notes_template?: string | null;
           location_mode?: PackageLocationMode;
@@ -482,7 +482,7 @@ export interface Database {
           max_guests?: number;
           duration_hours?: number;
           events_count?: number;
-          featured_image_url?: string;
+          featured_image_url?: string | null;
           gallery_image_urls?: string[];
           vendor_notes_template?: string | null;
           location_mode?: PackageLocationMode;
