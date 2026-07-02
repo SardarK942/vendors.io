@@ -265,4 +265,54 @@ describe('getOrCreateWizardProfile', () => {
     expect(result.isNew).toBe(true);
     expect(captured.inserted).toBe(true);
   });
+
+  // ─── Migration 00067 race-loser retry ─────────────────────────────────────
+  //
+  // The setup wizard's layout AND its step page both call this function; in
+  // Next.js RSC they run concurrently. Under the partial unique index added
+  // by migration 00067, the second insert to land raises unique_violation
+  // (Postgres code 23505). The function must catch that, re-select the row
+  // the winning request just created, and return it — otherwise the loser
+  // fails the request even though the profile exists.
+  it('first mode: re-selects existing partial when insert loses a race (unique_violation)', async () => {
+    let insertCalled = false;
+    let reselectCalled = false;
+    const mockClient = {
+      from: vi.fn(() => ({
+        // Initial SELECT — no profiles yet from THIS caller's point of view
+        // (the winning insert has not yet committed when the loser reads).
+        select: vi.fn(() => ({
+          eq: vi.fn(() => ({
+            order: vi.fn(() => Promise.resolve({ data: [], error: null })),
+            eq: vi.fn(() => ({
+              maybeSingle: vi.fn(() => {
+                reselectCalled = true;
+                return Promise.resolve({
+                  data: { id: 'vp-created-by-winner' },
+                  error: null,
+                });
+              }),
+            })),
+          })),
+        })),
+        insert: vi.fn(() => ({
+          select: vi.fn(() => ({
+            single: vi.fn(() => {
+              insertCalled = true;
+              return Promise.resolve({
+                data: null,
+                error: { code: '23505', message: 'duplicate key value' },
+              });
+            }),
+          })),
+        })),
+      })),
+    } as unknown as SupabaseClient<Database>;
+
+    const result = await getOrCreateWizardProfile(mockClient, 'user-A', 'first');
+    expect(insertCalled).toBe(true);
+    expect(reselectCalled).toBe(true);
+    expect(result.profileId).toBe('vp-created-by-winner');
+    expect(result.isNew).toBe(false);
+  });
 });
