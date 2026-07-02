@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import { buildHoldRange } from '@/services/availability.service';
+import { getActiveVendorProfileId } from '@/lib/vendor/active';
 
 const bodySchema = z.discriminatedUnion('mode', [
   z.object({
@@ -26,14 +27,8 @@ export const POST = withErrorBoundary(async (req: NextRequest) => {
 
   const body = bodySchema.parse(await req.json());
 
-  // Resolve the vendor profile for this user.
-  const { data: vendor } = await supabase
-    .from('vendor_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!vendor) throw new HttpError(404, 'No vendor profile found for this user');
+  const vendorProfileId = await getActiveVendorProfileId(supabase, user.id);
+  if (!vendorProfileId) throw new HttpError(404, 'No vendor profile found for this user');
 
   const range =
     body.mode === 'full_day'
@@ -43,7 +38,7 @@ export const POST = withErrorBoundary(async (req: NextRequest) => {
   const { data, error } = await supabase
     .from('vendor_calendar_holds')
     .insert({
-      vendor_profile_id: vendor.id,
+      vendor_profile_id: vendorProfileId,
       hold_type: 'vendor_blocked',
       hold_range: range,
     })
