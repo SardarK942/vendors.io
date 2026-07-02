@@ -23,7 +23,7 @@ interface PackageProps {
   events_count: number;
   max_guests: number;
   duration_hours: number;
-  featured_image_url: string;
+  featured_image_url: string | null;
   vendor_notes_template?: string | null;
   location_mode: 'couple_provides' | 'at_vendor';
   addons?: Addon[];
@@ -173,13 +173,27 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-start gap-4">
-              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded">
-                <Image
-                  src={pkg.featured_image_url}
-                  alt={pkg.name}
-                  fill
-                  className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-                />
+              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded bg-cream-soft">
+                {pkg.featured_image_url ? (
+                  <Image
+                    src={pkg.featured_image_url}
+                    alt={pkg.name}
+                    fill
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                  />
+                ) : (
+                  <div
+                    className="flex h-full w-full items-center justify-center outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="line-clamp-2 px-1 text-center font-display text-[10px] leading-tight text-ink-soft"
+                      translate="no"
+                    >
+                      {pkg.name}
+                    </span>
+                  </div>
+                )}
               </div>
               <div>
                 <p className="font-semibold" translate="no">

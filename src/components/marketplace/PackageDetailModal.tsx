@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { PackageWithAddons } from './PackageGrid';
+import { PackagePhotoFallback } from './PackagePhotoFallback';
 import { fmtUSD } from '@/lib/intl';
 
 interface Props {
@@ -79,13 +80,17 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
         <div className="space-y-5">
           {/* Featured image */}
           <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-muted">
-            <Image
-              src={pkg.featured_image_url}
-              alt={pkg.name}
-              fill
-              className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-              sizes="(max-width: 768px) 100vw, 672px"
-            />
+            {pkg.featured_image_url ? (
+              <Image
+                src={pkg.featured_image_url}
+                alt={pkg.name}
+                fill
+                className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                sizes="(max-width: 768px) 100vw, 672px"
+              />
+            ) : (
+              <PackagePhotoFallback name={pkg.name} />
+            )}
           </div>
 
           {/* Summary line */}

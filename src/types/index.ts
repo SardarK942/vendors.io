@@ -181,7 +181,7 @@ export const createPackageSchema = z.object({
   max_guests: z.number().int().positive(),
   duration_hours: z.number().positive(),
   events_count: z.number().int().min(1).max(5).default(1),
-  featured_image_url: z.string().url(),
+  featured_image_url: z.string().url().nullable().optional(),
   gallery_image_urls: z.array(z.string().url()).max(2).default([]),
   vendor_notes_template: z.string().max(1000).optional().nullable(),
   location_mode: packageLocationModeSchema.default('couple_provides'),

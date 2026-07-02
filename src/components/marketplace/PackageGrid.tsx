@@ -7,6 +7,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight } from 'lucide-react';
 import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
+import { PackagePhotoFallback } from './PackagePhotoFallback';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
 import { fmtUSD } from '@/lib/intl';
 
@@ -18,7 +19,7 @@ export interface PackageWithAddons {
   duration_hours: number;
   max_guests: number;
   events_count: number;
-  featured_image_url: string;
+  featured_image_url: string | null;
   gallery_image_urls: string[];
   included_items: string[];
   vendor_notes_template: string | null;
@@ -144,13 +145,17 @@ export function PackageGrid({
                 }`}
               >
                 <div className="relative aspect-[4/3] bg-muted">
-                  <Image
-                    src={p.featured_image_url}
-                    alt={p.name}
-                    fill
-                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                  />
+                  {p.featured_image_url ? (
+                    <Image
+                      src={p.featured_image_url}
+                      alt={p.name}
+                      fill
+                      className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
+                  ) : (
+                    <PackagePhotoFallback name={p.name} />
+                  )}
                 </div>
                 <div className="space-y-2 p-4">
                   <h3 className="text-base font-semibold leading-tight" translate="no">

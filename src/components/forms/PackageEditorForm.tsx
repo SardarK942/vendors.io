@@ -21,7 +21,7 @@ interface PackageInitial {
   max_guests: number;
   duration_hours: number;
   events_count: number;
-  featured_image_url: string;
+  featured_image_url: string | null;
   gallery_image_urls: string[];
   included_items: string[];
   vendor_notes_template: string | null;
@@ -59,12 +59,6 @@ export function PackageEditorForm({ mode, initial }: Props) {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    if (!featuredImageUrl) {
-      toast.error('Featured image is required — upload or paste a URL.');
-      setLoading(false);
-      return;
-    }
-
     const payload = {
       name: form.get('name') as string,
       description: form.get('description') as string,
@@ -72,7 +66,7 @@ export function PackageEditorForm({ mode, initial }: Props) {
       max_guests: parseInt(form.get('max_guests') as string, 10),
       duration_hours: parseFloat(form.get('duration_hours') as string),
       events_count: parseInt(form.get('events_count') as string, 10),
-      featured_image_url: featuredImageUrl,
+      featured_image_url: featuredImageUrl || null,
       gallery_image_urls: [] as string[],
       included_items: includedItems,
       vendor_notes_template: (form.get('vendor_notes_template') as string) || null,
@@ -229,7 +223,11 @@ export function PackageEditorForm({ mode, initial }: Props) {
 
           {/* Featured Image */}
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Featured Image *</legend>
+            <legend className="text-sm font-medium">Featured Image</legend>
+            <p className="text-xs text-muted-foreground">
+              Optional — packages without a photo show a placeholder tile until you add one. Adding
+              a photo boosts bookings.
+            </p>
             <PhotoUploaderDrawer
               value={featuredImageUrl ? [featuredImageUrl] : []}
               onChange={(urls) => setFeaturedImageUrl(urls[0] ?? '')}
