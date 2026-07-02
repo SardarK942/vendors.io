@@ -39,6 +39,51 @@ export interface ProfileRowShape {
  * Returns { profileId, isNew } where isNew indicates whether a new row was
  * inserted on this call.
  */
+// Postgres error code for unique_violation. Returned by Supabase in `error.code`
+// when a concurrent request has already inserted the partial row we're trying
+// to create (migration 00067's partial unique index).
+const PG_UNIQUE_VIOLATION = '23505';
+
+async function insertPartialProfile(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<{ profileId: string; isNew: boolean }> {
+  const { data: created, error } = await supabase
+    .from('vendor_profiles')
+    .insert({
+      user_id: userId,
+      business_name: '',
+      // Slug stays null until the vendor completes basics; the partial unique
+      // index (migration 00060) covers WHERE slug IS NOT NULL so concurrent
+      // wizard stubs don't collide on the constraint.
+      slug: null,
+      category:
+        'photography' as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
+      service_area: [],
+      portfolio_images: [],
+      onboarding_complete: false,
+      is_active: false,
+    })
+    .select('id')
+    .single();
+
+  if (created) return { profileId: created.id, isNew: true };
+
+  // Migration 00067's partial unique index enforces at most one in-progress
+  // row per user. A concurrent request beat us — re-select and return it.
+  if (error?.code === PG_UNIQUE_VIOLATION) {
+    const { data: existing } = await supabase
+      .from('vendor_profiles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('onboarding_complete', false)
+      .maybeSingle();
+    if (existing) return { profileId: existing.id, isNew: false };
+  }
+
+  throw new Error(`getOrCreateWizardProfile: insert failed — ${error?.message ?? 'unknown'}`);
+}
+
 export async function getOrCreateWizardProfile(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -56,32 +101,7 @@ export async function getOrCreateWizardProfile(
       return { profileId: any_existing[0].id, isNew: false };
     }
 
-    // None exists — create a fresh row.
-    const { data: created, error } = await supabase
-      .from('vendor_profiles')
-      .insert({
-        user_id: userId,
-        business_name: '',
-        // Slug stays null until the vendor completes basics; the partial unique
-        // index (migration 00060) covers WHERE slug IS NOT NULL so concurrent
-        // wizard stubs don't collide on the constraint.
-        slug: null,
-        category:
-          'photography' as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
-        service_area: [],
-        portfolio_images: [],
-        onboarding_complete: false,
-        is_active: false,
-      })
-      .select('id')
-      .single();
-
-    if (error || !created) {
-      throw new Error(
-        `getOrCreateWizardProfile(first): insert failed — ${error?.message ?? 'unknown'}`
-      );
-    }
-    return { profileId: created.id, isNew: true };
+    return insertPartialProfile(supabase, userId);
   }
 
   // 'next' mode: check for an abandoned partial second-business attempt.
@@ -104,30 +124,7 @@ export async function getOrCreateWizardProfile(
     return { profileId: partials[0].id, isNew: false };
   }
 
-  // Otherwise create a fresh row for the second business.
-  const { data: created, error } = await supabase
-    .from('vendor_profiles')
-    .insert({
-      user_id: userId,
-      business_name: '',
-      slug: null,
-      // Placeholder — replaced when the vendor completes the basics step.
-      category:
-        'photography' as Database['public']['Tables']['vendor_profiles']['Insert']['category'],
-      service_area: [],
-      portfolio_images: [],
-      onboarding_complete: false,
-      is_active: false,
-    })
-    .select('id')
-    .single();
-
-  if (error || !created) {
-    throw new Error(
-      `getOrCreateWizardProfile(next): insert failed — ${error?.message ?? 'unknown'}`
-    );
-  }
-  return { profileId: created.id, isNew: true };
+  return insertPartialProfile(supabase, userId);
 }
 
 export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep {
