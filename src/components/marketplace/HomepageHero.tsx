@@ -44,15 +44,11 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            size="lg"
-            asChild
-            className="bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
-          >
+          <Button size="lg" variant="primary" asChild>
             <Link href="/vendors">Browse all vendors →</Link>
           </Button>
           {showVendorCta && (
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="secondary" asChild>
               <Link href="/signup">List your business</Link>
             </Button>
           )}
