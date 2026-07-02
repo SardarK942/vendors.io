@@ -41,11 +41,21 @@ vi.mock('@/lib/logger', () => ({
   logger: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
 }));
 
+// PR #90: the three routes now go through getActiveVendorProfileId (multi-business
+// resolver) instead of a naive .single(). Mock the helper directly — the
+// underlying vendor_profiles/users query chain is covered by resume.test.ts.
+vi.mock('@/lib/vendor/active', () => ({
+  getActiveVendorProfileId: vi.fn(),
+}));
+
 import { requireUser } from '@/lib/api/auth';
+import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import { HttpError } from '@/lib/api/error-boundary';
 import { POST as blockPost } from '@/app/api/vendor-calendar/block/route';
 import { DELETE as blockDelete } from '@/app/api/vendor-calendar/block/[id]/route';
 import { PATCH as capacityPatch } from '@/app/api/vendor-calendar/capacity/route';
+
+const mockGetActiveVendorProfileId = getActiveVendorProfileId as ReturnType<typeof vi.fn>;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -145,6 +155,7 @@ describe('POST /api/vendor-calendar/block', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetActiveVendorProfileId.mockResolvedValue('vp-1');
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -159,6 +170,7 @@ describe('POST /api/vendor-calendar/block', () => {
   });
 
   it('returns 404 when user has no vendor profile', async () => {
+    mockGetActiveVendorProfileId.mockResolvedValueOnce(null);
     mockRequireUser.mockResolvedValueOnce({
       user: { id: 'u-1' },
       supabase: buildSupabase({ vendorRow: null }),
@@ -252,9 +264,7 @@ describe('POST /api/vendor-calendar/block', () => {
     };
     expect(payload.hold_type).toBe('vendor_blocked');
     expect(payload.vendor_profile_id).toBe('vp-1');
-    expect(payload.hold_range).toBe(
-      '["2026-08-15T00:00:00+00:00","2026-08-16T00:00:00+00:00")'
-    );
+    expect(payload.hold_range).toBe('["2026-08-15T00:00:00+00:00","2026-08-16T00:00:00+00:00")');
   });
 
   it('returns 201 with correct time_range tstzrange', async () => {
@@ -297,9 +307,7 @@ describe('POST /api/vendor-calendar/block', () => {
 
     expect(res.status).toBe(201);
     const payload = capturedInsert as { hold_range: string };
-    expect(payload.hold_range).toBe(
-      '["2026-08-15T10:00:00+00:00","2026-08-15T12:00:00+00:00")'
-    );
+    expect(payload.hold_range).toBe('["2026-08-15T10:00:00+00:00","2026-08-15T12:00:00+00:00")');
   });
 
   it('returns 409 when DB trigger raises calendar_capacity_exceeded', async () => {
@@ -333,6 +341,7 @@ describe('DELETE /api/vendor-calendar/block/[id]', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetActiveVendorProfileId.mockResolvedValue('vp-1');
   });
 
   async function callDelete(id: string) {
@@ -381,6 +390,7 @@ describe('PATCH /api/vendor-calendar/capacity', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGetActiveVendorProfileId.mockResolvedValue('vp-1');
   });
 
   it('returns 401 when unauthenticated', async () => {
@@ -394,6 +404,7 @@ describe('PATCH /api/vendor-calendar/capacity', () => {
   });
 
   it('returns 404 when user has no vendor profile', async () => {
+    mockGetActiveVendorProfileId.mockResolvedValueOnce(null);
     mockRequireUser.mockResolvedValueOnce({
       user: { id: 'u-1' },
       supabase: buildSupabase({ vendorRow: null }),
