@@ -59,6 +59,16 @@
 
     /* Corner radius — DESIGN.md radii.lg (10px) */
     --radius: 0.625rem;
+
+    /* shadcn Sidebar tokens — mapped to Baazar palette (Section 1, spec 2026-07-03). */
+    --sidebar-background: 40 55% 94%; /* between cream and cream-soft */
+    --sidebar-foreground: var(--ink);
+    --sidebar-primary: var(--ink);
+    --sidebar-primary-foreground: var(--cream);
+    --sidebar-accent: 232 56% 41%; /* indigo, used at alpha via bg-sidebar-accent/10 */
+    --sidebar-accent-foreground: var(--ink);
+    --sidebar-border: var(--hairline);
+    --sidebar-ring: var(--indigo);
   }
 
   /* Dark mode intentionally not supported. DESIGN.md anti-reference: */
@@ -93,5 +103,15 @@
     text-decoration-color: hsl(var(--haldi));
     text-decoration-thickness: 1px;
     text-underline-offset: 2px;
+  }
+  .dark {
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
   }
 }
