@@ -3,7 +3,6 @@ import tailwindcssAnimate from 'tailwindcss-animate';
 import plugin from 'tailwindcss/plugin';
 
 const config: Config = {
-  darkMode: ['class'],
   content: [
     './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
@@ -12,6 +11,8 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // ── Baazar M+ brand tokens — prefer these for NEW code ─────
+        // Supports alpha modifiers: bg-ink/50, text-cream/80, etc.
         cream: {
           DEFAULT: 'hsl(var(--cream) / <alpha-value>)',
           soft: 'hsl(var(--cream-soft) / <alpha-value>)',
@@ -32,6 +33,8 @@ const config: Config = {
           soft: 'hsl(var(--hairline-soft) / <alpha-value>)',
         },
         error: 'hsl(var(--error) / <alpha-value>)',
+
+        // ── shadcn semantic tokens — kept for existing component compat ──
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {
@@ -84,15 +87,21 @@ const config: Config = {
         },
       },
       borderRadius: {
-        sm: '4px',
-        md: '6px',
-        lg: '10px',
+        // DESIGN.md radii — overrides Tailwind defaults for sm/md/lg.
+        // xl, 2xl, 3xl, full inherit Tailwind defaults (12/16/24/9999px).
+        sm: '4px', // radii.sm
+        md: '6px', // radii.md
+        lg: '10px', // radii.lg
       },
       fontFamily: {
+        // DESIGN.md TY-C — Spectral display, Schibsted Grotesk body, DM Mono.
+        // Variables set by next/font in src/app/layout.tsx.
         display: ['var(--font-display)', 'Georgia', 'serif'],
         body: ['var(--font-body)', 'system-ui', '-apple-system', 'sans-serif'],
         mono: ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+        // Override Tailwind's default sans so every untyped element gets Schibsted.
         sans: ['var(--font-body)', 'system-ui', '-apple-system', 'sans-serif'],
+        // serif maps to display family for headlines/eds.
         serif: ['var(--font-display)', 'Georgia', 'serif'],
         'wordmark-deva': ['var(--font-wordmark-deva)', 'serif'],
         'wordmark-nastaliq': ['var(--font-wordmark-nastaliq)', 'serif'],
@@ -100,17 +109,14 @@ const config: Config = {
         'wordmark-persian': ['var(--font-wordmark-persian)', 'serif'],
       },
       boxShadow: {
+        // Bucket B hover shadows — hot-pink (#D1006C)
         pink: '0 4px 10px rgba(209, 0, 108, 0.25)',
         'pink-card': '0 8px 20px rgba(209, 0, 108, 0.15)',
       },
       keyframes: {
         'pulse-pink': {
-          '0%, 100%': {
-            boxShadow: '0 0 0 0 rgba(209, 0, 108, 0.4)',
-          },
-          '50%': {
-            boxShadow: '0 0 0 6px rgba(209, 0, 108, 0.0)',
-          },
+          '0%, 100%': { boxShadow: '0 0 0 0 rgba(209, 0, 108, 0.4)' },
+          '50%': { boxShadow: '0 0 0 6px rgba(209, 0, 108, 0.0)' },
         },
       },
       animation: {
