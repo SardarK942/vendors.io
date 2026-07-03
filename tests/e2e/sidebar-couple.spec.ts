@@ -22,7 +22,7 @@ test.describe('couple sidebar', () => {
     couple = await seedCouple({ markOnboardingComplete: true });
     await loginAs(page, couple);
 
-    const sidebar = page.getByRole('complementary').or(page.getByRole('navigation')).first();
+    const sidebar = page.locator('[data-sidebar="sidebar"]');
     await expect(sidebar.getByRole('link', { name: /^Home$/ })).toBeVisible();
     await expect(sidebar.getByRole('link', { name: /^Bookings$/ })).toBeVisible();
     await expect(sidebar.getByRole('link', { name: /^Saved$/ })).toBeVisible();

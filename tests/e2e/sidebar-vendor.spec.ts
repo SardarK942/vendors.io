@@ -25,7 +25,7 @@ test.describe('vendor sidebar', () => {
     vendor = await seedVendor({ publish: true });
     await loginAs(page, vendor);
 
-    const sidebar = page.getByRole('complementary').or(page.getByRole('navigation')).first();
+    const sidebar = page.locator('[data-sidebar="sidebar"]');
     await expect(sidebar.getByRole('link', { name: /^Home$/ })).toBeVisible();
     await expect(sidebar.getByRole('link', { name: /^Bookings$/ })).toBeVisible();
     await expect(sidebar.getByRole('link', { name: /^Notifications$/ })).toBeVisible();
