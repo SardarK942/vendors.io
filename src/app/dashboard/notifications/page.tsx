@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { NotificationsPageClient } from '@/components/notifications/NotificationsPageClient';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +22,7 @@ export default async function NotificationsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold">Notifications</h1>
+      <PageTitle>Notifications</PageTitle>
       <NotificationsPageClient
         userId={user.id}
         initial={(notifications ?? []) as Parameters<typeof NotificationsPageClient>[0]['initial']}

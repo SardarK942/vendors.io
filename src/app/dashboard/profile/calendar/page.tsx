@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { CalendarHoldsList } from '@/components/dashboard/CalendarHoldsList';
 import { BlockDateForm } from '@/components/dashboard/BlockDateForm';
 import { CapacityField } from '@/components/dashboard/CapacityField';
@@ -75,7 +76,7 @@ export default async function CalendarPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Calendar</h1>
+        <PageTitle>Calendar</PageTitle>
         <p className="text-sm text-muted-foreground">
           Manage your availability and concurrent capacity.
         </p>

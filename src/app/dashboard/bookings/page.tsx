@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { getBookingRequests } from '@/services/booking.service';
 import { BookingCard } from '@/components/dashboard/BookingCard';
 import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
@@ -45,7 +46,7 @@ export default async function BookingsPage({ searchParams }: PageProps) {
     return (
       <div className="space-y-6">
         <div>
-          <h1 className="text-2xl font-bold">Bookings</h1>
+          <PageTitle>Bookings</PageTitle>
           <p className="text-muted-foreground">Your booking requests and their status.</p>
         </div>
 
@@ -127,7 +128,7 @@ export default async function BookingsPage({ searchParams }: PageProps) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Bookings</h1>
+        <PageTitle>Bookings</PageTitle>
         <p className="text-muted-foreground">All bookings, filterable.</p>
       </div>
 

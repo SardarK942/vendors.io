@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
 import { EventCardGrid } from '@/components/dashboard/EventCardGrid';
 import { type EventCardData } from '@/components/dashboard/EventCard';
@@ -126,7 +127,7 @@ export default async function DashboardPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <PageTitle>Home</PageTitle>
             <p className="text-muted-foreground">
               Welcome back, {profile?.full_name || user.email}
             </p>
@@ -150,7 +151,7 @@ export default async function DashboardPage() {
   if (!vendorProfile) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <PageTitle>Home</PageTitle>
         <Card className="p-6">
           <p>Finish profile setup to start receiving bookings.</p>
           <Button asChild className="mt-4">
@@ -200,7 +201,7 @@ export default async function DashboardPage() {
       <BackfillBanner show={showBackfill} />
 
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <PageTitle>Home</PageTitle>
         <p className="text-muted-foreground">Welcome back, {profile?.full_name || user.email}</p>
       </div>
 
