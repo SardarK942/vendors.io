@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { VendorBusinessAnchor } from '@/components/dashboard/sidebar/VendorBusinessAnchor';
 import { SidebarUserMenu } from '@/components/dashboard/sidebar/SidebarUserMenu';
-import { getActiveVendorProfileId, getActiveVendorProfileFullRow } from '@/lib/vendor/active';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { ActiveBusinessProvider } from '@/contexts/ActiveBusinessContext';
 import {
   getBookingsNeedsActionCount,
@@ -30,11 +30,17 @@ export default async function DashboardLayout({
   const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
   const role = (profile?.role as 'couple' | 'vendor') || 'couple';
 
-  const activeBusinessId =
-    role === 'vendor' ? await getActiveVendorProfileId(supabase, user.id) : null;
+  const { profile: activeProfile } =
+    role === 'vendor' ? await getActiveVendorProfile(supabase, user.id) : { profile: null };
 
-  const activeBusiness =
-    role === 'vendor' ? await getActiveVendorProfileFullRow(supabase, user.id) : null;
+  const activeBusinessId = activeProfile?.id ?? null;
+  const activeBusiness = activeProfile
+    ? {
+        business_name: activeProfile.business_name,
+        verified: activeProfile.verified,
+        city: activeProfile.base_city,
+      }
+    : null;
 
   const [bookingsCount, unreadCount] = await Promise.all([
     getBookingsNeedsActionCount(supabase, role, user.id, activeBusinessId),
