@@ -106,7 +106,11 @@ No visual drift from the existing design system.
 Two placements, max 2 haldi per view (per DESIGN.md rule):
 
 1. **Page title on every dashboard page.** The `<PageTitle>` component (new — see file list) wraps every dashboard-tree page's heading in the solid haldi block treatment (homepage "Cultural" pattern scaled to fit the title text). Applies to `/dashboard`, `/dashboard/bookings`, `/dashboard/notifications`, `/dashboard/saved`, `/dashboard/profile/calendar`, `/dashboard/profile/packages`, `/dashboard/money`, `/dashboard/profile`, `/dashboard/settings`. Does NOT apply to nested sub-pages (e.g., `/dashboard/bookings/[id]`, `/dashboard/profile/packages/new`) — those keep their existing titles so the yellow keeps its top-level-page signal.
-2. **Bookings counter in the sidebar** — a soft haldi pill on the Bookings nav row, showing the count returned by `SELECT count(*) FROM bookings WHERE vendor_profile_id = activeBusinessId AND status = 'pending_quote'`. Hidden at zero. Vendor-only (couples don't see the counter). Same semantic haldi as `InboxRow`'s "Needs quote" chip.
+2. **Bookings counter in the sidebar** — a soft haldi pill on the Bookings nav row, showing a "needs your action" count. Query varies by role:
+   - **Vendor:** `SELECT count(*) FROM bookings WHERE vendor_profile_id = activeBusinessId AND status = 'pending_quote'`. Same semantic as `InboxRow`'s "Needs quote" chip.
+   - **Couple:** `SELECT count(*) FROM bookings WHERE couple_user_id = me AND status IN ('accepted', 'adjusted_quote_sent')`. `accepted` = vendor accepted, awaiting deposit ("Awaiting deposit" per `EventCard`). `adjusted_quote_sent` = vendor sent an adjusted quote, awaiting couple response (accept / decline / counter).
+
+   Hidden at zero for both roles.
 
 Nothing in Settings, nothing in the profile subpages. Yellow stays scarce so it keeps its signal.
 
