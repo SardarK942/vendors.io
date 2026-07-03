@@ -65,10 +65,7 @@ export async function getActiveVendorProfile(
 
   // Resolution 3: multiple profiles, no/stale active. Pick the oldest, persist it.
   const first = list[0];
-  await supabase
-    .from('users')
-    .update({ active_vendor_profile_id: first.id })
-    .eq('id', userId);
+  await supabase.from('users').update({ active_vendor_profile_id: first.id }).eq('id', userId);
 
   return { profile: first, totalCount };
 }
@@ -82,4 +79,29 @@ export async function getActiveVendorProfileId(
 ): Promise<string | null> {
   const { profile } = await getActiveVendorProfile(supabase, userId);
   return profile?.id ?? null;
+}
+
+/**
+ * Fetch the active vendor profile's full row with specific fields for display.
+ */
+export async function getActiveVendorProfileFullRow(
+  supabase: SupabaseClient<Database>,
+  userId: string
+): Promise<{ id: string; business_name: string; verified: boolean; city: string | null } | null> {
+  const activeId = await getActiveVendorProfileId(supabase, userId);
+  if (!activeId) return null;
+  const { data, error } = await supabase
+    .from('vendor_profiles')
+    .select('id, business_name, verified, base_city')
+    .eq('id', activeId)
+    .single();
+  if (error) return null;
+  if (!data) return null;
+  // Map base_city to city for the component interface
+  return {
+    id: data.id,
+    business_name: data.business_name,
+    verified: data.verified,
+    city: data.base_city,
+  };
 }
