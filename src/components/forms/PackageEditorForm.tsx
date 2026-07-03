@@ -166,6 +166,9 @@ export function PackageEditorForm({ mode, initial }: Props) {
                 autoComplete="off"
                 className="tabular-nums"
               />
+              <p className="text-pretty text-xs text-muted-foreground">
+                Not final — you can send an adjusted quote per booking if the event needs it.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="max_guests">Max Guests *</Label>
