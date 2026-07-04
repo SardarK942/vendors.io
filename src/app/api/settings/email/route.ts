@@ -19,6 +19,10 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
   }
 
+  if (next === user.email) {
+    return NextResponse.json({ error: 'New email must differ from current.' }, { status: 400 });
+  }
+
   const { error } = await supabase.auth.updateUser({ email: next });
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 400 });

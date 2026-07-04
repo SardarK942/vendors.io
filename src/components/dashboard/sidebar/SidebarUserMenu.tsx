@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronUp, LogOut, User as UserIcon } from 'lucide-react';
+import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import {
@@ -24,10 +25,16 @@ export function SidebarUserMenu({ user }: Props) {
 
   async function handleLogout() {
     setBusy(true);
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push('/login');
-    router.refresh();
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      router.push('/login');
+      router.refresh();
+    } catch {
+      toast.error('Log out failed, please try again.');
+      setBusy(false);
+    }
   }
 
   return (

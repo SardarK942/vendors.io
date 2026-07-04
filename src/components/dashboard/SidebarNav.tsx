@@ -14,6 +14,7 @@ import {
   Settings as SettingsIcon,
   User,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import {
   Sidebar,
   SidebarContent,
@@ -32,6 +33,7 @@ type Role = 'couple' | 'vendor';
 
 interface Props {
   role: Role;
+  hasBusiness: boolean;
   businessAnchor: React.ReactNode;
   userMenu: React.ReactNode;
   bookingsCount: number;
@@ -41,7 +43,7 @@ interface Props {
 interface LinkDef {
   href: string;
   label: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
   showBookingsCounter?: boolean;
   showUnreadDot?: boolean;
 }
@@ -73,6 +75,7 @@ function workspaceLinks(role: Role): LinkDef[] {
 
 export function SidebarNav({
   role,
+  hasBusiness,
   businessAnchor,
   userMenu,
   bookingsCount,
@@ -92,7 +95,7 @@ export function SidebarNav({
 
   return (
     <Sidebar collapsible="icon">
-      {role === 'vendor' && businessAnchor ? (
+      {role === 'vendor' && hasBusiness ? (
         <SidebarHeader className="border-b border-hairline-soft">{businessAnchor}</SidebarHeader>
       ) : null}
 

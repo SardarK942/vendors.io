@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
 import { BaazarChrome } from '@/components/ui/BaazarChrome';
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -50,13 +51,17 @@ export default async function DashboardLayout({
   const email = user.email ?? '';
   const initial = (email.charAt(0) || '?').toUpperCase();
 
+  const cookieStore = await cookies();
+  const sidebarOpen = cookieStore.get('sidebar_state')?.value !== 'false';
+
   return (
     <ActiveBusinessProvider activeBusinessId={activeBusinessId}>
       <div className="min-h-screen bg-muted/40">
         <BaazarChrome />
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={sidebarOpen}>
           <SidebarNav
             role={role}
+            hasBusiness={activeProfile != null}
             businessAnchor={<VendorBusinessAnchor business={activeBusiness} />}
             userMenu={<SidebarUserMenu user={{ email, initial }} />}
             bookingsCount={bookingsCount}
@@ -64,8 +69,8 @@ export default async function DashboardLayout({
           />
           <SidebarInset>
             <div className="mx-auto flex w-full max-w-7xl gap-4 px-4 pb-8 pt-24 sm:px-6 lg:px-8">
-              <SidebarTrigger className="absolute right-4 top-20 z-10 md:hidden" />
-              <main className="flex-1">{children}</main>
+              <SidebarTrigger className="absolute right-4 top-20 z-10" />
+              <div className="flex-1">{children}</div>
             </div>
           </SidebarInset>
         </SidebarProvider>

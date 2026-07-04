@@ -17,6 +17,10 @@ export async function POST(req: Request) {
     );
   }
 
+  if (current.length > 256 || next.length > 256) {
+    return NextResponse.json({ error: 'Password too long.' }, { status: 400 });
+  }
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
