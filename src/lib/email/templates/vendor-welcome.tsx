@@ -53,7 +53,7 @@ export function VendorWelcomeTemplate({
 
       <Section style={{ textAlign: 'center', marginTop: 32 }}>
         <Button
-          href="https://www.baazar.io/dashboard/profile/packages"
+          href="https://www.baazar.io/dashboard"
           style={{
             backgroundColor: INK,
             color: CREAM,
@@ -63,7 +63,7 @@ export function VendorWelcomeTemplate({
             textDecoration: 'none',
           }}
         >
-          Add your first package →
+          Go to your dashboard →
         </Button>
       </Section>
     </BaazarEmailLayout>

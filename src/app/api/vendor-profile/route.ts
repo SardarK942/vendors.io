@@ -4,6 +4,12 @@ import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
 
+// Historical note: this route previously refused is_active=true when the vendor
+// had zero active packages (409 NO_ACTIVE_PACKAGES). Removed because the custom-
+// request flow (src/lib/vendor-packages/with-custom-request.ts) lets couples
+// send quote requests to zero-package vendors — the gate was blocking legit
+// quote-only vendors (caterers, venues, planners) from resuming after a pause.
+
 const patchVendorProfileSchema = z.object({
   business_name: z.string().min(2).max(100).optional(),
   bio: z.string().max(2000).optional().nullable(),
@@ -35,26 +41,6 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
     .eq('user_id', user.id)
     .single();
   if (!existing) throw new HttpError(403, 'No vendor profile for this user');
-
-  // Pause-toggle validation: if setting is_active=true, require at least 1 active package
-  if (parsed.is_active === true) {
-    const { count } = await supabase
-      .from('packages')
-      .select('id', { count: 'exact', head: true })
-      .eq('vendor_profile_id', existing.id)
-      .eq('is_active', true);
-    if ((count ?? 0) < 1) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'NO_ACTIVE_PACKAGES',
-            message: 'Add at least one active package before resuming your profile.',
-          },
-        },
-        { status: 409 }
-      );
-    }
-  }
 
   if (parsed.subcategories !== undefined) {
     // Re-load the row's category so validation isn't trusting client input.

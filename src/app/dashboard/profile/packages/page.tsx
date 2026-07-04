@@ -9,6 +9,7 @@ import { listPackagesForVendor } from '@/services/packages.service';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
 import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButton';
 import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
+import { PricingModelChoice } from '@/components/onboarding/PricingModelChoice';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { fmtUSD } from '@/lib/intl';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
@@ -41,26 +42,26 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
   const packages = (packagesData ?? []) as unknown as PackageWithFullPreview[];
   const vendorSlug = vendorProfile.slug ?? '';
 
+  // just_onboarded=1 shows only the pricing-model choice cards — the "Your Packages"
+  // header + empty state would repeat the same "add a package" CTA the choice card
+  // already provides. Once the vendor navigates away (or lands here without the flag),
+  // the regular listing takes over.
+  if (justOnboarded) {
+    return (
+      <div className="space-y-6">
+        <PricingModelChoice vendorSlug={vendorSlug} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {justOnboarded && (
-        <div
-          className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4"
-          role="status"
-          aria-live="polite"
-        >
-          <h3 className="font-semibold">
-            <span aria-hidden="true">🎉</span> Profile is live!
-          </h3>
-          <p className="text-sm">Create your first package to start receiving bookings.</p>
-        </div>
-      )}
-
       <div className="flex items-center justify-between">
         <div>
           <PageTitle>Your Packages</PageTitle>
           <p className="text-muted-foreground">
-            Customers can only book vendors with at least one active package.
+            Packages let couples book fixed pricing tiers in one click. Vendors without packages
+            still receive quote requests directly.
           </p>
         </div>
         <Button
@@ -73,14 +74,17 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
 
       {packages.length === 0 ? (
         <Card className="p-12 text-center">
-          <h2 className="text-lg font-semibold">No packages yet</h2>
-          <p className="mt-2 text-muted-foreground">Add your first package to go live in search.</p>
+          <h2 className="text-lg font-semibold">No packages — that&rsquo;s OK</h2>
+          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
+            Couples can already send quote requests from your live profile. Add a package here only
+            if you sell fixed pricing tiers (like a 3-hour photobooth or a bridal MUA package).
+          </p>
           <Button
             asChild
             size="lg"
             className="mt-6 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
           >
-            <Link href="/dashboard/profile/packages/new">+ Add your first package</Link>
+            <Link href="/dashboard/profile/packages/new">+ Add a package</Link>
           </Button>
         </Card>
       ) : (

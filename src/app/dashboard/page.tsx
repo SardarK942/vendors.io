@@ -205,19 +205,22 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">Welcome back, {profile?.full_name || user.email}</p>
       </div>
 
-      {/* Onboarding gate (retained from A2) */}
+      {/* Custom-request flow makes packages optional — this nudge only helps vendors
+          who *do* sell fixed pricing tiers, without gating anyone else. */}
       {activePackageCount === 0 && (
         <Card className="border-yellow-200 bg-yellow-50 p-6">
-          <h2 className="font-semibold text-yellow-900">Add a Package to Go Live</h2>
+          <h2 className="font-semibold text-yellow-900">Sell fixed pricing tiers?</h2>
           <p className="mt-1 text-sm text-yellow-800">
-            Customers can only book vendors with at least one active package.
+            You&rsquo;re already live and can receive quote requests from couples. If you sell
+            packages (like a 3-hour photobooth or a bridal MUA tier), add them so couples can book
+            them in one click.
           </p>
           <Button
             asChild
             size="lg"
             className="mt-4 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
           >
-            <Link href="/dashboard/profile/packages/new">+ Add Package</Link>
+            <Link href="/dashboard/profile/packages/new">+ Add a package</Link>
           </Button>
         </Card>
       )}
