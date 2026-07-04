@@ -9,6 +9,7 @@ import { listPackagesForVendor } from '@/services/packages.service';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
 import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButton';
 import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
+import { PricingModelChoice } from '@/components/onboarding/PricingModelChoice';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { fmtUSD } from '@/lib/intl';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
@@ -43,21 +44,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
 
   return (
     <div className="space-y-6">
-      {justOnboarded && (
-        <div
-          className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4"
-          role="status"
-          aria-live="polite"
-        >
-          <h3 className="font-semibold">
-            <span aria-hidden="true">🎉</span> Profile is live!
-          </h3>
-          <p className="text-sm">
-            Couples can now find your listing and send quote requests. If your business sells fixed
-            pricing tiers, add packages below so couples can book them in one click.
-          </p>
-        </div>
-      )}
+      {justOnboarded && <PricingModelChoice vendorSlug={vendorSlug} />}
 
       <div className="flex items-center justify-between">
         <div>
