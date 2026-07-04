@@ -79,7 +79,7 @@ describe('BookingStickyCard', () => {
     expect(screen.queryByText(/compare all/i)).not.toBeInTheDocument();
   });
 
-  it('shows custom-request fallback when 0 packages', () => {
+  it('shows request-a-quote fallback when 0 packages', () => {
     render(
       <BookingStickyCard
         vendor={baseVendor}
@@ -88,7 +88,7 @@ describe('BookingStickyCard', () => {
         onRequestBooking={() => {}}
       />
     );
-    expect(screen.getByRole('button', { name: /custom request/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /request a quote/i })).toBeInTheDocument();
   });
 
   it('renders trust row (rating, response time, events)', () => {
