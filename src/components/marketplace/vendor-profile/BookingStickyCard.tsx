@@ -38,8 +38,8 @@ export function BookingStickyCard({
         className="sticky top-6 z-30 rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]"
       >
         <p className="text-sm text-ink">
-          This vendor hasn’t listed packages yet. Send them a custom request to ask about
-          availability and pricing.
+          Every booking with this vendor starts with a custom quote. Send your event details and
+          they&rsquo;ll get back to you with pricing.
         </p>
         <Button
           className="mt-4 w-full"

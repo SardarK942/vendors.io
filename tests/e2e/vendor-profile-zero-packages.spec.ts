@@ -32,7 +32,7 @@ test.describe('Vendor profile — zero packages fallback', () => {
     await expect(stickyCard).toBeVisible();
 
     // Must show fallback message
-    await expect(stickyCard.getByText(/hasn't listed packages yet/i)).toBeVisible();
+    await expect(stickyCard.getByText(/starts with a custom quote/i)).toBeVisible();
 
     // ── Custom request button present and clickable ─────────────────────────
     await stickyCard.getByRole('button', { name: /custom request/i }).click();

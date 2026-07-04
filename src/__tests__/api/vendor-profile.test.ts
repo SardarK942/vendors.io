@@ -1,11 +1,9 @@
 /**
- * A2.10/A2.11 — Unit tests for PATCH /api/vendor-profile route handler
+ * Unit tests for PATCH /api/vendor-profile route handler.
  *
- * Tests:
- * - is_active=true with 0 active packages → 409 NO_ACTIVE_PACKAGES
- * - is_active=true with ≥1 active package → 200, returns updated profile
- * - base_address_public=true with valid address → 200
- * - Unauthenticated → 401 (via requireUser throw)
+ * The historical NO_ACTIVE_PACKAGES gate (409 when activating with 0 packages)
+ * was removed once the custom-request flow made packages optional. Activating
+ * now succeeds regardless of package count.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -108,17 +106,19 @@ describe('PATCH /api/vendor-profile', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 409 NO_ACTIVE_PACKAGES when activating with 0 active packages', async () => {
+  it('returns 200 when activating with 0 active packages (custom-request flow makes packages optional)', async () => {
+    const updated = { id: 'vp-1', user_id: 'u-1', is_active: true, business_name: 'Test Vendor' };
     const sb = buildSupabase({
       existingProfile: { id: 'vp-1', user_id: 'u-1' },
       activePackageCount: 0,
+      updatedProfile: updated,
     });
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
 
     const res = await PATCH(makeRequest({ is_active: true }));
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.error.code).toBe('NO_ACTIVE_PACKAGES');
+    expect(json.data.is_active).toBe(true);
   });
 
   it('returns 200 when activating with ≥1 active package', async () => {
