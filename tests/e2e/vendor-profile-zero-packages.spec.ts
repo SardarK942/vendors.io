@@ -34,8 +34,8 @@ test.describe('Vendor profile — zero packages fallback', () => {
     // Must show fallback message
     await expect(stickyCard.getByText(/starts with a custom quote/i)).toBeVisible();
 
-    // ── Custom request button present and clickable ─────────────────────────
-    await stickyCard.getByRole('button', { name: /custom request/i }).click();
+    // ── Request-a-quote button present and clickable ────────────────────────
+    await stickyCard.getByRole('button', { name: /request a quote/i }).click();
     await page.waitForURL(/\/request/);
 
     await ctx.close();

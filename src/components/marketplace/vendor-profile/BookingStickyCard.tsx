@@ -48,7 +48,7 @@ export function BookingStickyCard({
           disabled={!interactive}
         >
           <span className="inline-flex items-center gap-1.5">
-            Send a custom request
+            Request a quote
             <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
           </span>
         </Button>

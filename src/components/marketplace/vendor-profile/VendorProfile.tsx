@@ -130,7 +130,7 @@ export function VendorProfile({
                     href={`/vendors/${vendor.slug}/request`}
                     className="text-ink underline hover-pink-text"
                   >
-                    Send a custom request →
+                    Request a quote →
                   </Link>
                 </p>
               </div>
@@ -167,7 +167,7 @@ export function VendorProfile({
                       href={`/vendors/${vendor.slug}/request`}
                       className="text-ink underline hover-pink-text"
                     >
-                      Send a custom request →
+                      Request a quote →
                     </Link>
                   </p>
                 </div>

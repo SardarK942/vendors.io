@@ -42,10 +42,20 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
   const packages = (packagesData ?? []) as unknown as PackageWithFullPreview[];
   const vendorSlug = vendorProfile.slug ?? '';
 
+  // just_onboarded=1 shows only the pricing-model choice cards — the "Your Packages"
+  // header + empty state would repeat the same "add a package" CTA the choice card
+  // already provides. Once the vendor navigates away (or lands here without the flag),
+  // the regular listing takes over.
+  if (justOnboarded) {
+    return (
+      <div className="space-y-6">
+        <PricingModelChoice vendorSlug={vendorSlug} />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
-      {justOnboarded && <PricingModelChoice vendorSlug={vendorSlug} />}
-
       <div className="flex items-center justify-between">
         <div>
           <PageTitle>Your Packages</PageTitle>

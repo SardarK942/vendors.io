@@ -35,7 +35,7 @@ export function BookingBottomBar({
           <p className="text-xs text-ink/70">Vendor quotes every event custom.</p>
           <Button size="sm" onClick={() => onRequestBooking(null)} disabled={!interactive}>
             <span className="inline-flex items-center gap-1.5">
-              Request quote
+              Request a quote
               <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
             </span>
           </Button>
