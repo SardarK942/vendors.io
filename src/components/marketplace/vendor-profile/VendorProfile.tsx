@@ -5,7 +5,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Star } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { Database } from '@/types/database.types';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 
@@ -108,7 +109,7 @@ export function VendorProfile({
           />
           <div className="mt-6 space-y-8">
             <IdentityPanel vendor={vendor} />
-            {packages.length > 0 && (
+            {packages.length > 0 ? (
               <div id="packages-section">
                 <h2 className="font-spectral text-xl font-semibold text-ink">
                   Choose your package
@@ -134,6 +135,24 @@ export function VendorProfile({
                   </Link>
                 </p>
               </div>
+            ) : (
+              <div id="packages-section">
+                <h2 className="font-spectral text-xl font-semibold text-ink">Custom quote</h2>
+                <p className="mt-1 text-pretty text-xs text-ink/70">
+                  This vendor builds every quote around your event. Tell them your date, guest
+                  count, and what you need — they’ll come back with pricing.
+                </p>
+                <div className="mt-4">
+                  <Button asChild className="w-full" size="lg" disabled={!interactive}>
+                    <Link href={`/vendors/${vendor.slug}/request`}>
+                      <span className="inline-flex items-center gap-1.5">
+                        Request a quote
+                        <ArrowRight className="size-4" aria-hidden="true" />
+                      </span>
+                    </Link>
+                  </Button>
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -145,7 +164,7 @@ export function VendorProfile({
               <PhotoGalleryHero images={images} businessName={vendor.business_name ?? 'Vendor'} />
               <IdentityPanel vendor={vendor} />
 
-              {packages.length > 0 && (
+              {packages.length > 0 ? (
                 <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
                   <h2 className="font-spectral text-xl font-semibold text-ink">
                     Choose your package
@@ -170,6 +189,24 @@ export function VendorProfile({
                       Request a quote →
                     </Link>
                   </p>
+                </div>
+              ) : (
+                <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
+                  <h2 className="font-spectral text-xl font-semibold text-ink">Custom quote</h2>
+                  <p className="mt-1 max-w-md text-pretty text-xs text-ink/70">
+                    This vendor builds every quote around your event. Tell them your date, guest
+                    count, and what you need — they’ll come back with pricing.
+                  </p>
+                  <div className="mt-4">
+                    <Button asChild size="lg" disabled={!interactive}>
+                      <Link href={`/vendors/${vendor.slug}/request`}>
+                        <span className="inline-flex items-center gap-1.5">
+                          Request a quote
+                          <ArrowRight className="size-4" aria-hidden="true" />
+                        </span>
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
