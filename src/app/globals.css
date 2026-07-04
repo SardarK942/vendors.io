@@ -59,6 +59,16 @@
 
     /* Corner radius — DESIGN.md radii.lg (10px) */
     --radius: 0.625rem;
+
+    /* shadcn Sidebar tokens — mapped to Baazar palette (Section 1, spec 2026-07-03). */
+    --sidebar-background: 40 55% 94%; /* between cream and cream-soft */
+    --sidebar-foreground: var(--ink);
+    --sidebar-primary: var(--ink);
+    --sidebar-primary-foreground: var(--cream);
+    --sidebar-accent: 232 56% 41%; /* indigo, used at alpha via bg-sidebar-accent/10 */
+    --sidebar-accent-foreground: var(--ink);
+    --sidebar-border: var(--hairline);
+    --sidebar-ring: var(--indigo);
   }
 
   /* Dark mode intentionally not supported. DESIGN.md anti-reference: */

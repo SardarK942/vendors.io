@@ -65,10 +65,7 @@ export async function getActiveVendorProfile(
 
   // Resolution 3: multiple profiles, no/stale active. Pick the oldest, persist it.
   const first = list[0];
-  await supabase
-    .from('users')
-    .update({ active_vendor_profile_id: first.id })
-    .eq('id', userId);
+  await supabase.from('users').update({ active_vendor_profile_id: first.id }).eq('id', userId);
 
   return { profile: first, totalCount };
 }

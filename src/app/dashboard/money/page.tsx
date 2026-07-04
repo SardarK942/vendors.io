@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { EarningsCard } from '@/components/dashboard/EarningsCard';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 
@@ -26,7 +27,7 @@ export default async function MoneyPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-pretty text-2xl font-bold">Business Analytics</h1>
+        <PageTitle>Business Analytics</PageTitle>
         <p className="text-sm text-muted-foreground">Booking earnings attributed to Baazar.</p>
       </div>
       <EarningsCard vendorProfileId={vendorProfileRaw.id} />

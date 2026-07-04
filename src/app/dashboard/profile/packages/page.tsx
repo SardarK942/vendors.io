@@ -4,6 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { listPackagesForVendor } from '@/services/packages.service';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
 import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButton';
@@ -57,7 +58,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
 
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-pretty text-2xl font-bold">Your Packages</h1>
+          <PageTitle>Your Packages</PageTitle>
           <p className="text-muted-foreground">
             Customers can only book vendors with at least one active package.
           </p>
