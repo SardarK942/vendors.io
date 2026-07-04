@@ -94,7 +94,10 @@ export function SidebarNav({
   };
 
   return (
-    <Sidebar collapsible="icon">
+    // pt-20 clears the BaazarChrome wordmark that floats at top:0 across the
+    // whole app (StaggeredMenu is position:fixed with padding 1.25em). Without
+    // this the sidebar header renders directly under the "baazar." logo.
+    <Sidebar collapsible="icon" className="pt-20">
       {role === 'vendor' && hasBusiness ? (
         <SidebarHeader className="border-b border-hairline-soft">{businessAnchor}</SidebarHeader>
       ) : null}
