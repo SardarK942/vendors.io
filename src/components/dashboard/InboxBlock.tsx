@@ -50,7 +50,7 @@ export async function InboxBlock({ vendorProfileId }: InboxBlockProps) {
   }): string {
     if (r.package_name_snapshot) return r.package_name_snapshot;
     if (r.status === 'pending_quote' && r.event_type) {
-      return `Custom request · ${r.event_type}`;
+      return `Quote request · ${r.event_type}`;
     }
     return 'Booking';
   }

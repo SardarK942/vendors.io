@@ -28,12 +28,12 @@ const FLOW_STEPS = [
   {
     id: 'list',
     icon: LayoutGrid,
-    title: 'List your packages',
-    description: 'Starting prices, add-ons, guest counts. Your packages appear in the marketplace.',
+    title: 'Publish your listing',
+    description: 'Photos, bio, and category. Add packages if you sell fixed pricing tiers — otherwise couples send quote requests directly.',
     card: {
       badge: 'Marketplace',
       headline: 'Your work, live on Baazar.',
-      body: 'Set a starting price, add-ons, and photos once. Couples find you across search, category pages, and event-type filters.',
+      body: 'Photos, bio, and category once. Couples find you across search, category pages, and event-type filters. Add packages later if you sell fixed pricing tiers.',
     },
   },
   {

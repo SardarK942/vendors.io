@@ -308,7 +308,7 @@ export function notifyCustomRequestReceived(
   return createNotification(sb, {
     user_id: vendorUserId,
     type: 'custom_request_received',
-    title: 'New custom request',
+    title: 'New quote request',
     body: `${ctx.coupleName} sent a request for ${ctx.eventDate}. Send a quote to lock it in.`,
     link: `/dashboard/bookings/${ctx.bookingId}`,
     metadata: {

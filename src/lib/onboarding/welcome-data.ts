@@ -61,7 +61,7 @@ export const COUPLE_TIPS: readonly OnboardingTip[] = [
   },
   {
     number: 3,
-    text: "For non-standard requests (multi-day events, custom catering, large guest counts), use the Custom Request card on a vendor's profile to brief them directly.",
+    text: "For non-standard requests (multi-day events, custom catering, large guest counts), use the Request a Quote card on a vendor's profile to brief them directly.",
   },
 ];
 
@@ -95,7 +95,7 @@ export const VENDOR_FEATURES: readonly OnboardingFeature[] = [
 export const VENDOR_TIPS: readonly OnboardingTip[] = [
   {
     number: 1,
-    text: "Complete your profile (basics, photos, packages) to publish to the marketplace. Customers can't book you until you publish.",
+    text: "Complete your profile (basics, photos, and bio) to publish. If you sell fixed pricing tiers, add packages after publishing — otherwise couples can send you quote requests directly.",
   },
   {
     number: 2,
