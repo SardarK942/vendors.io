@@ -144,6 +144,7 @@ export function Step2Details({
           return (
             <div
               key={event.id}
+              data-testid={`event-card-${idx}`}
               className="rounded-lg border border-hairline bg-cream p-5 shadow-[0_1px_2px_rgba(27,25,19,0.04),0_8px_24px_rgba(27,25,19,0.05)]"
             >
               <div className="mb-3 flex items-center justify-between">
@@ -156,7 +157,7 @@ export function Step2Details({
               </div>
 
               <div className="grid grid-cols-1 gap-6 md:grid-cols-[268px_1fr]">
-                <div>
+                <div data-testid={`date-picker-${idx}`}>
                   <label className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
                     Date
                     {isMultiDay && idx > 0 && prevDate && (
