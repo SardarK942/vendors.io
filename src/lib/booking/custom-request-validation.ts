@@ -37,11 +37,18 @@ export const customEventEntrySchema = z.object({
 
 export type CustomEventEntry = z.infer<typeof customEventEntrySchema>;
 
-// V2 schema — used by CustomRequestForm (dynamic events list).
+export const BUDGET_RANGES = ['lt_5k', '5k_15k', '15k_30k', 'gt_30k', 'discuss'] as const;
+export type BudgetRange = (typeof BUDGET_RANGES)[number];
+
+// V2 schema — extended with v2 punch-list fields (all optional, nullable).
 export const customRequestSchemaV2 = z.object({
   vendor_slug: z.string().min(1).max(120),
   events: z.array(customEventEntrySchema).min(1),
   description: z.string().min(50).max(1000),
+  is_multi_day: z.boolean().optional().default(false),
+  event_city: z.string().min(1).max(120).nullish(),
+  venue_name: z.string().max(120).nullish(),
+  budget_range: z.enum(BUDGET_RANGES).nullish(),
 });
 
 export type CustomRequestInputV2 = z.infer<typeof customRequestSchemaV2>;
