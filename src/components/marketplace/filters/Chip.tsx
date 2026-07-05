@@ -6,7 +6,13 @@ import { cn } from '@/lib/utils';
 
 export type ChipVariant = 'toggle' | 'dropdown' | 'applied' | 'all-filters';
 
-export interface ChipProps {
+// Extends native button attrs so Chip composes cleanly with Radix's `asChild`
+// pattern (aria-expanded, data-state, aria-controls, onClick injected by the
+// wrapping primitive all reach the underlying <button>).
+export interface ChipProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onClick' | 'children'
+> {
   /** Visual + interaction variant. */
   variant?: ChipVariant;
   /** Active state (ink-filled). Toggle = "on"; Dropdown = "panel open OR value set". */
@@ -40,6 +46,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
       onRemove,
       panelId,
       className,
+      ...rest
     },
     ref
   ) => {
@@ -90,6 +97,7 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
               'inline-flex h-full items-center gap-1.5 bg-transparent text-inherit',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
             )}
+            {...rest}
           >
             {children}
             {count !== undefined && count > 0 && (
@@ -125,7 +133,14 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
     }
 
     return (
-      <button ref={ref} type="button" onClick={onClick} className={baseClasses} {...ariaProps}>
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        className={baseClasses}
+        {...ariaProps}
+        {...rest}
+      >
         {variant === 'all-filters' && (
           <SlidersHorizontal className="size-3.5" strokeWidth={2} aria-hidden="true" />
         )}
