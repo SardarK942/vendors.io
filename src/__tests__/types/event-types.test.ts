@@ -3,12 +3,12 @@ import { describe, it, expect } from 'vitest';
 import { EVENT_TYPES, CULTURAL_EVENT_TYPES, GENERAL_EVENT_TYPES } from '@/types';
 
 describe('EVENT_TYPES', () => {
-  it('has exactly 20 entries', () => {
-    expect(EVENT_TYPES).toHaveLength(20);
+  it('has exactly 23 entries', () => {
+    expect(EVENT_TYPES).toHaveLength(23);
   });
 
-  it('has 12 cultural + 8 general', () => {
-    expect(CULTURAL_EVENT_TYPES).toHaveLength(12);
+  it('has 15 cultural + 8 general', () => {
+    expect(CULTURAL_EVENT_TYPES).toHaveLength(15);
     expect(GENERAL_EVENT_TYPES).toHaveLength(8);
   });
 
@@ -25,6 +25,9 @@ describe('EVENT_TYPES', () => {
       'reception',
       'walima',
       'aqiqah',
+      'katb_el_kitab',
+      'laylat_al_henna',
+      'zaffa',
       'multiple',
     ]);
   });
@@ -48,5 +51,28 @@ describe('EVENT_TYPES', () => {
     expect(byId.mehndi).toBe('Mehndi / Henna');
     expect(byId.walima).toBe('Walima / Wedding Feast');
     expect(byId.aqiqah).toBe('Aqiqah / Baby Naming');
+  });
+});
+
+describe('EVENT_TYPES — Arab additions', () => {
+  it('includes katb_el_kitab in the cultural group', () => {
+    const entry = EVENT_TYPES.find((e) => e.id === 'katb_el_kitab');
+    expect(entry).toBeDefined();
+    expect(entry?.group).toBe('cultural');
+    expect(entry?.label).toMatch(/Katb el-Kitab/i);
+  });
+
+  it('includes laylat_al_henna in the cultural group', () => {
+    const entry = EVENT_TYPES.find((e) => e.id === 'laylat_al_henna');
+    expect(entry).toBeDefined();
+    expect(entry?.group).toBe('cultural');
+    expect(entry?.label).toMatch(/Laylat al-Henna/i);
+  });
+
+  it('includes zaffa in the cultural group', () => {
+    const entry = EVENT_TYPES.find((e) => e.id === 'zaffa');
+    expect(entry).toBeDefined();
+    expect(entry?.group).toBe('cultural');
+    expect(entry?.label).toMatch(/Zaffa/i);
   });
 });

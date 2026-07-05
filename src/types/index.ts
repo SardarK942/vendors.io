@@ -49,7 +49,7 @@ export type VendorSearchInput = z.infer<typeof vendorSearchSchema>;
 
 // ─── Booking Schemas ────────────────────────────────────────────
 
-// ─── EVENT_TYPES: canonical 20-entry constant (Bucket B) ────────
+// ─── EVENT_TYPES: canonical 23-entry constant (Bucket B) ────────
 
 export const EVENT_TYPES = [
   // Cultural / wedding-adjacent
@@ -64,6 +64,9 @@ export const EVENT_TYPES = [
   { id: 'reception', label: 'Reception', group: 'cultural' as const },
   { id: 'walima', label: 'Walima / Wedding Feast', group: 'cultural' as const },
   { id: 'aqiqah', label: 'Aqiqah / Baby Naming', group: 'cultural' as const },
+  { id: 'katb_el_kitab', label: 'Katb el-Kitab / Milka', group: 'cultural' as const },
+  { id: 'laylat_al_henna', label: 'Laylat al-Henna', group: 'cultural' as const },
+  { id: 'zaffa', label: 'Zaffa (wedding procession)', group: 'cultural' as const },
   { id: 'multiple', label: 'Multi-event booking', group: 'cultural' as const },
   // General celebration
   { id: 'birthday_party', label: 'Birthday party', group: 'general' as const },
