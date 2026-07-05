@@ -88,6 +88,16 @@ export function Step2Details({
 }: Step2DetailsProps) {
   function updateEvent(idx: number, patch: Partial<CustomEvent>) {
     const next = events.map((e, i) => (i === idx ? { ...e, ...patch } : e));
+
+    // Defensive: block same-day / backward date at the current index.
+    if (patch.date && idx > 0) {
+      const prev = next[idx - 1].date;
+      if (prev && patch.date <= prev) {
+        // Ignore this update — silently no-op so the UI stays consistent.
+        return;
+      }
+    }
+
     // Ascending-date invariant: if the changed row is a date and later rows have
     // dates <= new date, clear those later dates.
     if (patch.date && isMultiDay) {
@@ -125,7 +135,11 @@ export function Step2Details({
         {events.map((event, idx) => {
           const prevDate = idx > 0 ? events[idx - 1].date : '';
           const minDateMatcher = prevDate
-            ? { before: new Date(`${prevDate}T00:00:00`) }
+            ? (() => {
+                const d = new Date(`${prevDate}T00:00:00`);
+                d.setDate(d.getDate() + 1);
+                return { before: d };
+              })()
             : undefined;
           return (
             <div
