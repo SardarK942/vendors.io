@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
     guest_count = primary.guestCount;
     event_type = primary.eventTypeId;
     description = desc;
-    is_multi_day = imd ?? false;
+    is_multi_day = imd;
     event_city = ec ?? null;
     venue_name = vn ?? null;
     budget_range = br ?? null;
@@ -154,11 +154,11 @@ export async function POST(req: NextRequest) {
           sendCustomRequestEmail({
             to: vendorEmail,
             coupleFirstName,
-            coupleCity: 'not specified',
+            coupleCity: event_city ?? 'not specified',
             eventType: event_type,
             eventDate: event_date,
             headcount: guest_count,
-            location: 'TBD',
+            location: venue_name ?? event_city ?? 'TBD',
             description,
             bookingId: inserted.id,
             notificationId: notifyResult.id,

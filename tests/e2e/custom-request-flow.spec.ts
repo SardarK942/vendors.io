@@ -88,16 +88,10 @@ async function pickCalendarDate(scope: Locator, monthsAhead: number, dayOfMonth:
  * Opens the vendor page and clicks the "Request a quote" CTA to open the modal on Step 1.
  *
  * The vendor page always renders a virtual "Custom Request" tile inside the
- * PackageGrid (see `appendCustomRequest` — it's unconditionally appended, so
- * `packages.length > 0` is always true and the "Choose your package" branch
- * always renders, even for a vendor with zero real packages). That tile is
- * also an `<a role="link">` whose accessible name contains "Request a quote",
- * but clicking it does a plain Next.js navigation to `/vendors/[slug]/request`
- * rather than opening the modal (`onClick` there has no `setCustomRequestOpen`
- * wiring). The one link that *does* open the modal is the "Don't see what you
- * need? Request a quote →" text link — it's the only "Request a quote" link
- * whose accessible name ends with the literal arrow glyph, so we anchor on
- * that to avoid ambiguity.
+ * PackageGrid (see `appendCustomRequest`), plus a "Don't see what you need?
+ * Request a quote →" text link — both now open the modal via
+ * `onRequestCustomQuote`. We anchor on the text link since its accessible
+ * name (ending in the literal arrow glyph) is the only unambiguous match.
  */
 async function openModalFromVendorPage(page: Page, vendorSlug: string) {
   await page.goto(`/vendors/${vendorSlug}`);

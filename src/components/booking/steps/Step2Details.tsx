@@ -62,9 +62,12 @@ function GuestCountInput({ id, initialValue, onChange }: GuestCountInputProps) {
       value={value}
       onChange={(e) => {
         // Allow any digits or empty. Coercion happens at Step 3 submit.
+        // Clamp to the server's max(2000) so the client never accepts a
+        // value the API will reject.
         const raw = e.target.value.replace(/[^0-9]/g, '');
-        setValue(raw);
-        onChange(raw);
+        const clamped = raw.length && Number(raw) > 2000 ? '2000' : raw;
+        setValue(clamped);
+        onChange(clamped);
       }}
       className="w-full rounded-md border border-hairline bg-cream px-3 py-2 tabular-nums text-ink focus:border-ink focus:outline-none"
     />

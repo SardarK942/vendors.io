@@ -125,6 +125,7 @@ export function VendorProfile({
                     vendorSlug={vendor.slug ?? ''}
                     interactive={interactive}
                     featuredPackageId={featured?.id}
+                    onRequestCustomQuote={() => setCustomRequestOpen(true)}
                   />
                 </div>
                 <p className="mt-4 text-center text-xs">
@@ -190,6 +191,7 @@ export function VendorProfile({
                       vendorSlug={vendor.slug ?? ''}
                       interactive={interactive}
                       featuredPackageId={featured?.id}
+                      onRequestCustomQuote={() => setCustomRequestOpen(true)}
                     />
                   </div>
                   <p className="mt-4 text-center text-xs">

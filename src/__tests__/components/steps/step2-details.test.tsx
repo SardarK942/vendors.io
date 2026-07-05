@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Step2Details } from '@/components/booking/steps/Step2Details';
 import type { CustomEvent } from '@/components/booking/CustomRequestFlow';
@@ -45,42 +45,5 @@ describe('Step2Details — guest count fix', () => {
     // Final call to onEventsChange should carry guestCount '600' (string), not clamp to '1'.
     const last = onEventsChange.mock.calls.at(-1)?.[0][0].guestCount;
     expect(last).toBe('600');
-  });
-});
-
-describe('Step2Details — ascending date invariant', () => {
-  it('clears Day 2 date when Day 1 date moves past it', async () => {
-    const eventsBefore: CustomEvent[] = [
-      mkEvent({ date: '2099-03-13' }),
-      mkEvent({ date: '2099-03-14' }),
-    ];
-    let events = eventsBefore;
-    const onEventsChange = vi.fn((next: CustomEvent[]) => {
-      events = next;
-    });
-    render(
-      <Step2Details
-        isMultiDay={true}
-        events={events}
-        onEventsChange={onEventsChange}
-        eventCity=""
-        venueName=""
-        budgetRange={null}
-        description=""
-        onEventCityChange={vi.fn()}
-        onVenueNameChange={vi.fn()}
-        onBudgetRangeChange={vi.fn()}
-        onDescriptionChange={vi.fn()}
-        onBack={vi.fn()}
-        onContinue={vi.fn()}
-      />
-    );
-    // Simulate re-selecting Day 1 to Mar 20 via the exposed test hook path:
-    // The Step2Details component exposes DatePicker; test the behavior by directly
-    // dispatching a change through the onEventsChange path.
-    // Instead, this behavior is asserted via an internal helper. If refactored,
-    // update the test accordingly.
-    // Placeholder: this test guards the ordering invariant lives somewhere.
-    expect(true).toBe(true);
   });
 });
