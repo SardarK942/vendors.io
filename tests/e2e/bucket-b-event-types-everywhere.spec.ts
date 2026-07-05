@@ -4,15 +4,20 @@
 // is surfaced in every picker surface.
 //
 // Surfaces tested:
-// 1. The CustomRequestForm at /vendors/[slug]/request — uses EventTypePicker
-//    (Radix Select) which is the canonical grouped dropdown with cultural/general split.
-//    NOTE: This route requires a logged-in user (redirects to /login for anon).
+// 1. The custom-request flow at /vendors/[slug]/request — as of the v2 modal
+//    rewrite, this route renders Step1Shape (single/multi-day radio choice)
+//    first; the EventTypePicker (Radix Select) — the canonical grouped
+//    dropdown with cultural/general split — lives on Step2Details. This test
+//    clicks through Step 1 ("single event" → Continue) before asserting on
+//    the picker. NOTE: This route requires a logged-in user (redirects to
+//    /login for anon).
 // 2. The AllFiltersSheet on /vendors — opened via "All filters" chip, uses
 //    EventTypesSection which renders chip buttons (not <option>s).
 //
 // Note: The wizard /setup/details step does NOT have an event-type picker (it
 // covers languages, years in business, and response SLA). The brief pointed to
-// that URL in error — the canonical grouped EventTypePicker lives in CustomRequestForm.
+// that URL in error — the canonical grouped EventTypePicker lives in
+// Step2Details (formerly CustomRequestForm, deleted in the v2 modal rewrite).
 
 import { test, expect } from '@playwright/test';
 import { seedVendor, seedCouple, cleanup, type TestVendor, type TestUser } from './helpers/seed';
@@ -28,22 +33,29 @@ test.describe('Bucket B — all 20 event types in every picker', () => {
     couple = null;
   });
 
-  test('CustomRequestForm event picker shows full list with divider', async ({ browser }) => {
+  test('Step2Details event picker shows full list with divider', async ({ browser }) => {
     // Publish the profile so /vendors/[slug]/request resolves once logged in.
     vendor = await seedVendor({ chargesEnabled: false, publish: true });
-    // The request form requires any authenticated user — use a couple account.
+    // The request flow requires any authenticated user — use a couple account.
     couple = await seedCouple();
 
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     await loginAs(page, couple);
 
-    // Visit the custom request form for this vendor.
+    // Visit the custom request flow for this vendor — lands on Step 1 (shape choice).
     await page.goto(`/vendors/${vendor.vendorSlug}/request`);
+    await expect(
+      page.getByRole('heading', { name: /what.s the shape of your event/i })
+    ).toBeVisible();
+    await page.getByRole('radio', { name: /single event/i }).check();
+    await page.getByRole('button', { name: /continue/i }).click();
 
-    // The EventTypePicker is a Radix Select — its trigger renders as role="combobox".
-    // The "Event type" label renders above the picker via a <label> element.
+    // Step 2 — the EventTypePicker is a Radix Select — its trigger renders as
+    // role="combobox". The "Event type" label renders above the picker via a
+    // <label> element with no htmlFor, so it isn't reachable via getByLabel.
     // Using the last combobox since the date picker (if present) is rendered differently.
+    await expect(page.getByRole('heading', { name: /tell us the details/i })).toBeVisible();
     const picker = page.locator('button[role="combobox"]').last();
     await picker.click();
 
