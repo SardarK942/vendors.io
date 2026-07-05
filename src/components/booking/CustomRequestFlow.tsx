@@ -4,6 +4,7 @@ import * as React from 'react';
 import type { EventTypeId } from '@/types';
 import type { BudgetRange } from '@/lib/booking/custom-request-validation';
 import { Step1Shape } from './steps/Step1Shape';
+import { Step2Details } from './steps/Step2Details';
 
 export type CustomEvent = {
   id: string;
@@ -77,10 +78,21 @@ export function CustomRequestFlow({
         />
       )}
       {stepIndex === 1 && (
-        <div className="text-sm text-ink-muted">
-          Step 2 renders here (implemented in Task 6). Current state:{' '}
-          {isMultiDay ? 'multi' : 'single'}, {events.length} event(s), vendor {vendorBusinessName}.
-        </div>
+        <Step2Details
+          isMultiDay={isMultiDay}
+          events={events}
+          onEventsChange={setEvents}
+          eventCity={eventCity}
+          onEventCityChange={setEventCity}
+          venueName={venueName}
+          onVenueNameChange={setVenueName}
+          budgetRange={budgetRange}
+          onBudgetRangeChange={setBudgetRange}
+          description={description}
+          onDescriptionChange={setDescription}
+          onBack={() => setStepIndex(0)}
+          onContinue={() => setStepIndex(2)}
+        />
       )}
       {stepIndex === 2 && (
         <div className="text-sm text-ink-muted">Step 3 renders here (Task 7).</div>
