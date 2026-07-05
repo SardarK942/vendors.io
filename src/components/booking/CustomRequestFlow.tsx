@@ -5,6 +5,7 @@ import type { EventTypeId } from '@/types';
 import type { BudgetRange } from '@/lib/booking/custom-request-validation';
 import { Step1Shape } from './steps/Step1Shape';
 import { Step2Details } from './steps/Step2Details';
+import { Step3Review } from './steps/Step3Review';
 
 export type CustomEvent = {
   id: string;
@@ -45,6 +46,44 @@ export function CustomRequestFlow({
   const [venueName, setVenueName] = React.useState('');
   const [budgetRange, setBudgetRange] = React.useState<BudgetRange | null>(null);
   const [description, setDescription] = React.useState('');
+  const [submitting, setSubmitting] = React.useState(false);
+  const [submitError, setSubmitError] = React.useState<string | null>(null);
+  const [successBookingId, setSuccessBookingId] = React.useState<string | null>(null);
+
+  async function handleSubmit() {
+    setSubmitError(null);
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/bookings/custom-request', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          vendor_slug: vendorSlug,
+          is_multi_day: isMultiDay,
+          events: events.map((e) => ({
+            date: e.date,
+            startTime: e.startTime,
+            guestCount: Math.max(1, Number(e.guestCount) || 1),
+            eventTypeId: e.eventTypeId,
+          })),
+          event_city: eventCity.trim() || null,
+          venue_name: venueName.trim() || null,
+          budget_range: budgetRange,
+          description,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok || !json.ok) {
+        setSubmitError('We couldn’t send your request — please try again.');
+        return;
+      }
+      setSuccessBookingId(json.booking_id);
+    } catch {
+      setSubmitError('We couldn’t send your request — please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
 
   function goToStep2() {
     // Reconcile the events array with the shape decision.
@@ -94,8 +133,51 @@ export function CustomRequestFlow({
           onContinue={() => setStepIndex(2)}
         />
       )}
-      {stepIndex === 2 && (
-        <div className="text-sm text-ink-muted">Step 3 renders here (Task 7).</div>
+      {stepIndex === 2 && !successBookingId && (
+        <Step3Review
+          isMultiDay={isMultiDay}
+          events={events}
+          eventCity={eventCity}
+          venueName={venueName}
+          budgetRange={budgetRange}
+          description={description}
+          vendorBusinessName={vendorBusinessName}
+          vendorResponseSlaHours={vendorResponseSlaHours}
+          onBack={() => setStepIndex(1)}
+          onSubmit={handleSubmit}
+          submitting={submitting}
+          submitError={submitError}
+        />
+      )}
+      {successBookingId && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="rounded-lg border border-hairline bg-cream p-8 text-ink"
+        >
+          <h2 className="text-balance font-display text-2xl font-bold tracking-[-0.012em]">
+            Request sent.
+          </h2>
+          <p className="mt-3 text-sm text-ink-muted">
+            {vendorBusinessName} will respond
+            {vendorResponseSlaHours ? ` within ${vendorResponseSlaHours} hours` : ' soon'} with a
+            quote. We&apos;ll send you a notification — check your dashboard inbox.
+          </p>
+          <div className="mt-6 flex gap-3">
+            <a
+              href={`/dashboard/bookings/${successBookingId}`}
+              className="rounded-md bg-ink px-4 py-2 text-sm font-semibold text-cream transition-[background-color,transform] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
+            >
+              View in dashboard
+            </a>
+            <a
+              href="/vendors"
+              className="rounded-md border border-hairline px-4 py-2 text-sm font-semibold text-ink hover:border-ink"
+            >
+              Browse other vendors
+            </a>
+          </div>
+        </div>
       )}
     </div>
   );
