@@ -392,6 +392,47 @@ export async function BookingDetail({
                 </div>
               </>
             )}
+            {(bookingAsAny.event_city as string | null) && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                    Location
+                  </p>
+                  <p className="text-sm text-ink">
+                    {bookingAsAny.event_city as string}
+                    {(bookingAsAny.venue_name as string | null) && ` · ${bookingAsAny.venue_name as string}`}
+                  </p>
+                </div>
+              </>
+            )}
+            {(bookingAsAny.budget_range as string | null) && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Budget</p>
+                  <p className="text-sm text-ink">
+                    {
+                      (
+                        {
+                          lt_5k: 'Under $5k',
+                          '5k_15k': '$5k–15k',
+                          '15k_30k': '$15k–30k',
+                          gt_30k: '$30k+',
+                          discuss: 'Prefer to discuss',
+                        } as const
+                      )[bookingAsAny.budget_range as 'lt_5k' | '5k_15k' | '15k_30k' | 'gt_30k' | 'discuss']
+                    }
+                  </p>
+                </div>
+              </>
+            )}
+            {(bookingAsAny.is_multi_day as boolean) && (
+              <>
+                <Separator />
+                <p className="text-xs text-ink-soft">Multi-day event</p>
+              </>
+            )}
           </CardContent>
         </Card>
 
