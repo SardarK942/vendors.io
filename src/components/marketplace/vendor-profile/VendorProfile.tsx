@@ -14,6 +14,7 @@ import { OwnerBanner } from '@/components/marketplace/OwnerBanner';
 import { ExitPreviewPill } from '@/components/marketplace/ExitPreviewPill';
 import { PackageGrid } from '@/components/marketplace/PackageGrid';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
+import { CustomRequestModal } from '@/components/booking/CustomRequestModal';
 
 import { IdentityPanel } from './IdentityPanel';
 import { PhotoGalleryHero } from './PhotoGalleryHero';
@@ -57,6 +58,7 @@ export function VendorProfile({
 }: VendorProfileProps) {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState(false);
+  const [customRequestOpen, setCustomRequestOpen] = useState(false);
   const interactive = (interactiveProp ?? (!isOwner || previewMode)) && showBookingButton;
   const showBanner = isOwner && !previewMode;
   const featured = getFeaturedPackage(packages);
@@ -71,7 +73,7 @@ export function VendorProfile({
       router.push(`/vendors/${vendor.slug}/book?package=${pkgId}`);
     } else {
       // Zero-packages fallback OR vendor sticky card "send a custom request"
-      router.push(`/vendors/${vendor.slug}/request`);
+      setCustomRequestOpen(true);
     }
   }
 
@@ -129,6 +131,10 @@ export function VendorProfile({
                   Don’t see what you need?{' '}
                   <Link
                     href={`/vendors/${vendor.slug}/request`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCustomRequestOpen(true);
+                    }}
                     className="text-ink underline hover-pink-text"
                   >
                     Request a quote →
@@ -144,7 +150,13 @@ export function VendorProfile({
                 </p>
                 <div className="mt-4">
                   <Button asChild className="w-full" size="lg" disabled={!interactive}>
-                    <Link href={`/vendors/${vendor.slug}/request`}>
+                    <Link
+                      href={`/vendors/${vendor.slug}/request`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCustomRequestOpen(true);
+                      }}
+                    >
                       <span className="inline-flex items-center gap-1.5">
                         Request a quote
                         <ArrowRight className="size-4" aria-hidden="true" />
@@ -184,6 +196,10 @@ export function VendorProfile({
                     Don’t see what you need?{' '}
                     <Link
                       href={`/vendors/${vendor.slug}/request`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCustomRequestOpen(true);
+                      }}
                       className="text-ink underline hover-pink-text"
                     >
                       Request a quote →
@@ -199,7 +215,13 @@ export function VendorProfile({
                   </p>
                   <div className="mt-4">
                     <Button asChild size="lg" disabled={!interactive}>
-                      <Link href={`/vendors/${vendor.slug}/request`}>
+                      <Link
+                        href={`/vendors/${vendor.slug}/request`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCustomRequestOpen(true);
+                        }}
+                      >
                         <span className="inline-flex items-center gap-1.5">
                           Request a quote
                           <ArrowRight className="size-4" aria-hidden="true" />
@@ -280,6 +302,14 @@ export function VendorProfile({
       />
 
       {isOwner && previewMode && <ExitPreviewPill onExit={() => setPreviewMode(false)} />}
+
+      <CustomRequestModal
+        open={customRequestOpen}
+        onOpenChange={setCustomRequestOpen}
+        vendorSlug={vendor.slug ?? ''}
+        vendorBusinessName={vendor.business_name}
+        vendorResponseSlaHours={vendor.response_sla_hours ?? null}
+      />
     </>
   );
 }
