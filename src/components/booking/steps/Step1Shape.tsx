@@ -25,7 +25,7 @@ export function Step1Shape({
           Step 1 of 3
         </p>
         <h2 className="text-balance font-display text-2xl font-bold tracking-[-0.014em] text-ink">
-          What's the shape of your event?
+          What&apos;s the shape of your event?
         </h2>
         <p className="mt-2 text-pretty text-sm text-ink-muted">
           Multi-day events (a mehndi Friday, a wedding Saturday, a walima Sunday) get their own card
