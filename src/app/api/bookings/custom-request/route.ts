@@ -43,15 +43,31 @@ export async function POST(req: NextRequest) {
   let event_type: string;
   let description: string;
   let extra_events_json: string | null = null;
+  let is_multi_day: boolean = false;
+  let event_city: string | null = null;
+  let venue_name: string | null = null;
+  let budget_range: string | null = null;
 
   if (parsedV2.success) {
-    const { vendor_slug: vs, events, description: desc } = parsedV2.data;
+    const {
+      vendor_slug: vs,
+      events,
+      description: desc,
+      is_multi_day: imd,
+      event_city: ec,
+      venue_name: vn,
+      budget_range: br,
+    } = parsedV2.data;
     const primary = events[0];
     vendor_slug = vs;
     event_date = primary.date;
     guest_count = primary.guestCount;
     event_type = primary.eventTypeId;
     description = desc;
+    is_multi_day = imd;
+    event_city = ec ?? null;
+    venue_name = vn ?? null;
+    budget_range = br ?? null;
     if (events.length > 1) {
       extra_events_json = JSON.stringify(events);
     }
@@ -95,6 +111,10 @@ export async function POST(req: NextRequest) {
       special_requests,
       status: 'pending_quote',
       total_price_cents: 0,
+      is_multi_day,
+      event_city,
+      venue_name,
+      budget_range,
     })
     .select('id')
     .single();
@@ -134,11 +154,11 @@ export async function POST(req: NextRequest) {
           sendCustomRequestEmail({
             to: vendorEmail,
             coupleFirstName,
-            coupleCity: 'not specified',
+            coupleCity: event_city ?? 'not specified',
             eventType: event_type,
             eventDate: event_date,
             headcount: guest_count,
-            location: 'TBD',
+            location: venue_name ?? event_city ?? 'TBD',
             description,
             bookingId: inserted.id,
             notificationId: notifyResult.id,

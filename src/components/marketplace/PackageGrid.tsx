@@ -38,6 +38,7 @@ interface Props {
   vendorSlug: string;
   interactive?: boolean;
   featuredPackageId?: string;
+  onRequestCustomQuote?: () => void;
 }
 
 function isCustom(p: PackageItem): p is CustomRequestPackage {
@@ -55,6 +56,7 @@ export function PackageGrid({
   vendorSlug,
   interactive = true,
   featuredPackageId,
+  onRequestCustomQuote,
 }: Props) {
   const [selected, setSelected] = useState<PackageWithAddons | null>(null);
   const reducedMotion = useReducedMotion();
@@ -72,14 +74,17 @@ export function PackageGrid({
             <Link
               key={p.id}
               href={`/vendors/${vendorSlug}/request`}
-              onClick={
-                !interactive
-                  ? (e) => {
-                      e.preventDefault();
-                      toast('Preview mode — bookings disabled.');
-                    }
-                  : undefined
-              }
+              onClick={(e) => {
+                if (!interactive) {
+                  e.preventDefault();
+                  toast('Preview mode — bookings disabled.');
+                  return;
+                }
+                if (onRequestCustomQuote) {
+                  e.preventDefault();
+                  onRequestCustomQuote();
+                }
+              }}
               className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft bg-cream-soft text-left transition-shadow hover:shadow-md"
             >
               <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">

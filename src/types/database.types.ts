@@ -36,6 +36,8 @@
  *   - 00063 first_booking_at/first_save_at/dashboard_welcome_dismissed_at/followup_48h_sent_at
  *           on users + vendor_profiles; published_at + served_event_types on vendor_profiles (Bucket J)
  *
+ *   - 00070 is_multi_day, event_city, venue_name, budget_range on bookings (custom-quote flow v2)
+ *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
  */
@@ -638,6 +640,10 @@ export interface Database {
           couple_counter_count: number;
           couple_counter_amount: number | null;
           couple_counter_note: string | null;
+          is_multi_day: boolean;
+          event_city: string | null;
+          venue_name: string | null;
+          budget_range: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -678,6 +684,10 @@ export interface Database {
           couple_counter_count?: number;
           couple_counter_amount?: number | null;
           couple_counter_note?: string | null;
+          is_multi_day?: boolean;
+          event_city?: string | null;
+          venue_name?: string | null;
+          budget_range?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -717,6 +727,10 @@ export interface Database {
           couple_counter_count?: number;
           couple_counter_amount?: number | null;
           couple_counter_note?: string | null;
+          is_multi_day?: boolean;
+          event_city?: string | null;
+          venue_name?: string | null;
+          budget_range?: string | null;
           updated_at?: string;
         };
         Relationships: [

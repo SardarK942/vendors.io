@@ -99,7 +99,8 @@ export function DatePicker({
           day: 'w-9 h-9 text-center text-[12px] tabular-nums p-0',
           day_button:
             'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink tabular-nums hover:bg-cream-soft transition-colors',
-          selected: 'bg-ink !text-cream hover:bg-ink',
+          selected:
+            '[&_button]:bg-hot-pink [&_button]:text-cream [&_button]:font-semibold [&_button]:shadow-[0_2px_8px_rgba(229,19,127,0.35)] [&_button:hover]:bg-hot-pink',
           today: '',
           outside: 'text-ink-soft opacity-50',
           disabled: 'text-ink-soft opacity-30 cursor-not-allowed',
