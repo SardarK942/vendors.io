@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { createClient } from '@/lib/supabase/client';
@@ -225,10 +226,9 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
           </div>
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
+            <PasswordInput
               id="password"
               name="password"
-              type="password"
               required
               minLength={8}
               placeholder="Min 8 characters"

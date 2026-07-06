@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 import { GoogleIcon } from './GoogleIcon';
@@ -99,10 +100,9 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
                     Forgot your password?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   required
                   disabled={loading}
                   autoComplete="current-password"
