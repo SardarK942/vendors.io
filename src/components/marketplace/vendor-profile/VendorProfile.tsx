@@ -158,6 +158,7 @@ export function VendorProfile({
                         setCustomRequestOpen(true);
                       }}
                     >
+
                       <span className="inline-flex items-center gap-1.5">
                         Request a quote
                         <ArrowRight className="size-4" aria-hidden="true" />
@@ -224,6 +225,7 @@ export function VendorProfile({
                           setCustomRequestOpen(true);
                         }}
                       >
+
                         <span className="inline-flex items-center gap-1.5">
                           Request a quote
                           <ArrowRight className="size-4" aria-hidden="true" />
