@@ -7,6 +7,7 @@ import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 
@@ -161,10 +162,9 @@ function ResetPasswordInner() {
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="password">New password</Label>
-                <Input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   minLength={8}
                   required
                   disabled={loading || sessionReady === 'pending'}
@@ -173,10 +173,9 @@ function ResetPasswordInner() {
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="confirm">Confirm new password</Label>
-                <Input
+                <PasswordInput
                   id="confirm"
                   name="confirm"
-                  type="password"
                   minLength={8}
                   required
                   disabled={loading || sessionReady === 'pending'}
