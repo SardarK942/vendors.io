@@ -1,5 +1,19 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  async redirects() {
+    return [
+      // Marketing entry for the vendor DM outreach campaign. Any URL surfaced
+      // in a DM or email that says "start here" should route through this so
+      // we can retarget / analytics-track the campaign entry point in one
+      // place. Signup page pre-selects the vendor role.
+      {
+        source: '/join-vendor',
+        destination: '/signup?role=vendor',
+        permanent: false,
+      },
+    ];
+  },
+};
 
 // Wrap with Sentry only when the DSN is set. Without the DSN the wrapper still
 // injects a client-side shim that tries to hit sentry.io and 404s; skipping it

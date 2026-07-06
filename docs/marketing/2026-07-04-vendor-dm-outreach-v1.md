@@ -38,10 +38,10 @@ photo, a real detail]. [Optional: one-sentence why.]
 [Line 2 — Who we are] I'm Sardar, founder of Baazar (baazar.io) — a new
 cultural-wedding marketplace launching in Chicago.
 
-[Line 3 — The hook, category-specific] See variants below.
+[Line 3 — The hook, category-specific] See per-category scripts below.
 
-[Line 4 — Ask permission, not a click] Cool if I share a bit more about how
-it works? No pressure either way.
+[Line 4 — Invite + soft CTA] Cool if I share a bit more about how it works?
+Or start here: baazar.io/join-vendor.
 ```
 
 ### Rules for line 1 (non-negotiable)
@@ -50,32 +50,42 @@ it works? No pressure either way.
 - **Under 15 words.** Longer reads as a bot.
 - **No emojis.** One is fine if it matches how they post. Zero is safer.
 
-### Rules for line 4 (non-negotiable)
+### Rules for line 4
 
-- **Do NOT paste a link in message 1.** Instagram down-ranks DMs with links. Also reads as spam.
-- **Ask for permission.** "Cool if I share more?" invites a two-way conversation. "Check us out at [link]" is a one-way pitch that dies unread.
+- **Give both paths.** Line 4 offers conversation ("cool if I share more?") AND a soft CTA (`baazar.io/join-vendor`). Repliers get relationship, clickers get action.
+- **v2 change from v1:** we now include a soft link in message 1. v1's "no link" rule was based on IG down-ranking DMs with links — worth testing whether that effect is real for this specific vendor cohort. Reply-rate is the metric to watch.
+- **Test the alternative if reply rate tanks.** If week 1 shows reply rate <10% with the CTA, swap back to invite-only (`Cool if I share more? No pressure either way.`) — the CTA URL is the first thing to sacrifice.
 
 ---
 
-## Category variants — line 3 only
+## Category-specific line 3s — v2 (2026-07-05)
 
-Pick the vendor's category, drop in the matching line 3. Everything else stays the same.
+**Superseded from v1:** The 4-variant model (V1–V4) collapsed too many distinct businesses into the same hook. v2 uses **one bespoke line 3 per category** so a DJ's DM doesn't sound like a photobooth vendor's DM.
 
-### V1 — Photobooth / DJ / MUA / Videographer (package-native)
+The v2 line 3s live in the batch CSV — one per row, pre-assigned to each vendor's category. The file is `~/Downloads/vendor-dm-batch-2026-07-04.csv` (and re-generated via `scratchpad/build_dm_batch.py`).
 
-> We're building the founding vendor roster in Chicago before we open to couples. You'd get first placement + your existing packages listed exactly how you already sell them. We only take 5% when a booking closes — nothing otherwise.
+### Shared pattern across every category
 
-### V2 — Photographer
+```
+We're building/onboarding Chicago's founding [category] roster before we open
+to couples. [ONE category-specific detail: what pricing model they use, what
+placement they get, what filters couples use to find them.] No fees, no
+monthly costs.
+```
 
-> We're onboarding a founding photographer cohort in Chicago before we open to couples. You'd list starting prices and every couple sends you the full brief (date, venue, hours, extras) with their inquiry — so you can quote real numbers on message one. 5% deposit through us when they book, you keep 95%.
+### The specificity is the point
 
-### V3 — Caterer / Venue / Large decor (custom-quote native)
+- **DJ**: mentions cross-event bookings (mehndi + sangeet + reception) — that's how DJs actually sell
+- **Photobooth**: mentions their 3/4/5-hour packages — the actual unit of sale
+- **Photographer**: explains the full-brief inquiry format — solves their real intake pain
+- **Venue / Catering / Decor (large)**: no packages framing — they don't sell that way
+- **Content Creator**: names the specific job (BTS + reels alongside photographer)
 
-> We're onboarding a founding vendor cohort in Chicago before we open to couples. No packages needed on your end — couples send you a quote request with headcount, cuisine, and event details, you send back your real quote in your CRM inbox. 5% deposit through us when they book, you keep 95%.
+**Regenerate the batch CSV** whenever you refine a line 3 — the Python script is a single source of truth.
 
-### V4 — Mehndi artists / Small decor / Content creators (long-tail fallback)
+### v2 also softened the fee mention
 
-> We're building a founding vendor roster in Chicago before we open to couples. Your listing is free, you get inquiries directly, and we only take 5% when a booking closes. Zero upfront cost, zero monthly fee.
+v1 line 3 ended with `We only take 5% when a booking closes — nothing otherwise` — defensive, forces a money-evaluation in message 1. v2 ends with just `No fees, no monthly costs.` The specific 5% is deferred to the reply playbook, where it does its job of disarming the "what does it cost?" objection _when they ask_.
 
 ---
 
@@ -140,7 +150,19 @@ Then **mark the row "declined" + reason** and never message from the same accoun
 
 > Here's your listing — you can claim it in about 3 min: baazar.io/vendors/[their-slug]
 
-(If they weren't scraped, send them to baazar.io/join-vendor or the equivalent onboarding start URL.)
+(If they weren't scraped, send them to baazar.io/join-vendor.)
+
+### "Sign me up" / "I'm in" / "Where do I start?"
+
+> Welcome — glad you're in.
+>
+> Signup takes about 5 minutes: baazar.io/join-vendor
+>
+> You'll pick your business type, upload a few photos, add your bio, and publish. Once you're live, couples can send you quote requests directly. If you sell fixed pricing tiers you can add packages after publishing — otherwise skip that step.
+>
+> Ping me if anything gets stuck along the way.
+
+The `baazar.io/join-vendor` route redirects to `/signup?role=vendor` (pre-selects vendor on the role picker). Configured in `next.config.mjs`; signup page reads the `?role=` query param and locks the role picker to the intended value.
 
 ---
 
