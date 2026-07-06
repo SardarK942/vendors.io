@@ -272,7 +272,7 @@ export async function BookingDetail({
       )}
       {role === 'couple' && booking.status === 'pending_quote' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          Custom request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond
+          Quote request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond
           with a quote — we’ll email you and post it here.
         </div>
       )}
@@ -297,7 +297,7 @@ export async function BookingDetail({
       )}
       {role === 'vendor' && booking.status === 'pending_quote' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          <strong>Action needed:</strong> A couple sent a custom request. Read their notes below,
+          <strong>Action needed:</strong> A couple sent a quote request. Read their notes below,
           then send them a quote to lock in the date.
         </div>
       )}

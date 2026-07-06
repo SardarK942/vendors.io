@@ -25,8 +25,8 @@ export function renderCustomRequestHtml(args: CustomRequestArgs): string {
 
   return `
     <div style="font-family: -apple-system, sans-serif; background:#FBF6EC; color:#1B1414; padding:24px;">
-      <h1 style="font-size:22px; margin:0 0 16px;">New custom request</h1>
-      <p><strong>${safeCoupleFirstName}</strong> from <strong>${safeCoupleCity}</strong> has sent you a custom request.</p>
+      <h1 style="font-size:22px; margin:0 0 16px;">New quote request</h1>
+      <p><strong>${safeCoupleFirstName}</strong> from <strong>${safeCoupleCity}</strong> has sent you a quote request.</p>
       <table style="border-collapse:collapse; margin:16px 0; width:100%;">
         <tr>
           <td style="padding:6px 12px 6px 0; color:#666; white-space:nowrap;">Event type</td>
@@ -70,7 +70,7 @@ export async function sendCustomRequestEmail(args: {
   bookingId: string;
   notificationId?: string;
 }): Promise<{ ok: boolean; id?: string; error?: string }> {
-  const subject = `New custom request from ${args.coupleFirstName} — ${args.eventType} on ${args.eventDate}`;
+  const subject = `New quote request from ${args.coupleFirstName} — ${args.eventType} on ${args.eventDate}`;
   return sendWithRecord({
     to: args.to,
     subject,
