@@ -41,16 +41,27 @@ Code already wired: `sentry.client.config.ts`, `sentry.server.config.ts`, `sentr
    - `UPSTASH_REDIS_REST_URL`
    - `UPSTASH_REDIS_REST_TOKEN`
 4. Add both to Vercel env (Production + Preview) → redeploy.
-5. **Verify:** `curl -X POST https://<base-url>/api/ai/search -H 'content-type: application/json' -d '{"query":"test"}'` in a loop from the same IP; around the 30th request in a minute you should see `429 Too many requests`.
+5. **Verify:** `for i in $(seq 1 35); do curl -s -o /dev/null -w "%{http_code}\n" -X POST https://<base-url>/api/ai/search -H 'content-type: application/json' -d '{"query":"test"}'; done` — around the 31st iteration you should start seeing `429`.
 
-Already rate-limited (dormant until env vars set):
+Already wired via `checkRateLimit` in `src/lib/rate-limit.ts` (Upstash-backed; dormant until env vars set):
 
-- `/api/bookings/request` — 10/min per user
-- `/api/ai/search` — 30/min per IP
-- `/api/bookings/[id]/cancel` — 5/min per user
-- `/api/vendors/me/withdraw` — 3/min per user
+- `POST /api/bookings` — `booking:create` — 10/min per user
+- `POST /api/bookings/[id]/cancel` — `booking:cancel` — 5/min per user
+- `POST /api/ai/search` — `ai:search` — 30/min per IP (anonymous allowed)
+- `POST /api/users/me/active-business` — `active-business` — 30/min per user
+- `PATCH /api/booking-events/[id]/notes` — `vendor-notes` — 10/min per user
 
-Fail-open: if Upstash is down, requests pass through. A rate limiter that kills the site is worse than none.
+Separate Postgres-backed limiter (`src/lib/ai/rate-limit.ts`, always live — no Upstash dependency):
+
+- `POST /api/ai/bio-assist` — 10 calls / 24 h per user, tracked in `ai_bio_assist_calls`
+
+Separate Postgres-backed IP-hash limiter (also always live):
+
+- `GET /api/cal/[token]` — 600 polls / hour per (vendor, IP-hash), tracked in `vendor_calendar_feed_polls`
+
+Fail-open: if Upstash is unreachable, `checkRateLimit` allows the request through (logged to `console.error`). A rate limiter that takes the site down is worse than none.
+
+Not yet protected — see the follow-up rate-limit sweep in the `feat/enable-rate-limiting` PR notes for the prioritized list (Phase B): public POSTs (`/api/newsletter/subscribe`, `/api/scraped-vendors/[id]/request`), auth wrappers around Supabase flows, `/api/bookings/[id]/deposit`, `/api/bookings/custom-request`, the booking state-machine POSTs, and the `/api/uploadthing` core (missing auth check).
 
 ---
 
