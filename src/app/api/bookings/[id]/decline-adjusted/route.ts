@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { coupleDeclineAdjusted } from '@/services/booking.service';
 import { sendCoupleDeclinedEmail } from '@/lib/email/resend';
-import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
 export const POST = withErrorBoundary(
-  async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id: bookingId } = await params;
     const { user, supabase } = await requireUser();
+
+    const gate = await checkRateLimit(
+      request,
+      'booking:decline-adjusted',
+      { limit: 20, window: '1 m' },
+      user.id
+    );
+    if (!gate.ok) throw new HttpError(429, gate.message!);
 
     const result = await coupleDeclineAdjusted(supabase, bookingId, user.id);
     if (result.error) {

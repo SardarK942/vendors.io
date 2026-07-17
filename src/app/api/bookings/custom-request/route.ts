@@ -8,6 +8,7 @@ import {
 import { notifyCustomRequestReceived } from '@/services/notifications.service';
 import { deliver } from '@/lib/notifications/deliver';
 import { sendCustomRequestEmail } from '@/lib/email/custom-request';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,18 @@ export async function POST(req: NextRequest) {
 
   if (!user) {
     return NextResponse.json({ ok: false, error: 'auth required' }, { status: 401 });
+  }
+
+  // A couple planning a real wedding wouldn't send more than 5 quote requests
+  // per hour — this stops one logged-in account from spamming every vendor slug.
+  const gate = await checkRateLimit(
+    req,
+    'custom-request:create',
+    { limit: 5, window: '1 h' },
+    user.id
+  );
+  if (!gate.ok) {
+    return NextResponse.json({ ok: false, error: gate.message ?? 'rate_limit' }, { status: 429 });
   }
 
   // Try V2 (events array) first; fall back to V1 (single-event) for backwards-compat.

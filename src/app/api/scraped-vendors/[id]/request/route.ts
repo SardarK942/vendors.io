@@ -7,6 +7,7 @@ import {
   sendRemovalRequestTeamEmail,
   sendRemovalConfirmationVendorEmail,
 } from '@/lib/email/resend';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,6 +30,12 @@ interface Props {
 }
 
 export async function POST(req: NextRequest, { params }: Props) {
+  // Public + sends up to 2 emails per call → hard IP cap to blunt reflection spam.
+  const gate = await checkRateLimit(req, 'scraped-vendor:request', { limit: 3, window: '1 h' });
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.message ?? 'rate_limit' }, { status: 429 });
+  }
+
   const rawParams = await params;
   const paramsParsed = paramsSchema.safeParse(rawParams);
   if (!paramsParsed.success) {

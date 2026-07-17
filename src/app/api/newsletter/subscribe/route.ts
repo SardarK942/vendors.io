@@ -2,10 +2,17 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { newsletterSubscribeSchema } from '@/lib/newsletter/validation';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  // Public endpoint — hard cap per IP to blunt DB-flood + list-poisoning.
+  const gate = await checkRateLimit(req, 'newsletter:subscribe', { limit: 5, window: '1 h' });
+  if (!gate.ok) {
+    return NextResponse.json({ ok: false, error: gate.message ?? 'rate_limit' }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();
