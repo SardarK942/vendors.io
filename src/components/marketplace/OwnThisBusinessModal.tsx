@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { TurnstileGate } from '@/components/security/TurnstileGate';
 
 type View = 'choice' | 'remove' | 'claim';
 
@@ -26,6 +27,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<'remove' | 'claim' | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   function reset() {
     setView('choice');
@@ -54,6 +56,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
         requester_name: name || null,
         requester_ig: ig || null,
         reason: reason || null,
+        turnstile_token: turnstileToken,
       }),
     });
     setSubmitting(false);
@@ -65,6 +68,8 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-md">
+        {/* Invisible bot-check; renders 0x0 unless Cloudflare escalates. Dormant when NEXT_PUBLIC_TURNSTILE_SITE_KEY is unset. */}
+        <TurnstileGate onToken={setTurnstileToken} action="scraped-vendor-request" />
         {done && (
           <div className="space-y-3" role="status" aria-live="polite">
             <DialogHeader>

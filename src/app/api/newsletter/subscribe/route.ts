@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { newsletterSubscribeSchema } from '@/lib/newsletter/validation';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,6 +24,12 @@ export async function POST(req: NextRequest) {
   const parsed = newsletterSubscribeSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: 'invalid payload' }, { status: 400 });
+  }
+
+  // Cloudflare Turnstile bot check — dormant until TURNSTILE_SECRET_KEY is set.
+  const turnstile = await verifyTurnstileToken(parsed.data.turnstile_token, req);
+  if (!turnstile.ok) {
+    return NextResponse.json({ ok: false, error: 'bot_check_failed' }, { status: 400 });
   }
 
   const { email, source } = parsed.data;
