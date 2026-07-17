@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -21,6 +22,19 @@ export async function POST(req: Request) {
 
   if (next === user.email) {
     return NextResponse.json({ error: 'New email must differ from current.' }, { status: 400 });
+  }
+
+  // updateUser({email}) triggers a Supabase confirmation email to `next`.
+  // Cap prevents using a hijacked session to spray confirm emails at arbitrary
+  // addresses.
+  const gate = await checkRateLimit(
+    req,
+    'settings:email',
+    { limit: 3, window: '10 m' },
+    user.id
+  );
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.message ?? 'rate_limit' }, { status: 429 });
   }
 
   const { error } = await supabase.auth.updateUser({ email: next });

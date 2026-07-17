@@ -14,11 +14,17 @@
  * Identifier precedence: explicit userId > x-forwarded-for IP > 'anonymous'.
  */
 
-import type { NextRequest } from 'next/server';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
 type Window = `${number} ${'s' | 'm' | 'h'}`;
+
+/** Minimal shape checkRateLimit needs — both `Request` and `NextRequest` match. */
+interface HeadersOnlyRequest {
+  headers: {
+    get: (name: string) => string | null;
+  };
+}
 
 export interface RateLimitOptions {
   limit: number;
@@ -61,7 +67,7 @@ function getLimiter(key: string, options: RateLimitOptions): Ratelimit | null {
   return limiter;
 }
 
-function identifierFrom(request: NextRequest, userId?: string): string {
+function identifierFrom(request: HeadersOnlyRequest, userId?: string): string {
   if (userId) return `u:${userId}`;
   const xff = request.headers.get('x-forwarded-for');
   const ip = xff?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || 'anonymous';
@@ -74,7 +80,7 @@ function identifierFrom(request: NextRequest, userId?: string): string {
  * limiter failures should degrade to "allow" rather than take the site down.
  */
 export async function checkRateLimit(
-  request: NextRequest,
+  request: HeadersOnlyRequest,
   key: string,
   options: RateLimitOptions,
   userId?: string
