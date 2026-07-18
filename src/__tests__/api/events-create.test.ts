@@ -38,4 +38,8 @@ describe('createEventSchema', () => {
     const bad = { ...valid, functions: [{ ...valid.functions[0], date: '08/27/2026' }] };
     expect(createEventSchema.safeParse(bad).success).toBe(false);
   });
+  it('rejects tasks whose function_index is out of range', () => {
+    const bad = { ...valid, tasks: [{ title: 'Orphan task', due_date: null, function_index: 5 }] };
+    expect(createEventSchema.safeParse(bad).success).toBe(false);
+  });
 });

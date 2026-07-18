@@ -322,30 +322,42 @@ export const eventFunctionInputSchema = z.object({
   vendor_needs: z.array(eventVendorNeedInputSchema).max(20).default([]),
 });
 
-export const createEventSchema = z.object({
-  name: z.string().min(1).max(120),
-  celebration_type: z.string().min(1).max(40),
-  city: z.string().max(80).nullish(),
-  total_budget_cents: z.number().int().nonnegative().max(1_000_000_000).nullish(),
-  functions: z.array(eventFunctionInputSchema).min(1).max(12),
-  allocations: z
-    .array(
-      z.object({
-        category: z.string().min(1).max(40),
-        planned_cents: z.number().int().nonnegative(),
-      })
-    )
-    .max(20)
-    .default([]),
-  tasks: z
-    .array(
-      z.object({
-        title: z.string().min(1).max(200),
-        due_date: eventIsoDate.nullish(),
-        function_index: z.number().int().nonnegative().nullish(),
-      })
-    )
-    .max(50)
-    .default([]),
-});
+export const createEventSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    celebration_type: z.string().min(1).max(40),
+    city: z.string().max(80).nullish(),
+    total_budget_cents: z.number().int().nonnegative().max(1_000_000_000).nullish(),
+    functions: z.array(eventFunctionInputSchema).min(1).max(12),
+    allocations: z
+      .array(
+        z.object({
+          category: z.string().min(1).max(40),
+          planned_cents: z.number().int().nonnegative(),
+        })
+      )
+      .max(20)
+      .default([]),
+    tasks: z
+      .array(
+        z.object({
+          title: z.string().min(1).max(200),
+          due_date: eventIsoDate.nullish(),
+          function_index: z.number().int().nonnegative().nullish(),
+        })
+      )
+      .max(50)
+      .default([]),
+  })
+  .superRefine((data, ctx) => {
+    data.tasks.forEach((t, i) => {
+      if (t.function_index != null && t.function_index >= data.functions.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['tasks', i, 'function_index'],
+          message: `function_index ${t.function_index} out of range (${data.functions.length} functions)`,
+        });
+      }
+    });
+  });
 export type CreateEventInput = z.infer<typeof createEventSchema>;
