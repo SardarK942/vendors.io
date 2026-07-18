@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { EventRow, type EventRowData } from './EventRow';
 import Image from 'next/image';
 import { fmtUSD } from '@/lib/intl';
+import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 
 interface Addon {
   id: string;
@@ -51,6 +52,7 @@ interface Props {
   vendor: VendorProps;
   pkg: PackageProps;
   selectedAddons: SelectedAddon[];
+  eventOptions: EventOption[];
 }
 
 function makeBlankEvent(seq: number): EventRowData {
@@ -74,7 +76,7 @@ function makeBlankEvent(seq: number): EventRowData {
   };
 }
 
-export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
+export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props) {
   const router = useRouter();
   // Lazy init so makeBlankEvent's `new Date()` runs once at mount instead of
   // every render — avoids SSR/hydration date drift.
@@ -86,6 +88,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
     Object.fromEntries(Array.from({ length: pkg.events_count }, (_, i) => [i + 1, 50]))
   );
   const [specialRequests, setSpecialRequests] = useState('');
+  const [eventFunctionId, setEventFunctionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fullNameId = useId();
@@ -126,6 +129,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
         selected_addons: selectedAddons,
         guest_count: totalGuestCount,
         special_requests: specialRequests || undefined,
+        event_function_id: eventFunctionId ?? undefined,
         couple_full_name: coupleFullName,
         couple_contact_phone: couplePhone,
         events: events.map((ev, i) => ({
@@ -349,6 +353,11 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 );
               })
             )}
+            <EventFunctionSelect
+              options={eventOptions}
+              value={eventFunctionId}
+              onChange={setEventFunctionId}
+            />
             <div>
               <label htmlFor={specialRequestsId} className="mb-1 block text-sm font-medium">
                 Special Requests (optional)

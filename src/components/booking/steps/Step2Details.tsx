@@ -4,6 +4,7 @@ import * as React from 'react';
 import { DatePicker } from '@/components/ui/date-picker';
 import { EventTypePicker } from '@/components/ui/EventTypePicker';
 import { BUDGET_RANGES, type BudgetRange } from '@/lib/booking/custom-request-validation';
+import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 import type { CustomEvent } from '../CustomRequestFlow';
 
 export interface Step2DetailsProps {
@@ -18,6 +19,9 @@ export interface Step2DetailsProps {
   onBudgetRangeChange: (v: BudgetRange | null) => void;
   description: string;
   onDescriptionChange: (v: string) => void;
+  eventOptions: EventOption[];
+  eventFunctionId: string | null;
+  onEventFunctionIdChange: (v: string | null) => void;
   onBack: () => void;
   onContinue: () => void;
 }
@@ -86,6 +90,9 @@ export function Step2Details({
   onBudgetRangeChange,
   description,
   onDescriptionChange,
+  eventOptions,
+  eventFunctionId,
+  onEventFunctionIdChange,
   onBack,
   onContinue,
 }: Step2DetailsProps) {
@@ -257,6 +264,12 @@ export function Step2Details({
           />
         </div>
       </div>
+
+      <EventFunctionSelect
+        options={eventOptions}
+        value={eventFunctionId}
+        onChange={onEventFunctionIdChange}
+      />
 
       <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">

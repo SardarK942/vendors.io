@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { BookingForm } from '@/components/forms/BookingForm';
+import type { EventOption } from '@/components/events/EventFunctionSelect';
 import {
   BOOKING_SELECTION_COOKIE_NAME,
   decodeBookingSelectionCookie,
@@ -71,6 +72,28 @@ export default async function BookPage({ params }: BookPageProps) {
 
   if (!pkg || !pkg.is_active) notFound();
 
+  // Load the couple's events so they can link this booking to an event function.
+  let eventOptions: EventOption[] = [];
+  const { data: evts } = await supabase
+    .from('events')
+    .select('id, name, event_functions(id, label, date, sequence)')
+    .eq('couple_user_id', user.id)
+    .order('created_at', { ascending: false });
+  eventOptions = (evts ?? []).map((e) => ({
+    eventId: e.id,
+    eventName: e.name,
+    functions: [
+      ...((e.event_functions as {
+        id: string;
+        label: string;
+        date: string | null;
+        sequence: number;
+      }[]) ?? []),
+    ]
+      .sort((a, b) => a.sequence - b.sequence)
+      .map(({ id, label, date }) => ({ id, label, date })),
+  }));
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6">
@@ -86,6 +109,7 @@ export default async function BookPage({ params }: BookPageProps) {
           addons: (pkg.addons ?? []) as { id: string; name: string; price_delta_cents: number }[],
         }}
         selectedAddons={selection.selected_addons}
+        eventOptions={eventOptions}
       />
     </div>
   );

@@ -35,6 +35,9 @@ describe('Step2Details — guest count fix', () => {
         onVenueNameChange={vi.fn()}
         onBudgetRangeChange={vi.fn()}
         onDescriptionChange={vi.fn()}
+        eventOptions={[]}
+        eventFunctionId={null}
+        onEventFunctionIdChange={vi.fn()}
         onBack={vi.fn()}
         onContinue={vi.fn()}
       />
