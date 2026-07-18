@@ -8,7 +8,6 @@ CREATE TABLE events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), couple_user_
 CREATE INDEX idx_events_couple ON events (couple_user_id, created_at DESC);
 
 CREATE TABLE event_functions (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), event_id uuid NOT NULL REFERENCES events(id) ON DELETE CASCADE, sequence int NOT NULL, label text NOT NULL, event_type_id text, date date, start_time time, end_time time, venue_name text, city text, guest_estimate int, notes text, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now(), UNIQUE (event_id, sequence));
-CREATE INDEX idx_event_functions_event ON event_functions (event_id, sequence);
 
 CREATE TABLE event_vendor_needs (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), event_function_id uuid NOT NULL REFERENCES event_functions(id) ON DELETE CASCADE, category text NOT NULL, booking_id uuid REFERENCES bookings(id) ON DELETE SET NULL, manual_vendor_name text, manual_amount_cents bigint, manual_booked boolean NOT NULL DEFAULT false, notes text, sort int NOT NULL DEFAULT 0, created_at timestamptz NOT NULL DEFAULT now(), updated_at timestamptz NOT NULL DEFAULT now());
 CREATE INDEX idx_event_vendor_needs_function ON event_vendor_needs (event_function_id, sort);
