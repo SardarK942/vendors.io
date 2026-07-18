@@ -24,12 +24,15 @@ export const PATCH = withErrorBoundary(
     if (!gate.ok) throw new HttpError(429, gate.message!);
 
     const parsed = patchSchema.parse(await request.json());
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('events')
       .update({ ...parsed, updated_at: new Date().toISOString() })
       .eq('id', id)
-      .eq('couple_user_id', user.id);
+      .eq('couple_user_id', user.id)
+      .select('id')
+      .maybeSingle();
     if (error) throw new HttpError(500, error.message);
+    if (!data) throw new HttpError(404, 'Event not found');
     return NextResponse.json({ ok: true });
   }
 );
@@ -38,12 +41,15 @@ export const DELETE = withErrorBoundary(
   async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     const { user, supabase } = await requireUser();
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('events')
       .delete()
       .eq('id', id)
-      .eq('couple_user_id', user.id);
+      .eq('couple_user_id', user.id)
+      .select('id')
+      .maybeSingle();
     if (error) throw new HttpError(500, error.message);
+    if (!data) throw new HttpError(404, 'Event not found');
     return NextResponse.json({ ok: true });
   }
 );

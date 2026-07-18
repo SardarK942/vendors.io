@@ -31,7 +31,7 @@ export const POST = withErrorBoundary(
       event_function_id: parsed.event_function_id ?? null,
     });
     if (error) throw new HttpError(500, error.message);
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return NextResponse.json({ ok: true });
   }
 );
 

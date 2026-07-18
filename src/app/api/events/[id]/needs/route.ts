@@ -58,7 +58,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
       : { event_function_id: parsed.event_function_id, category: parsed.category }
   );
   if (error) throw new HttpError(500, error.message);
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return NextResponse.json({ ok: true });
 });
 
 const patchSchema = z.object({
