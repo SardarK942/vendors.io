@@ -301,3 +301,51 @@ export const SPOKEN_LANGUAGES = [
 ] as const;
 
 export type SpokenLanguage = (typeof SPOKEN_LANGUAGES)[number];
+
+// ─── Customer Events (Phase 1) ──────────────────────────────────────
+// Spec: docs/superpowers/specs/2026-07-18-customer-events-design.md §2.
+
+const eventIsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+export const eventVendorNeedInputSchema = z.object({
+  category: z.string().min(1).max(40),
+  manual_vendor_name: z.string().max(120).nullish(),
+  manual_amount_cents: z.number().int().nonnegative().max(100_000_000).nullish(),
+  manual_booked: z.boolean().default(false),
+});
+
+export const eventFunctionInputSchema = z.object({
+  label: z.string().min(1).max(80),
+  event_type_id: z.string().max(40).nullish(),
+  date: eventIsoDate.nullish(),
+  guest_estimate: z.number().int().positive().max(10_000).nullish(),
+  vendor_needs: z.array(eventVendorNeedInputSchema).max(20).default([]),
+});
+
+export const createEventSchema = z.object({
+  name: z.string().min(1).max(120),
+  celebration_type: z.string().min(1).max(40),
+  city: z.string().max(80).nullish(),
+  total_budget_cents: z.number().int().nonnegative().max(1_000_000_000).nullish(),
+  functions: z.array(eventFunctionInputSchema).min(1).max(12),
+  allocations: z
+    .array(
+      z.object({
+        category: z.string().min(1).max(40),
+        planned_cents: z.number().int().nonnegative(),
+      })
+    )
+    .max(20)
+    .default([]),
+  tasks: z
+    .array(
+      z.object({
+        title: z.string().min(1).max(200),
+        due_date: eventIsoDate.nullish(),
+        function_index: z.number().int().nonnegative().nullish(),
+      })
+    )
+    .max(50)
+    .default([]),
+});
+export type CreateEventInput = z.infer<typeof createEventSchema>;
