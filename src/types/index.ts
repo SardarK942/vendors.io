@@ -238,6 +238,7 @@ export const createBookingSchema = z.object({
   couple_full_name: z.string().min(1).max(120),
   couple_contact_phone: z.string().min(1).max(40),
   events: z.array(bookingEventInputSchema).min(1).max(5),
+  event_function_id: z.string().uuid().nullish(),
 });
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 

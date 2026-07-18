@@ -9,6 +9,7 @@ import { notifyCustomRequestReceived } from '@/services/notifications.service';
 import { deliver } from '@/lib/notifications/deliver';
 import { sendCustomRequestEmail } from '@/lib/email/custom-request';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { linkBookingToFunction } from '@/services/events.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,7 @@ export async function POST(req: NextRequest) {
   let event_city: string | null = null;
   let venue_name: string | null = null;
   let budget_range: string | null = null;
+  let event_function_id: string | null = null;
 
   if (parsedV2.success) {
     const {
@@ -70,6 +72,7 @@ export async function POST(req: NextRequest) {
       event_city: ec,
       venue_name: vn,
       budget_range: br,
+      event_function_id: efi,
     } = parsedV2.data;
     const primary = events[0];
     vendor_slug = vs;
@@ -81,6 +84,7 @@ export async function POST(req: NextRequest) {
     event_city = ec ?? null;
     venue_name = vn ?? null;
     budget_range = br ?? null;
+    event_function_id = efi ?? null;
     if (events.length > 1) {
       extra_events_json = JSON.stringify(events);
     }
@@ -135,6 +139,15 @@ export async function POST(req: NextRequest) {
   if (error || !inserted) {
     logger.error('custom-request insert failed', error, { vendor_slug });
     return NextResponse.json({ ok: false }, { status: 500 });
+  }
+
+  // Customer Events: link to the couple's event function + fill the vendor slot.
+  // Fire-and-forget — a slot failure must never fail the booking.
+  if (event_function_id) {
+    void linkBookingToFunction(supabase, user.id, {
+      bookingId: inserted.id,
+      eventFunctionId: event_function_id,
+    });
   }
 
   // Derive couple display info from auth user metadata (privacy: first name + city only).
