@@ -12,6 +12,8 @@ export const HIGH_PRIORITY_TYPES: ReadonlySet<NotificationType> = new Set<Notifi
   'vendor_adjusted_quote',
   'couple_declined_adjusted',
   'booking_confirmed',
+  'event_task_overdue',
+  'event_countdown',
 ]);
 
 export function isHighPriority(type: NotificationType): boolean {
