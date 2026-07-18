@@ -184,7 +184,7 @@ export async function linkBookingToFunction(
   try {
     const { data: booking } = await supabase
       .from('bookings')
-      .select('id, couple_user_id, vendor_profile_id, vendor_profiles(category)')
+      .select('id, couple_user_id, vendor_profiles(category)')
       .eq('id', args.bookingId)
       .maybeSingle();
     if (!booking || booking.couple_user_id !== coupleUserId)
@@ -200,11 +200,6 @@ export async function linkBookingToFunction(
     if (!fn || (fnOwner && fnOwner !== coupleUserId))
       return { ok: false, error: 'function not found' };
 
-    await supabase
-      .from('bookings')
-      .update({ event_function_id: args.eventFunctionId })
-      .eq('id', args.bookingId);
-
     const category =
       (booking as { vendor_profiles?: { category?: string } | null }).vendor_profiles?.category ??
       'other';
@@ -219,8 +214,12 @@ export async function linkBookingToFunction(
       .limit(1)
       .maybeSingle();
 
+    // Write the slot first: a slot without the bookings FK is invisible-but-harmless
+    // and retryable via the journal's link picker. A linked booking with no slot is
+    // the state the journal can't display, so that failure mode is the worse one —
+    // avoid it by only linking the booking once the slot write has succeeded.
     if (emptySlot) {
-      await supabase
+      const { error: slotError } = await supabase
         .from('event_vendor_needs')
         .update({
           booking_id: args.bookingId,
@@ -229,13 +228,31 @@ export async function linkBookingToFunction(
           manual_amount_cents: null,
         })
         .eq('id', emptySlot.id);
+      if (slotError) {
+        logger.error('linkBookingToFunction write failed', { error: slotError, ...args });
+        return { ok: false, error: slotError.message };
+      }
     } else {
-      await supabase.from('event_vendor_needs').insert({
+      const { error: slotError } = await supabase.from('event_vendor_needs').insert({
         event_function_id: args.eventFunctionId,
         category,
         booking_id: args.bookingId,
       });
+      if (slotError) {
+        logger.error('linkBookingToFunction write failed', { error: slotError, ...args });
+        return { ok: false, error: slotError.message };
+      }
     }
+
+    const { error: bookingError } = await supabase
+      .from('bookings')
+      .update({ event_function_id: args.eventFunctionId })
+      .eq('id', args.bookingId);
+    if (bookingError) {
+      logger.error('linkBookingToFunction write failed', { error: bookingError, ...args });
+      return { ok: false, error: bookingError.message };
+    }
+
     return { ok: true };
   } catch (err) {
     logger.error('linkBookingToFunction failed', { err, ...args });

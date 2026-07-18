@@ -6,10 +6,13 @@ function stubSupabase(fixtures: {
   booking?: Row | null;
   ownedFunction?: Row | null;
   existingNeed?: Row | null;
+  updateError?: { message: string };
+  insertError?: { message: string };
 }) {
   const calls: { table: string; op: string; payload?: unknown }[] = [];
   const client = {
     from(table: string) {
+      let isUpdateChain = false;
       const chain = {
         _table: table,
         select() {
@@ -17,16 +20,19 @@ function stubSupabase(fixtures: {
         },
         update(payload: unknown) {
           calls.push({ table, op: 'update', payload });
+          isUpdateChain = true;
           return chain;
         },
         insert(payload: unknown) {
           calls.push({ table, op: 'insert', payload });
-          return Promise.resolve({ error: null });
+          return Promise.resolve({ error: fixtures.insertError ?? null });
         },
-        eq() {
+        eq(column: string, value: unknown) {
+          calls.push({ table, op: 'eq', payload: [column, value] });
           return chain;
         },
-        is() {
+        is(column: string, value: unknown) {
+          calls.push({ table, op: 'is', payload: [column, value] });
           return chain;
         },
         limit() {
@@ -44,7 +50,7 @@ function stubSupabase(fixtures: {
           return chain.maybeSingle();
         },
         then(resolve: (v: unknown) => void) {
-          resolve({ error: null });
+          resolve({ error: isUpdateChain ? (fixtures.updateError ?? null) : null });
         },
       };
       return chain;
@@ -106,5 +112,32 @@ describe('linkBookingToFunction', () => {
       eventFunctionId: 'f1',
     });
     expect(res.ok).toBe(false);
+  });
+  it('returns ok:false when the slot insert fails', async () => {
+    const { client } = stubSupabase({
+      booking,
+      ownedFunction: fn,
+      existingNeed: null,
+      insertError: { message: 'rls denied' },
+    });
+    const res = await linkBookingToFunction(client, 'u1', {
+      bookingId: 'b1',
+      eventFunctionId: 'f1',
+    });
+    expect(res.ok).toBe(false);
+  });
+  it('targets the fill-slot query with function, category, and empty-slot filters', async () => {
+    const { client, calls } = stubSupabase({
+      booking,
+      ownedFunction: fn,
+      existingNeed: { id: 'n1' },
+    });
+    await linkBookingToFunction(client, 'u1', { bookingId: 'b1', eventFunctionId: 'f1' });
+    const eqCols = calls
+      .filter((c) => c.op === 'eq' || c.op === 'is')
+      .map((c) => (c.payload as unknown[])[0]);
+    expect(eqCols).toEqual(
+      expect.arrayContaining(['event_function_id', 'category', 'booking_id', 'manual_booked'])
+    );
   });
 });
