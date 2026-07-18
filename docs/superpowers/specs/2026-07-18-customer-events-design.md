@@ -29,6 +29,7 @@ Phase 1 schema deliberately anchors phases 2–3 (see §1).
 - **Wizard entry:** full-screen wizard at `/dashboard/events/new`; signup onboarding unchanged.
 - **Task reminders:** optional due dates + daily cron → due-soon/overdue notifications + countdown milestone pings.
 - **Registry-first components:** search shadcn + 21st.dev registries (shadcn MCP) before writing any component from scratch; hand-roll only when nothing fits. Restyle with Baazar tokens.
+- **Neutral voice:** no religious-specific greetings or copy anywhere in the UI, notifications, or emails ("Salaam" → "Hello"). Cultural event-type/function names (Nikah, Mehndi, Katb el-Kitab…) are product taxonomy and stay.
 
 ## 1. Data model — migration `00072_customer_events.sql`
 
