@@ -20,9 +20,9 @@ export interface CustomRequestFlowProps {
   vendorSlug: string;
   vendorBusinessName: string;
   vendorResponseSlaHours: number | null;
-  // Optional: the modal entry point (CustomRequestModal, rendered client-side
-  // from VendorProfile) doesn't have a server page to fetch these from, so it
-  // falls back to the empty-state "Set up your event" link.
+  // Optional: defaults to [] so any caller that can't supply event options
+  // (e.g. a future non-server entry point) falls back to the empty-state
+  // "Set up your event" link.
   eventOptions?: EventOption[];
   onClose?: () => void;
 }

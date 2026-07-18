@@ -34,12 +34,14 @@ export function EventFunctionSelect({ options, value, onChange }: Props) {
       {options.length > 1 && (
         <p className="text-xs text-ink-soft">{options.map((o) => o.eventName).join(' · ')}</p>
       )}
-      <div className="flex flex-wrap gap-2">
+      <div role="radiogroup" aria-label="Which event is this for?" className="flex flex-wrap gap-2">
         {options.flatMap((o) =>
           o.functions.map((f) => (
             <button
               key={f.id}
               type="button"
+              role="radio"
+              aria-checked={value === f.id}
               onClick={() => onChange(value === f.id ? null : f.id)}
               className={
                 value === f.id
@@ -54,6 +56,8 @@ export function EventFunctionSelect({ options, value, onChange }: Props) {
         )}
         <button
           type="button"
+          role="radio"
+          aria-checked={value === null}
           onClick={() => onChange(null)}
           className={
             value === null

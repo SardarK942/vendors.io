@@ -7,6 +7,7 @@ import { recordVendorProfileView } from '@/services/analytics.actions';
 import { appendCustomRequest } from '@/lib/vendor-packages/with-custom-request';
 import { getUnclaimedBySlug } from '@/lib/scraped-vendor/public';
 import { UnclaimedVendorRoute } from '@/components/marketplace/UnclaimedVendorRoute';
+import { getEventOptions } from '@/lib/events/get-event-options';
 
 interface VendorPageProps {
   params: Promise<{ slug: string }>;
@@ -52,6 +53,11 @@ export default async function VendorPage({ params }: VendorPageProps) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
+
+  // Load the couple's events so the "Request a quote" modal can link the
+  // request to an event function. Non-couples (or logged-out visitors)
+  // simply get [] — CustomRequestFlow falls back to its empty-state link.
+  const eventOptions = user ? await getEventOptions(supabase, user.id) : [];
 
   if (!vendor.onboarding_complete || !vendor.is_active) {
     if (!user || user.id !== vendor.user_id) {
@@ -102,6 +108,7 @@ export default async function VendorPage({ params }: VendorPageProps) {
           reviews={reviews ?? []}
           packages={packages as unknown as Parameters<typeof VendorProfile>[0]['packages']}
           isOwner={isOwner}
+          eventOptions={eventOptions}
         />
       </SavedVendorsProvider>
     </div>
