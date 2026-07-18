@@ -4,6 +4,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, EventRow } from '@/types/database.types';
 import type { CreateEventInput } from '@/types';
 import type { NeedWithBooking } from '@/lib/events/derive';
+import { logger } from '@/lib/logger';
 
 type Sb = SupabaseClient<Database>;
 type Result<T> = { data?: T; error?: string; status: number };
@@ -172,4 +173,72 @@ export async function getEventGraph(
     allocations: allocations ?? [],
     tasks: tasks ?? [],
   };
+}
+
+// Sets bookings.event_function_id and fills/creates the matching category slot.
+export async function linkBookingToFunction(
+  supabase: Sb,
+  coupleUserId: string,
+  args: { bookingId: string; eventFunctionId: string }
+): Promise<{ ok: boolean; error?: string }> {
+  try {
+    const { data: booking } = await supabase
+      .from('bookings')
+      .select('id, couple_user_id, vendor_profile_id, vendor_profiles(category)')
+      .eq('id', args.bookingId)
+      .maybeSingle();
+    if (!booking || booking.couple_user_id !== coupleUserId)
+      return { ok: false, error: 'booking not found' };
+
+    const { data: fn } = await supabase
+      .from('event_functions')
+      .select('id, event_id, events!inner(couple_user_id)')
+      .eq('id', args.eventFunctionId)
+      .maybeSingle();
+    // RLS already scopes reads, but verify ownership explicitly for service-role callers.
+    const fnOwner = (fn as { events?: { couple_user_id?: string } } | null)?.events?.couple_user_id;
+    if (!fn || (fnOwner && fnOwner !== coupleUserId))
+      return { ok: false, error: 'function not found' };
+
+    await supabase
+      .from('bookings')
+      .update({ event_function_id: args.eventFunctionId })
+      .eq('id', args.bookingId);
+
+    const category =
+      (booking as { vendor_profiles?: { category?: string } | null }).vendor_profiles?.category ??
+      'other';
+
+    const { data: emptySlot } = await supabase
+      .from('event_vendor_needs')
+      .select('id')
+      .eq('event_function_id', args.eventFunctionId)
+      .eq('category', category)
+      .is('booking_id', null)
+      .eq('manual_booked', false)
+      .limit(1)
+      .maybeSingle();
+
+    if (emptySlot) {
+      await supabase
+        .from('event_vendor_needs')
+        .update({
+          booking_id: args.bookingId,
+          manual_booked: false,
+          manual_vendor_name: null,
+          manual_amount_cents: null,
+        })
+        .eq('id', emptySlot.id);
+    } else {
+      await supabase.from('event_vendor_needs').insert({
+        event_function_id: args.eventFunctionId,
+        category,
+        booking_id: args.bookingId,
+      });
+    }
+    return { ok: true };
+  } catch (err) {
+    logger.error('linkBookingToFunction failed', { err, ...args });
+    return { ok: false, error: 'link failed' };
+  }
 }
