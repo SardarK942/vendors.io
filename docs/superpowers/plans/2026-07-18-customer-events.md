@@ -840,15 +840,13 @@ export async function createEventWithGraph(
   }
 
   if (input.allocations.length > 0) {
-    const { error } = await supabase
-      .from('event_budget_allocations')
-      .insert(
-        input.allocations.map((a) => ({
-          event_id: event.id,
-          category: a.category,
-          planned_cents: a.planned_cents,
-        }))
-      );
+    const { error } = await supabase.from('event_budget_allocations').insert(
+      input.allocations.map((a) => ({
+        event_id: event.id,
+        category: a.category,
+        planned_cents: a.planned_cents,
+      }))
+    );
     if (error) return rollback(error.message);
   }
 
@@ -1552,7 +1550,9 @@ git add src/services/notifications.service.ts src/components/notifications/Notif
 git commit -m "feat(events): reminder notification helpers + card copy"
 ```
 
----### Task 7: Booking paths accept event_function_id (server side)
+---
+
+### Task 7: Booking paths accept event_function_id (server side)
 
 **Files:**
 
