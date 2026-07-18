@@ -1,8 +1,11 @@
 // Smart-hybrid toast strategy (spec §4.6).
-// These 5 types fire a sonner toast on realtime arrival (action-required or
-// money-moved events); the other 7 types update the bell badge silently.
-// Toasts only fire for events received via the realtime channel — never for
-// notifications loaded via the initial fetch on bell mount.
+// Types listed here fire a sonner toast on realtime arrival (action-required or
+// money-moved events) and sort into the action tab. All other notification types
+// update the bell badge silently. Toasts only fire for events received via the
+// realtime channel — never for notifications loaded via the initial fetch on
+// bell mount. Membership here does NOT trigger email — email delivery is wired
+// explicitly at each call site (see payment.service.ts notifyDepositPaid +
+// sendDepositConfirmationEmail pairing).
 
 import type { NotificationType } from '@/types/database.types';
 
