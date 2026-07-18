@@ -13,13 +13,13 @@ describe('BaazarEmailLayout', () => {
     expect(html).toContain('Test preview');
   });
 
-  it('includes Baazar wordmark image', async () => {
+  it('includes Baazar monogram image', async () => {
     const html = await render(
       <BaazarEmailLayout preview="x" unsubscribeToken="abc">
         <p>body</p>
       </BaazarEmailLayout>
     );
-    expect(html).toContain('wordmark.png');
+    expect(html).toContain('monogram.png');
   });
 
   it('includes CAN-SPAM footer (reply prompt, address, unsubscribe)', async () => {
