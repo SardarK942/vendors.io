@@ -2,13 +2,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { adjustBookingQuote } from '@/services/booking.service';
 import { adjustQuoteSchema } from '@/types';
 import { sendAdjustedQuoteEmail } from '@/lib/email/resend';
-import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
 export const POST = withErrorBoundary(
   async (request: NextRequest, { params }: { params: { id: string } }) => {
     const { user, supabase } = await requireUser();
+
+    const gate = await checkRateLimit(
+      request,
+      'booking:adjust',
+      { limit: 20, window: '1 m' },
+      user.id
+    );
+    if (!gate.ok) throw new HttpError(429, gate.message!);
+
     const parsed = adjustQuoteSchema.parse(await request.json());
 
     const result = await adjustBookingQuote(supabase, params.id, user.id, parsed);

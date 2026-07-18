@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { coupleCounterBooking } from '@/services/booking.service';
 
 export const POST = withErrorBoundary(
   async (request: NextRequest, { params }: { params: { id: string } }) => {
     const { user, supabase } = await requireUser();
+
+    const gate = await checkRateLimit(
+      request,
+      'booking:counter',
+      { limit: 20, window: '1 m' },
+      user.id
+    );
+    if (!gate.ok) throw new HttpError(429, gate.message!);
 
     let body: { totalCents?: unknown; note?: unknown };
     try {

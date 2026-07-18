@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createClient } from '@/lib/supabase/client';
+import { TurnstileGate } from '@/components/security/TurnstileGate';
 
 export function ForgotPasswordForm() {
   return (
@@ -21,9 +21,9 @@ export function ForgotPasswordForm() {
 function ForgotPasswordInner() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,23 +31,37 @@ function ForgotPasswordInner() {
     const formData = new FormData(e.currentTarget);
     const email = (formData.get('email') as string).trim().toLowerCase();
 
-    // Supabase will email the user a link; the link bounces through
-    // /reset-password where we accept the new password.
     const callbackQs = new URLSearchParams({ redirect });
     const redirectUrl = `${window.location.origin}/reset-password?${callbackQs.toString()}`;
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
-
-    if (error) {
-      toast.error(error.message);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          redirect_to: redirectUrl,
+          turnstile_token: turnstileToken,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        if (res.status === 429) {
+          toast.error('Too many attempts. Please try again in a bit.');
+        } else if (json.error === 'bot_check_failed') {
+          toast.error('Bot check failed. Refresh and try again.');
+        } else {
+          toast.error('Could not send reset link — please try again.');
+        }
+        setLoading(false);
+        return;
+      }
+      setSent(email);
+    } catch {
+      toast.error('Could not send reset link — please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSent(email);
-    setLoading(false);
   }
 
   if (sent) {
@@ -120,6 +134,7 @@ function ForgotPasswordInner() {
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Sending…' : 'Send reset link'}
               </Button>
+              <TurnstileGate onToken={setTurnstileToken} action="forgot-password" />
             </div>
             <div className="mt-4 text-center text-sm">
               Remembered it?{' '}

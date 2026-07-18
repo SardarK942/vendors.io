@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { acceptBooking } from '@/services/booking.service';
 import { createDepositCheckout } from '@/services/payment.service';
 import { sendVendorAcceptedEmail } from '@/lib/email/resend';
-import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
 
 export const POST = withErrorBoundary(
-  async (_request: NextRequest, { params }: { params: { id: string } }) => {
+  async (request: NextRequest, { params }: { params: { id: string } }) => {
     const { user, supabase } = await requireUser();
+
+    const gate = await checkRateLimit(
+      request,
+      'booking:accept',
+      { limit: 20, window: '1 m' },
+      user.id
+    );
+    if (!gate.ok) throw new HttpError(429, gate.message!);
 
     // Accept the booking (validates vendor ownership + status=pending)
     const result = await acceptBooking(supabase, params.id, user.id);

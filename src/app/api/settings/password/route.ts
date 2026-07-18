@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: Request) {
   const body = (await req.json().catch(() => null)) as {
@@ -27,6 +28,19 @@ export async function POST(req: Request) {
   } = await supabase.auth.getUser();
   if (!user?.email) {
     return NextResponse.json({ error: 'Not signed in.' }, { status: 401 });
+  }
+
+  // Every POST here re-signs-in with the current password — that's a password
+  // oracle for the logged-in user. Hard cap prevents online brute force
+  // via /api/settings/password even if someone hijacks a session cookie.
+  const gate = await checkRateLimit(
+    req,
+    'settings:password',
+    { limit: 5, window: '10 m' },
+    user.id
+  );
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.message ?? 'rate_limit' }, { status: 429 });
   }
 
   const reauth = await supabase.auth.signInWithPassword({

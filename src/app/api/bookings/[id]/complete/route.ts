@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { completeBooking } from '@/services/payment.service';
-import { withErrorBoundary } from '@/lib/api/error-boundary';
+import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export const POST = withErrorBoundary(
-  async (_request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
+  async (request: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params;
     const { user, supabase } = await requireUser();
+
+    const gate = await checkRateLimit(
+      request,
+      'booking:complete',
+      { limit: 20, window: '1 m' },
+      user.id
+    );
+    if (!gate.ok) throw new HttpError(429, gate.message!);
 
     const result = await completeBooking(supabase, id, user.id);
 

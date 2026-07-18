@@ -2,10 +2,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { logger } from '@/lib/logger';
 import { newsletterSubscribeSchema } from '@/lib/newsletter/validation';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
+  // Public endpoint — hard cap per IP to blunt DB-flood + list-poisoning.
+  const gate = await checkRateLimit(req, 'newsletter:subscribe', { limit: 5, window: '1 h' });
+  if (!gate.ok) {
+    return NextResponse.json({ ok: false, error: gate.message ?? 'rate_limit' }, { status: 429 });
+  }
+
   let body: unknown;
   try {
     body = await req.json();
@@ -16,6 +24,12 @@ export async function POST(req: NextRequest) {
   const parsed = newsletterSubscribeSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json({ ok: false, error: 'invalid payload' }, { status: 400 });
+  }
+
+  // Cloudflare Turnstile bot check — dormant until TURNSTILE_SECRET_KEY is set.
+  const turnstile = await verifyTurnstileToken(parsed.data.turnstile_token, req);
+  if (!turnstile.ok) {
+    return NextResponse.json({ ok: false, error: 'bot_check_failed' }, { status: 400 });
   }
 
   const { email, source } = parsed.data;

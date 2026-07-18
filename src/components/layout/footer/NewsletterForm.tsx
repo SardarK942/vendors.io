@@ -4,6 +4,7 @@ import * as React from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { newsletterSubscribeSchema } from '@/lib/newsletter/validation';
+import { TurnstileGate } from '@/components/security/TurnstileGate';
 
 type FormState =
   | { kind: 'default' }
@@ -17,6 +18,7 @@ const SUCCESS_RESET_MS = 5000;
 export function NewsletterForm() {
   const [email, setEmail] = React.useState('');
   const [state, setState] = React.useState<FormState>({ kind: 'default' });
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
   const resetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
@@ -40,7 +42,11 @@ export function NewsletterForm() {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: parsed.data.email, source: 'footer' }),
+        body: JSON.stringify({
+          email: parsed.data.email,
+          source: 'footer',
+          turnstile_token: turnstileToken,
+        }),
       });
       if (!res.ok) {
         setState({ kind: 'error-server', message: 'Something glitched — try once more.' });
@@ -148,6 +154,7 @@ export function NewsletterForm() {
       >
         {errorMessage}
       </p>
+      <TurnstileGate onToken={setTurnstileToken} action="newsletter-subscribe" />
     </form>
   );
 }
