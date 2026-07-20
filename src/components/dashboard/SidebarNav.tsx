@@ -11,6 +11,7 @@ import {
   Heart,
   Home,
   Package,
+  PartyPopper,
   Settings as SettingsIcon,
   User,
 } from 'lucide-react';
@@ -54,6 +55,7 @@ function workspaceLinks(role: Role): LinkDef[] {
     { href: '/dashboard/bookings', label: 'Bookings', icon: BookOpen, showBookingsCounter: true },
   ];
   if (role === 'couple') {
+    links.splice(1, 0, { href: '/dashboard/events', label: 'My Event', icon: PartyPopper });
     links.push({ href: '/dashboard/saved', label: 'Saved', icon: Heart });
   }
   links.push({

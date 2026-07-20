@@ -16,6 +16,9 @@ import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBan
 import { DashboardCalendarNudge } from '@/components/dashboard/calendar/DashboardCalendarNudge';
 import { getFeedStatus } from '@/services/calendar-feed.service';
 import { fmtDate } from '@/lib/intl';
+import { listEvents, getEventGraph } from '@/services/events.service';
+import { computeRollups } from '@/lib/events/derive';
+import { EventSummaryCard } from '@/components/events/EventSummaryCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -114,6 +117,13 @@ export default async function DashboardPage() {
       };
     });
 
+    // Sub-project customer-events: most recent event's journal graph, if any.
+    // listEvents() orders by created_at desc, so [0] is the most recent.
+    const coupleEvents = await listEvents(supabase, user.id);
+    const latestEventGraph =
+      coupleEvents.length > 0 ? await getEventGraph(supabase, user.id, coupleEvents[0].id) : null;
+    const eventRollups = latestEventGraph ? computeRollups(latestEventGraph.needs) : null;
+
     return (
       <div className="space-y-6">
         {showBanner && (
@@ -136,6 +146,26 @@ export default async function DashboardPage() {
             <Link href="/vendors">Browse Vendors →</Link>
           </Button>
         </div>
+
+        {latestEventGraph && eventRollups ? (
+          <EventSummaryCard
+            event={latestEventGraph.event}
+            functions={latestEventGraph.functions}
+            needs={latestEventGraph.needs}
+            tasks={latestEventGraph.tasks}
+            committedCents={eventRollups.totalCommittedCents}
+          />
+        ) : (
+          <div className="rounded-2xl border border-hairline bg-cream-soft/40 px-8 py-10 text-center">
+            <p className="font-display text-2xl text-ink">Plan your celebration</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
+              Start a journal to track functions, vendors, budget, and tasks — all in one place.
+            </p>
+            <Button asChild variant="primary" className="mt-5">
+              <Link href="/dashboard/events/new">Start planning →</Link>
+            </Button>
+          </div>
+        )}
 
         <EventCardGrid events={events} />
       </div>
