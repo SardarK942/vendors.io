@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
@@ -112,7 +112,15 @@ export function StepBudget({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [totalBudgetCents]);
 
-  const sumAllocated = Object.values(allocations).reduce((s, v) => s + v, 0);
+  // Only count categories still selected by a function — a category can be
+  // deselected in Step 3 after Step 4 already seeded/adjusted a slider for
+  // it, leaving an orphaned entry in `allocations` that shouldn't inflate
+  // the displayed total (toPayload prunes these before submit too).
+  const liveCategories = useMemo(() => new Set(categories), [categories]);
+  const sumAllocated = Object.entries(allocations).reduce(
+    (s, [category, v]) => (liveCategories.has(category) ? s + v : s),
+    0
+  );
   const total = totalBudgetCents ?? 0;
   const percentAllocated = total > 0 ? Math.round((sumAllocated / total) * 100) : 0;
   const unassignedCents = Math.max(0, total - sumAllocated);

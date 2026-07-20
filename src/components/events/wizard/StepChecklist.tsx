@@ -5,15 +5,13 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
-import type { WizardFunction } from './EventWizard';
+import type { WizardFunction, WizardTask } from './wizard-state';
 import { cn } from '@/lib/utils';
-
-type Task = { title: string; due_date: string | null; function_index: number | null };
 
 interface StepChecklistProps {
   functions: WizardFunction[];
-  tasks: Task[];
-  onChange: (tasks: Task[]) => void;
+  tasks: WizardTask[];
+  onChange: (tasks: WizardTask[]) => void;
 }
 
 const MISC_PRESETS = ['Order outfits', 'Send invitations', 'Confirm final guest count'];
@@ -26,39 +24,42 @@ export function StepChecklist({ functions, tasks, onChange }: StepChecklistProps
   const [freeText, setFreeText] = useState('');
 
   // One suggested chip per unbooked vendor need, plus the misc presets.
+  // Suggestions reference the function's stable uid, and their titles are
+  // derived from the function's live label at render time — so a function
+  // renamed or reordered after Step 5 still produces an accurate chip.
   const suggestions = useMemo(() => {
-    const needBased: { title: string; function_index: number | null }[] = [];
-    functions.forEach((f, i) => {
+    const needBased: { title: string; function_uid: string | null }[] = [];
+    functions.forEach((f) => {
       f.categories
         .filter((c) => !(c in f.booked))
         .forEach((c) => {
           needBased.push({
             title: `Book ${categoryLabel(c)} for ${f.label}`,
-            function_index: i,
+            function_uid: f.uid,
           });
         });
     });
-    const misc = MISC_PRESETS.map((title) => ({ title, function_index: null }));
+    const misc = MISC_PRESETS.map((title) => ({ title, function_uid: null }));
     return [...needBased, ...misc];
   }, [functions]);
 
-  function isSelected(candidate: { title: string; function_index: number | null }) {
+  function isSelected(candidate: { title: string; function_uid: string | null }) {
     return tasks.some(
-      (t) => t.title === candidate.title && t.function_index === candidate.function_index
+      (t) => t.title === candidate.title && t.function_uid === candidate.function_uid
     );
   }
 
-  function toggle(candidate: { title: string; function_index: number | null }) {
+  function toggle(candidate: { title: string; function_uid: string | null }) {
     if (isSelected(candidate)) {
       onChange(
         tasks.filter(
-          (t) => !(t.title === candidate.title && t.function_index === candidate.function_index)
+          (t) => !(t.title === candidate.title && t.function_uid === candidate.function_uid)
         )
       );
     } else {
       onChange([
         ...tasks,
-        { title: candidate.title, due_date: null, function_index: candidate.function_index },
+        { title: candidate.title, due_date: null, function_uid: candidate.function_uid },
       ]);
     }
   }
@@ -66,7 +67,7 @@ export function StepChecklist({ functions, tasks, onChange }: StepChecklistProps
   function addFreeText() {
     const title = freeText.trim();
     if (!title) return;
-    onChange([...tasks, { title, due_date: null, function_index: null }]);
+    onChange([...tasks, { title, due_date: null, function_uid: null }]);
     setFreeText('');
   }
 
@@ -94,7 +95,7 @@ export function StepChecklist({ functions, tasks, onChange }: StepChecklistProps
         <div className="flex flex-wrap gap-2">
           {suggestions.map((s) => (
             <button
-              key={`${s.title}-${s.function_index}`}
+              key={`${s.title}-${s.function_uid}`}
               type="button"
               aria-pressed={isSelected(s)}
               onClick={() => toggle(s)}

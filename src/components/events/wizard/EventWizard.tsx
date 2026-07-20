@@ -4,85 +4,37 @@ import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { EVENT_TYPES, type CreateEventInput } from '@/types';
+import { EVENT_TYPES } from '@/types';
 import { StepBasics } from './StepBasics';
 import { StepFunctions } from './StepFunctions';
 import { StepVendors } from './StepVendors';
 import { StepBudget } from './StepBudget';
 import { StepChecklist } from './StepChecklist';
+import {
+  DEFAULT_CATEGORIES,
+  allocationCategoriesFor,
+  toPayload,
+  type WizardFunction,
+  type WizardState,
+} from './wizard-state';
 
 // ─── Wizard state (single source of truth — passed down to every step) ────
+// The state shape itself, plus the pure toPayload/allocation helpers, live in
+// ./wizard-state.ts so they're importable without React (unit tests, etc).
 
-export interface WizardFunction {
-  label: string;
-  event_type_id: string | null;
-  date: string | null;
-  guest_estimate: number | null;
-  categories: string[];
-  booked: Record<string, { name: string; amountCents: number | null }>;
-}
-
-export interface WizardState {
-  step: 1 | 2 | 3 | 4 | 5;
-  name: string;
-  celebration_type: string;
-  city: string;
-  totalBudgetCents: number | null;
-  functions: WizardFunction[];
-  allocations: Record<string, number>;
-  tasks: { title: string; due_date: string | null; function_index: number | null }[];
-}
-
-// Smart per-function-type vendor category defaults, seeded when a function
-// enters Step 3 (Vendors) without any categories picked yet.
-export const DEFAULT_CATEGORIES: Record<string, string[]> = {
-  mehndi: ['mehndi', 'decor', 'catering'],
-  sangeet: ['dj', 'decor', 'catering'],
-  nikah: ['venue', 'photography'],
-  katb_el_kitab: ['venue', 'photography'],
-  baraat: ['dj', 'videography'],
-  wedding: ['venue', 'photography', 'catering', 'dj'],
-  reception: ['venue', 'photography', 'catering', 'dj'],
-  walima: ['venue', 'catering', 'photography'],
-  laylat_al_henna: ['mehndi', 'decor', 'catering'],
-  zaffa: ['dj', 'videography'],
-};
+export type { WizardFunction, WizardState, WizardTask } from './wizard-state';
+export { DEFAULT_CATEGORIES, toPayload } from './wizard-state';
 
 function defaultFunctionFor(celebrationType: string): WizardFunction {
   const label = EVENT_TYPES.find((e) => e.id === celebrationType)?.label ?? celebrationType;
   return {
+    uid: crypto.randomUUID(),
     label,
     event_type_id: celebrationType || null,
     date: null,
     guest_estimate: null,
     categories: DEFAULT_CATEGORIES[celebrationType] ?? [],
     booked: {},
-  };
-}
-
-export function toPayload(s: WizardState): CreateEventInput {
-  return {
-    name: s.name.trim(),
-    celebration_type: s.celebration_type,
-    city: s.city.trim() || null,
-    total_budget_cents: s.totalBudgetCents,
-    functions: s.functions.map((f) => ({
-      label: f.label,
-      event_type_id: f.event_type_id,
-      date: f.date,
-      guest_estimate: f.guest_estimate,
-      vendor_needs: f.categories.map((c) => ({
-        category: c,
-        manual_booked: c in f.booked,
-        manual_vendor_name: f.booked[c]?.name ?? null,
-        manual_amount_cents: f.booked[c]?.amountCents ?? null,
-      })),
-    })),
-    allocations: Object.entries(s.allocations).map(([category, planned_cents]) => ({
-      category,
-      planned_cents,
-    })),
-    tasks: s.tasks,
   };
 }
 
@@ -137,19 +89,10 @@ export function EventWizard({ coupleName, defaultCity = '' }: EventWizardProps) 
   const isLastStep = state.step === 5;
 
   // Union of every category selected across functions — Step 4's slider set.
-  const allocationCategories = useMemo(() => {
-    const seen = new Set<string>();
-    const ordered: string[] = [];
-    for (const f of state.functions) {
-      for (const c of f.categories) {
-        if (!seen.has(c)) {
-          seen.add(c);
-          ordered.push(c);
-        }
-      }
-    }
-    return ordered;
-  }, [state.functions]);
+  const allocationCategories = useMemo(
+    () => allocationCategoriesFor(state.functions),
+    [state.functions]
+  );
 
   function goBack() {
     setState((prev) => ({ ...prev, step: Math.max(1, prev.step - 1) as WizardState['step'] }));

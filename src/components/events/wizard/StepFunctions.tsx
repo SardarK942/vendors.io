@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { CULTURAL_EVENT_TYPES } from '@/types';
-import type { WizardFunction } from './EventWizard';
+import type { WizardFunction } from './wizard-state';
 import { cn } from '@/lib/utils';
 
 interface StepFunctionsProps {
@@ -19,6 +19,7 @@ const CHIP_TYPES = CULTURAL_EVENT_TYPES.filter((e) => e.id !== 'multiple');
 
 function emptyFunction(label: string, eventTypeId: string | null): WizardFunction {
   return {
+    uid: crypto.randomUUID(),
     label,
     event_type_id: eventTypeId,
     date: null,
@@ -159,11 +160,12 @@ export function StepFunctions({ functions, onChange }: StepFunctionsProps) {
                   min={1}
                   value={f.guest_estimate ?? ''}
                   placeholder="—"
-                  onChange={(e) =>
+                  onChange={(e) => {
+                    const parsed = e.target.value ? parseInt(e.target.value, 10) : NaN;
                     updateAt(i, {
-                      guest_estimate: e.target.value ? parseInt(e.target.value, 10) : null,
-                    })
-                  }
+                      guest_estimate: Number.isFinite(parsed) && parsed >= 1 ? parsed : null,
+                    });
+                  }}
                   className="w-24"
                 />
               </div>

@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
-import type { WizardFunction } from './EventWizard';
+import type { WizardFunction } from './wizard-state';
 import { cn } from '@/lib/utils';
 
 interface StepVendorsProps {
@@ -127,6 +127,7 @@ export function StepVendors({ functions, onChange }: StepVendorsProps) {
                             <Input
                               value={booked.name}
                               placeholder="Vendor name"
+                              maxLength={120}
                               onChange={(e) => updateBooked(i, slug, { name: e.target.value })}
                             />
                             <Input
