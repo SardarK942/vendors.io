@@ -308,12 +308,22 @@ export type SpokenLanguage = (typeof SPOKEN_LANGUAGES)[number];
 
 const eventIsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
-export const eventVendorNeedInputSchema = z.object({
-  category: z.string().min(1).max(40),
-  manual_vendor_name: z.string().max(120).nullish(),
-  manual_amount_cents: z.number().int().nonnegative().max(100_000_000).nullish(),
-  manual_booked: z.boolean().default(false),
-});
+export const eventVendorNeedInputSchema = z
+  .object({
+    category: z.string().min(1).max(40),
+    manual_vendor_name: z.string().max(120).nullish(),
+    manual_amount_cents: z.number().int().nonnegative().max(100_000_000).nullish(),
+    manual_booked: z.boolean().default(false),
+  })
+  .superRefine((val, ctx) => {
+    if (val.manual_booked && !val.manual_vendor_name?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Vendor name is required when a slot is marked as already booked.',
+        path: ['manual_vendor_name'],
+      });
+    }
+  });
 
 export const eventFunctionInputSchema = z.object({
   label: z.string().min(1).max(80),

@@ -24,6 +24,17 @@ export const POST = withErrorBoundary(
         event_function_id: z.string().uuid().nullable().optional(),
       })
       .parse(await request.json());
+
+    if (parsed.event_function_id) {
+      const { data: fn } = await supabase
+        .from('event_functions')
+        .select('id')
+        .eq('id', parsed.event_function_id)
+        .eq('event_id', id)
+        .maybeSingle();
+      if (!fn) throw new HttpError(400, 'function does not belong to this event');
+    }
+
     const { error } = await supabase.from('event_tasks').insert({
       event_id: id,
       title: parsed.title,

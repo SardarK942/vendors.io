@@ -1,17 +1,37 @@
 // Pure domain logic for customer events. No I/O — unit-testable.
 // Spec: docs/superpowers/specs/2026-07-18-customer-events-design.md §1.
-import type { BookingStatus } from '@/types';
 import type { EventVendorNeedRow, EventTaskRow, EventFunctionRow } from '@/types/database.types';
 
 export type NeedStatus = 'booked_baazar' | 'booked_manual' | 'needed';
 
-export const ACTIVE_BOOKING_STATUSES: readonly BookingStatus[] = [
-  'pending',
-  'deposit_paid',
-  'completed',
-  'accepted',
-  'adjusted_quote_sent',
+// Source of truth: bookings.status is a TEXT column with a DB CHECK constraint
+// (supabase/migrations/00057_add_counter_offer_cap.sql), not the zod
+// `bookingStatusSchema` in src/types/index.ts — that schema predates
+// 'pending_quote' (00040) and 'couple_countered' (00057) and is intentionally
+// NOT widened here to avoid touching its other consumers. The 13 statuses the
+// DB actually allows: pending, pending_quote, accepted, adjusted_quote_sent,
+// couple_countered, adjusted_quote_declined, deposit_paid, disputed,
+// completed, expired, couple_cancelled, vendor_cancelled, cancelled_mutual.
+//
+// DEAD = terminal/dead-end statuses — never worth surfacing as "booked via
+// Baazar" or as a candidate in the unlinked-booking picker. Everything else
+// is active. Verified against every `status:` write in booking.service.ts /
+// payment.service.ts / custom-request route.
+export const DEAD_BOOKING_STATUSES: readonly string[] = [
+  'couple_cancelled',
+  'vendor_cancelled',
+  'cancelled_mutual',
+  'expired',
+  'disputed',
+  'adjusted_quote_declined',
 ] as const;
+
+// Derived from DEAD_BOOKING_STATUSES rather than listed separately, so the
+// two partitions can't drift out of sync the way the pre-fix ACTIVE list did
+// (it silently excluded 'pending_quote' and 'couple_countered').
+function isDeadBookingStatus(status: string): boolean {
+  return DEAD_BOOKING_STATUSES.includes(status);
+}
 
 export interface NeedWithBooking extends EventVendorNeedRow {
   booking?: {
@@ -23,11 +43,7 @@ export interface NeedWithBooking extends EventVendorNeedRow {
 }
 
 function bookingIsActive(need: NeedWithBooking): boolean {
-  return Boolean(
-    need.booking_id &&
-    need.booking &&
-    (ACTIVE_BOOKING_STATUSES as readonly string[]).includes(need.booking.status)
-  );
+  return Boolean(need.booking_id && need.booking && !isDeadBookingStatus(need.booking.status));
 }
 
 export function deriveNeedStatus(need: NeedWithBooking): NeedStatus {

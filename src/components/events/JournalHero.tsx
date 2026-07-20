@@ -1,5 +1,6 @@
 import type { EventFunctionRow, EventRow } from '@/types/database.types';
 import { formatPrice } from '@/lib/utils';
+import { dateRangeLabel } from '@/lib/events/format';
 
 interface JournalHeroProps {
   event: EventRow;
@@ -9,26 +10,6 @@ interface JournalHeroProps {
   /** Whether at least one function on this event has a date set (even if all are past). */
   hasDatedFunction: boolean;
   committedCents: number;
-}
-
-function fmtShort(dateIso: string): string {
-  return new Date(`${dateIso}T00:00:00`).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-}
-
-/** "Jun 5, 2027" for a single date, "Jun 5 – Jun 12, 2027" for a span. */
-function dateRangeLabel(functions: EventFunctionRow[]): string | null {
-  const dates = functions
-    .map((f) => f.date)
-    .filter((d): d is string => Boolean(d))
-    .sort();
-  if (dates.length === 0) return null;
-  const first = dates[0];
-  const last = dates[dates.length - 1];
-  return first === last ? fmtShort(first) : `${fmtShort(first)} – ${fmtShort(last)}`;
 }
 
 export function JournalHero({

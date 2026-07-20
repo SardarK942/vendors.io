@@ -694,9 +694,11 @@ export async function createBooking(
   }
 
   // Customer Events: link to the couple's event function + fill the vendor slot.
-  // Fire-and-forget — a slot failure must never fail the booking.
+  // Awaited so the write actually happens before we respond, but the result is
+  // intentionally ignored — a slot failure must never fail the booking, and
+  // linkBookingToFunction logs internally on error.
   if (input.event_function_id) {
-    void linkBookingToFunction(supabase, coupleUserId, {
+    await linkBookingToFunction(supabase, coupleUserId, {
       bookingId: booking.id as string,
       eventFunctionId: input.event_function_id,
     });

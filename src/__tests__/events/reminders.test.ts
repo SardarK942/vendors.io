@@ -58,6 +58,16 @@ it('selectDueSoonTasks picks tasks due within 3 days, unnotified, incomplete', (
   expect(selectDueSoonTasks([due, far, done, already], TODAY).map((t) => t.id)).toEqual(['a']);
 });
 
+it('selectDueSoonTasks includes both window boundaries: due today (d=0) and d=3', () => {
+  const dueToday = task({ id: 'd0', due_date: TODAY });
+  const dueInThree = task({ id: 'd3', due_date: '2026-07-21' });
+  const dueInFour = task({ id: 'd4', due_date: '2026-07-22' });
+  expect(selectDueSoonTasks([dueToday, dueInThree, dueInFour], TODAY).map((t) => t.id)).toEqual([
+    'd0',
+    'd3',
+  ]);
+});
+
 it('selectOverdueTasks picks past-due, unnotified, incomplete', () => {
   const over = task({ id: 'a', due_date: '2026-07-17' });
   const today = task({ id: 'b', due_date: '2026-07-18' });

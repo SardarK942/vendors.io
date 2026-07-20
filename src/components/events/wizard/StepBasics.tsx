@@ -45,6 +45,7 @@ export function StepBasics({
       <div className="space-y-2">
         <Label htmlFor="celebration-type">Celebration type</Label>
         <EventTypePicker
+          id="celebration-type"
           value={celebrationType ? (celebrationType as EventTypeId) : undefined}
           onValueChange={(id) => onChange({ celebration_type: id })}
           className="w-full"

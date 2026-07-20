@@ -51,16 +51,25 @@ export async function POST(req: NextRequest) {
       }
 
       for (const t of dueSoonTasks) {
-        await notifyEventTaskDue(sb, event.couple_user_id, {
-          eventId: event.id,
-          taskTitle: t.title,
-          dueDate: t.due_date!,
-        });
-        await sb
-          .from('event_tasks')
-          .update({ due_soon_notified_at: new Date().toISOString() })
-          .eq('id', t.id);
-        sent.dueSoon++;
+        // Isolated per-task: one bad due-soon notify must not abort the rest
+        // of this event's due-soon/overdue/countdown reminders.
+        try {
+          await notifyEventTaskDue(sb, event.couple_user_id, {
+            eventId: event.id,
+            taskTitle: t.title,
+            dueDate: t.due_date!,
+          });
+          await sb
+            .from('event_tasks')
+            .update({ due_soon_notified_at: new Date().toISOString() })
+            .eq('id', t.id);
+          sent.dueSoon++;
+        } catch (err) {
+          logger.error('event-reminders: due-soon task failed', err, {
+            eventId: event.id,
+            taskId: t.id,
+          });
+        }
       }
 
       for (const t of overdueTasks) {

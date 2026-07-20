@@ -54,6 +54,33 @@ describe('deriveNeedStatus', () => {
     };
     expect(deriveNeedStatus(n)).toBe('booked_baazar');
   });
+  it('is booked_baazar for a linked pending_quote (custom-request) booking', () => {
+    const n = {
+      ...base,
+      booking_id: 'b1',
+      booking: { id: 'b1', status: 'pending_quote', total_price_cents: null },
+    };
+    expect(deriveNeedStatus(n)).toBe('booked_baazar');
+  });
+  it('is booked_baazar for a linked couple_countered booking', () => {
+    const n = {
+      ...base,
+      booking_id: 'b1',
+      booking: { id: 'b1', status: 'couple_countered', total_price_cents: 320000 },
+    };
+    expect(deriveNeedStatus(n)).toBe('booked_baazar');
+  });
+  it('falls back to booked_manual when a linked booking is cancelled but manual_booked is also set', () => {
+    const n = {
+      ...base,
+      manual_booked: true,
+      manual_vendor_name: 'Henna by Zara',
+      manual_amount_cents: 50000,
+      booking_id: 'b1',
+      booking: { id: 'b1', status: 'vendor_cancelled', total_price_cents: 320000 },
+    };
+    expect(deriveNeedStatus(n)).toBe('booked_manual');
+  });
 });
 
 describe('committedCentsForNeed', () => {
@@ -69,6 +96,14 @@ describe('committedCentsForNeed', () => {
     expect(
       committedCentsForNeed({ ...base, manual_booked: true, manual_amount_cents: 50000 })
     ).toBe(50000);
+  });
+  it('is 0 for an active pending_quote booking (no price until vendor responds)', () => {
+    const n = {
+      ...base,
+      booking_id: 'b1',
+      booking: { id: 'b1', status: 'pending_quote', total_price_cents: null },
+    };
+    expect(committedCentsForNeed(n)).toBe(0);
   });
   it('is 0 for needed and for cancelled bookings', () => {
     expect(committedCentsForNeed(base)).toBe(0);

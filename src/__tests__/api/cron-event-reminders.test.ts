@@ -31,12 +31,17 @@ vi.mock('@/lib/email/event-countdown', () => ({
 // Generic chainable/thenable query-builder stand-in: any method call returns
 // another instance of the same chain, and awaiting it resolves to `result`.
 // This mirrors how supabase-js query builders are themselves thenables.
-function chain(result: unknown): unknown {
+// `onCall` (optional) lets callers observe which method was invoked with
+// which arguments — used to capture `.update(payload)` calls below.
+function chain(result: unknown, onCall?: (prop: string, args: unknown[]) => void): unknown {
   const target = { then: (resolve: (v: unknown) => void) => resolve(result) };
   return new Proxy(target, {
     get(t, prop) {
       if (prop in t) return (t as Record<string | symbol, unknown>)[prop];
-      return () => chain(result);
+      return (...args: unknown[]) => {
+        onCall?.(String(prop), args);
+        return chain(result, onCall);
+      };
     },
   });
 }
@@ -49,13 +54,19 @@ interface TableData {
 }
 
 function buildSupabase(tables: TableData, coupleEmail: string | null = 'couple@test.com') {
+  const updateCalls: Record<string, unknown[]> = {};
   return {
     auth: {
       admin: {
         getUserById: vi.fn().mockResolvedValue({ data: { user: { email: coupleEmail } } }),
       },
     },
-    from: vi.fn((table: keyof TableData) => chain({ data: tables[table] ?? [], error: null })),
+    from: vi.fn((table: keyof TableData) =>
+      chain({ data: tables[table] ?? [], error: null }, (prop, args) => {
+        if (prop === 'update') (updateCalls[table as string] ??= []).push(args[0]);
+      })
+    ),
+    updateCalls,
   };
 }
 
@@ -286,6 +297,112 @@ describe('POST /api/cron/event-reminders', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('stamps due_soon_notified_at and overdue_notified_at on the notified tasks', async () => {
+    const sb = buildSupabase({
+      events: [{ id: 'e1', couple_user_id: 'u1', name: 'Aisha & Omar' }],
+      event_tasks: [
+        {
+          id: 't-due',
+          event_id: 'e1',
+          event_function_id: null,
+          title: 'Book decor',
+          due_date: '2026-07-20',
+          completed_at: null,
+          due_soon_notified_at: null,
+          overdue_notified_at: null,
+          sort: 0,
+          created_at: '',
+          updated_at: '',
+        },
+        {
+          id: 't-overdue',
+          event_id: 'e1',
+          event_function_id: null,
+          title: 'Confirm caterer',
+          due_date: '2026-07-01',
+          completed_at: null,
+          due_soon_notified_at: null,
+          overdue_notified_at: null,
+          sort: 1,
+          created_at: '',
+          updated_at: '',
+        },
+      ],
+      event_functions: [],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockedCreateServiceRoleClient.mockReturnValue(sb as any);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-18T00:00:00Z'));
+    try {
+      const res = await POST(makeRequest('test-secret'));
+      const body = await res.json();
+      expect(res.status).toBe(200);
+      expect(body.sent).toEqual({ dueSoon: 1, overdue: 1, countdown: 0 });
+    } finally {
+      vi.useRealTimers();
+    }
+
+    expect(sb.updateCalls.event_tasks).toEqual([
+      expect.objectContaining({ due_soon_notified_at: expect.any(String) }),
+      expect.objectContaining({ overdue_notified_at: expect.any(String) }),
+    ]);
+  });
+
+  it('isolates one failing due-soon notify so the remaining due-soon tasks still get processed', async () => {
+    notifyEventTaskDueMock.mockRejectedValueOnce(new Error('notify boom'));
+    const sb = buildSupabase({
+      events: [{ id: 'e1', couple_user_id: 'u1', name: 'Aisha & Omar' }],
+      event_tasks: [
+        {
+          id: 't-bad',
+          event_id: 'e1',
+          event_function_id: null,
+          title: 'Book decor',
+          due_date: '2026-07-20',
+          completed_at: null,
+          due_soon_notified_at: null,
+          overdue_notified_at: null,
+          sort: 0,
+          created_at: '',
+          updated_at: '',
+        },
+        {
+          id: 't-good',
+          event_id: 'e1',
+          event_function_id: null,
+          title: 'Book florist',
+          due_date: '2026-07-21',
+          completed_at: null,
+          due_soon_notified_at: null,
+          overdue_notified_at: null,
+          sort: 1,
+          created_at: '',
+          updated_at: '',
+        },
+      ],
+      event_functions: [],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockedCreateServiceRoleClient.mockReturnValue(sb as any);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-18T00:00:00Z'));
+    let body: { sent: { dueSoon: number; overdue: number; countdown: number } };
+    try {
+      const res = await POST(makeRequest('test-secret'));
+      expect(res.status).toBe(200);
+      body = await res.json();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    // Only the second (healthy) task counts, but the run still succeeds.
+    expect(body.sent.dueSoon).toBe(1);
+    expect(notifyEventTaskDueMock).toHaveBeenCalledTimes(2);
   });
 
   it('isolates one failing event so the rest of the run still completes', async () => {

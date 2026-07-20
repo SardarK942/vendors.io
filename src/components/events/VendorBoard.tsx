@@ -229,7 +229,7 @@ export function VendorBoard({ eventId, functions, needs, unlinkedBookings }: Ven
         open={deleteNeed != null}
         onOpenChange={(open) => !open && setDeleteNeed(null)}
         title="Remove this slot?"
-        description="This removes it from your vendor board. It won't cancel an existing booking."
+        description="This removes it from your vendor board. It won't cancel an existing booking — a linked booking stays active and returns to your unlinked bookings list."
         confirmLabel="Remove"
         cancelLabel="Keep slot"
         destructive

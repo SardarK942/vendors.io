@@ -142,9 +142,11 @@ export async function POST(req: NextRequest) {
   }
 
   // Customer Events: link to the couple's event function + fill the vendor slot.
-  // Fire-and-forget — a slot failure must never fail the booking.
+  // Awaited so the write actually happens before we respond, but the result is
+  // intentionally ignored — a slot failure must never fail the booking, and
+  // linkBookingToFunction logs internally on error.
   if (event_function_id) {
-    void linkBookingToFunction(supabase, user.id, {
+    await linkBookingToFunction(supabase, user.id, {
       bookingId: inserted.id,
       eventFunctionId: event_function_id,
     });

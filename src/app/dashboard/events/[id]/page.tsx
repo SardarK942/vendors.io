@@ -1,21 +1,17 @@
 import { notFound, redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getEventGraph } from '@/services/events.service';
-import { computeRollups, deriveNeedStatus, daysUntil } from '@/lib/events/derive';
+import {
+  computeRollups,
+  deriveNeedStatus,
+  daysUntil,
+  DEAD_BOOKING_STATUSES,
+} from '@/lib/events/derive';
 import { JournalHero } from '@/components/events/JournalHero';
 import { FunctionTimeline } from '@/components/events/FunctionTimeline';
 import { VendorBoard, type UnlinkedBooking } from '@/components/events/VendorBoard';
 import { BudgetPanel } from '@/components/events/BudgetPanel';
 import { TasksPanel } from '@/components/events/TasksPanel';
-
-// Bookings in these statuses are dead ends — never worth surfacing in the
-// "Link a Baazar booking" picker.
-const EXCLUDED_BOOKING_STATUSES = [
-  'couple_cancelled',
-  'vendor_cancelled',
-  'cancelled_mutual',
-  'expired',
-];
 
 interface EventJournalPageProps {
   params: Promise<{ id: string }>;
@@ -49,7 +45,7 @@ export default async function EventJournalPage({ params }: EventJournalPageProps
     .select('id, status, vendor_profiles(business_name, category)')
     .eq('couple_user_id', user.id)
     .is('event_function_id', null)
-    .not('status', 'in', `(${EXCLUDED_BOOKING_STATUSES.join(',')})`);
+    .not('status', 'in', `(${DEAD_BOOKING_STATUSES.join(',')})`);
 
   const unlinkedBookings: UnlinkedBooking[] = (unlinkedBookingsRaw ?? []).map((b) => {
     const vendor = b.vendor_profiles as { business_name: string; category: string } | null;

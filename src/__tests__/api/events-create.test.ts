@@ -42,6 +42,30 @@ describe('createEventSchema', () => {
     const bad = { ...valid, tasks: [{ title: 'Orphan task', due_date: null, function_index: 5 }] };
     expect(createEventSchema.safeParse(bad).success).toBe(false);
   });
+  it('rejects a manual_booked vendor need with no vendor name', () => {
+    const bad = {
+      ...valid,
+      functions: [
+        {
+          ...valid.functions[0],
+          vendor_needs: [{ category: 'mehndi', manual_booked: true, manual_vendor_name: null }],
+        },
+      ],
+    };
+    expect(createEventSchema.safeParse(bad).success).toBe(false);
+  });
+  it('rejects a manual_booked vendor need whose name is whitespace only', () => {
+    const bad = {
+      ...valid,
+      functions: [
+        {
+          ...valid.functions[0],
+          vendor_needs: [{ category: 'mehndi', manual_booked: true, manual_vendor_name: '   ' }],
+        },
+      ],
+    };
+    expect(createEventSchema.safeParse(bad).success).toBe(false);
+  });
 });
 
 describe('createBookingSchema', () => {

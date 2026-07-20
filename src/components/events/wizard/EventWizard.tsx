@@ -169,7 +169,7 @@ export function EventWizard({ coupleName, defaultCity = '' }: EventWizardProps) 
           type="button"
           onClick={() => router.push('/dashboard')}
         >
-          Save &amp; exit
+          Exit
         </Button>
       </header>
 

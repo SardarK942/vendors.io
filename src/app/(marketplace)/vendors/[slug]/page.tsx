@@ -54,11 +54,6 @@ export default async function VendorPage({ params }: VendorPageProps) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Load the couple's events so the "Request a quote" modal can link the
-  // request to an event function. Non-couples (or logged-out visitors)
-  // simply get [] — CustomRequestFlow falls back to its empty-state link.
-  const eventOptions = user ? await getEventOptions(supabase, user.id) : [];
-
   if (!vendor.onboarding_complete || !vendor.is_active) {
     if (!user || user.id !== vendor.user_id) {
       notFound();
@@ -66,6 +61,11 @@ export default async function VendorPage({ params }: VendorPageProps) {
   }
 
   const isOwner = !!user && user.id === vendor.user_id;
+
+  // Load the couple's events so the "Request a quote" modal can link the
+  // request to an event function. Non-couples (or logged-out visitors)
+  // simply get [] — CustomRequestFlow falls back to its empty-state link.
+  const eventOptions = user ? await getEventOptions(supabase, user.id) : [];
 
   const { data: reviews } = await supabase
     .from('reviews')

@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
 import { PageTitle } from '@/components/dashboard/PageTitle';
 import { daysUntil } from '@/lib/events/derive';
-import { fmtDate } from '@/lib/intl';
+import { dateRangeLabel } from '@/lib/events/format';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,24 +20,6 @@ interface EventListRow {
   name: string;
   city: string | null;
   functions: EventListFunction[];
-}
-
-// Noon-anchor pattern from EventCard.tsx / JournalHero.tsx — avoids the
-// off-by-one day UTC drift when a bare YYYY-MM-DD is parsed as midnight UTC.
-function fmtShort(dateIso: string): string {
-  return fmtDate(`${dateIso}T00:00:00`, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-/** "Jun 5, 2027" for a single date, "Jun 5 – Jun 12, 2027" for a span. Mirrors JournalHero. */
-function dateRangeLabel(functions: EventListFunction[]): string | null {
-  const dates = functions
-    .map((f) => f.date)
-    .filter((d): d is string => Boolean(d))
-    .sort();
-  if (dates.length === 0) return null;
-  const first = dates[0];
-  const last = dates[dates.length - 1];
-  return first === last ? fmtShort(first) : `${fmtShort(first)} – ${fmtShort(last)}`;
 }
 
 export default async function EventsListPage() {

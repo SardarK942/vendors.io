@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { formatPrice } from '@/lib/utils';
-import { fmtDate } from '@/lib/intl';
 import { daysUntil, deriveNeedStatus } from '@/lib/events/derive';
+import { dateRangeLabel } from '@/lib/events/format';
 import type { NeedWithBooking } from '@/lib/events/derive';
 import type { EventFunctionRow, EventRow, EventTaskRow } from '@/types/database.types';
 
@@ -12,24 +12,6 @@ interface EventSummaryCardProps {
   needs: NeedWithBooking[];
   tasks: EventTaskRow[];
   committedCents: number;
-}
-
-// Noon-anchor pattern from JournalHero.tsx / EventCard.tsx — avoids the
-// off-by-one day UTC drift when a bare YYYY-MM-DD is parsed as midnight UTC.
-function fmtShort(dateIso: string): string {
-  return fmtDate(`${dateIso}T00:00:00`, { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-/** "Jun 5, 2027" for a single date, "Jun 5 – Jun 12, 2027" for a span. Mirrors JournalHero. */
-function dateRangeLabel(functions: EventFunctionRow[]): string | null {
-  const dates = functions
-    .map((f) => f.date)
-    .filter((d): d is string => Boolean(d))
-    .sort();
-  if (dates.length === 0) return null;
-  const first = dates[0];
-  const last = dates[dates.length - 1];
-  return first === last ? fmtShort(first) : `${fmtShort(first)} – ${fmtShort(last)}`;
 }
 
 function sortTasksByDue(tasks: EventTaskRow[]): EventTaskRow[] {

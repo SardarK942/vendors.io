@@ -115,7 +115,10 @@ export function toPayload(s: WizardState): CreateEventInput {
       vendor_needs: f.categories.map((c) => ({
         category: c,
         manual_booked: c in f.booked,
-        manual_vendor_name: f.booked[c]?.name ?? null,
+        // Trimmed so a whitespace-only name normalizes to null and fails the
+        // schema's manual_booked → non-empty-name requirement, same as an
+        // outright-empty name would.
+        manual_vendor_name: f.booked[c]?.name.trim() || null,
         manual_amount_cents: f.booked[c]?.amountCents ?? null,
       })),
     })),

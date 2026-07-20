@@ -119,6 +119,24 @@ describe('toPayload', () => {
     expect(parsed.tasks[0]?.function_index).toBe(0);
   });
 
+  it('trims a manual_booked vendor name so a whitespace-only name fails createEventSchema', () => {
+    const state = baseState({
+      functions: [
+        fn({
+          uid: 'f1',
+          label: 'Mehndi',
+          categories: ['mehndi'],
+          booked: { mehndi: { name: '   ', amountCents: null } },
+        }),
+      ],
+    });
+
+    const payload = toPayload(state);
+
+    expect(payload.functions[0]?.vendor_needs[0]?.manual_vendor_name).toBeNull();
+    expect(createEventSchema.safeParse(payload).success).toBe(false);
+  });
+
   it('prunes allocation entries whose category is no longer selected by any function', () => {
     const state = baseState({
       functions: [fn({ uid: 'f1', label: 'Wedding', categories: ['venue'] })],

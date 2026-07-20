@@ -84,6 +84,24 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
 export const DELETE = withErrorBoundary(async (request: NextRequest) => {
   const { supabase } = await requireUser();
   const { need_id } = z.object({ need_id: z.string().uuid() }).parse(await request.json());
+
+  // If this slot has a linked booking, unlink it first so the booking doesn't
+  // become orphaned (event_function_id pointing at a slot that no longer
+  // exists). Unlinking returns the booking to the couple's "Link a Baazar
+  // booking" picker instead of stranding it.
+  const { data: need } = await supabase
+    .from('event_vendor_needs')
+    .select('booking_id')
+    .eq('id', need_id)
+    .maybeSingle();
+  if (need?.booking_id) {
+    const { error: unlinkError } = await supabase
+      .from('bookings')
+      .update({ event_function_id: null })
+      .eq('id', need.booking_id);
+    if (unlinkError) throw new HttpError(500, unlinkError.message);
+  }
+
   const { error } = await supabase.from('event_vendor_needs').delete().eq('id', need_id);
   if (error) throw new HttpError(500, error.message);
   return NextResponse.json({ ok: true });
