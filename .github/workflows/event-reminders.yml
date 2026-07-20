@@ -1,0 +1,17 @@
+name: Event reminders (daily)
+
+on:
+  schedule:
+    - cron: '0 13 * * *' # 8am America/Chicago (CDT)
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Trigger reminder cron route
+        run: |
+          curl -sf -X POST "${{ secrets.APP_URL }}/api/cron/event-reminders" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json"
