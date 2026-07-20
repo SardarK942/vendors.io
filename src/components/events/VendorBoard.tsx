@@ -26,6 +26,7 @@ import {
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
 import { formatPrice } from '@/lib/utils';
+import { dollarsToCents } from '@/lib/events/money';
 import type { NeedWithBooking, NeedStatus } from '@/lib/events/derive';
 import type { EventFunctionRow } from '@/types/database.types';
 
@@ -230,6 +231,7 @@ export function VendorBoard({ eventId, functions, needs, unlinkedBookings }: Ven
         title="Remove this slot?"
         description="This removes it from your vendor board. It won't cancel an existing booking."
         confirmLabel="Remove"
+        cancelLabel="Keep slot"
         destructive
         busy={busy}
         onConfirm={async () => {
@@ -362,6 +364,15 @@ function AddVendorDialog({
   const [name, setName] = useState('');
   const [amount, setAmount] = useState('');
 
+  function handleSubmitManual() {
+    const manual_amount_cents = dollarsToCents(amount);
+    if (manual_amount_cents === undefined) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+    onSubmitManual({ category, manual_vendor_name: name.trim(), manual_amount_cents });
+  }
+
   return (
     <Dialog
       open={open}
@@ -436,13 +447,7 @@ function AddVendorDialog({
               <Button
                 type="button"
                 disabled={busy || !category || !name.trim()}
-                onClick={() =>
-                  onSubmitManual({
-                    category,
-                    manual_vendor_name: name.trim(),
-                    manual_amount_cents: amount ? Math.round(parseFloat(amount) * 100) : null,
-                  })
-                }
+                onClick={handleSubmitManual}
               >
                 Add vendor
               </Button>
@@ -556,6 +561,15 @@ function EditManualNeedDialog({
     need?.manual_amount_cents != null ? String(need.manual_amount_cents / 100) : ''
   );
 
+  function handleSubmit() {
+    const manual_amount_cents = dollarsToCents(amount);
+    if (manual_amount_cents === undefined) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+    onSubmit({ manual_vendor_name: name.trim(), manual_amount_cents });
+  }
+
   return (
     <Dialog
       key={need?.id}
@@ -597,16 +611,7 @@ function EditManualNeedDialog({
           </div>
         </div>
         <DialogFooter>
-          <Button
-            type="button"
-            disabled={busy || !name.trim()}
-            onClick={() =>
-              onSubmit({
-                manual_vendor_name: name.trim(),
-                manual_amount_cents: amount ? Math.round(parseFloat(amount) * 100) : null,
-              })
-            }
-          >
+          <Button type="button" disabled={busy || !name.trim()} onClick={handleSubmit}>
             Save
           </Button>
         </DialogFooter>

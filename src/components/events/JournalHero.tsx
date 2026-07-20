@@ -6,6 +6,8 @@ interface JournalHeroProps {
   functions: EventFunctionRow[];
   /** Days until the nearest upcoming dated function, or null if none is dated/upcoming. */
   daysToGo: number | null;
+  /** Whether at least one function on this event has a date set (even if all are past). */
+  hasDatedFunction: boolean;
   committedCents: number;
 }
 
@@ -29,7 +31,13 @@ function dateRangeLabel(functions: EventFunctionRow[]): string | null {
   return first === last ? fmtShort(first) : `${fmtShort(first)} – ${fmtShort(last)}`;
 }
 
-export function JournalHero({ event, functions, daysToGo, committedCents }: JournalHeroProps) {
+export function JournalHero({
+  event,
+  functions,
+  daysToGo,
+  hasDatedFunction,
+  committedCents,
+}: JournalHeroProps) {
   const dateRange = dateRangeLabel(functions);
   const metaLine = [dateRange, event.city].filter(Boolean).join(' · ');
   const total = event.total_budget_cents;
@@ -54,6 +62,13 @@ export function JournalHero({ event, functions, daysToGo, committedCents }: Jour
               </div>
               <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-cream/60">
                 {daysToGo === 1 ? 'day to go' : 'days to go'}
+              </p>
+            </>
+          ) : hasDatedFunction ? (
+            <>
+              <div className="font-display text-6xl leading-none text-cream sm:text-7xl">✓</div>
+              <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-cream/60">
+                Celebration complete
               </p>
             </>
           ) : (

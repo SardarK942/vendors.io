@@ -38,6 +38,7 @@ export default async function EventJournalPage({ params }: EventJournalPageProps
     .filter((f) => f.date && daysUntil(f.date, todayIso) >= 0)
     .sort((a, b) => (a.date! < b.date! ? -1 : 1));
   const daysToGo = upcoming[0]?.date ? daysUntil(upcoming[0].date, todayIso) : null;
+  const hasDatedFunction = graph.functions.some((f) => f.date);
 
   const needsWithStatus = graph.needs.map((n) => ({ ...n, status: deriveNeedStatus(n) }));
 
@@ -66,6 +67,7 @@ export default async function EventJournalPage({ params }: EventJournalPageProps
         event={graph.event}
         functions={graph.functions}
         daysToGo={daysToGo}
+        hasDatedFunction={hasDatedFunction}
         committedCents={rollups.totalCommittedCents}
       />
       <FunctionTimeline

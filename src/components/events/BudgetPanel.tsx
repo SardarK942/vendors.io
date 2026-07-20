@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
 import { formatPrice } from '@/lib/utils';
+import { dollarsToCents } from '@/lib/events/money';
 import type { Rollups } from '@/lib/events/derive';
 import type { Database, EventFunctionRow, EventRow } from '@/types/database.types';
 
@@ -97,9 +98,13 @@ export function BudgetPanel({ event, rollups, allocations, functions }: BudgetPa
   const sortedFunctions = [...functions].sort((a, b) => a.sequence - b.sequence);
 
   async function handleSaveBudget() {
+    const cents = dollarsToCents(budgetInput);
+    if (cents === undefined) {
+      toast.error('Enter a valid amount');
+      return;
+    }
     setBusy(true);
     try {
-      const cents = budgetInput ? Math.round(parseFloat(budgetInput) * 100) : null;
       const res = await fetch(`/api/events/${event.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
