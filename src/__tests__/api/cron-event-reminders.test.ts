@@ -89,13 +89,21 @@ const mockedCreateServiceRoleClient = vi.mocked(createServiceRoleClient);
 describe('POST /api/cron/event-reminders', () => {
   const ORIGINAL_SECRET = process.env.CRON_SECRET;
 
+  // Fixtures below (due_date / event_functions.date values) are all authored
+  // relative to a fixed "today" of 2026-07-18 — freeze the clock here so the
+  // route's `new Date()` doesn't drift them into the wrong bucket as real
+  // time passes. Individual tests may still override the system time locally
+  // (e.g. the countdown test) and restore it via `vi.useRealTimers()`.
   beforeEach(() => {
     vi.clearAllMocks();
     process.env.CRON_SECRET = 'test-secret';
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.setSystemTime(new Date('2026-07-18T00:00:00Z'));
   });
 
   afterEach(() => {
     process.env.CRON_SECRET = ORIGINAL_SECRET;
+    vi.useRealTimers();
   });
 
   it('returns 401 when no authorization header is present', async () => {
