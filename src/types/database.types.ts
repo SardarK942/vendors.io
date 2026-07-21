@@ -56,7 +56,10 @@ export type NotificationType =
   | 'booking_completed'
   | 'review_received'
   | 'custom_request_received'
-  | 'couple_countered';
+  | 'couple_countered'
+  | 'event_task_due'
+  | 'event_task_overdue'
+  | 'event_countdown';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -644,6 +647,7 @@ export interface Database {
           event_city: string | null;
           venue_name: string | null;
           budget_range: string | null;
+          event_function_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -688,6 +692,7 @@ export interface Database {
           event_city?: string | null;
           venue_name?: string | null;
           budget_range?: string | null;
+          event_function_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -731,6 +736,7 @@ export interface Database {
           event_city?: string | null;
           venue_name?: string | null;
           budget_range?: string | null;
+          event_function_id?: string | null;
           updated_at?: string;
         };
         Relationships: [
@@ -753,6 +759,249 @@ export interface Database {
             columns: ['package_id'];
             isOneToOne: false;
             referencedRelation: 'packages';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'bookings_event_function_id_fkey';
+            columns: ['event_function_id'];
+            isOneToOne: false;
+            referencedRelation: 'event_functions';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      events: {
+        Row: {
+          id: string;
+          couple_user_id: string;
+          name: string;
+          celebration_type: string;
+          city: string | null;
+          total_budget_cents: number | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          couple_user_id: string;
+          name: string;
+          celebration_type: string;
+          city?: string | null;
+          total_budget_cents?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          couple_user_id?: string;
+          name?: string;
+          celebration_type?: string;
+          city?: string | null;
+          total_budget_cents?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'events_couple_user_id_fkey';
+            columns: ['couple_user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      event_functions: {
+        Row: {
+          id: string;
+          event_id: string;
+          sequence: number;
+          label: string;
+          event_type_id: string | null;
+          date: string | null;
+          start_time: string | null;
+          end_time: string | null;
+          venue_name: string | null;
+          city: string | null;
+          guest_estimate: number | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          sequence: number;
+          label: string;
+          event_type_id?: string | null;
+          date?: string | null;
+          start_time?: string | null;
+          end_time?: string | null;
+          venue_name?: string | null;
+          city?: string | null;
+          guest_estimate?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          sequence?: number;
+          label?: string;
+          event_type_id?: string | null;
+          date?: string | null;
+          start_time?: string | null;
+          end_time?: string | null;
+          venue_name?: string | null;
+          city?: string | null;
+          guest_estimate?: number | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_functions_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      event_vendor_needs: {
+        Row: {
+          id: string;
+          event_function_id: string;
+          category: string;
+          booking_id: string | null;
+          manual_vendor_name: string | null;
+          manual_amount_cents: number | null;
+          manual_booked: boolean;
+          notes: string | null;
+          sort: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_function_id: string;
+          category: string;
+          booking_id?: string | null;
+          manual_vendor_name?: string | null;
+          manual_amount_cents?: number | null;
+          manual_booked?: boolean;
+          notes?: string | null;
+          sort?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_function_id?: string;
+          category?: string;
+          booking_id?: string | null;
+          manual_vendor_name?: string | null;
+          manual_amount_cents?: number | null;
+          manual_booked?: boolean;
+          notes?: string | null;
+          sort?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_vendor_needs_event_function_id_fkey';
+            columns: ['event_function_id'];
+            isOneToOne: false;
+            referencedRelation: 'event_functions';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_vendor_needs_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: false;
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      event_budget_allocations: {
+        Row: { id: string; event_id: string; category: string; planned_cents: number };
+        Insert: { id?: string; event_id: string; category: string; planned_cents: number };
+        Update: {
+          id?: string;
+          event_id?: string;
+          category?: string;
+          planned_cents?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_budget_allocations_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      event_tasks: {
+        Row: {
+          id: string;
+          event_id: string;
+          event_function_id: string | null;
+          title: string;
+          due_date: string | null;
+          completed_at: string | null;
+          due_soon_notified_at: string | null;
+          overdue_notified_at: string | null;
+          sort: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          event_id: string;
+          event_function_id?: string | null;
+          title: string;
+          due_date?: string | null;
+          completed_at?: string | null;
+          due_soon_notified_at?: string | null;
+          overdue_notified_at?: string | null;
+          sort?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          event_id?: string;
+          event_function_id?: string | null;
+          title?: string;
+          due_date?: string | null;
+          completed_at?: string | null;
+          due_soon_notified_at?: string | null;
+          overdue_notified_at?: string | null;
+          sort?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'event_tasks_event_id_fkey';
+            columns: ['event_id'];
+            isOneToOne: false;
+            referencedRelation: 'events';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'event_tasks_event_function_id_fkey';
+            columns: ['event_function_id'];
+            isOneToOne: false;
+            referencedRelation: 'event_functions';
             referencedColumns: ['id'];
           },
         ];
@@ -1528,3 +1777,8 @@ export interface Database {
     CompositeTypes: Record<string, never>;
   };
 }
+
+export type EventRow = Database['public']['Tables']['events']['Row'];
+export type EventFunctionRow = Database['public']['Tables']['event_functions']['Row'];
+export type EventVendorNeedRow = Database['public']['Tables']['event_vendor_needs']['Row'];
+export type EventTaskRow = Database['public']['Tables']['event_tasks']['Row'];

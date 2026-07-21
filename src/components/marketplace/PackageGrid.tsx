@@ -49,7 +49,8 @@ function isCustom(p: PackageItem): p is CustomRequestPackage {
  * Layout C — photo-forward package grid.
  * 3 columns desktop, 2 tablet, 1 mobile.
  * Real packages open PackageDetailModal. Custom Request (virtual, always last)
- * navigates directly to /vendors/{slug}/request (no intermediate modal).
+ * opens the quote-request modal via onRequestCustomQuote when provided;
+ * otherwise it falls back to a plain navigation to /vendors/{slug}/request.
  */
 export function PackageGrid({
   packages,

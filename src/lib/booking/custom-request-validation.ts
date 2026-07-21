@@ -49,6 +49,7 @@ export const customRequestSchemaV2 = z.object({
   event_city: z.string().min(1).max(120).nullish(),
   venue_name: z.string().max(120).nullish(),
   budget_range: z.enum(BUDGET_RANGES).nullish(),
+  event_function_id: z.string().uuid().nullish(),
 });
 
 export type CustomRequestInputV2 = z.infer<typeof customRequestSchemaV2>;

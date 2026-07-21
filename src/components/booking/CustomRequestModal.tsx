@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CustomRequestFlow } from './CustomRequestFlow';
+import type { EventOption } from '@/components/events/EventFunctionSelect';
 
 export interface CustomRequestModalProps {
   open: boolean;
@@ -10,6 +11,7 @@ export interface CustomRequestModalProps {
   vendorSlug: string;
   vendorBusinessName: string;
   vendorResponseSlaHours: number | null;
+  eventOptions?: EventOption[];
 }
 
 export function CustomRequestModal({
@@ -18,6 +20,7 @@ export function CustomRequestModal({
   vendorSlug,
   vendorBusinessName,
   vendorResponseSlaHours,
+  eventOptions,
 }: CustomRequestModalProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -35,6 +38,7 @@ export function CustomRequestModal({
             vendorSlug={vendorSlug}
             vendorBusinessName={vendorBusinessName}
             vendorResponseSlaHours={vendorResponseSlaHours}
+            eventOptions={eventOptions}
             onClose={() => onOpenChange(false)}
           />
         </div>

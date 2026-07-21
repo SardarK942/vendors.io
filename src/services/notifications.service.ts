@@ -342,3 +342,54 @@ export function notifyCoupleCountered(
     },
   });
 }
+
+// ─── Customer Events (Phase 1) reminders ────────────────────────────
+
+export function notifyEventTaskDue(
+  sb: Sb,
+  userId: string,
+  ctx: { eventId: string; taskTitle: string; dueDate: string }
+): Promise<{ id: string } | null> {
+  return createNotification(sb, {
+    user_id: userId,
+    type: 'event_task_due',
+    title: 'Task due soon',
+    body: `"${ctx.taskTitle}" is due ${ctx.dueDate}.`,
+    link: `/dashboard/events/${ctx.eventId}`,
+    metadata: { event_id: ctx.eventId, due_date: ctx.dueDate },
+  });
+}
+
+export function notifyEventTaskOverdue(
+  sb: Sb,
+  userId: string,
+  ctx: { eventId: string; taskTitle: string; dueDate: string }
+): Promise<{ id: string } | null> {
+  return createNotification(sb, {
+    user_id: userId,
+    type: 'event_task_overdue',
+    title: 'Task overdue',
+    body: `"${ctx.taskTitle}" was due ${ctx.dueDate}.`,
+    link: `/dashboard/events/${ctx.eventId}`,
+    metadata: { event_id: ctx.eventId, due_date: ctx.dueDate },
+  });
+}
+
+export function notifyEventCountdown(
+  sb: Sb,
+  userId: string,
+  ctx: { eventId: string; functionLabel: string; daysOut: number; openSlots: number }
+): Promise<{ id: string } | null> {
+  const slotLine =
+    ctx.openSlots > 0
+      ? ` ${ctx.openSlots} vendor slot${ctx.openSlots === 1 ? '' : 's'} still open.`
+      : '';
+  return createNotification(sb, {
+    user_id: userId,
+    type: 'event_countdown',
+    title: `${ctx.functionLabel} is ${ctx.daysOut} day${ctx.daysOut === 1 ? '' : 's'} away`,
+    body: `Your ${ctx.functionLabel} is coming up.${slotLine}`,
+    link: `/dashboard/events/${ctx.eventId}`,
+    metadata: { event_id: ctx.eventId, days_out: ctx.daysOut },
+  });
+}

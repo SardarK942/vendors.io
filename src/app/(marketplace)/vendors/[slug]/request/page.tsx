@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
 import { CustomRequestFlow } from '@/components/booking/CustomRequestFlow';
+import { getEventOptions } from '@/lib/events/get-event-options';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,9 @@ export default async function CustomRequestPage({ params }: RequestPageProps) {
 
   if (!vendor) notFound();
 
+  // Load the couple's events so they can link this request to an event function.
+  const eventOptions = await getEventOptions(supabase, user.id);
+
   return (
     <div className="mx-auto max-w-3xl px-4 py-8">
       <Link
@@ -42,6 +46,7 @@ export default async function CustomRequestPage({ params }: RequestPageProps) {
         vendorSlug={slug}
         vendorBusinessName={vendor.business_name}
         vendorResponseSlaHours={vendor.response_sla_hours ?? null}
+        eventOptions={eventOptions}
       />
     </div>
   );

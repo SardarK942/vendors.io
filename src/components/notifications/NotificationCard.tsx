@@ -23,6 +23,9 @@ const TYPE_ICON: Record<NotificationType, string> = {
   review_received: '⭐',
   custom_request_received: '📋',
   couple_countered: '↩️',
+  event_task_due: '⏰',
+  event_task_overdue: '⚠️',
+  event_countdown: '🎊',
 };
 
 function timeAgo(iso: string): string {

@@ -6,6 +6,7 @@ import type { BudgetRange } from '@/lib/booking/custom-request-validation';
 import { Step1Shape } from './steps/Step1Shape';
 import { Step2Details } from './steps/Step2Details';
 import { Step3Review } from './steps/Step3Review';
+import type { EventOption } from '@/components/events/EventFunctionSelect';
 
 export type CustomEvent = {
   id: string;
@@ -19,6 +20,10 @@ export interface CustomRequestFlowProps {
   vendorSlug: string;
   vendorBusinessName: string;
   vendorResponseSlaHours: number | null;
+  // Optional: defaults to [] so any caller that can't supply event options
+  // (e.g. a future non-server entry point) falls back to the empty-state
+  // "Set up your event" link.
+  eventOptions?: EventOption[];
   onClose?: () => void;
 }
 
@@ -36,6 +41,7 @@ export function CustomRequestFlow({
   vendorSlug,
   vendorBusinessName,
   vendorResponseSlaHours,
+  eventOptions = [],
   onClose,
 }: CustomRequestFlowProps) {
   const [stepIndex, setStepIndex] = React.useState<0 | 1 | 2>(0);
@@ -46,6 +52,7 @@ export function CustomRequestFlow({
   const [venueName, setVenueName] = React.useState('');
   const [budgetRange, setBudgetRange] = React.useState<BudgetRange | null>(null);
   const [description, setDescription] = React.useState('');
+  const [eventFunctionId, setEventFunctionId] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [successBookingId, setSuccessBookingId] = React.useState<string | null>(null);
@@ -70,6 +77,7 @@ export function CustomRequestFlow({
           venue_name: venueName.trim() || null,
           budget_range: budgetRange,
           description,
+          event_function_id: eventFunctionId ?? undefined,
         }),
       });
       const json = await res.json();
@@ -129,6 +137,9 @@ export function CustomRequestFlow({
           onBudgetRangeChange={setBudgetRange}
           description={description}
           onDescriptionChange={setDescription}
+          eventOptions={eventOptions}
+          eventFunctionId={eventFunctionId}
+          onEventFunctionIdChange={setEventFunctionId}
           onBack={() => setStepIndex(0)}
           onContinue={() => setStepIndex(2)}
         />

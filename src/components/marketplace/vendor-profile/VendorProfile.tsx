@@ -15,6 +15,7 @@ import { ExitPreviewPill } from '@/components/marketplace/ExitPreviewPill';
 import { PackageGrid } from '@/components/marketplace/PackageGrid';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
 import { CustomRequestModal } from '@/components/booking/CustomRequestModal';
+import type { EventOption } from '@/components/events/EventFunctionSelect';
 
 import { IdentityPanel } from './IdentityPanel';
 import { PhotoGalleryHero } from './PhotoGalleryHero';
@@ -41,6 +42,7 @@ interface VendorProfileProps {
   packages?: PackageWithAddons[];
   isOwner?: boolean;
   interactive?: boolean;
+  eventOptions?: EventOption[];
 }
 
 function reviewerName(users: ReviewItem['users']): string {
@@ -55,6 +57,7 @@ export function VendorProfile({
   packages = [],
   isOwner = false,
   interactive: interactiveProp,
+  eventOptions = [],
 }: VendorProfileProps) {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState(false);
@@ -158,7 +161,6 @@ export function VendorProfile({
                         setCustomRequestOpen(true);
                       }}
                     >
-
                       <span className="inline-flex items-center gap-1.5">
                         Request a quote
                         <ArrowRight className="size-4" aria-hidden="true" />
@@ -225,7 +227,6 @@ export function VendorProfile({
                           setCustomRequestOpen(true);
                         }}
                       >
-
                         <span className="inline-flex items-center gap-1.5">
                           Request a quote
                           <ArrowRight className="size-4" aria-hidden="true" />
@@ -313,6 +314,7 @@ export function VendorProfile({
         vendorSlug={vendor.slug ?? ''}
         vendorBusinessName={vendor.business_name}
         vendorResponseSlaHours={vendor.response_sla_hours ?? null}
+        eventOptions={eventOptions}
       />
     </>
   );

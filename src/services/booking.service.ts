@@ -15,6 +15,7 @@ import { sendCoupleCounteredEmail } from '@/lib/email/couple-countered';
 import { wouldExceedCapacity } from '@/services/availability.service';
 import { deliver } from '@/lib/notifications/deliver';
 import { createServiceRoleClient } from '@/lib/supabase/server';
+import { linkBookingToFunction } from '@/services/events.service';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -690,6 +691,17 @@ export async function createBooking(
     // Rollback booking
     await supabase.from('bookings').delete().eq('id', booking.id);
     return { error: eventsError.message, status: 500 };
+  }
+
+  // Customer Events: link to the couple's event function + fill the vendor slot.
+  // Awaited so the write actually happens before we respond, but the result is
+  // intentionally ignored — a slot failure must never fail the booking, and
+  // linkBookingToFunction logs internally on error.
+  if (input.event_function_id) {
+    await linkBookingToFunction(supabase, coupleUserId, {
+      bookingId: booking.id as string,
+      eventFunctionId: input.event_function_id,
+    });
   }
 
   // Atomic first-booking detection — flip first_booking_at on the couple's user row.
