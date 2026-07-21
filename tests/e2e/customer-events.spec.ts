@@ -10,9 +10,27 @@
  *    whole wizard and stay independent of spec 1's ordering.
  */
 
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 import { seedCouple, cleanup, getServiceClient, type TestUser } from './helpers/seed';
 import { loginAs } from './helpers/login';
+
+/**
+ * loginAs() with one retry on a transient post-submit timeout. This dev box
+ * runs Next.js dev-mode compiles alongside a heavily-loaded desktop session,
+ * so the auth round-trip occasionally exceeds the shared helper's 15s
+ * waitForURL under momentary CPU contention — reproduced even on the
+ * baseline tests/e2e/auth.spec.ts when run in isolation. Same UI-driven auth
+ * pattern as loginAs(); this just re-submits once instead of failing the
+ * whole spec on a one-off stall.
+ */
+async function loginWithRetry(page: Page, user: TestUser): Promise<void> {
+  try {
+    await loginAs(page, user);
+  } catch {
+    await page.goto('/login');
+    await loginAs(page, user);
+  }
+}
 
 interface SeededEvent {
   eventId: string;
@@ -94,6 +112,12 @@ test.describe('customer events', () => {
         failOnStatusCode: false,
       })
       .catch(() => {});
+    // The wizard's own submit endpoint — unauthenticated, so this 401s, but
+    // that still forces createEventSchema.parse + createEventWithGraph's
+    // module graph to compile before spec 1's real (authenticated) submit.
+    await request
+      .post('/api/events', { timeout: 60_000, data: {}, failOnStatusCode: false })
+      .catch(() => {});
   });
 
   test.afterEach(async () => {
@@ -104,7 +128,7 @@ test.describe('customer events', () => {
   test('wizard happy path creates event and lands on journal', async ({ page }) => {
     test.setTimeout(120_000);
     couple = await seedCouple({ markOnboardingComplete: true });
-    await loginAs(page, couple);
+    await loginWithRetry(page, couple);
 
     // /dashboard/events/new 307-redirects to the full-screen wizard at /events/new.
     await page.goto('/dashboard/events/new');
@@ -148,7 +172,7 @@ test.describe('customer events', () => {
     await page.getByRole('button', { name: /Finish setup/i }).click();
 
     // ── Journal ──────────────────────────────────────────────────────────────
-    await expect(page).toHaveURL(/\/dashboard\/events\/[0-9a-f-]+/, { timeout: 15_000 });
+    await expect(page).toHaveURL(/\/dashboard\/events\/[0-9a-f-]+/, { timeout: 30_000 });
     await expect(page.getByText('Henna by Zara')).toBeVisible();
     await expect(page.getByText('Still needed').first()).toBeVisible();
   });
@@ -157,7 +181,7 @@ test.describe('customer events', () => {
     test.setTimeout(90_000);
     couple = await seedCouple({ markOnboardingComplete: true });
     const seeded = await seedEvent(couple, { totalBudgetCents: 1_000_000 });
-    await loginAs(page, couple);
+    await loginWithRetry(page, couple);
 
     await page.goto(`/dashboard/events/${seeded.eventId}`);
     await expect(page.getByText('Reception').first()).toBeVisible();
@@ -199,7 +223,7 @@ test.describe('customer events', () => {
       .single();
     if (error || !taskRow) throw new Error(`seed task: ${error?.message}`);
 
-    await loginAs(page, couple);
+    await loginWithRetry(page, couple);
     await page.goto(`/dashboard/events/${seeded.eventId}`);
 
     const taskRowLocator = page.getByText('Order outfits').locator('..');
@@ -228,7 +252,7 @@ test.describe('customer events', () => {
     const coupleB = await seedCouple({ markOnboardingComplete: true });
 
     try {
-      await loginAs(page, coupleB);
+      await loginWithRetry(page, coupleB);
       await page.goto(`/dashboard/events/${seeded.eventId}`);
       const bodyText = await page.locator('body').textContent();
       const is404 =
