@@ -3,14 +3,15 @@ import { AUTH_PANEL_CONTENT, type AuthPanelVariant } from './auth-panel-content'
 import { AuthBrandIllustration } from './AuthBrandIllustration';
 
 /**
- * Left brand panel of the auth split-screen. Cream→haldi gradient, baazar. wordmark,
- * inline brand illustration, and a variant-aware heading + benefit chips.
+ * Left brand panel of the auth split-screen. Cream→haldi→pink gradient (matching the
+ * Figma signup frame), baazar. wordmark, the brand handshake illustration, and a
+ * variant-aware heading + benefit chips.
  * Hidden below lg (AuthSplitLayout shows a compact wordmark on mobile instead).
  */
 export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
   const { heading, subcopy, chips } = AUTH_PANEL_CONTENT[variant];
   return (
-    <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-cream to-[#fff2d5] p-12 lg:flex">
+    <aside className="relative hidden flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#fbf7ee_0%,#fff2d5_42%,#ffd9ec_78%,#ffc2e0_100%)] p-12 lg:flex">
       <Link href="/" className="relative z-10 inline-block">
         <p className="m-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink/60">
           MADE IN <span className="text-haldi">CHICAGO</span>
