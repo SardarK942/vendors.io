@@ -64,7 +64,7 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
 
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card className="border-ink/10 shadow-sm">
+      <Card className="border-none bg-transparent p-0 shadow-none">
         <CardHeader>
           <CardTitle className="font-spectral text-2xl text-ink">Welcome back</CardTitle>
           <CardDescription className="text-ink/70">Sign in to your Baazar account.</CardDescription>
@@ -103,7 +103,11 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
                   autoComplete="current-password"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button
+                type="submit"
+                className="w-full bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
+                disabled={loading}
+              >
                 {loading ? 'Signing in…' : 'Sign in'}
               </Button>
               <Button
