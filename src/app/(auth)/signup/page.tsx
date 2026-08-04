@@ -5,7 +5,7 @@ import { AuthSplitLayout } from '@/components/auth/AuthSplitLayout';
 import type { UserRole } from '@/types';
 
 interface Props {
-  searchParams: Promise<{ return_to?: string }>;
+  searchParams: Promise<{ return_to?: string; role?: string }>;
 }
 
 export default async function SignupPage({ searchParams }: Props) {
@@ -14,6 +14,13 @@ export default async function SignupPage({ searchParams }: Props) {
 
   let claimContext: { businessName: string } | null = null;
   let prefilledRole: UserRole | null = null;
+
+  // Marketing links can preselect a role via ?role=vendor|couple (e.g. /join-vendor
+  // → /signup?role=vendor). This preselects the form + brand panel but does NOT lock
+  // the role picker — only a claim token locks it (handled below, and it wins).
+  if (params.role === 'vendor' || params.role === 'couple') {
+    prefilledRole = params.role;
+  }
 
   // If the user arrived here from a /claim/<token> redirect, decode the token
   // server-side to look up the business name. The vendor row id is encoded

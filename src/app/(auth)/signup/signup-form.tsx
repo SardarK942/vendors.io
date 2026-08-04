@@ -28,7 +28,8 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
 
   // When the user arrived from a /claim/<token> URL, the role is locked to
   // 'vendor' (they're claiming a business) and the role picker is hidden.
-  const roleLocked = prefilledRole !== null;
+  // A ?role= preselect (prefilledRole without a claim) still shows the picker.
+  const roleLocked = claimContext !== null;
 
   // callbackUrl is the email-confirmation link destination.
   // We include signup_role so the auth callback can redirect to /signup/success
