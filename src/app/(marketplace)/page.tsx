@@ -5,6 +5,7 @@ import { CategoryHoverExpand } from '@/components/marketplace/CategoryHoverExpan
 import { CategoryHoverExpandMobile } from '@/components/marketplace/CategoryHoverExpandMobile';
 import { HowItWorks } from '@/components/marketplace/HowItWorks';
 import { WhyCouplesChoose } from '@/components/marketplace/WhyCouplesChoose';
+import { VendorSpotlight } from '@/components/marketplace/VendorSpotlight';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
 import { getCategoryVendorCounts } from '@/lib/vendor-categories/queries';
 
@@ -73,6 +74,9 @@ export default async function HomePage() {
 
       {/* H4 — Why couples choose Baazar + testimonials (curated placeholders). */}
       <WhyCouplesChoose />
+
+      {/* H5 — Vendor Spotlight (real unclaimed vendor; hidden if none). */}
+      <VendorSpotlight />
 
       {/* H6 — Why Customers Trust Us. Re-skinned to the M+ brand per the Figma
           redesign (frame 113:86): full-bleed cream band with a rounded top,
