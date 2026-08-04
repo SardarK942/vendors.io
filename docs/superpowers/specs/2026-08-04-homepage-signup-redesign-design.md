@@ -1,7 +1,7 @@
-# Homepage + Signup Figma Redesign — Design Spec
+# Homepage + Auth (Login + Signup) Figma Redesign — Design Spec
 
 **Date:** 2026-08-04
-**Branch:** `feat/customer-events` (redesign work will branch fresh off `main` per git-workflow lock)
+**Branch:** `feat/homepage-signup-redesign` (homepage work already in progress here; auth work adds only `(auth)/` files → no collision)
 **Figma source:** editable draft copy `QX0FCLvf8nTx8DVljzwv7t` ("Bazzar.io (Copy)")
 
 - Homepage frame: `113:86` ("Landing Page", 1920×5823)
@@ -13,6 +13,12 @@
 1. **CTA color:** hot-pink `#D1006C` primary CTAs now permitted (palette lock amended 2026-08-04). Signup submit = pink; homepage buttons stay ink as the Figma shows.
 2. **Signup scope:** re-skin only. Two-column visual layout, but keep existing fields (email, full name, password, terms) + Google OAuth + role picker + claim banner. **No** new fields (business name/phone/category/location/confirm-pw), **no** Apple button, **no** schema/backend work.
 3. **Testimonials:** build styled card row, seed with curated static wedding quotes (drafted here), swap to a data source later.
+
+## Auth decisions (2026-08-04, resume session — these supersede the S1/S2 layout notes below)
+
+4. **Split BOTH auth pages.** The Figma two-column split now applies to **login _and_ signup** so auth stays unified (login was just redesigned in #65; leaving it centered while signup went split would look inconsistent). The shared `(auth)/layout.tsx` — today a centered `max-w-md` shell with a wordmark header + footer — is slimmed to a **full-bleed passthrough**; its chrome is absorbed into the split panels.
+5. **Shared `AuthBrandPanel` (left, ~55%), Figma-faithful with illustration.** Cream→haldi gradient (`#fbf7ee`→`#fff2d5`), static `baazar.` wordmark (hot-pink period), an **inline brand SVG illustration** committed to the repo — **NOT** the Figma export (it expires in ~7 days and would burn the scarce ~3-remaining monthly MCP reads; swap to the exact Figma export later if pixel-match is wanted), plus a context-aware **heading + 3 benefit chips**. Hidden below `lg`; mobile shows a compact wordmark+tagline above the form.
+6. **Forms are behavior-preserving re-skins**, moved into the right column (~45%), primary CTAs → hot-pink. Only `(auth)/` files change → **no collision** with the concurrent homepage work on `page.tsx` / `HomepageHero.tsx`. Same branch `feat/homepage-signup-redesign` so homepage + auth ship in unison.
 
 ## Brand token mapping (Figma → ours)
 
@@ -81,38 +87,51 @@ H1 hero → H6 trust re-skin (lowest risk, existing) → H3 steps → H2 heading
 
 ---
 
-## SIGNUP — `src/app/(auth)/signup/page.tsx` + `signup-form.tsx`
+## AUTH — split-screen, `login` + `signup` unified
 
-### S0. Preserved behaviors (must not break)
+Files touched (only these — no overlap with the homepage work):
+`src/app/(auth)/layout.tsx`, `src/app/(auth)/signup/page.tsx`, `src/app/(auth)/signup/signup-form.tsx`, `src/app/(auth)/login/page.tsx`, `src/components/auth/LoginForm.tsx`, plus new shared components under `src/components/auth/`.
+
+### A0. Preserved behaviors (hard requirements — re-skin, not re-wire)
+
+**Signup** (`signup-form.tsx`):
 
 - Role picker (couple 🎉 / vendor 🏪) — hidden & locked when `prefilledRole` came from a claim token (role forced vendor).
-- "Claiming your business" context banner (claim-token decode via service role).
+- "Claiming your business" context banner (claim-token decode via service role, in `signup/page.tsx`).
 - Continue-with-Google OAuth (role persisted via cookie round-trip).
-- Email / full-name / password (min 8, `PasswordInput`) + Terms agreement gate.
+- Email / full-name / password (min 8) + Terms agreement gate.
 - `return_to` + `?role=` handling; claim token wins over `?role=`.
 
-### S1. Layout — two-column split (re-skin)
+**Login** (`LoginForm.tsx`):
 
-Figma `210:1488`: left **brand panel** (~57%) cream→haldi gradient (`#fbf7ee`→`#fff2d5`), wordmark, big serif heading, supporting paragraph, illustration, "Get Started with Us" + **3 benefit chips**; right **form panel** (~43%) white, form card.
-Plan:
+- Email / password sign-in; `redirect` query → post-login destination.
+- Forgot-password link (preserves `redirect`); signup link (preserves `return_to`).
+- Continue-with-Google OAuth. `Suspense` wrapper (uses `useSearchParams`).
 
-- Wrap `SignupForm` in a two-column shell (stacks to single column < lg; form on top on mobile).
-- **Left panel is role-aware:**
-  - `role === 'vendor'` (or claim/`?role=vendor`): "Join Baazar as a Vendor" + vendor benefit chips (1. No Listing Fees · 2. Verified leads with pre-committed deposit · 3. Culture-focused vendor marketplace) + handshake illustration.
-  - `role === 'couple'` (default): couple-oriented heading + benefit chips (draft: 1. Verified vendors · 2. Secure 5% deposit · 3. One place for your whole celebration).
-  - When role picker is visible (no prefill), default to couple copy; optionally swap panel copy on role toggle (front-end).
-- Illustration/wordmark assets: download-and-commit the Figma-exported handshake + brand marks (assets expire in 7 days) OR substitute an existing brand illustration. Flag asset sourcing.
+### A1. Shared shell — `AuthSplitLayout` + `AuthBrandPanel`
 
-### S2. Form card — re-skin, same fields
+- **`(auth)/layout.tsx`** → slim full-bleed passthrough: `min-h-screen bg-cream` (or the brand-panel gradient bleeds full-bleed and the form column is white). Remove the centered `max-w-md` wordmark header + footer chrome — it moves into the split.
+- **`AuthSplitLayout`** (new, `src/components/auth/AuthSplitLayout.tsx`): CSS grid — left brand panel `~55%` (`lg:grid-cols-[1.1fr_0.9fr]` or similar), right form column `~45%` white, centered form `max-w-md`. Stacks to single column under `lg` (form first). Accepts `brand` content + `children` (the form).
+- **`AuthBrandPanel`** (new, `src/components/auth/AuthBrandPanel.tsx`): cream→haldi gradient bg, `baazar.` serif wordmark (hot-pink period, mirrors `(auth)/layout.tsx`'s current mark), inline **brand SVG illustration**, then a **context-aware `heading` + `subcopy` + 3 `chips`** (all props with brand defaults). `hidden lg:flex`. A **compact wordmark+tagline header** renders above the form on mobile (shared small component so the brand still shows when the panel is hidden).
+- **Illustration:** new inline SVG committed at `src/components/auth/AuthBrandIllustration.tsx` (or an `.svg` asset) — on-brand cream/haldi/pink celebratory motif. No external/expiring dependency. (Follow-up: swap to exact Figma handshake export for pixel-match.)
 
-Right panel keeps the **existing** fields only: Full Name, Email, Password (`PasswordInput`), Terms checkbox → primary submit **"Create Account"** (hot-pink `#D1006C`), "Or" divider, **Google** button (keep), footer terms line. **Drop** Figma's Business Name / Phone / Category / Service Location / Confirm Password / Apple button (out of scope). Header text: "Create Your Account" / role-aware sub.
+### A2. Signup right panel — re-skin, same fields
 
-- Keep shadcn Card/Button/Input/PasswordInput/Label/Separator ([[feedback-registry-first-components]]).
-- Field surface styling to match Figma (`#f6f8fa` fill, `#e5e7eb` border, 12px radius, 14px label) mapped to our tokens.
+- Wrap `SignupForm` via `AuthSplitLayout`. `signup/page.tsx` passes claim/role context into both the brand panel (copy) and the form (unchanged props).
+- **Brand panel copy is role-aware:**
+  - vendor (or claim / `?role=vendor`): heading "Join Baazar as a Vendor" · chips: No listing fees · Verified leads (pre-committed deposit) · Culture-focused marketplace.
+  - couple (default / picker visible): heading "Plan your celebration with Baazar" · chips: Verified vendors · Secure 5% deposit · Your whole celebration in one place.
+  - When the picker is visible (no prefill), default couple copy; swap panel copy on role toggle (front-end, optional nicety).
+- **Form keeps existing fields only:** Full Name, Email, Password, Terms → primary submit relabeled **"Create Account"** in **hot-pink**, "or" divider, **Google** button (keep), footer terms line. **Drop** Figma's Business Name / Phone / Category / Service Location / Confirm Password / Apple. Field surfaces styled to the Figma register (`#f6f8fa` fill, `#e5e7eb` border, ~12px radius) mapped to our tokens. The outer shadcn `Card` chrome may be dropped since the form now sits in its own column — keep primitives (`Button`/`Input`/`Label`/`Separator`).
 
-### Signup build order
+### A3. Login right panel — re-skin, same logic
 
-S1 shell + role-aware left panel → S2 form re-skin. Verify all S0 behaviors via the existing e2e signup path before merge.
+- Wrap `LoginForm` via `AuthSplitLayout`. Brand panel uses **default (couple-leaning) brand copy** in a "Welcome back" register — heading "Welcome back" · subcopy about the marketplace · same default chips.
+- Keep all form logic from #65 (email/password, forgot-password, Google, `redirect`). Primary "Sign in" → hot-pink. Drop/loosen the outer `Card` to match signup's column treatment so the two pages are visually identical minus the form body.
+
+### Auth build order
+
+A1 shared shell (`AuthSplitLayout` + `AuthBrandPanel` + illustration + slim `layout.tsx`) → A2 signup form re-skin → A3 login form re-skin. Verify A0 behaviors for **both** pages (run existing signup + login e2e) before merge.
 
 ---
 
@@ -127,20 +146,23 @@ Per [[feedback-registry-first-components]]: before building ANY new UI piece bel
 - **H4 testimonials row** → search "testimonials" / "testimonial carousel" / "review cards".
 - **H5 vendor spotlight** → search "feature spotlight" / "showcase card" / "product highlight".
 - **H6 trust trio** → already exists; reuse in place.
-- **Signup S1 split-screen** → search "split screen auth" / "authentication layout" / "sign up split".
-- **Signup S2 form** → reuse existing shadcn Card/Button/Input/PasswordInput/Label/Separator (already in repo).
-  Existing repo components to reuse (do not rebuild): `HomepageHero`, `CategoryHoverExpand(+Mobile)`, `SignupForm`, `PasswordInput`, shadcn primitives.
+- **Auth A1 split-screen shell** → search "split screen auth" / "authentication layout" / "sign up split" (adapt one shared `AuthSplitLayout` used by both login + signup).
+- **Auth A2/A3 forms** → reuse existing shadcn Button/Input/Label/Separator (already in repo); no new form library.
+  Existing repo components to reuse (do not rebuild): `HomepageHero`, `CategoryHoverExpand(+Mobile)`, `SignupForm`, `LoginForm`, `GoogleIcon`, shadcn primitives.
 
 ## Out of scope / flagged follow-ups
 
 - Real "Trusted by" partner logos (H1) — placeholder for now.
 - `testimonials` data source (H4) + `is_featured` vendor flag (H5) — static now, schema later.
 - Richer vendor signup form + Apple OAuth — deferred (already partly covered by the 6-step onboarding wizard).
+- Exact Figma handshake illustration export — using an inline brand SVG now; swap for pixel-match later.
 - `DESIGN.md` update to record the pink-CTA amendment.
-- Mobile frames not in Figma — derive responsive behavior ourselves (single-column stacks, hero search full-width).
+- Mobile frames not in Figma — derive responsive behavior ourselves (single-column stacks, hero search full-width, auth brand panel hidden under `lg`).
 
 ## Verification
 
 - Homepage: role-aware vendor CTA still hides for couples; category counts still live; trust trio intact.
 - Signup: role picker + claim banner + Google OAuth + terms gate + return_to/role params all functional (run existing signup e2e).
+- Login: email/password sign-in + forgot-password link + Google OAuth + `redirect` param + signup link all functional (run existing login e2e).
+- Both auth pages responsive: brand panel hidden under `lg`, form single-column with compact wordmark header; no horizontal scroll.
 - Full CI green before merge (incl. e2e) per [[merge-rule-full-ci-green]]. Delete any specs for removed UI in the same PR ([[delete-specs-with-features]]).
