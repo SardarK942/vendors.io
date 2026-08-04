@@ -24,7 +24,7 @@ export const AUTH_PANEL_CONTENT: Record<AuthPanelVariant, PanelContent> = {
     ],
   },
   login: {
-    heading: 'Welcome back',
+    heading: 'Good to see you again',
     subcopy: 'Sign in to manage your bookings, quotes, and profile on Baazar.',
     chips: ['Verified vendors', 'Secure 5% deposit', 'Your whole celebration in one place'],
   },

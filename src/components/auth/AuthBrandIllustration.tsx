@@ -8,8 +8,7 @@ export function AuthBrandIllustration({ className }: { className?: string }) {
     <svg
       viewBox="0 0 400 320"
       className={className}
-      role="img"
-      aria-label="Baazar celebration illustration"
+      aria-hidden="true"
       xmlns="http://www.w3.org/2000/svg"
     >
       {/* soft ground */}
