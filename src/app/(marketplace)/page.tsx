@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { HomepageHero } from '@/components/marketplace/HomepageHero';
 import { CategoryHoverExpand } from '@/components/marketplace/CategoryHoverExpand';
 import { CategoryHoverExpandMobile } from '@/components/marketplace/CategoryHoverExpandMobile';
+import { HowItWorks } from '@/components/marketplace/HowItWorks';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
 import { getCategoryVendorCounts } from '@/lib/vendor-categories/queries';
 
@@ -65,6 +66,9 @@ export default async function HomePage() {
           @Gur__vi
         </a>
       </p>
+
+      {/* H3 — Book your perfect vendor in three simple steps. */}
+      <HowItWorks />
 
       {/* H6 — Why Customers Trust Us. Re-skinned to the M+ brand per the Figma
           redesign (frame 113:86): full-bleed cream band with a rounded top,
