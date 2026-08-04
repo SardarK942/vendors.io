@@ -114,7 +114,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
           : `Sign up as ${role === 'couple' ? 'an event planner' : 'a vendor'}`;
 
   return (
-    <Card className="border-ink/10 shadow-sm">
+    <Card className="border-none bg-transparent p-0 shadow-none">
       {claimContext ? (
         <div className="-mb-2 rounded-t-[inherit] border-b border-indigo/20 bg-indigo/5 px-6 py-4">
           <p className="text-xs font-medium uppercase tracking-wide text-indigo">
@@ -232,7 +232,11 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               .
             </label>
           </div>
-          <Button type="submit" className="w-full" disabled={loading || !agreed || !role}>
+          <Button
+            type="submit"
+            className="w-full bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
+            disabled={loading || !agreed || !role}
+          >
             {submitLabel}
           </Button>
         </form>
