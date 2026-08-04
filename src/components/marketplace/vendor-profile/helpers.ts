@@ -34,12 +34,18 @@ export function formatPrice(cents: number): string {
 /**
  * Smooth-scrolls to the packages comparison section and briefly pulses the
  * featured package card to draw the eye. No-op if the section isn't on the page.
- * Respects prefers-reduced-motion via CSS (the pulse keyframe is overridden).
+ * Respects prefers-reduced-motion: scroll jumps instantly and the pulse keyframe
+ * is overridden in CSS so the highlight remains static.
  */
 export function scrollToPackages(): void {
   const section = document.getElementById('packages-section');
   if (!section) return;
-  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  section.scrollIntoView({
+    behavior: prefersReducedMotion ? 'auto' : 'smooth',
+    block: 'start',
+  });
   const featuredCard = section.querySelector<HTMLElement>('[data-pkg-featured="true"]');
   if (featuredCard) {
     featuredCard.classList.add('pulse-pink');

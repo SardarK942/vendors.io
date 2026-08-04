@@ -23,11 +23,17 @@ export function WizardStepper({ profile }: Props) {
   const next = nextIncompleteStep(profile);
   const nextIdx = STEPS.findIndex((s) => s.key === next);
 
+  const currentIdx = STEPS.findIndex((s) => s.key === current);
+  const currentLabel = STEPS[currentIdx]?.label;
+
   return (
     <nav className="space-y-1">
       <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
         Set up your profile
       </h2>
+      <p className="sr-only" role="status" aria-live="polite">
+        {currentLabel ? `Step ${currentIdx + 1} of ${STEPS.length}: ${currentLabel}` : ''}
+      </p>
       <ul className="space-y-1">
         {STEPS.map((step, idx) => {
           const isComplete = idx < nextIdx;
@@ -60,7 +66,12 @@ export function WizardStepper({ profile }: Props) {
           return (
             <li key={step.key}>
               {isReachable ? (
-                <Link href={`/dashboard/profile/setup/${step.key}`}>{content}</Link>
+                <Link
+                  href={`/dashboard/profile/setup/${step.key}`}
+                  className="block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                >
+                  {content}
+                </Link>
               ) : (
                 content
               )}
@@ -70,7 +81,7 @@ export function WizardStepper({ profile }: Props) {
       </ul>
       <Link
         href="/dashboard"
-        className="mt-6 block px-3 py-2 text-xs text-muted-foreground underline hover:text-foreground"
+        className="mt-6 block rounded px-3 py-2 text-xs text-muted-foreground underline transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
       >
         Save &amp; exit
       </Link>

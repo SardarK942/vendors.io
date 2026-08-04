@@ -16,13 +16,20 @@ export function ScrapedVendorMatchPrompt({ matches }: Props) {
         We already have a listing for your business on Baazar.
       </h3>
       <div className="mb-4 rounded-md border bg-background p-3">
-        <p className="font-medium">{top.business_name}</p>
+        <p className="font-medium" translate="no">
+          {top.business_name}
+        </p>
         <p className="text-xs text-muted-foreground">
           {top.category ?? 'category unknown'} · {top.city ?? 'unknown city'}
-          {top.instagram_handle && ` · @${top.instagram_handle}`}
+          {top.instagram_handle && (
+            <>
+              {' '}
+              · <span translate="no">@{top.instagram_handle}</span>
+            </>
+          )}
         </p>
       </div>
-      <p className="mb-3 text-sm">To verify it&apos;s yours and take ownership:</p>
+      <p className="mb-3 text-sm">To verify it’s yours and take ownership:</p>
       <ol className="ml-5 list-decimal text-sm">
         <li>Visit your listing</li>
         <li>Click &ldquo;I own this business&rdquo;</li>
@@ -31,7 +38,7 @@ export function ScrapedVendorMatchPrompt({ matches }: Props) {
       <div className="mt-4">
         <Link
           href={`/vendors/${top.slug}`}
-          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:opacity-90"
+          className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
           Visit my listing
         </Link>

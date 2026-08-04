@@ -3,11 +3,13 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Heart, ArrowRight, Camera } from 'lucide-react';
 import { cn, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { formatShortDate, formatWeddingCount, formatPriceFromCents } from './vendor-card-helpers';
 import { useSavedVendors } from './SavedVendorsProvider';
 import { showHeartConfettiToast } from '@/components/celebration/HeartConfetti';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import type { Database } from '@/types/database.types';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
@@ -46,11 +48,17 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const { savedIds, toggle } = useSavedVendors();
   const isSaved = savedIds.has(vendor.id);
   const heartRef = React.useRef<HTMLButtonElement>(null);
+  const reducedMotion = useReducedMotion();
+  const heartTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
   const neighborhood = vendor.base_city ?? vendor.service_area?.[0] ?? 'Chicago';
-  const respondsIn = vendor.response_sla_hours ? `Responds in ${vendor.response_sla_hours}h` : null;
+  const respondsIn = vendor.response_sla_hours
+    ? `Responds in ${vendor.response_sla_hours} h`
+    : null;
   const weddingCount = formatWeddingCount(vendor.confirmed_wedding_count);
   const minPrice = formatPriceFromCents(vendor.vendor_packages_price_band?.min_price_cents);
   const showAvailablePill = !!searchDate && vendor.is_available_for_date === true;
@@ -69,8 +77,9 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
       href={`/vendors/${vendor.slug}`}
       data-vendor-slug={vendor.slug}
       className={cn(
-        'group relative block overflow-hidden rounded-lg border border-hairline bg-cream',
-        'hover-lift-card'
+        'group relative block overflow-hidden rounded-2xl border border-hairline bg-cream',
+        'hover-lift-card',
+        'transition-transform active:scale-[0.98] motion-reduce:active:scale-100'
       )}
     >
       {/* Photo */}
@@ -88,28 +97,37 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={cn(
               'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] object-cover transition-transform',
+              'outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10',
               'md:group-hover:scale-[1.04] motion-reduce:md:group-hover:scale-100'
             )}
           />
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-ink-muted">
-            <Camera className="size-8 stroke-current" strokeWidth={1.5} />
+            <Camera className="size-8 stroke-current" strokeWidth={1.5} aria-hidden="true" />
             <span className="text-xs">Photo coming soon</span>
           </div>
         )}
 
         {/* Verified pill — hidden in compact mode to save space */}
         {vendor.verified && !compact && (
-          <span
-            className={cn(
-              'absolute left-3 top-3 inline-flex items-center gap-1.5',
-              'rounded-full border border-ink/10 bg-cream/95 px-2.5 py-1 backdrop-blur',
-              'text-[11px] font-semibold tracking-wide text-ink'
-            )}
-          >
-            <span aria-hidden="true" className="size-[7px] rounded-full bg-indigo" />
-            Verified
-          </span>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span
+                tabIndex={0}
+                className={cn(
+                  'absolute left-3 top-3 inline-flex cursor-help items-center gap-1.5',
+                  'rounded-full border border-ink/10 bg-cream/95 px-2.5 py-1 backdrop-blur',
+                  'text-[11px] font-semibold tracking-wide text-ink'
+                )}
+              >
+                <span aria-hidden="true" className="size-[7px] rounded-full bg-indigo" />
+                Verified
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>
+              Identity, insurance, and references confirmed by Baazar.
+            </TooltipContent>
+          </Tooltip>
         )}
 
         {/* "Available {date}" haldi pill — conditional, hidden in compact */}
@@ -128,31 +146,53 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
         )}
 
         {/* Save heart */}
-        <button
-          ref={heartRef}
-          type="button"
-          onClick={handleSaveClick}
-          aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
-          aria-pressed={isSaved}
-          className={cn(
-            'absolute right-3 top-3 inline-flex size-[34px] items-center justify-center rounded-full',
-            'border border-ink/10 bg-cream/95 backdrop-blur',
-            'transition-colors',
-            'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
-            isSaved ? 'text-red-500' : 'text-ink/50 hover-pink-text'
-          )}
-        >
-          <Heart className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')} strokeWidth={2} />
-        </button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <button
+              ref={heartRef}
+              type="button"
+              onClick={handleSaveClick}
+              aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
+              aria-pressed={isSaved}
+              className={cn(
+                'absolute right-3 top-3 inline-flex size-[34px] items-center justify-center rounded-full',
+                'before:absolute before:-inset-1 before:content-[""]',
+                'border border-ink/10 bg-cream/95 backdrop-blur',
+                'transition-[transform,background-color,color]',
+                'active:scale-[0.96] motion-reduce:active:scale-100',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
+                isSaved ? 'text-red-500' : 'text-ink/50 hover-pink-text'
+              )}
+            >
+              <AnimatePresence initial={false} mode="popLayout">
+                <motion.span
+                  key={isSaved ? 'filled' : 'outline'}
+                  initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                  animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+                  exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                  transition={heartTransition}
+                  className="inline-flex"
+                  aria-hidden="true"
+                >
+                  <Heart
+                    className={cn('size-4', isSaved ? 'fill-red-500' : 'fill-none')}
+                    strokeWidth={2}
+                  />
+                </motion.span>
+              </AnimatePresence>
+            </button>
+          </TooltipTrigger>
+          <TooltipContent>{isSaved ? 'Remove from saved' : 'Save vendor'}</TooltipContent>
+        </Tooltip>
 
         {/* HV-B arrow orb — hover only, hidden in compact */}
         {!compact && (
           <span
             aria-hidden="true"
             className={cn(
-              'absolute bottom-3.5 right-3.5 inline-flex size-10 items-center justify-center rounded-full',
+              'absolute bottom-3.5 right-3.5 inline-flex size-10 items-center justify-center rounded-full pl-0.5',
               'bg-indigo text-cream',
-              'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] -translate-x-2 opacity-0 transition-all',
+              'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] -translate-x-2 opacity-0 transition-[transform,opacity]',
               'md:group-hover:translate-x-0 md:group-hover:opacity-100',
               'motion-reduce:md:group-hover:translate-x-0'
             )}
@@ -174,6 +214,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             'font-display font-bold leading-[1.18] tracking-[-0.014em] text-ink',
             compact ? 'text-[15px]' : 'mb-2 text-[21px]'
           )}
+          translate="no"
         >
           {vendor.business_name}
         </h3>
@@ -194,10 +235,18 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
                 <span aria-hidden="true" className="text-ink-soft">
                   ·
                 </span>
-                <span className="inline-flex items-center gap-1.5 font-semibold text-ink">
-                  <span aria-hidden="true" className="size-[6px] rounded-full bg-indigo" />
-                  {respondsIn}
-                </span>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span
+                      tabIndex={0}
+                      className="inline-flex cursor-help items-center gap-1.5 font-semibold text-ink"
+                    >
+                      <span aria-hidden="true" className="size-[6px] rounded-full bg-indigo" />
+                      {respondsIn}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>Median time to first reply over the last 30 days.</TooltipContent>
+                </Tooltip>
               </>
             )}
             {weddingCount && (
@@ -211,7 +260,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           </div>
         )}
         {minPrice && !compact && (
-          <p className="mt-3 text-[14px] font-semibold text-ink">
+          <p className="mt-3 text-[14px] font-semibold tabular-nums text-ink">
             <span className="text-[12px] font-normal text-ink-muted">From </span>
             {minPrice}
           </p>

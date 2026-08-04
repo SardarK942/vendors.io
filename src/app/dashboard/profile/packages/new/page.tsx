@@ -1,3 +1,5 @@
+import Link from 'next/link';
+import { ArrowLeft } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PackageEditorForm } from '@/components/forms/PackageEditorForm';
@@ -19,7 +21,14 @@ export default async function NewPackagePage() {
 
   return (
     <div className="max-w-2xl">
-      <h1 className="mb-6 text-2xl font-bold">Add Package</h1>
+      <Link
+        href="/dashboard/profile/packages"
+        className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-ink"
+      >
+        <ArrowLeft className="size-4" aria-hidden="true" />
+        Back to packages
+      </Link>
+      <h1 className="mb-6 text-pretty text-2xl font-bold">Add Package</h1>
       <PackageEditorForm mode="create" />
     </div>
   );

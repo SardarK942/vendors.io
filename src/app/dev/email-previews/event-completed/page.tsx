@@ -23,6 +23,8 @@ export default function EventCompletedPreview() {
         <h2 style={{ marginBottom: '8px' }}>Couple variant</h2>
         <iframe
           srcDoc={coupleHtml}
+          width={800}
+          height={800}
           style={{ width: '100%', height: '90vh', border: '1px solid #ccc', borderRadius: '6px' }}
           title="Event completed — couple"
         />
@@ -31,6 +33,8 @@ export default function EventCompletedPreview() {
         <h2 style={{ marginBottom: '8px' }}>Vendor variant</h2>
         <iframe
           srcDoc={vendorHtml}
+          width={800}
+          height={800}
           style={{ width: '100%', height: '90vh', border: '1px solid #ccc', borderRadius: '6px' }}
           title="Event completed — vendor"
         />

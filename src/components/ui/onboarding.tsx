@@ -28,18 +28,24 @@ const stepIndicatorVariants = cva('flex items-center justify-center gap-2', {
   },
 });
 
-const stepDotVariants = cva('rounded-full transition-all duration-200', {
-  variants: {
-    variant: {
-      dots: 'size-2 data-[state=active]:size-2.5 data-[state=active]:bg-foreground data-[state=completed]:bg-foreground/60 data-[state=inactive]:bg-muted-foreground/30',
-      pills:
-        'h-1 max-w-8 flex-1 rounded-full data-[state=active]:bg-foreground data-[state=completed]:bg-foreground/60 data-[state=inactive]:bg-muted-foreground/30',
+// Dots use an opacity-only transition (size stays constant) to avoid the
+// layout jank of growing dots and to keep the indicator legible under
+// reduce-motion. motion-reduce:transition-none disables the fade itself.
+const stepDotVariants = cva(
+  'rounded-full transition-opacity duration-200 motion-reduce:transition-none',
+  {
+    variants: {
+      variant: {
+        dots: 'size-2 bg-foreground data-[state=active]:opacity-100 data-[state=completed]:opacity-60 data-[state=inactive]:opacity-30',
+        pills:
+          'h-1 max-w-8 flex-1 rounded-full data-[state=active]:bg-foreground data-[state=completed]:bg-foreground/60 data-[state=inactive]:bg-muted-foreground/30',
+      },
     },
-  },
-  defaultVariants: {
-    variant: 'dots',
-  },
-});
+    defaultVariants: {
+      variant: 'dots',
+    },
+  }
+);
 
 export interface StepIndicatorProps
   extends

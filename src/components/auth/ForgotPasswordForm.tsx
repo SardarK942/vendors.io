@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { createClient } from '@/lib/supabase/client';
+import { TurnstileGate } from '@/components/security/TurnstileGate';
 
 export function ForgotPasswordForm() {
   return (
@@ -21,9 +21,9 @@ export function ForgotPasswordForm() {
 function ForgotPasswordInner() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/dashboard';
-  const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,28 +31,42 @@ function ForgotPasswordInner() {
     const formData = new FormData(e.currentTarget);
     const email = (formData.get('email') as string).trim().toLowerCase();
 
-    // Supabase will email the user a link; the link bounces through
-    // /reset-password where we accept the new password.
     const callbackQs = new URLSearchParams({ redirect });
     const redirectUrl = `${window.location.origin}/reset-password?${callbackQs.toString()}`;
 
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: redirectUrl,
-    });
-
-    if (error) {
-      toast.error(error.message);
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          redirect_to: redirectUrl,
+          turnstile_token: turnstileToken,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { ok?: boolean; error?: string };
+      if (!res.ok || !json.ok) {
+        if (res.status === 429) {
+          toast.error('Too many attempts. Please try again in a bit.');
+        } else if (json.error === 'bot_check_failed') {
+          toast.error('Bot check failed. Refresh and try again.');
+        } else {
+          toast.error('Could not send reset link — please try again.');
+        }
+        setLoading(false);
+        return;
+      }
+      setSent(email);
+    } catch {
+      toast.error('Could not send reset link — please try again.');
+    } finally {
       setLoading(false);
-      return;
     }
-
-    setSent(email);
-    setLoading(false);
   }
 
   if (sent) {
     return (
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-6" role="status" aria-live="polite">
         <Card className="border-ink/10 shadow-sm">
           <CardHeader>
             <CardTitle className="font-spectral text-2xl text-ink">Check your email</CardTitle>
@@ -63,11 +77,11 @@ function ForgotPasswordInner() {
           </CardHeader>
           <CardContent>
             <div className="text-sm text-muted-foreground">
-              Didn&apos;t get the email? Check your spam folder, or{' '}
+              Didn’t get the email? Check your spam folder, or{' '}
               <button
                 type="button"
                 onClick={() => setSent(null)}
-                className="font-medium text-ink underline underline-offset-4 hover-pink-text"
+                className="rounded font-medium text-ink underline underline-offset-4 hover-pink-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 try a different address
               </button>
@@ -78,7 +92,10 @@ function ForgotPasswordInner() {
                 href="/login"
                 className="font-medium underline underline-offset-4 hover-pink-text"
               >
-                ← Back to sign in
+                <span aria-hidden="true" className="inline-block -translate-x-0.5">
+                  ←
+                </span>{' '}
+                Back to sign in
               </Link>
             </div>
           </CardContent>
@@ -93,7 +110,7 @@ function ForgotPasswordInner() {
         <CardHeader>
           <CardTitle className="font-spectral text-2xl text-ink">Forgot your password?</CardTitle>
           <CardDescription className="text-ink/70">
-            Enter the email you signed up with and we&apos;ll send you a link to choose a new one.
+            Enter the email you signed up with and we’ll send you a link to choose a new one.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -109,11 +126,15 @@ function ForgotPasswordInner() {
                   required
                   disabled={loading}
                   autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? 'Sending…' : 'Send reset link'}
               </Button>
+              <TurnstileGate onToken={setTurnstileToken} action="forgot-password" />
             </div>
             <div className="mt-4 text-center text-sm">
               Remembered it?{' '}

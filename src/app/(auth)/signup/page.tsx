@@ -11,6 +11,7 @@ interface Props {
 export default async function SignupPage({ searchParams }: Props) {
   const params = await searchParams;
   const returnTo = params.return_to ?? null;
+  const roleHint = params.role ?? null;
 
   let claimContext: { businessName: string } | null = null;
   let prefilledRole: UserRole | null = null;
@@ -44,6 +45,13 @@ export default async function SignupPage({ searchParams }: Props) {
         prefilledRole = 'vendor';
       }
     }
+  }
+
+  // Marketing / DM-campaign entry: /signup?role=vendor (used by the
+  // /join-vendor redirect). Only applied when no claim context has already
+  // set the role — claim tokens take priority.
+  if (!prefilledRole && (roleHint === 'vendor' || roleHint === 'couple')) {
+    prefilledRole = roleHint;
   }
 
   return (

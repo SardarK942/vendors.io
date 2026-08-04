@@ -74,12 +74,12 @@ export function BookingCard({ booking, role, bookingEvents }: BookingCardProps) 
             )}
             {bookingEvents && bookingEvents.length > 0 ? (
               <span className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
+                <Users className="h-4 w-4" aria-hidden="true" />
                 <GuestCountBadge events={bookingEvents} />
               </span>
             ) : booking.guest_count ? (
               <span className="flex items-center gap-1">
-                <Users className="h-4 w-4" />
+                <Users className="h-4 w-4" aria-hidden="true" />
                 {booking.guest_count} guests
               </span>
             ) : null}

@@ -41,13 +41,13 @@ export default async function HomePage() {
           Browse by category
         </p>
         <h2
-          className="m-0 mb-2 font-serif font-bold leading-[0.96] tracking-[-0.020em] text-ink"
+          className="m-0 mb-2 text-balance font-serif font-bold leading-[0.96] tracking-[-0.020em] text-ink"
           style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}
         >
           Every vendor your celebration needs.
         </h2>
-        <p className="m-0 mx-auto max-w-[540px] text-base text-ink-muted">
-          Photography, mehndi, catering, and eight more. Hover to peek; click to browse.
+        <p className="m-0 mx-auto max-w-[540px] text-balance text-base text-ink-muted">
+          Photography, mehndi, catering, and 8 more. Hover to peek; click to browse.
         </p>
       </header>
 
@@ -60,11 +60,21 @@ export default async function HomePage() {
       {/* Skiper UI attribution */}
       <p className="mx-auto max-w-[1280px] px-6 pb-8 text-center text-[10px] text-ink-soft lg:px-14">
         Category browser pattern adapted from{' '}
-        <a href="https://skiper-ui.com" target="_blank" rel="noopener" className="hover:text-ink">
+        <a
+          href="https://skiper-ui.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+        >
           Skiper UI
         </a>{' '}
         · Original by{' '}
-        <a href="https://x.com/Gur__vi" target="_blank" rel="noopener" className="hover:text-ink">
+        <a
+          href="https://x.com/Gur__vi"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+        >
           @Gur__vi
         </a>
       </p>

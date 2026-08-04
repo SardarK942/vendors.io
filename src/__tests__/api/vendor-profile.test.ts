@@ -1,11 +1,9 @@
 /**
- * A2.10/A2.11 — Unit tests for PATCH /api/vendor-profile route handler
+ * Unit tests for PATCH /api/vendor-profile route handler.
  *
- * Tests:
- * - is_active=true with 0 active packages → 409 NO_ACTIVE_PACKAGES
- * - is_active=true with ≥1 active package → 200, returns updated profile
- * - base_address_public=true with valid address → 200
- * - Unauthenticated → 401 (via requireUser throw)
+ * The historical NO_ACTIVE_PACKAGES gate (409 when activating with 0 packages)
+ * was removed once the custom-request flow made packages optional. Activating
+ * now succeeds regardless of package count.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
@@ -57,7 +55,10 @@ function buildSupabase({
           select: (_cols: unknown) => ({
             eq: (_col: string, _val: string) => ({
               single: () =>
-                Promise.resolve({ data: existingProfile, error: existingProfile ? null : { message: 'not found' } }),
+                Promise.resolve({
+                  data: existingProfile,
+                  error: existingProfile ? null : { message: 'not found' },
+                }),
               // For the update chain
             }),
           }),
@@ -105,17 +106,19 @@ describe('PATCH /api/vendor-profile', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 409 NO_ACTIVE_PACKAGES when activating with 0 active packages', async () => {
+  it('returns 200 when activating with 0 active packages (custom-request flow makes packages optional)', async () => {
+    const updated = { id: 'vp-1', user_id: 'u-1', is_active: true, business_name: 'Test Vendor' };
     const sb = buildSupabase({
       existingProfile: { id: 'vp-1', user_id: 'u-1' },
       activePackageCount: 0,
+      updatedProfile: updated,
     });
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
 
     const res = await PATCH(makeRequest({ is_active: true }));
-    expect(res.status).toBe(409);
+    expect(res.status).toBe(200);
     const json = await res.json();
-    expect(json.error.code).toBe('NO_ACTIVE_PACKAGES');
+    expect(json.data.is_active).toBe(true);
   });
 
   it('returns 200 when activating with ≥1 active package', async () => {
@@ -174,5 +177,76 @@ describe('PATCH /api/vendor-profile', () => {
 
     const res = await PATCH(makeRequest({ is_active: false }));
     expect(res.status).toBe(403);
+  });
+
+  describe('subcategories', () => {
+    /** Build a supabase mock tailored for subcategory tests.
+     *  - select().eq('user_id', ...) → { id, user_id }
+     *  - select().eq('id', ...)       → { id, category }  (the re-load query)
+     *  - update(payload)              → returns payload as data so we can inspect it
+     */
+    function buildSubcatSupabase({ category }: { category: string }) {
+      let capturedUpdatePayload: Record<string, unknown> | null = null;
+
+      const sb = {
+        from: (table: string) => {
+          if (table === 'vendor_profiles') {
+            return {
+              select: (_cols: unknown) => ({
+                eq: (col: string, _val: string) => ({
+                  single: () => {
+                    if (col === 'user_id') {
+                      return Promise.resolve({
+                        data: { id: 'vp-1', user_id: 'u-1' },
+                        error: null,
+                      });
+                    }
+                    // col === 'id' — the category re-load query
+                    return Promise.resolve({
+                      data: { id: 'vp-1', category },
+                      error: null,
+                    });
+                  },
+                }),
+              }),
+              update: (payload: Record<string, unknown>) => {
+                capturedUpdatePayload = payload;
+                return {
+                  eq: (_col: string, _val: string) => ({
+                    select: (_s: unknown) => ({
+                      single: () => Promise.resolve({ data: payload, error: null }),
+                    }),
+                  }),
+                };
+              },
+            };
+          }
+          return {
+            select: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
+          };
+        },
+      };
+
+      return { sb, getUpdatePayload: () => capturedUpdatePayload };
+    }
+
+    it('persists subcategories on PATCH when the vendor category supports them', async () => {
+      const { sb, getUpdatePayload } = buildSubcatSupabase({ category: 'carts' });
+      mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
+
+      const res = await PATCH(makeRequest({ subcategories: ['dessert', 'favor_gift'] }));
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.data.subcategories).toEqual(['dessert', 'favor_gift']);
+      expect(getUpdatePayload()?.subcategories).toEqual(['dessert', 'favor_gift']);
+    });
+
+    it("rejects subcategories not in the row's category taxonomy", async () => {
+      const { sb } = buildSubcatSupabase({ category: 'carts' });
+      mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
+
+      const res = await PATCH(makeRequest({ subcategories: ['dessert', 'not_a_slug'] }));
+      expect(res.status).toBe(400);
+    });
   });
 });

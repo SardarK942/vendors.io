@@ -85,13 +85,17 @@ describe('BookingForm guest count', () => {
   });
 
   it('renders one guest-count input for a single-event package', () => {
-    render(<BookingForm vendor={VENDOR} pkg={SINGLE_EVENT_PKG} selectedAddons={[]} />);
+    render(
+      <BookingForm vendor={VENDOR} pkg={SINGLE_EVENT_PKG} selectedAddons={[]} eventOptions={[]} />
+    );
     const inputs = screen.getAllByLabelText(/how many guests/i);
     expect(inputs).toHaveLength(1);
   });
 
   it('renders N guest-count inputs for a multi-event package', () => {
-    render(<BookingForm vendor={VENDOR} pkg={MULTI_EVENT_PKG} selectedAddons={[]} />);
+    render(
+      <BookingForm vendor={VENDOR} pkg={MULTI_EVENT_PKG} selectedAddons={[]} eventOptions={[]} />
+    );
     // Expect one input per event in the package
     expect(screen.getByLabelText(/guests for event 1/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/guests for event 2/i)).toBeInTheDocument();
@@ -99,18 +103,24 @@ describe('BookingForm guest count', () => {
   });
 
   it('defaults each guest-count input to 50', () => {
-    render(<BookingForm vendor={VENDOR} pkg={MULTI_EVENT_PKG} selectedAddons={[]} />);
+    render(
+      <BookingForm vendor={VENDOR} pkg={MULTI_EVENT_PKG} selectedAddons={[]} eventOptions={[]} />
+    );
     const input1 = screen.getByLabelText(/guests for event 1/i) as HTMLInputElement;
     expect(input1.value).toBe('50');
   });
 
   it('does NOT render the old "Total Guest Count" label for single-event', () => {
-    render(<BookingForm vendor={VENDOR} pkg={SINGLE_EVENT_PKG} selectedAddons={[]} />);
+    render(
+      <BookingForm vendor={VENDOR} pkg={SINGLE_EVENT_PKG} selectedAddons={[]} eventOptions={[]} />
+    );
     expect(screen.queryByLabelText(/total guest count/i)).toBeNull();
   });
 
   it('does NOT render the old "Total Guest Count" label for multi-event', () => {
-    render(<BookingForm vendor={VENDOR} pkg={MULTI_EVENT_PKG} selectedAddons={[]} />);
+    render(
+      <BookingForm vendor={VENDOR} pkg={MULTI_EVENT_PKG} selectedAddons={[]} eventOptions={[]} />
+    );
     expect(screen.queryByLabelText(/total guest count/i)).toBeNull();
   });
 });

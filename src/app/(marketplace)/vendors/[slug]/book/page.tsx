@@ -2,6 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import { BookingForm } from '@/components/forms/BookingForm';
+import { getEventOptions } from '@/lib/events/get-event-options';
 import {
   BOOKING_SELECTION_COOKIE_NAME,
   decodeBookingSelectionCookie,
@@ -71,12 +72,15 @@ export default async function BookPage({ params }: BookPageProps) {
 
   if (!pkg || !pkg.is_active) notFound();
 
+  // Load the couple's events so they can link this booking to an event function.
+  const eventOptions = await getEventOptions(supabase, user.id);
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold">Book {vendor.business_name}</h1>
+        <h1 className="text-pretty text-2xl font-bold">Book {vendor.business_name}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Fill in your event details below. The vendor will review and respond within 72 hours.
+          Fill in your event details below. The vendor will review and respond within 72 hours.
         </p>
       </div>
       <BookingForm
@@ -86,6 +90,7 @@ export default async function BookPage({ params }: BookPageProps) {
           addons: (pkg.addons ?? []) as { id: string; name: string; price_delta_cents: number }[],
         }}
         selectedAddons={selection.selected_addons}
+        eventOptions={eventOptions}
       />
     </div>
   );

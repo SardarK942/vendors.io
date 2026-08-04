@@ -49,7 +49,7 @@ export type VendorSearchInput = z.infer<typeof vendorSearchSchema>;
 
 // ─── Booking Schemas ────────────────────────────────────────────
 
-// ─── EVENT_TYPES: canonical 20-entry constant (Bucket B) ────────
+// ─── EVENT_TYPES: canonical 23-entry constant (Bucket B) ────────
 
 export const EVENT_TYPES = [
   // Cultural / wedding-adjacent
@@ -64,6 +64,9 @@ export const EVENT_TYPES = [
   { id: 'reception', label: 'Reception', group: 'cultural' as const },
   { id: 'walima', label: 'Walima / Wedding Feast', group: 'cultural' as const },
   { id: 'aqiqah', label: 'Aqiqah / Baby Naming', group: 'cultural' as const },
+  { id: 'katb_el_kitab', label: 'Katb el-Kitab / Milka', group: 'cultural' as const },
+  { id: 'laylat_al_henna', label: 'Laylat al-Henna', group: 'cultural' as const },
+  { id: 'zaffa', label: 'Zaffa (wedding procession)', group: 'cultural' as const },
   { id: 'multiple', label: 'Multi-event booking', group: 'cultural' as const },
   // General celebration
   { id: 'birthday_party', label: 'Birthday party', group: 'general' as const },
@@ -181,7 +184,7 @@ export const createPackageSchema = z.object({
   max_guests: z.number().int().positive(),
   duration_hours: z.number().positive(),
   events_count: z.number().int().min(1).max(5).default(1),
-  featured_image_url: z.string().url(),
+  featured_image_url: z.string().url().nullable().optional(),
   gallery_image_urls: z.array(z.string().url()).max(2).default([]),
   vendor_notes_template: z.string().max(1000).optional().nullable(),
   location_mode: packageLocationModeSchema.default('couple_provides'),
@@ -235,6 +238,7 @@ export const createBookingSchema = z.object({
   couple_full_name: z.string().min(1).max(120),
   couple_contact_phone: z.string().min(1).max(40),
   events: z.array(bookingEventInputSchema).min(1).max(5),
+  event_function_id: z.string().uuid().nullish(),
 });
 export type CreateBookingInput = z.infer<typeof createBookingSchema>;
 
@@ -298,3 +302,73 @@ export const SPOKEN_LANGUAGES = [
 ] as const;
 
 export type SpokenLanguage = (typeof SPOKEN_LANGUAGES)[number];
+
+// ─── Customer Events (Phase 1) ──────────────────────────────────────
+// Spec: docs/superpowers/specs/2026-07-18-customer-events-design.md §2.
+
+const eventIsoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+
+export const eventVendorNeedInputSchema = z
+  .object({
+    category: z.string().min(1).max(40),
+    manual_vendor_name: z.string().max(120).nullish(),
+    manual_amount_cents: z.number().int().nonnegative().max(100_000_000).nullish(),
+    manual_booked: z.boolean().default(false),
+  })
+  .superRefine((val, ctx) => {
+    if (val.manual_booked && !val.manual_vendor_name?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Vendor name is required when a slot is marked as already booked.',
+        path: ['manual_vendor_name'],
+      });
+    }
+  });
+
+export const eventFunctionInputSchema = z.object({
+  label: z.string().min(1).max(80),
+  event_type_id: z.string().max(40).nullish(),
+  date: eventIsoDate.nullish(),
+  guest_estimate: z.number().int().positive().max(10_000).nullish(),
+  vendor_needs: z.array(eventVendorNeedInputSchema).max(20).default([]),
+});
+
+export const createEventSchema = z
+  .object({
+    name: z.string().min(1).max(120),
+    celebration_type: z.string().min(1).max(40),
+    city: z.string().max(80).nullish(),
+    total_budget_cents: z.number().int().nonnegative().max(1_000_000_000).nullish(),
+    functions: z.array(eventFunctionInputSchema).min(1).max(12),
+    allocations: z
+      .array(
+        z.object({
+          category: z.string().min(1).max(40),
+          planned_cents: z.number().int().nonnegative(),
+        })
+      )
+      .max(20)
+      .default([]),
+    tasks: z
+      .array(
+        z.object({
+          title: z.string().min(1).max(200),
+          due_date: eventIsoDate.nullish(),
+          function_index: z.number().int().nonnegative().nullish(),
+        })
+      )
+      .max(50)
+      .default([]),
+  })
+  .superRefine((data, ctx) => {
+    data.tasks.forEach((t, i) => {
+      if (t.function_index != null && t.function_index >= data.functions.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['tasks', i, 'function_index'],
+          message: `function_index ${t.function_index} out of range (${data.functions.length} functions)`,
+        });
+      }
+    });
+  });
+export type CreateEventInput = z.infer<typeof createEventSchema>;

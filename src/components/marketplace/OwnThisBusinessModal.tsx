@@ -7,6 +7,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { TurnstileGate } from '@/components/security/TurnstileGate';
 
 type View = 'choice' | 'remove' | 'claim';
 
@@ -26,6 +27,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
   const [reason, setReason] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<'remove' | 'claim' | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
   function reset() {
     setView('choice');
@@ -54,6 +56,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
         requester_name: name || null,
         requester_ig: ig || null,
         reason: reason || null,
+        turnstile_token: turnstileToken,
       }),
     });
     setSubmitting(false);
@@ -65,8 +68,10 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && handleClose()}>
       <DialogContent className="max-w-md">
+        {/* Invisible bot-check; renders 0x0 unless Cloudflare escalates. Dormant when NEXT_PUBLIC_TURNSTILE_SITE_KEY is unset. */}
+        <TurnstileGate onToken={setTurnstileToken} action="scraped-vendor-request" />
         {done && (
-          <div className="space-y-3">
+          <div className="space-y-3" role="status" aria-live="polite">
             <DialogHeader>
               <DialogTitle>
                 {done === 'remove' ? 'Removal request sent' : 'Claim request sent'}
@@ -74,13 +79,13 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             </DialogHeader>
             <p className="text-sm">
               {done === 'remove'
-                ? "Thanks. We'll take this listing offline within 48 hours."
-                : "Thanks. We'll DM your Instagram with a claim link within 7 days."}
+                ? "Thanks. We'll take this listing offline within 48 hours."
+                : "Thanks. We'll DM your Instagram with a claim link within 7 days."}
             </p>
             <button
               type="button"
               onClick={handleClose}
-              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream"
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
             >
               Close
             </button>
@@ -119,14 +124,14 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-md border px-3 py-1.5 text-sm"
+                className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 Cancel
               </button>
               <button
                 type="button"
                 onClick={() => setView(intent)}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
               >
                 Continue
               </button>
@@ -139,7 +144,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             <DialogHeader>
               <DialogTitle>Remove this listing</DialogTitle>
               <DialogDescription>
-                We&apos;ll take {businessName} offline within 48 hours.
+                We’ll take <span translate="no">{businessName}</span> offline within 48 hours.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-3 text-sm">
@@ -150,6 +155,10 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -159,6 +168,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -168,6 +178,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   type="text"
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
+                  autoComplete="off"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -176,7 +187,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
               <button
                 type="button"
                 onClick={() => setView('choice')}
-                className="rounded-md border px-3 py-1.5 text-sm"
+                className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 Back
               </button>
@@ -184,7 +195,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                 type="button"
                 onClick={() => submit('remove')}
                 disabled={!email || submitting}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream disabled:opacity-60"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] disabled:opacity-60 motion-reduce:active:scale-100"
               >
                 {submitting ? 'Sending…' : 'Send removal request'}
               </button>
@@ -203,7 +214,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
             <ol className="ml-5 list-decimal text-sm">
               <li>Confirm your Instagram handle below.</li>
               <li>Make sure your IG bio mentions your business name.</li>
-              <li>We&apos;ll DM you within 7 days with a claim link.</li>
+              <li>We’ll DM you within 7 days with a claim link.</li>
               <li>Click the link to take ownership.</li>
             </ol>
             <div className="space-y-3 text-sm">
@@ -215,6 +226,10 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   value={ig}
                   onChange={(e) => setIg(e.target.value)}
                   placeholder="@yourhandle"
+                  autoComplete="off"
+                  spellCheck={false}
+                  autoCapitalize="none"
+                  autoCorrect="off"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -225,6 +240,10 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -234,6 +253,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  autoComplete="name"
                   className="mt-1 w-full rounded-md border px-2 py-1.5"
                 />
               </label>
@@ -242,7 +262,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
               <button
                 type="button"
                 onClick={() => setView('choice')}
-                className="rounded-md border px-3 py-1.5 text-sm"
+                className="rounded-md border px-3 py-1.5 text-sm transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               >
                 Back
               </button>
@@ -250,7 +270,7 @@ export function OwnThisBusinessModal({ open, vendorId, businessName, onClose }: 
                 type="button"
                 onClick={() => submit('claim_request')}
                 disabled={!email || !ig || submitting}
-                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream disabled:opacity-60"
+                className="rounded-md bg-ink px-3 py-1.5 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-ink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] disabled:opacity-60 motion-reduce:active:scale-100"
               >
                 {submitting ? 'Sending…' : 'Request claim link'}
               </button>

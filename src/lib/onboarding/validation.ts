@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SPOKEN_LANGUAGES } from '@/types';
 import { RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
+import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
 
 const VALID_LANGUAGE_SLUGS = SPOKEN_LANGUAGES.map((lang) => lang.toLowerCase());
 const VALID_SLA_VALUES = RESPONSE_SLA_OPTIONS.map((o) => o.value);
@@ -14,11 +15,25 @@ const instagramHandle = z
     z.union([z.literal(''), z.string().regex(/^[A-Za-z0-9._]{1,30}$/, 'Invalid Instagram handle')])
   );
 
-export const basicsSchema = z.object({
-  businessName: z.string().min(1).max(120),
-  category: z.string().min(1),
-  bio: z.string().max(500, 'Bio must be 500 characters or fewer'),
-});
+export const basicsSchema = z
+  .object({
+    businessName: z.string().min(1).max(120),
+    category: z.string().min(1),
+    bio: z.string().max(500, 'Bio must be 500 characters or fewer'),
+    subcategories: z.array(z.string()).optional().default([]),
+  })
+  .refine(
+    (d) => {
+      if (!d.subcategories || d.subcategories.length === 0) return true;
+      const valid = validSubcategorySlugs(d.category);
+      // If category has no taxonomy, subcategories are silently dropped server-side
+      // (see route handler) — schema-level we accept the payload to keep the
+      // wizard form forgiving on category-change edge cases.
+      if (valid.size === 0) return true;
+      return d.subcategories.every((s) => valid.has(s));
+    },
+    { message: 'Invalid subcategory slug', path: ['subcategories'] }
+  );
 
 export const locationSchema = z.object({
   baseAddressLine1: z.string().optional(),

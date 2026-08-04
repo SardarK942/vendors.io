@@ -7,6 +7,7 @@ export type NewsletterSource = (typeof SOURCE_ALLOWLIST)[number];
 export const newsletterSubscribeSchema = z.object({
   email: z.string().min(1).email().max(254),
   source: z.enum(SOURCE_ALLOWLIST).default('footer'),
+  turnstile_token: z.string().min(1).max(2048).nullish(),
 });
 
 export type NewsletterSubscribeInput = z.infer<typeof newsletterSubscribeSchema>;

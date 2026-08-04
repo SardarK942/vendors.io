@@ -12,6 +12,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { getActiveVendorProfileId } from '@/lib/vendor/active';
 
 const bodySchema = z.object({
   concurrent_capacity: z
@@ -26,19 +27,13 @@ export const PATCH = withErrorBoundary(async (req: NextRequest) => {
 
   const body = bodySchema.parse(await req.json());
 
-  // Resolve the vendor profile for this user.
-  const { data: vendor } = await supabase
-    .from('vendor_profiles')
-    .select('id')
-    .eq('user_id', user.id)
-    .single();
-
-  if (!vendor) throw new HttpError(404, 'No vendor profile found for this user');
+  const vendorProfileId = await getActiveVendorProfileId(supabase, user.id);
+  if (!vendorProfileId) throw new HttpError(404, 'No vendor profile found for this user');
 
   const { error } = await supabase
     .from('vendor_profiles')
     .update({ concurrent_capacity: body.concurrent_capacity })
-    .eq('id', vendor.id);
+    .eq('id', vendorProfileId);
 
   if (error) throw new HttpError(500, error.message);
 

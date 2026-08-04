@@ -173,6 +173,87 @@ describe('PATCH /api/vendor-profile/setup/[step] — basics', () => {
     const json = await res.json();
     expect(json.ok).toBe(true);
   });
+
+  it('persists subcategories when category=carts and slugs are valid', async () => {
+    let capturedPayload: unknown = null;
+    const sb = {
+      from: (_table: string) => ({
+        select: (_cols: unknown) => ({
+          eq: (_col: string, _val: string) => ({
+            maybeSingle: () =>
+              Promise.resolve({ data: { id: 'vp-1', slug: 'chai-cart' }, error: null }),
+          }),
+        }),
+        update: (payload: unknown) => {
+          capturedPayload = payload;
+          return {
+            eq: (_col: string, _val: string) => Promise.resolve({ data: null, error: null }),
+          };
+        },
+        insert: (_payload: unknown) => Promise.resolve({ data: null, error: null }),
+      }),
+    };
+    mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
+
+    const [req, ctx] = makeRequest('basics', {
+      businessName: 'Chai Cart Co',
+      category: 'carts',
+      bio: 'We do dessert and beverage carts.',
+      subcategories: ['dessert', 'beverage'],
+    });
+    const res = await PATCH(req, ctx);
+    expect(res.status).toBe(200);
+    expect((capturedPayload as { subcategories: unknown }).subcategories).toEqual([
+      'dessert',
+      'beverage',
+    ]);
+  });
+
+  it('rejects unknown subcategory slugs', async () => {
+    const sb = buildSupabaseForBasics({ existingRow: { id: 'vp-1', slug: 'slug-abc' } });
+    mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
+
+    const [req, ctx] = makeRequest('basics', {
+      businessName: 'Chai Cart Co',
+      category: 'carts',
+      bio: 'ok',
+      subcategories: ['dessert', 'not_a_real_slug'],
+    });
+    const res = await PATCH(req, ctx);
+    expect(res.status).toBe(400);
+  });
+
+  it('ignores subcategories when category has no taxonomy', async () => {
+    let capturedPayload: unknown = null;
+    const sb = {
+      from: (_table: string) => ({
+        select: (_cols: unknown) => ({
+          eq: (_col: string, _val: string) => ({
+            maybeSingle: () =>
+              Promise.resolve({ data: { id: 'vp-1', slug: 'acme-photo' }, error: null }),
+          }),
+        }),
+        update: (payload: unknown) => {
+          capturedPayload = payload;
+          return {
+            eq: (_col: string, _val: string) => Promise.resolve({ data: null, error: null }),
+          };
+        },
+        insert: (_payload: unknown) => Promise.resolve({ data: null, error: null }),
+      }),
+    };
+    mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
+
+    const [req, ctx] = makeRequest('basics', {
+      businessName: 'Acme Photo',
+      category: 'photography',
+      bio: 'ok',
+      subcategories: ['dessert'],
+    });
+    const res = await PATCH(req, ctx);
+    expect(res.status).toBe(200);
+    expect((capturedPayload as { subcategories: unknown }).subcategories).toBeNull();
+  });
 });
 
 // ─── Tests: location step ─────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { SearchBar } from '@/components/marketplace/SearchBar';
+import { AiSearchInput } from '@/components/marketplace/AiSearchInput';
 import { HomepageWordmarkPanel } from '@/components/marketplace/HomepageWordmarkPanel';
 import { RotatingWord } from '@/components/marketplace/RotatingWord';
 
@@ -11,7 +11,7 @@ export interface HomepageHeroProps {
 
 /**
  * V2 asymmetric homepage hero: left = type stack (kicker + headline + subhead +
- * SearchBar + dual CTAs), right = brand panel (static Devanagari wordmark + 4-
+ * AI search + dual CTAs), right = brand panel (static Devanagari wordmark + 4-
  * script glyph row). Stacks to single-column under lg: breakpoint (the right
  * panel hides on mobile per HomepageWordmarkPanel's `hidden lg:block` class).
  *
@@ -19,14 +19,14 @@ export interface HomepageHeroProps {
  */
 export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
   return (
-    <section className="pb-22 lg:gap-18 grid grid-cols-1 gap-10 px-6 pt-16 lg:grid-cols-[1.5fr_1fr] lg:px-14 lg:pb-24 lg:pt-24">
+    <section className="pb-22 lg:gap-18 grid grid-cols-1 gap-10 px-6 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-16 lg:grid-cols-[1.5fr_1fr] lg:px-14 lg:pb-24 lg:pt-24">
       <div className="text-left">
         <p className="m-0 mb-6 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
           Baazar · Chicago weddings
         </p>
 
         <h1
-          className="m-0 mb-7 font-serif font-extrabold leading-[0.98] tracking-[-0.025em] text-ink"
+          className="m-0 mb-7 text-balance font-serif font-extrabold leading-[0.98] tracking-[-0.025em] text-ink"
           style={{ fontSize: 'clamp(40px, 5.5vw, 68px)' }}
         >
           Planning your{' '}
@@ -37,26 +37,22 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
           starts here.
         </h1>
 
-        <p className="m-0 mb-8 max-w-[520px] text-lg leading-[1.55] text-ink-muted">
+        <p className="m-0 mb-8 max-w-[520px] text-pretty text-lg leading-[1.55] text-ink-muted">
           Chicago&rsquo;s marketplace for{' '}
           <span className="bg-haldi box-decoration-clone px-2 pb-1 pt-0 text-ink">Cultural</span>{' '}
           wedding vendors. Discover, compare, and book with confidence.
         </p>
 
-        <div className="mb-4">
-          <SearchBar />
+        <div className="mb-4 max-w-[520px]">
+          <AiSearchInput variant="hero" />
         </div>
 
         <div className="flex flex-col gap-3 sm:flex-row">
-          <Button
-            size="lg"
-            asChild
-            className="bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
-          >
+          <Button size="lg" variant="primary" asChild>
             <Link href="/vendors">Browse all vendors →</Link>
           </Button>
           {showVendorCta && (
-            <Button size="lg" variant="outline" asChild>
+            <Button size="lg" variant="secondary" asChild>
               <Link href="/signup">List your business</Link>
             </Button>
           )}

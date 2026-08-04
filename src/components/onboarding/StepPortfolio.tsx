@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Button } from '@/components/ui/button';
 import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 import { portfolioSchema } from '@/lib/onboarding/validation';
@@ -18,6 +19,8 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useUnsavedChangesGuard(JSON.stringify(images) !== JSON.stringify(initial.portfolioImages));
 
   async function onNext() {
     const parsed = portfolioSchema.safeParse({ portfolioImages: images });
@@ -44,20 +47,28 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Show your work</h1>
+        <h1 className="text-balance text-2xl font-bold">Show your work</h1>
         <p className="text-sm text-muted-foreground">Step 5 of 6</p>
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       {getError('portfolioImages') && (
-        <p className="mt-1 text-xs text-hot-pink">{getError('portfolioImages')}</p>
+        <p className="mt-1 text-xs text-hot-pink" role="alert" aria-live="assertive">
+          {getError('portfolioImages')}
+        </p>
       )}
 
       {images.length > 0 && images.length < 3 && (
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-800 dark:text-amber-300">
+        <div
+          className="rounded-md bg-amber-500/10 px-4 py-3 text-sm text-amber-800 shadow-[0_1px_2px_rgba(180,83,9,0.10),0_4px_12px_rgba(180,83,9,0.06)] dark:text-amber-300"
+          role="status"
+          aria-live="polite"
+        >
           Vendors with 3+ photos get 2&times; more clicks &mdash; add more if you have them.
         </div>
       )}
@@ -75,7 +86,11 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
         triggerLabel={{ empty: 'Upload portfolio photos', manage: 'Manage photos' }}
       />
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting || images.length === 0}>

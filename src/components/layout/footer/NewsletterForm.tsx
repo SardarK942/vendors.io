@@ -1,8 +1,10 @@
 'use client';
 
 import * as React from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { ArrowRight, Check, Loader2 } from 'lucide-react';
 import { newsletterSubscribeSchema } from '@/lib/newsletter/validation';
+import { TurnstileGate } from '@/components/security/TurnstileGate';
 
 type FormState =
   | { kind: 'default' }
@@ -16,6 +18,7 @@ const SUCCESS_RESET_MS = 5000;
 export function NewsletterForm() {
   const [email, setEmail] = React.useState('');
   const [state, setState] = React.useState<FormState>({ kind: 'default' });
+  const [turnstileToken, setTurnstileToken] = React.useState<string | null>(null);
   const resetTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   React.useEffect(() => {
@@ -39,7 +42,11 @@ export function NewsletterForm() {
       const res = await fetch('/api/newsletter/subscribe', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ email: parsed.data.email, source: 'footer' }),
+        body: JSON.stringify({
+          email: parsed.data.email,
+          source: 'footer',
+          turnstile_token: turnstileToken,
+        }),
       });
       if (!res.ok) {
         setState({ kind: 'error-server', message: 'Something glitched — try once more.' });
@@ -60,6 +67,16 @@ export function NewsletterForm() {
   const isError = state.kind === 'error-format' || state.kind === 'error-server';
   const errorMessage = isError ? state.message : '';
 
+  const reducedMotion = useReducedMotion();
+  const iconTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+  const iconKey: 'submitting' | 'success' | 'idle' = submitting
+    ? 'submitting'
+    : success
+      ? 'success'
+      : 'idle';
+
   return (
     <form
       className="relative flex max-w-[480px] flex-1 items-center gap-2.5 md:ml-auto"
@@ -70,8 +87,12 @@ export function NewsletterForm() {
       </label>
       <input
         id="footer-newsletter-email"
+        name="email"
         type="email"
         autoComplete="email"
+        inputMode="email"
+        spellCheck={false}
+        autoCapitalize="none"
         placeholder={success ? 'Subscribed — keep an eye out.' : 'you@email.com'}
         value={success ? '' : email}
         onChange={(e) => {
@@ -93,6 +114,7 @@ export function NewsletterForm() {
       <button
         type="submit"
         aria-label="Subscribe to The Bazaar Letter"
+        translate="no"
         disabled={submitting || success}
         className={[
           'flex h-10 w-10 flex-none items-center justify-center rounded-full bg-hot-pink text-cream',
@@ -101,13 +123,25 @@ export function NewsletterForm() {
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-hot-pink focus-visible:ring-offset-2 focus-visible:ring-offset-ink',
         ].join(' ')}
       >
-        {submitting ? (
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-        ) : success ? (
-          <Check className="h-4 w-4" aria-hidden="true" />
-        ) : (
-          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-        )}
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span
+            key={iconKey}
+            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+            exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            transition={iconTransition}
+            className="inline-flex"
+            aria-hidden="true"
+          >
+            {iconKey === 'submitting' ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : iconKey === 'success' ? (
+              <Check className="h-4 w-4" />
+            ) : (
+              <ArrowRight className="h-4 w-4" />
+            )}
+          </motion.span>
+        </AnimatePresence>
       </button>
       <p
         id="footer-newsletter-error"
@@ -120,6 +154,7 @@ export function NewsletterForm() {
       >
         {errorMessage}
       </p>
+      <TurnstileGate onToken={setTurnstileToken} action="newsletter-subscribe" />
     </form>
   );
 }

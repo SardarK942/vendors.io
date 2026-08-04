@@ -6,7 +6,13 @@ import { cn } from '@/lib/utils';
 
 export type ChipVariant = 'toggle' | 'dropdown' | 'applied' | 'all-filters';
 
-export interface ChipProps {
+// Extends native button attrs so Chip composes cleanly with Radix's `asChild`
+// pattern (aria-expanded, data-state, aria-controls, onClick injected by the
+// wrapping primitive all reach the underlying <button>).
+export interface ChipProps extends Omit<
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  'onClick' | 'children'
+> {
   /** Visual + interaction variant. */
   variant?: ChipVariant;
   /** Active state (ink-filled). Toggle = "on"; Dropdown = "panel open OR value set". */
@@ -40,27 +46,31 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
       onRemove,
       panelId,
       className,
+      ...rest
     },
     ref
   ) => {
     const baseClasses = cn(
-      'inline-flex items-center justify-center gap-1.5 h-8 px-3.5 rounded-full',
+      'inline-flex items-center justify-center gap-1.5 h-8 rounded-full',
       'font-sans text-[12px] font-medium leading-none whitespace-nowrap',
-      'transition-all duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)]',
+      'transition-[background-color,border-color,color,transform] duration-[180ms] ease-[cubic-bezier(.22,1,.36,1)]',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
       'disabled:opacity-40 disabled:pointer-events-none',
+      // Press affordance — skipped on 'applied' (its inner X has its own hit
+      // zone via stopPropagation; scaling the outer would scale the X too).
+      variant !== 'applied' && 'active:scale-[0.96] motion-reduce:active:scale-100',
       // Variant-specific
       variant === 'toggle' && [
-        'border bg-cream text-ink',
+        'border bg-cream text-ink px-3.5',
         isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover-pink-border',
       ],
       variant === 'dropdown' && [
-        'border bg-cream text-ink',
+        'border bg-cream text-ink pl-3.5 pr-3',
         isActive ? 'border-ink bg-ink text-cream' : 'border-hairline hover-pink-border',
       ],
       variant === 'applied' && ['border border-ink bg-cream-soft text-ink pr-1'],
       variant === 'all-filters' && [
-        'border border-ink bg-cream text-ink font-semibold hover-pink-border',
+        'border border-ink bg-cream text-ink font-semibold hover-pink-border pl-3 pr-3.5',
       ],
       className
     );
@@ -72,15 +82,74 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
           ? { 'aria-expanded': isActive, 'aria-controls': panelId }
           : {};
 
+    // 'applied' variant: two sibling buttons (label + X) wrapped in a chip-
+    // shaped div so removing the filter doesn't nest a <button> inside another.
+    if (variant === 'applied') {
+      const labelText =
+        typeof children === 'string' || typeof children === 'number' ? String(children) : 'filter';
+      return (
+        <div className={cn(baseClasses, 'gap-1 p-0 pl-3.5 pr-1')}>
+          <button
+            ref={ref}
+            type="button"
+            onClick={onClick}
+            className={cn(
+              'inline-flex h-full items-center gap-1.5 bg-transparent text-inherit',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+            )}
+            {...rest}
+          >
+            {children}
+            {count !== undefined && count > 0 && (
+              <span
+                className={cn(
+                  'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1',
+                  'text-[10px] font-bold tabular-nums leading-none',
+                  isActive ? 'bg-cream text-ink' : 'bg-indigo text-cream'
+                )}
+              >
+                {count}
+              </span>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRemove?.();
+            }}
+            aria-label={`Remove ${labelText}`}
+            className={cn(
+              'relative ml-1 inline-flex size-4 items-center justify-center rounded-full',
+              'before:absolute before:-inset-2 before:content-[""]',
+              'text-ink-muted transition-colors hover:bg-ink hover:text-cream',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-1 focus-visible:ring-offset-cream'
+            )}
+          >
+            <X className="size-3" strokeWidth={2.5} aria-hidden="true" />
+          </button>
+        </div>
+      );
+    }
+
     return (
-      <button ref={ref} type="button" onClick={onClick} className={baseClasses} {...ariaProps}>
-        {variant === 'all-filters' && <SlidersHorizontal className="size-3.5" strokeWidth={2} />}
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        className={baseClasses}
+        {...ariaProps}
+        {...rest}
+      >
+        {variant === 'all-filters' && (
+          <SlidersHorizontal className="size-3.5" strokeWidth={2} aria-hidden="true" />
+        )}
         {children}
         {count !== undefined && count > 0 && (
           <span
             className={cn(
               'inline-flex h-4 min-w-[16px] items-center justify-center rounded-full px-1',
-              'text-[10px] font-bold leading-none',
+              'text-[10px] font-bold tabular-nums leading-none',
               isActive ? 'bg-cream text-ink' : 'bg-indigo text-cream'
             )}
           >
@@ -98,31 +167,6 @@ export const Chip = React.forwardRef<HTMLButtonElement, ChipProps>(
           >
             <path d="m3 4.5 3 3 3-3" />
           </svg>
-        )}
-        {variant === 'applied' && (
-          <span
-            role="button"
-            tabIndex={0}
-            aria-label="Remove filter"
-            onClick={(e) => {
-              e.stopPropagation();
-              onRemove?.();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                e.stopPropagation();
-                onRemove?.();
-              }
-            }}
-            className={cn(
-              'ml-1 inline-flex size-4 items-center justify-center rounded-full',
-              'text-ink-muted transition-colors hover:bg-ink hover:text-cream',
-              'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-indigo'
-            )}
-          >
-            <X className="size-3" strokeWidth={2.5} />
-          </span>
         )}
       </button>
     );

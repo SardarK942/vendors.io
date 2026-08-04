@@ -2,6 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
+import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
+
+// Historical note: this route previously refused is_active=true when the vendor
+// had zero active packages (409 NO_ACTIVE_PACKAGES). Removed because the custom-
+// request flow (src/lib/vendor-packages/with-custom-request.ts) lets couples
+// send quote requests to zero-package vendors — the gate was blocking legit
+// quote-only vendors (caterers, venues, planners) from resuming after a pause.
 
 const patchVendorProfileSchema = z.object({
   business_name: z.string().min(2).max(100).optional(),
@@ -20,6 +27,7 @@ const patchVendorProfileSchema = z.object({
   base_address_public: z.boolean().optional(),
   // pause toggle
   is_active: z.boolean().optional(),
+  subcategories: z.array(z.string()).optional(),
 });
 
 export const PATCH = withErrorBoundary(async (request: NextRequest) => {
@@ -34,23 +42,19 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
     .single();
   if (!existing) throw new HttpError(403, 'No vendor profile for this user');
 
-  // Pause-toggle validation: if setting is_active=true, require at least 1 active package
-  if (parsed.is_active === true) {
-    const { count } = await supabase
-      .from('packages')
-      .select('id', { count: 'exact', head: true })
-      .eq('vendor_profile_id', existing.id)
-      .eq('is_active', true);
-    if ((count ?? 0) < 1) {
-      return NextResponse.json(
-        {
-          error: {
-            code: 'NO_ACTIVE_PACKAGES',
-            message: 'Add at least one active package before resuming your profile.',
-          },
-        },
-        { status: 409 }
-      );
+  if (parsed.subcategories !== undefined) {
+    // Re-load the row's category so validation isn't trusting client input.
+    const { data: row } = await supabase
+      .from('vendor_profiles')
+      .select('category')
+      .eq('id', existing.id)
+      .single();
+    const valid = validSubcategorySlugs((row?.category as string) ?? '');
+    if (valid.size === 0 && parsed.subcategories.length > 0) {
+      throw new HttpError(400, 'This category does not support subcategories');
+    }
+    if (!parsed.subcategories.every((s) => valid.has(s))) {
+      throw new HttpError(400, 'Invalid subcategory slug');
     }
   }
 
@@ -62,7 +66,10 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: { code: 'UPDATE_FAILED', message: error.message } }, { status: 500 });
+    return NextResponse.json(
+      { error: { code: 'UPDATE_FAILED', message: error.message } },
+      { status: 500 }
+    );
   }
 
   return NextResponse.json({ data }, { status: 200 });

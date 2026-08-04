@@ -1,5 +1,6 @@
 // src/components/marketplace/vendor-profile/IdentityPanel.tsx
 import { Badge } from '@/components/ui/badge';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CheckCircle, MapPin, Languages, CalendarDays } from 'lucide-react';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import type { Database } from '@/types/database.types';
@@ -16,11 +17,20 @@ export function IdentityPanel({ vendor }: IdentityPanelProps) {
     <section data-testid="identity-panel" className="space-y-6">
       <div>
         <div className="flex items-center gap-3">
-          <h1 className="font-spectral text-3xl font-bold text-ink">{vendor.business_name}</h1>
+          <h1 className="font-spectral text-3xl font-bold text-ink" translate="no">
+            {vendor.business_name}
+          </h1>
           {vendor.verified && (
-            <Badge className="gap-1">
-              <CheckCircle className="h-3 w-3" /> Verified
-            </Badge>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Badge className="cursor-help gap-1" tabIndex={0}>
+                  <CheckCircle className="h-3 w-3" aria-hidden="true" /> Verified
+                </Badge>
+              </TooltipTrigger>
+              <TooltipContent>
+                Identity, insurance, and references confirmed by Baazar.
+              </TooltipContent>
+            </Tooltip>
           )}
         </div>
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-ink/80">
@@ -28,18 +38,18 @@ export function IdentityPanel({ vendor }: IdentityPanelProps) {
             {VENDOR_CATEGORY_LABELS[vendor.category] || vendor.category}
           </Badge>
           <span className="flex items-center gap-1">
-            <MapPin className="h-4 w-4" />
+            <MapPin className="h-4 w-4" aria-hidden="true" />
             {location}
           </span>
           {vendor.languages && vendor.languages.length > 0 && (
             <span className="flex items-center gap-1">
-              <Languages className="h-4 w-4" />
+              <Languages className="h-4 w-4" aria-hidden="true" />
               {vendor.languages.join(', ')}
             </span>
           )}
           {vendor.years_in_business != null && (
             <span className="flex items-center gap-1">
-              <CalendarDays className="h-4 w-4" />
+              <CalendarDays className="h-4 w-4" aria-hidden="true" />
               {vendor.years_in_business} {vendor.years_in_business === 1 ? 'year' : 'years'} in
               business
             </span>

@@ -10,7 +10,11 @@ export default function MarketplaceError({
   reset: () => void;
 }) {
   return (
-    <div className="flex min-h-[400px] flex-col items-center justify-center text-center">
+    <div
+      className="flex min-h-[400px] flex-col items-center justify-center text-center"
+      role="alert"
+      aria-live="assertive"
+    >
       <h2 className="text-2xl font-bold">Something went wrong</h2>
       <p className="mt-2 text-muted-foreground">
         {error.message || 'An unexpected error occurred.'}

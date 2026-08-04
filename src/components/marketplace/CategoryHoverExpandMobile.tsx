@@ -10,6 +10,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import type { FeaturedCategory } from '@/lib/vendor-categories/featured';
+import { fmtCount } from '@/lib/intl';
 
 export interface CategoryHoverExpandMobileProps {
   categories: readonly FeaturedCategory[];
@@ -45,7 +46,7 @@ export function CategoryHoverExpandMobile({ categories, counts }: CategoryHoverE
               alt={cat.alt}
               fill
               sizes="(max-width: 640px) 100vw, 320px"
-              className="object-cover"
+              className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-ink/[0.78] to-transparent" />
             <div className="absolute bottom-0 left-0 right-0 p-4 text-cream">
@@ -68,7 +69,9 @@ export function CategoryHoverExpandMobile({ categories, counts }: CategoryHoverE
                   <h3 className="m-0 mb-0.5 font-serif text-lg font-bold leading-tight tracking-[-0.012em]">
                     {cat.label}
                   </h3>
-                  <p className="m-0 mb-2 text-xs text-cream/85">{count} in Chicago</p>
+                  <p className="m-0 mb-2 text-xs tabular-nums text-cream/85">
+                    {fmtCount(count)} in Chicago
+                  </p>
                   <span className="inline-flex items-center gap-1 text-xs font-semibold">
                     Browse {plural(cat.label.toLowerCase())}{' '}
                     <ArrowRight className="h-3 w-3" aria-hidden="true" />

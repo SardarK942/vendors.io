@@ -17,6 +17,8 @@ interface EventTypePickerProps {
   placeholder?: string;
   disabled?: boolean;
   className?: string;
+  /** Forwarded to the underlying SelectTrigger so a <Label htmlFor> can target it. */
+  id?: string;
 }
 
 export function EventTypePicker({
@@ -25,6 +27,7 @@ export function EventTypePicker({
   placeholder = 'Select event type',
   disabled,
   className,
+  id,
 }: EventTypePickerProps) {
   return (
     <Select
@@ -32,7 +35,7 @@ export function EventTypePicker({
       onValueChange={(v) => onValueChange(v as EventTypeId)}
       disabled={disabled}
     >
-      <SelectTrigger className={className}>
+      <SelectTrigger id={id} className={className}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent>

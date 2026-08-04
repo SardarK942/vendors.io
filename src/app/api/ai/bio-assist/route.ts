@@ -19,6 +19,7 @@ const bodySchema = z.object({
   category: z.string().min(1),
   instagramHandle: z.string().optional(),
   draft: z.string().optional(),
+  subcategories: z.array(z.string()).optional(),
 });
 
 export async function POST(req: NextRequest) {
@@ -54,12 +55,12 @@ export async function POST(req: NextRequest) {
   if (!parsed.success)
     return new Response(JSON.stringify({ error: 'Invalid input' }), { status: 400 });
 
-  const { businessName, category, instagramHandle, draft } = parsed.data;
+  const { businessName, category, instagramHandle, draft, subcategories } = parsed.data;
   const usePolish = draft && draft.trim().length >= 20;
   const systemPrompt = usePolish ? BIO_POLISH_SYSTEM : BIO_DRAFT_SYSTEM;
   const userPrompt = usePolish
-    ? bioPolishUserPrompt({ businessName, category, draft: draft! })
-    : bioDraftUserPrompt({ businessName, category, instagramHandle });
+    ? bioPolishUserPrompt({ businessName, category, draft: draft!, subcategories })
+    : bioDraftUserPrompt({ businessName, category, instagramHandle, subcategories });
 
   try {
     const genAI = getGoogleAI();

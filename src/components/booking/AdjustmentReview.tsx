@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CounterModal } from '@/components/bookings/CounterModal';
+import { fmtUSD } from '@/lib/intl';
 
 const REASON_LABELS: Record<string, string> = {
   travel: 'Travel distance',
@@ -44,6 +47,7 @@ export function AdjustmentReview({
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [counterOpen, setCounterOpen] = useState(false);
+  const [declineConfirmOpen, setDeclineConfirmOpen] = useState(false);
 
   // T18: Remaining counter-offers for this couple (cap is 2)
   const countersLeft = Math.max(0, 2 - coupleCounterCount);
@@ -76,17 +80,20 @@ export function AdjustmentReview({
       if (res.ok) {
         const json = await res.json();
         if (endpoint === 'accept-adjusted' && json.data?.deposit_checkout_url) {
+          toast.success('Quote accepted. Redirecting to payment…');
           window.location.href = json.data.deposit_checkout_url;
         } else {
-          window.location.reload();
+          toast.success(endpoint === 'accept-adjusted' ? 'Quote accepted.' : 'Quote declined.');
+          setDeclineConfirmOpen(false);
+          router.refresh();
         }
       } else {
         const json = await res.json().catch(() => ({}));
-        alert(json.error ?? 'Action failed. Please try again.');
+        toast.error(json.error ?? 'Action failed. Please try again.');
         setBusy(false);
       }
     } catch {
-      alert('Network error. Please try again.');
+      toast.error('Network error. Please try again.');
       setBusy(false);
     }
   }
@@ -97,19 +104,20 @@ export function AdjustmentReview({
 
   return (
     <div className="space-y-5 rounded-lg border p-6">
-      <h3 className="text-base font-semibold">Vendor sent an adjusted quote</h3>
+      <h3 className="text-base font-semibold">Vendor Sent an Adjusted Quote</h3>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">Package + add-ons</p>
-          <p className="text-lg font-medium">${(originalSubtotalCents / 100).toLocaleString()}</p>
+          <p className="text-lg font-medium tabular-nums">{fmtUSD(originalSubtotalCents)}</p>
         </div>
         <div className="space-y-1">
           <p className="text-xs text-muted-foreground">Adjustment</p>
           <p
-            className={`text-lg font-medium ${isIncrease ? 'text-orange-600' : isDiscount ? 'text-green-600' : ''}`}
+            className={`text-lg font-medium tabular-nums ${isIncrease ? 'text-orange-600' : isDiscount ? 'text-green-600' : ''}`}
           >
-            {adjustmentCents >= 0 ? '+' : ''}${(adjustmentCents / 100).toLocaleString()}
+            {adjustmentCents >= 0 ? '+' : ''}
+            {fmtUSD(adjustmentCents)}
           </p>
           <p className="text-xs text-muted-foreground">{REASON_LABELS[reason] ?? reason}</p>
           {explanation && (
@@ -121,15 +129,19 @@ export function AdjustmentReview({
       <div className="flex items-center justify-between border-t pt-4">
         <div>
           <p className="text-xs text-muted-foreground">Adjusted total</p>
-          <p className="text-xl font-bold">${(finalTotal / 100).toLocaleString()}</p>
+          <p className="text-xl font-bold tabular-nums">{fmtUSD(finalTotal)}</p>
         </div>
       </div>
+
+      <p className="sr-only" role="status" aria-live="polite">
+        {busy ? 'Processing your decision…' : ''}
+      </p>
 
       <div className="flex flex-wrap gap-3">
         <Button onClick={() => action('accept-adjusted')} disabled={busy}>
           Accept adjusted quote
         </Button>
-        <Button variant="outline" onClick={() => action('decline-adjusted')} disabled={busy}>
+        <Button variant="outline" onClick={() => setDeclineConfirmOpen(true)} disabled={busy}>
           Decline
         </Button>
 
@@ -152,7 +164,7 @@ export function AdjustmentReview({
       </div>
 
       <p className="text-xs text-muted-foreground">
-        If you decline, the vendor will have 72 hours to send a revised quote.
+        If you decline, the vendor will have 72 hours to send a revised quote.
       </p>
 
       <CounterModal
@@ -161,6 +173,17 @@ export function AdjustmentReview({
         bookingId={bookingId}
         currentTotalCents={totalPriceCents}
         onSuccess={() => router.refresh()}
+      />
+
+      <ConfirmDialog
+        open={declineConfirmOpen}
+        onOpenChange={setDeclineConfirmOpen}
+        title="Decline This Quote?"
+        description="The vendor will be asked to revise. If they don't, the booking will fall through."
+        confirmLabel="Decline Quote"
+        destructive
+        busy={busy}
+        onConfirm={() => action('decline-adjusted')}
       />
     </div>
   );

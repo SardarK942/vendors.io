@@ -1,7 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -29,6 +30,7 @@ interface Props {
 
 export function StepLocation({ initial, profileId, mode }: Props) {
   const router = useRouter();
+  const baseAddressId = useId();
   const [place, setPlace] = useState<Partial<PlaceData>>({
     address_line_1: initial.baseAddressLine1,
     city: initial.baseCity,
@@ -41,6 +43,27 @@ export function StepLocation({ initial, profileId, mode }: Props) {
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useUnsavedChangesGuard(
+    JSON.stringify({
+      address_line_1: place.address_line_1 ?? '',
+      city: place.city ?? '',
+      state: place.state ?? '',
+      postal_code: place.postal_code ?? '',
+      google_place_id: place.google_place_id ?? '',
+      addressPublic,
+      skipAddress,
+    }) !==
+      JSON.stringify({
+        address_line_1: initial.baseAddressLine1,
+        city: initial.baseCity,
+        state: initial.baseState,
+        postal_code: initial.basePostalCode,
+        google_place_id: initial.baseGooglePlaceId,
+        addressPublic: initial.baseAddressPublic,
+        skipAddress: initial.baseAddressSkipped,
+      })
+  );
 
   async function onNext() {
     const parsed = locationSchema.safeParse({
@@ -75,17 +98,20 @@ export function StepLocation({ initial, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Where are you based?</h1>
+        <h1 className="text-balance text-2xl font-bold">Where are you based?</h1>
         <p className="text-sm text-muted-foreground">Step 2 of 6</p>
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       <div className="space-y-2">
-        <Label>Base address</Label>
+        <Label htmlFor={baseAddressId}>Base address</Label>
         <GooglePlacesAutocomplete
+          id={baseAddressId}
           value={place}
           onChange={(p) => {
             setPlace(p);
@@ -95,7 +121,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
             clearField('basePostalCode');
             clearField('baseGooglePlaceId');
           }}
-          placeholder={skipAddress ? 'Skipped' : 'Start typing your address...'}
+          placeholder={skipAddress ? 'Skipped' : 'Start typing your address…'}
           disabled={skipAddress}
           className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
         />
@@ -111,6 +137,7 @@ export function StepLocation({ initial, profileId, mode }: Props) {
           <input
             type="checkbox"
             checked={skipAddress}
+            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
             onChange={(e) => {
               setSkipAddress(e.target.checked);
               if (e.target.checked) {
@@ -129,10 +156,10 @@ export function StepLocation({ initial, profileId, mode }: Props) {
               }
             }}
           />
-          I don&apos;t have a fixed address (I travel to clients)
+          I don’t have a fixed address (I travel to clients)
         </label>
         {!skipAddress && !place.address_line_1 && (
-          <p className="mt-1 text-xs text-ink/60">
+          <p className="mt-1 text-pretty text-xs text-ink/60">
             Adding an address helps customers find you in local searches.
           </p>
         )}
@@ -145,13 +172,17 @@ export function StepLocation({ initial, profileId, mode }: Props) {
             Make my full address publicly visible
           </Label>
         </div>
-        <p className="pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
+        <p className="text-pretty pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
           Customers see your city + state always. Full address shown only after they pay the
           deposit, unless you make it public here.
         </p>
       </div>
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

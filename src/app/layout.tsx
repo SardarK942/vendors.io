@@ -8,6 +8,7 @@ import {
   Amiri,
   Markazi_Text,
 } from 'next/font/google';
+import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from '@/components/ui/sonner';
 import './globals.css';
 
@@ -69,17 +70,15 @@ const markaziText = Markazi_Text({
 
 export const metadata: Metadata = {
   title: {
-    default: 'Baazar — South Asian wedding marketplace · Chicago',
+    default: 'Baazar — Cultural Wedding Marketplace · Chicago',
     template: '%s | Baazar',
   },
   description:
-    'Discover, compare, and book verified South Asian wedding vendors in Chicago. Editorial curation, transparent pricing, and secure hold deposits.',
+    'Discover, compare, and book verified cultural wedding vendors in Chicago. Editorial curation, transparent pricing, and secure hold deposits.',
   keywords: [
     'baazar',
-    'south asian wedding',
+    'cultural wedding',
     'chicago wedding vendors',
-    'desi wedding',
-    'indian wedding',
     'mehndi',
     'wedding marketplace',
   ],
@@ -95,8 +94,10 @@ export default function RootLayout({
       <body
         className={`${spectral.variable} ${schibstedGrotesk.variable} ${dmMono.variable} ${tiroDevanagari.variable} ${notoNastaliqUrdu.variable} ${amiri.variable} ${markaziText.variable} antialiased`}
       >
-        {children}
-        <Toaster richColors position="top-right" />
+        <NuqsAdapter>
+          {children}
+          <Toaster richColors position="top-right" />
+        </NuqsAdapter>
       </body>
     </html>
   );

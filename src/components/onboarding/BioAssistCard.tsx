@@ -2,13 +2,17 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Sparkles, X } from 'lucide-react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
+import { Sparkles, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BioAssistCardProps {
   currentBio: string;
   businessName: string;
   category: string;
+  /** Cart-type subcategories (or other category-specific taxonomy) — passed to
+   *  the AI so the bio can name what the vendor actually serves. */
+  subcategories?: string[];
   onAccept: (newBio: string) => void;
 }
 
@@ -22,24 +26,32 @@ export function BioAssistCard({
   currentBio,
   businessName,
   category,
+  subcategories,
   onAccept,
 }: BioAssistCardProps) {
   const [state, setState] = useState<CardState>({ kind: 'idle' });
   const abortRef = useRef<AbortController | null>(null);
 
   const mode = currentBio.length < 20 ? 'draft' : 'polish';
-  const idleLabel = mode === 'draft' ? '✨ Draft with AI' : '✨ Polish with AI';
-  const loadingLabel = mode === 'draft' ? '⋯ Drafting…' : '⋯ Polishing…';
+  const idleLabel = mode === 'draft' ? 'Draft with AI' : 'Polish with AI';
+  const loadingLabel = mode === 'draft' ? 'Drafting…' : 'Polishing…';
 
   async function start() {
     abortRef.current = new AbortController();
     setState({ kind: 'streaming', suggestion: '' });
 
     try {
+      // Server side reads `draft` (not `currentBio`) to decide polish vs draft
+      // mode. Sending currentBio-as-draft is what unlocks the polish path.
       const res = await fetch('/api/ai/bio-assist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mode, currentBio, businessName, category }),
+        body: JSON.stringify({
+          businessName,
+          category,
+          draft: currentBio,
+          subcategories: subcategories && subcategories.length > 0 ? subcategories : undefined,
+        }),
         signal: abortRef.current.signal,
       });
 
@@ -126,6 +138,11 @@ export function BioAssistCard({
   const showCard = state.kind !== 'idle';
   const isLoading = state.kind === 'streaming';
 
+  const reducedMotion = useReducedMotion();
+  const iconTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+
   return (
     <div className="space-y-2">
       <Button
@@ -133,13 +150,31 @@ export function BioAssistCard({
         variant="secondary"
         onClick={start}
         disabled={isLoading}
-        className="w-fit"
+        className="inline-flex w-fit items-center gap-1.5"
+        aria-live="polite"
       >
-        {isLoading ? loadingLabel : idleLabel}
+        <AnimatePresence initial={false} mode="popLayout">
+          <motion.span
+            key={isLoading ? 'loading' : 'idle'}
+            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
+            exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+            transition={iconTransition}
+            className="inline-flex"
+            aria-hidden="true"
+          >
+            {isLoading ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Sparkles className="size-4" />
+            )}
+          </motion.span>
+        </AnimatePresence>
+        <span>{isLoading ? loadingLabel : idleLabel}</span>
       </Button>
 
       {showCard && (
-        <div className="rounded-lg border border-ink/20 bg-cream p-3">
+        <div className="rounded-lg bg-cream p-3 shadow-[0_1px_2px_rgba(0,0,0,0.04),0_2px_8px_rgba(0,0,0,0.04)]">
           <div className="flex items-start justify-between gap-2">
             <p className="flex items-center gap-1 text-xs font-medium uppercase tracking-wide text-ink/60">
               <Sparkles className="size-3" /> AI Suggestion
@@ -148,16 +183,20 @@ export function BioAssistCard({
               type="button"
               onClick={dismiss}
               aria-label="Dismiss suggestion"
-              className="text-ink/40 hover:text-ink"
+              className="inline-flex size-10 items-center justify-center text-ink/40 hover:text-ink"
             >
               <X className="size-4" />
             </button>
           </div>
 
-          <p className="mt-2 whitespace-pre-wrap text-sm text-ink">
+          <p
+            className="mt-2 whitespace-pre-wrap text-sm text-ink"
+            aria-live="polite"
+            aria-atomic="false"
+          >
             {state.kind === 'error' ? state.message : state.suggestion}
             {state.kind === 'streaming' && (
-              <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-ink" />
+              <span className="ml-1 inline-block h-4 w-1 animate-pulse bg-ink motion-reduce:animate-none" />
             )}
           </p>
 

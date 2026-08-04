@@ -4,9 +4,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { listPackagesForVendor } from '@/services/packages.service';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
+import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButton';
+import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
+import { PricingModelChoice } from '@/components/onboarding/PricingModelChoice';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
+import { fmtUSD } from '@/lib/intl';
+import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,22 +39,29 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
     vendorProfile.id,
     /* includeInactive */ true
   );
-  const packages = (packagesData ?? []) as unknown as PackageItem[];
+  const packages = (packagesData ?? []) as unknown as PackageWithFullPreview[];
+  const vendorSlug = vendorProfile.slug ?? '';
+
+  // just_onboarded=1 shows only the pricing-model choice cards — the "Your Packages"
+  // header + empty state would repeat the same "add a package" CTA the choice card
+  // already provides. Once the vendor navigates away (or lands here without the flag),
+  // the regular listing takes over.
+  if (justOnboarded) {
+    return (
+      <div className="space-y-6">
+        <PricingModelChoice vendorSlug={vendorSlug} />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      {justOnboarded && (
-        <div className="mb-4 rounded-md border border-green-500/30 bg-green-500/10 p-4">
-          <h3 className="font-semibold">🎉 Profile is live!</h3>
-          <p className="text-sm">Create your first package to start receiving bookings.</p>
-        </div>
-      )}
-
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold">Your Packages</h1>
+          <PageTitle>Your Packages</PageTitle>
           <p className="text-muted-foreground">
-            Customers can only book vendors with at least one active package.
+            Packages let couples book fixed pricing tiers in one click. Vendors without packages
+            still receive quote requests directly.
           </p>
         </div>
         <Button
@@ -61,20 +74,23 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
 
       {packages.length === 0 ? (
         <Card className="p-12 text-center">
-          <h2 className="text-lg font-semibold">No packages yet</h2>
-          <p className="mt-2 text-muted-foreground">Add your first package to go live in search.</p>
+          <h2 className="text-lg font-semibold">No packages — that&rsquo;s OK</h2>
+          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
+            Couples can already send quote requests from your live profile. Add a package here only
+            if you sell fixed pricing tiers (like a 3-hour photobooth or a bridal MUA package).
+          </p>
           <Button
             asChild
             size="lg"
             className="mt-6 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
           >
-            <Link href="/dashboard/profile/packages/new">+ Add your first package</Link>
+            <Link href="/dashboard/profile/packages/new">+ Add a package</Link>
           </Button>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {(packages as PackageItem[]).map((pkg) => (
-            <PackageCard key={pkg.id} pkg={pkg} />
+          {packages.map((pkg) => (
+            <PackageCard key={pkg.id} pkg={pkg} vendorSlug={vendorSlug} />
           ))}
         </div>
       )}
@@ -82,27 +98,25 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
   );
 }
 
-interface PackageItem {
-  id: string;
-  name: string;
-  base_price_cents: number;
-  duration_hours: number;
-  max_guests: number;
-  featured_image_url: string;
-  is_active: boolean;
-}
+// Row shape from `listPackagesForVendor` — includes addons so PackagePreviewButton
+// can render the full customer-view modal without an extra fetch.
+type PackageWithFullPreview = PackageWithAddons & { is_active: boolean };
 
-function PackageCard({ pkg }: { pkg: PackageItem }) {
+function PackageCard({ pkg, vendorSlug }: { pkg: PackageWithFullPreview; vendorSlug: string }) {
   return (
     <Card className={`overflow-hidden ${!pkg.is_active ? 'opacity-60' : ''}`}>
-      <div className="relative h-40 w-full bg-gray-100">
-        <Image
-          src={pkg.featured_image_url}
-          alt={pkg.name}
-          fill
-          className="object-cover"
-          unoptimized
-        />
+      <div className="relative h-40 w-full">
+        {pkg.featured_image_url ? (
+          <Image
+            src={pkg.featured_image_url}
+            alt={pkg.name}
+            fill
+            className="object-cover"
+            unoptimized
+          />
+        ) : (
+          <PackagePhotoFallback name={pkg.name} />
+        )}
       </div>
       <CardContent className="space-y-2 p-4">
         <div className="flex items-start justify-between gap-2">
@@ -111,13 +125,13 @@ function PackageCard({ pkg }: { pkg: PackageItem }) {
             <span className="shrink-0 text-xs uppercase text-muted-foreground">Inactive</span>
           )}
         </div>
-        <p className="text-sm text-muted-foreground">
-          ${(pkg.base_price_cents / 100).toLocaleString()}
-        </p>
+        <p className="text-sm tabular-nums text-muted-foreground">{fmtUSD(pkg.base_price_cents)}</p>
         <p className="text-xs text-muted-foreground">
-          {pkg.duration_hours}h &middot; up to {pkg.max_guests} guests
+          {pkg.duration_hours}
+          {' '}h &middot; up to {pkg.max_guests} guests
         </p>
-        <div className="flex items-center gap-2 pt-2">
+        <div className="flex flex-wrap items-center gap-2 pt-2">
+          <PackagePreviewButton pkg={pkg} vendorSlug={vendorSlug} />
           <Button size="sm" variant="outline" asChild>
             <Link href={`/dashboard/profile/packages/${pkg.id}`}>Edit</Link>
           </Button>

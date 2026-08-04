@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { LANGUAGES, RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
 import { detailsSchema } from '@/lib/onboarding/validation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 
 interface ProfileShape {
   languages: string[] | null;
@@ -30,6 +31,15 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+
+  useUnsavedChangesGuard(
+    JSON.stringify({ languages, years, sla }) !==
+      JSON.stringify({
+        languages: profile.languages ?? [],
+        years: profile.years_in_business ?? '',
+        sla: profile.response_sla_hours ?? null,
+      })
+  );
 
   const toggleLang = (slug: string) => {
     setLanguages((prev) => {
@@ -86,7 +96,9 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <header>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-ink">Profile details</h1>
+        <h1 className="text-balance font-display text-3xl font-bold tracking-tight text-ink">
+          Profile details
+        </h1>
         <p className="mt-2 text-sm text-ink-muted">
           Three quick questions to help customers find you.
         </p>
@@ -94,12 +106,14 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
       </header>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       {/* Languages */}
-      <div className="space-y-3">
-        <Label className="font-display text-base font-semibold">Languages your team speaks</Label>
+      <fieldset className="space-y-3">
+        <legend className="font-display text-base font-semibold">Languages your team speaks</legend>
         <p className="text-xs text-ink-soft">Pick all that apply.</p>
         <div className="flex flex-wrap gap-2">
           {LANGUAGES.map((lang) => {
@@ -109,7 +123,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
                 key={lang.slug}
                 type="button"
                 onClick={() => toggleLang(lang.slug)}
-                className={`inline-flex h-9 items-center rounded-full border px-4 text-[13px] font-medium transition-colors ${
+                className={`inline-flex h-9 items-center rounded-full border px-4 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
                   on
                     ? 'border-ink bg-ink text-cream'
                     : 'border-hairline bg-cream text-ink hover:border-ink'
@@ -123,7 +137,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         {getError('languages') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('languages')}</p>
         )}
-      </div>
+      </fieldset>
 
       {/* Years in business */}
       <div className="space-y-2">
@@ -143,7 +157,9 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
             setYears(e.target.value === '' ? '' : Number(e.target.value));
             clearField('years_in_business');
           }}
-          className="w-32 rounded-md border border-hairline bg-cream px-3 py-2 font-mono text-base text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
+          inputMode="numeric"
+          autoComplete="off"
+          className="w-32 rounded-md border border-hairline bg-cream px-3 py-2 font-mono text-base tabular-nums text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
         />
         {getError('years_in_business') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('years_in_business')}</p>
@@ -151,8 +167,10 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
       </div>
 
       {/* Response SLA */}
-      <div className="space-y-3">
-        <Label className="font-display text-base font-semibold">How quickly do you respond?</Label>
+      <fieldset className="space-y-3">
+        <legend className="font-display text-base font-semibold">
+          How quickly do you respond?
+        </legend>
         <p className="text-xs text-ink-soft">
           Customers filter for fast-responding vendors — pick what you can honestly commit to.
         </p>
@@ -168,7 +186,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
                   setSla(opt.value);
                   clearField('response_sla_hours');
                 }}
-                className="size-4 accent-ink"
+                className="size-4 accent-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
               />
               <span className="text-sm text-ink">{opt.label}</span>
             </label>
@@ -177,9 +195,13 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
         {getError('response_sla_hours') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('response_sla_hours')}</p>
         )}
-      </div>
+      </fieldset>
 
-      {serverError && <p className="text-sm text-error">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-error" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex items-center justify-end gap-3 border-t border-hairline pt-4">
         <Button type="submit" disabled={!isValid} isLoading={submitting}>

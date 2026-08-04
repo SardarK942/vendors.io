@@ -20,8 +20,6 @@ export interface DatePickerProps {
   className?: string;
 }
 
-const DEFAULT_DISABLED: Matcher = { before: new Date() };
-
 const DEFAULT_MODIFIERS_CLASSNAMES: Record<string, string> = {
   unavailable: 'text-ink-soft line-through opacity-50 cursor-not-allowed',
   partial: 'bg-haldi/15 text-ink hover:bg-haldi/25',
@@ -47,7 +45,11 @@ export function DatePicker({
   modifiersClassNames,
   className,
 }: DatePickerProps) {
-  const selectedDate = selected ? new Date(`${selected}T00:00:00`) : undefined;
+  // Memoize so `new Date(...)` is stable across renders (avoids hydration drift).
+  const selectedDate = React.useMemo(
+    () => (selected ? new Date(`${selected}T00:00:00`) : undefined),
+    [selected]
+  );
 
   const handleSelect = (date: Date | undefined) => {
     if (!date) return;
@@ -58,8 +60,12 @@ export function DatePicker({
     onSelect(`${y}-${m}-${d}`);
   };
 
+  // Today is computed lazily so it's stable for the first commit pass and
+  // doesn't drift if the picker re-renders mid-session.
+  const [defaultDisabled] = React.useState<Matcher>(() => ({ before: new Date() }));
+
   const mergedDisabled: Matcher[] = [
-    DEFAULT_DISABLED,
+    defaultDisabled,
     ...(Array.isArray(disabled) ? disabled : disabled ? [disabled] : []),
   ];
 
@@ -82,18 +88,19 @@ export function DatePicker({
           caption_label: 'font-display font-bold text-[15px] tracking-[-0.012em] text-ink',
           nav: 'flex items-center gap-1',
           button_previous:
-            'inline-flex items-center justify-center w-7 h-7 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors',
+            "relative inline-flex items-center justify-center w-9 h-9 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors before:absolute before:-inset-1 before:content-['']",
           button_next:
-            'inline-flex items-center justify-center w-7 h-7 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors',
+            "relative inline-flex items-center justify-center w-9 h-9 rounded-full border border-hairline text-ink-muted hover:border-ink hover:text-ink transition-colors before:absolute before:-inset-1 before:content-['']",
           month_grid: 'w-full border-collapse',
           weekdays: 'flex',
           weekday:
             'w-9 text-center text-[9px] font-semibold uppercase tracking-[0.08em] text-ink-soft py-2',
           week: 'flex',
-          day: 'w-9 h-9 text-center text-[12px] p-0',
+          day: 'w-9 h-9 text-center text-[12px] tabular-nums p-0',
           day_button:
-            'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink hover:bg-cream-soft transition-colors',
-          selected: 'bg-ink !text-cream hover:bg-ink',
+            'w-9 h-9 inline-flex items-center justify-center rounded-sm text-ink tabular-nums hover:bg-cream-soft transition-colors',
+          selected:
+            '[&_button]:bg-hot-pink [&_button]:text-cream [&_button]:font-semibold [&_button]:shadow-[0_2px_8px_rgba(229,19,127,0.35)] [&_button:hover]:bg-hot-pink',
           today: '',
           outside: 'text-ink-soft opacity-50',
           disabled: 'text-ink-soft opacity-30 cursor-not-allowed',

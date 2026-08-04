@@ -8,6 +8,8 @@ import {
 import { notifyCustomRequestReceived } from '@/services/notifications.service';
 import { deliver } from '@/lib/notifications/deliver';
 import { sendCustomRequestEmail } from '@/lib/email/custom-request';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { linkBookingToFunction } from '@/services/events.service';
 
 export const dynamic = 'force-dynamic';
 
@@ -28,6 +30,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'auth required' }, { status: 401 });
   }
 
+  // A couple planning a real wedding wouldn't send more than 5 quote requests
+  // per hour — this stops one logged-in account from spamming every vendor slug.
+  const gate = await checkRateLimit(
+    req,
+    'custom-request:create',
+    { limit: 5, window: '1 h' },
+    user.id
+  );
+  if (!gate.ok) {
+    return NextResponse.json({ ok: false, error: gate.message ?? 'rate_limit' }, { status: 429 });
+  }
+
   // Try V2 (events array) first; fall back to V1 (single-event) for backwards-compat.
   const parsedV2 = customRequestSchemaV2.safeParse(body);
   const parsedV1 = parsedV2.success ? null : customRequestSchema.safeParse(body);
@@ -43,15 +57,34 @@ export async function POST(req: NextRequest) {
   let event_type: string;
   let description: string;
   let extra_events_json: string | null = null;
+  let is_multi_day: boolean = false;
+  let event_city: string | null = null;
+  let venue_name: string | null = null;
+  let budget_range: string | null = null;
+  let event_function_id: string | null = null;
 
   if (parsedV2.success) {
-    const { vendor_slug: vs, events, description: desc } = parsedV2.data;
+    const {
+      vendor_slug: vs,
+      events,
+      description: desc,
+      is_multi_day: imd,
+      event_city: ec,
+      venue_name: vn,
+      budget_range: br,
+      event_function_id: efi,
+    } = parsedV2.data;
     const primary = events[0];
     vendor_slug = vs;
     event_date = primary.date;
     guest_count = primary.guestCount;
     event_type = primary.eventTypeId;
     description = desc;
+    is_multi_day = imd;
+    event_city = ec ?? null;
+    venue_name = vn ?? null;
+    budget_range = br ?? null;
+    event_function_id = efi ?? null;
     if (events.length > 1) {
       extra_events_json = JSON.stringify(events);
     }
@@ -95,6 +128,10 @@ export async function POST(req: NextRequest) {
       special_requests,
       status: 'pending_quote',
       total_price_cents: 0,
+      is_multi_day,
+      event_city,
+      venue_name,
+      budget_range,
     })
     .select('id')
     .single();
@@ -102,6 +139,17 @@ export async function POST(req: NextRequest) {
   if (error || !inserted) {
     logger.error('custom-request insert failed', error, { vendor_slug });
     return NextResponse.json({ ok: false }, { status: 500 });
+  }
+
+  // Customer Events: link to the couple's event function + fill the vendor slot.
+  // Awaited so the write actually happens before we respond, but the result is
+  // intentionally ignored — a slot failure must never fail the booking, and
+  // linkBookingToFunction logs internally on error.
+  if (event_function_id) {
+    await linkBookingToFunction(supabase, user.id, {
+      bookingId: inserted.id,
+      eventFunctionId: event_function_id,
+    });
   }
 
   // Derive couple display info from auth user metadata (privacy: first name + city only).
@@ -134,11 +182,11 @@ export async function POST(req: NextRequest) {
           sendCustomRequestEmail({
             to: vendorEmail,
             coupleFirstName,
-            coupleCity: 'not specified',
+            coupleCity: event_city ?? 'not specified',
             eventType: event_type,
             eventDate: event_date,
             headcount: guest_count,
-            location: 'TBD',
+            location: venue_name ?? event_city ?? 'TBD',
             description,
             bookingId: inserted.id,
             notificationId: notifyResult.id,

@@ -1,12 +1,14 @@
 'use client';
 
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { EventRow, type EventRowData } from './EventRow';
 import Image from 'next/image';
+import { fmtUSD } from '@/lib/intl';
+import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 
 interface Addon {
   id: string;
@@ -22,7 +24,7 @@ interface PackageProps {
   events_count: number;
   max_guests: number;
   duration_hours: number;
-  featured_image_url: string;
+  featured_image_url: string | null;
   vendor_notes_template?: string | null;
   location_mode: 'couple_provides' | 'at_vendor';
   addons?: Addon[];
@@ -50,6 +52,7 @@ interface Props {
   vendor: VendorProps;
   pkg: PackageProps;
   selectedAddons: SelectedAddon[];
+  eventOptions: EventOption[];
 }
 
 function makeBlankEvent(seq: number): EventRowData {
@@ -57,8 +60,10 @@ function makeBlankEvent(seq: number): EventRowData {
   return {
     sequence: seq,
     event_date: today,
-    event_start_time: `${today}T16:00:00Z`,
-    event_end_time: `${today}T22:00:00Z`,
+    // No trailing `Z`: keep these as local time-of-day defaults so the
+    // <input type="datetime-local"> reads them without a TZ shift.
+    event_start_time: `${today}T16:00:00`,
+    event_end_time: `${today}T22:00:00`,
     event_type_label: '',
     location_name: null,
     address_line_1: '',
@@ -71,9 +76,11 @@ function makeBlankEvent(seq: number): EventRowData {
   };
 }
 
-export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
+export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props) {
   const router = useRouter();
-  const [events, setEvents] = useState<EventRowData[]>([makeBlankEvent(1)]);
+  // Lazy init so makeBlankEvent's `new Date()` runs once at mount instead of
+  // every render — avoids SSR/hydration date drift.
+  const [events, setEvents] = useState<EventRowData[]>(() => [makeBlankEvent(1)]);
   const [coupleFullName, setCoupleFullName] = useState('');
   const [couplePhone, setCouplePhone] = useState('');
   // Bucket B T6: per-event guest counts keyed by event sequence (1-indexed)
@@ -81,8 +88,12 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
     Object.fromEntries(Array.from({ length: pkg.events_count }, (_, i) => [i + 1, 50]))
   );
   const [specialRequests, setSpecialRequests] = useState('');
+  const [eventFunctionId, setEventFunctionId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fullNameId = useId();
+  const phoneId = useId();
+  const specialRequestsId = useId();
 
   const isSingleEvent = pkg.events_count === 1;
 
@@ -118,6 +129,7 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
         selected_addons: selectedAddons,
         guest_count: totalGuestCount,
         special_requests: specialRequests || undefined,
+        event_function_id: eventFunctionId ?? undefined,
         couple_full_name: coupleFullName,
         couple_contact_phone: couplePhone,
         events: events.map((ev, i) => ({
@@ -165,35 +177,57 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="flex items-start gap-4">
-              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded">
-                <Image src={pkg.featured_image_url} alt={pkg.name} fill className="object-cover" />
+              <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded bg-cream-soft">
+                {pkg.featured_image_url ? (
+                  <Image
+                    src={pkg.featured_image_url}
+                    alt={pkg.name}
+                    fill
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                  />
+                ) : (
+                  <div
+                    className="flex h-full w-full items-center justify-center outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                    aria-hidden="true"
+                  >
+                    <span
+                      className="line-clamp-2 px-1 text-center font-display text-[10px] leading-tight text-ink-soft"
+                      translate="no"
+                    >
+                      {pkg.name}
+                    </span>
+                  </div>
+                )}
               </div>
               <div>
-                <p className="font-semibold">{pkg.name}</p>
+                <p className="font-semibold" translate="no">
+                  {pkg.name}
+                </p>
                 <p className="text-sm text-muted-foreground">
-                  {pkg.duration_hours}h · up to {pkg.max_guests} guests
+                  {pkg.duration_hours}
+                  {' '}h · up to {pkg.max_guests} guests
                   {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
                 </p>
               </div>
             </div>
-            <div className="space-y-1 text-sm">
+            <div className="space-y-1 text-sm tabular-nums">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Package base</span>
-                <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+                <span>{fmtUSD(pkg.base_price_cents)}</span>
               </div>
               {selectedAddons.map((addon) => (
                 <div key={addon.addon_id} className="flex justify-between">
                   <span className="text-muted-foreground">+ {addon.name}</span>
                   <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
-                    {addon.price_delta_cents >= 0 ? '+' : ''}$
-                    {(addon.price_delta_cents / 100).toLocaleString()}
+                    {addon.price_delta_cents >= 0 ? '+' : ''}
+                    {fmtUSD(addon.price_delta_cents)}
                   </span>
                 </div>
               ))}
               <Separator />
               <div className="flex justify-between font-semibold">
                 <span>Subtotal</span>
-                <span>${(estimatedTotal / 100).toLocaleString()}</span>
+                <span>{fmtUSD(estimatedTotal)}</span>
               </div>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -240,25 +274,34 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">Full Name</label>
+              <label htmlFor={fullNameId} className="mb-1 block text-sm font-medium">
+                Full Name
+              </label>
               <input
+                id={fullNameId}
                 type="text"
                 required
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded-md border p-2 text-sm"
                 placeholder="e.g. Aisha & Ahmed Khan"
                 value={coupleFullName}
                 onChange={(e) => setCoupleFullName(e.target.value)}
+                autoComplete="name"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">Contact Phone</label>
+              <label htmlFor={phoneId} className="mb-1 block text-sm font-medium">
+                Contact Phone
+              </label>
               <input
+                id={phoneId}
                 type="tel"
                 required
-                className="w-full rounded border p-2 text-sm"
+                className="w-full rounded-md border p-2 text-sm"
                 placeholder="+1 (555) 000-0000"
                 value={couplePhone}
                 onChange={(e) => setCouplePhone(e.target.value)}
+                autoComplete="tel"
+                inputMode="tel"
               />
             </div>
             {/* Bucket B T6: per-event guest count inputs */}
@@ -272,7 +315,9 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                   type="number"
                   required
                   min={1}
-                  className="w-full rounded border p-2 text-sm"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  className="w-full rounded-md border p-2 text-sm"
                   value={guestCounts[1]}
                   onChange={(e) =>
                     setGuestCounts({ ...guestCounts, 1: parseInt(e.target.value, 10) || 1 })
@@ -293,7 +338,9 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                       type="number"
                       required
                       min={1}
-                      className="w-full rounded border p-2 text-sm"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      className="w-full rounded-md border p-2 text-sm"
                       value={guestCounts[seq]}
                       onChange={(e) =>
                         setGuestCounts({
@@ -306,26 +353,39 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
                 );
               })
             )}
+            <EventFunctionSelect
+              options={eventOptions}
+              value={eventFunctionId}
+              onChange={setEventFunctionId}
+            />
             <div>
-              <label className="mb-1 block text-sm font-medium">Special Requests (optional)</label>
+              <label htmlFor={specialRequestsId} className="mb-1 block text-sm font-medium">
+                Special Requests (optional)
+              </label>
               <textarea
-                className="min-h-[80px] w-full rounded border p-2 text-sm"
-                placeholder="Any special needs, dietary restrictions, setup requests..."
+                id={specialRequestsId}
+                className="min-h-[80px] w-full rounded-md border p-2 text-sm"
+                placeholder="Any special needs, dietary restrictions, setup requests…"
                 value={specialRequests}
                 onChange={(e) => setSpecialRequests(e.target.value)}
+                autoComplete="off"
               />
             </div>
           </CardContent>
         </Card>
 
         {error && (
-          <div className="rounded-lg border border-destructive bg-destructive/10 p-3 text-sm text-destructive">
+          <div
+            role="alert"
+            aria-live="assertive"
+            className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive shadow-[0_1px_2px_rgba(225,29,72,0.10),0_4px_12px_rgba(225,29,72,0.06)]"
+          >
             {error}
           </div>
         )}
 
         <Button type="submit" size="lg" className="w-full" disabled={submitting}>
-          {submitting ? 'Submitting...' : 'Submit Booking Request'}
+          {submitting ? 'Submitting…' : 'Submit Booking Request'}
         </Button>
       </div>
 
@@ -335,26 +395,26 @@ export function BookingForm({ vendor, pkg, selectedAddons }: Props) {
           <CardHeader>
             <CardTitle className="text-base">Price Summary</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2 text-sm">
+          <CardContent className="space-y-2 text-sm tabular-nums">
             <div className="flex justify-between">
               <span className="text-muted-foreground">{pkg.name}</span>
-              <span>${(pkg.base_price_cents / 100).toLocaleString()}</span>
+              <span>{fmtUSD(pkg.base_price_cents)}</span>
             </div>
             {selectedAddons.map((addon) => (
               <div key={addon.addon_id} className="flex justify-between">
                 <span className="text-muted-foreground">{addon.name}</span>
                 <span className={addon.price_delta_cents < 0 ? 'text-green-600' : ''}>
-                  {addon.price_delta_cents >= 0 ? '+' : ''}$
-                  {(addon.price_delta_cents / 100).toLocaleString()}
+                  {addon.price_delta_cents >= 0 ? '+' : ''}
+                  {fmtUSD(addon.price_delta_cents)}
                 </span>
               </div>
             ))}
             <Separator />
             <div className="flex justify-between text-base font-bold">
               <span>Estimated Total</span>
-              <span>${(estimatedTotal / 100).toLocaleString()}</span>
+              <span>{fmtUSD(estimatedTotal)}</span>
             </div>
-            <p className="pt-1 text-xs text-muted-foreground">
+            <p className="text-pretty pt-1 text-xs text-muted-foreground">
               Vendor may adjust the final price before deposit.
             </p>
           </CardContent>

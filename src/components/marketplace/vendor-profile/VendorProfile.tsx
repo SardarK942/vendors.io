@@ -5,7 +5,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Star } from 'lucide-react';
+import { ArrowRight, Star } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import type { Database } from '@/types/database.types';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 
@@ -13,6 +14,8 @@ import { OwnerBanner } from '@/components/marketplace/OwnerBanner';
 import { ExitPreviewPill } from '@/components/marketplace/ExitPreviewPill';
 import { PackageGrid } from '@/components/marketplace/PackageGrid';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
+import { CustomRequestModal } from '@/components/booking/CustomRequestModal';
+import type { EventOption } from '@/components/events/EventFunctionSelect';
 
 import { IdentityPanel } from './IdentityPanel';
 import { PhotoGalleryHero } from './PhotoGalleryHero';
@@ -20,6 +23,7 @@ import { PhotoCarouselHero } from './PhotoCarouselHero';
 import { BookingStickyCard } from './BookingStickyCard';
 import { BookingBottomBar } from './BookingBottomBar';
 import { getFeaturedPackage } from './helpers';
+import { fmtDate } from '@/lib/intl';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -38,6 +42,7 @@ interface VendorProfileProps {
   packages?: PackageWithAddons[];
   isOwner?: boolean;
   interactive?: boolean;
+  eventOptions?: EventOption[];
 }
 
 function reviewerName(users: ReviewItem['users']): string {
@@ -52,9 +57,11 @@ export function VendorProfile({
   packages = [],
   isOwner = false,
   interactive: interactiveProp,
+  eventOptions = [],
 }: VendorProfileProps) {
   const router = useRouter();
   const [previewMode, setPreviewMode] = useState(false);
+  const [customRequestOpen, setCustomRequestOpen] = useState(false);
   const interactive = (interactiveProp ?? (!isOwner || previewMode)) && showBookingButton;
   const showBanner = isOwner && !previewMode;
   const featured = getFeaturedPackage(packages);
@@ -69,7 +76,7 @@ export function VendorProfile({
       router.push(`/vendors/${vendor.slug}/book?package=${pkgId}`);
     } else {
       // Zero-packages fallback OR vendor sticky card "send a custom request"
-      router.push(`/vendors/${vendor.slug}/request`);
+      setCustomRequestOpen(true);
     }
   }
 
@@ -94,7 +101,7 @@ export function VendorProfile({
           <span className="mx-1">·</span>
           <span>{vendor.service_area?.[0] || 'Chicago'}</span>
           <span className="mx-1">·</span>
-          <span>{vendor.business_name}</span>
+          <span translate="no">{vendor.business_name}</span>
         </nav>
 
         {/* Mobile carousel + bio + packages (single column) */}
@@ -107,12 +114,12 @@ export function VendorProfile({
           />
           <div className="mt-6 space-y-8">
             <IdentityPanel vendor={vendor} />
-            {packages.length > 0 && (
+            {packages.length > 0 ? (
               <div id="packages-section">
                 <h2 className="font-spectral text-xl font-semibold text-ink">
                   Choose your package
                 </h2>
-                <p className="mt-1 text-xs text-ink/70">
+                <p className="mt-1 text-pretty text-xs text-ink/70">
                   Compare side-by-side. All prices include setup, breakdown, and one attendant.
                 </p>
                 <div className="mt-4">
@@ -121,17 +128,46 @@ export function VendorProfile({
                     vendorSlug={vendor.slug ?? ''}
                     interactive={interactive}
                     featuredPackageId={featured?.id}
+                    onRequestCustomQuote={() => setCustomRequestOpen(true)}
                   />
                 </div>
                 <p className="mt-4 text-center text-xs">
-                  Don&apos;t see what you need?{' '}
+                  Don’t see what you need?{' '}
                   <Link
                     href={`/vendors/${vendor.slug}/request`}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCustomRequestOpen(true);
+                    }}
                     className="text-ink underline hover-pink-text"
                   >
-                    Send a custom request →
+                    Request a quote →
                   </Link>
                 </p>
+              </div>
+            ) : (
+              <div id="packages-section">
+                <h2 className="font-spectral text-xl font-semibold text-ink">Custom quote</h2>
+                <p className="mt-1 text-pretty text-xs text-ink/70">
+                  This vendor builds every quote around your event. Tell them your date, guest
+                  count, and what you need — they’ll come back with pricing.
+                </p>
+                <div className="mt-4">
+                  <Button asChild className="w-full" size="lg" disabled={!interactive}>
+                    <Link
+                      href={`/vendors/${vendor.slug}/request`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCustomRequestOpen(true);
+                      }}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        Request a quote
+                        <ArrowRight className="size-4" aria-hidden="true" />
+                      </span>
+                    </Link>
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -144,12 +180,12 @@ export function VendorProfile({
               <PhotoGalleryHero images={images} businessName={vendor.business_name ?? 'Vendor'} />
               <IdentityPanel vendor={vendor} />
 
-              {packages.length > 0 && (
-                <div id="packages-section" className="border-t border-ink/10 pt-8">
+              {packages.length > 0 ? (
+                <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
                   <h2 className="font-spectral text-xl font-semibold text-ink">
                     Choose your package
                   </h2>
-                  <p className="mt-1 text-xs text-ink/70">
+                  <p className="mt-1 text-pretty text-xs text-ink/70">
                     Compare side-by-side. All prices include setup, breakdown, and one attendant.
                   </p>
                   <div className="mt-4">
@@ -158,17 +194,46 @@ export function VendorProfile({
                       vendorSlug={vendor.slug ?? ''}
                       interactive={interactive}
                       featuredPackageId={featured?.id}
+                      onRequestCustomQuote={() => setCustomRequestOpen(true)}
                     />
                   </div>
                   <p className="mt-4 text-center text-xs">
-                    Don&apos;t see what you need?{' '}
+                    Don’t see what you need?{' '}
                     <Link
                       href={`/vendors/${vendor.slug}/request`}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setCustomRequestOpen(true);
+                      }}
                       className="text-ink underline hover-pink-text"
                     >
-                      Send a custom request →
+                      Request a quote →
                     </Link>
                   </p>
+                </div>
+              ) : (
+                <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
+                  <h2 className="font-spectral text-xl font-semibold text-ink">Custom quote</h2>
+                  <p className="mt-1 max-w-md text-pretty text-xs text-ink/70">
+                    This vendor builds every quote around your event. Tell them your date, guest
+                    count, and what you need — they’ll come back with pricing.
+                  </p>
+                  <div className="mt-4">
+                    <Button asChild size="lg" disabled={!interactive}>
+                      <Link
+                        href={`/vendors/${vendor.slug}/request`}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCustomRequestOpen(true);
+                        }}
+                      >
+                        <span className="inline-flex items-center gap-1.5">
+                          Request a quote
+                          <ArrowRight className="size-4" aria-hidden="true" />
+                        </span>
+                      </Link>
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
@@ -186,10 +251,10 @@ export function VendorProfile({
 
         {/* Reviews — full-width below everything on both layouts */}
         {hasReviews && (
-          <div id="reviews-section" className="mt-12 border-t border-ink/10 pt-8">
+          <div id="reviews-section" className="mt-12 pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
             <div className="mb-6 flex items-center gap-3">
               <h2 className="font-spectral text-xl font-semibold text-ink">Reviews</h2>
-              <span className="text-2xl font-bold text-ink">
+              <span className="text-2xl font-bold tabular-nums text-ink">
                 {vendor.average_rating!.toFixed(1)}
               </span>
               <span className="flex text-amber-400">
@@ -202,7 +267,9 @@ export function VendorProfile({
                   />
                 ))}
               </span>
-              <span className="text-sm text-ink/60">({vendor.review_count} reviews)</span>
+              <span className="text-sm tabular-nums text-ink/60">
+                ({vendor.review_count} reviews)
+              </span>
             </div>
 
             <div className="space-y-4">
@@ -220,9 +287,7 @@ export function VendorProfile({
                       </span>
                       {reviewerName(r.users)}
                     </span>
-                    <span className="text-xs text-ink/50">
-                      {new Date(r.created_at).toLocaleDateString()}
-                    </span>
+                    <span className="text-xs text-ink/50">{fmtDate(r.created_at)}</span>
                   </div>
                   {r.comment && (
                     <p className="mt-2 whitespace-pre-wrap text-sm text-ink/85">{r.comment}</p>
@@ -242,6 +307,15 @@ export function VendorProfile({
       />
 
       {isOwner && previewMode && <ExitPreviewPill onExit={() => setPreviewMode(false)} />}
+
+      <CustomRequestModal
+        open={customRequestOpen}
+        onOpenChange={setCustomRequestOpen}
+        vendorSlug={vendor.slug ?? ''}
+        vendorBusinessName={vendor.business_name}
+        vendorResponseSlaHours={vendor.response_sla_hours ?? null}
+        eventOptions={eventOptions}
+      />
     </>
   );
 }

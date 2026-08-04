@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
@@ -27,13 +28,16 @@ export function BookingBottomBar({
     return (
       <div
         data-testid="vendor-bottom-bar"
-        className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-ink bg-white px-4 py-2.5 shadow-lg md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 touch-manipulation bg-white px-4 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] md:hidden"
         style={{ paddingBottom: `calc(0.625rem + env(safe-area-inset-bottom))` }}
       >
         <div className="flex items-center justify-between gap-3">
-          <p className="text-xs text-ink/70">Vendor hasn&apos;t listed packages yet.</p>
+          <p className="text-xs text-ink/70">Vendor quotes every event custom.</p>
           <Button size="sm" onClick={() => onRequestBooking(null)} disabled={!interactive}>
-            Custom request →
+            <span className="inline-flex items-center gap-1.5">
+              Request a quote
+              <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+            </span>
           </Button>
         </div>
       </div>
@@ -47,22 +51,30 @@ export function BookingBottomBar({
   return (
     <div
       data-testid="vendor-bottom-bar"
-      className="fixed bottom-0 left-0 right-0 z-50 border-t-2 border-ink bg-white px-4 py-2.5 shadow-lg md:hidden"
+      className="fixed bottom-0 left-0 right-0 z-50 bg-white px-4 py-2.5 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] md:hidden"
       style={{ paddingBottom: `calc(0.625rem + env(safe-area-inset-bottom))` }}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-base font-bold text-ink">From {formatPrice(total)}</p>
-          <p className="text-xs text-ink/70">Pay {formatPrice(deposit)} deposit today</p>
+          <p className="truncate text-base font-bold tabular-nums text-ink">
+            From {formatPrice(total)}
+          </p>
+          <p className="text-xs tabular-nums text-ink/70">
+            Pay {formatPrice(deposit)} deposit today
+          </p>
 
           <Sheet open={pickerOpen} onOpenChange={setPickerOpen}>
             <SheetTrigger asChild>
               <button
                 type="button"
+                aria-label="Change package"
                 className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-hot-pink"
               >
                 {selected.name}
-                {isFeatured ? ' · most popular' : ''} ▲
+                {isFeatured ? ' · Most Popular' : ''}{' '}
+                <span aria-hidden="true" className="inline-block -translate-y-[1px]">
+                  ▲
+                </span>
               </button>
             </SheetTrigger>
             <SheetContent side="bottom" className="bg-cream">
@@ -78,7 +90,7 @@ export function BookingBottomBar({
                         setSelectedId(p.id);
                         setPickerOpen(false);
                       }}
-                      className={`flex w-full items-center justify-between rounded-md border p-3 text-left ${
+                      className={`flex w-full items-center justify-between rounded-md border p-3 text-left transition-[transform,border-color,background-color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.98] motion-reduce:active:scale-100 ${
                         isSel
                           ? 'border-ink bg-white'
                           : 'border-ink/15 bg-white hover:border-hot-pink'
@@ -87,10 +99,13 @@ export function BookingBottomBar({
                       <div>
                         <p className="text-sm font-semibold text-ink">{p.name}</p>
                         {p.duration_hours != null && (
-                          <p className="text-xs text-ink/60">{p.duration_hours} hours</p>
+                          <p className="text-xs tabular-nums text-ink/60">
+                            {p.duration_hours}
+                            {' '}hours
+                          </p>
                         )}
                       </div>
-                      <p className="text-sm font-bold text-ink">
+                      <p className="text-sm font-bold tabular-nums text-ink">
                         {formatPrice(p.base_price_cents ?? 0)}
                       </p>
                     </button>
@@ -107,7 +122,10 @@ export function BookingBottomBar({
           disabled={!interactive}
           className="shrink-0"
         >
-          Request Booking →
+          <span className="inline-flex items-center gap-1.5">
+            Request Booking
+            <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+          </span>
         </Button>
       </div>
     </div>

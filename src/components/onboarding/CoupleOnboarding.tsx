@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { ArrowRight } from 'lucide-react';
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { useRouter } from 'next/navigation';
 import { CULTURAL_EVENT_TYPES, GENERAL_EVENT_TYPES } from '@/types';
@@ -65,29 +66,29 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
   // Step 0 — branching choice
   if (state.step === 0) {
     return (
-      <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-md">
-          <h2 className="text-2xl font-semibold text-ink">Are you planning an event?</h2>
+          <h2 className="text-balance text-2xl font-semibold text-ink">
+            Are you planning an event?
+          </h2>
           <p className="mt-2 text-sm text-ink/70">Tell us so we can show you the right vendors.</p>
 
           <div className="mt-6 space-y-3">
             <button
               type="button"
               onClick={() => setState({ step: 1, hasEvent: true, date: '', categories: [] })}
-              className="w-full rounded-md border-2 border-ink p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+              className="w-full rounded-md border-2 border-ink p-4 text-left transition-[transform,border-color,color] hover:border-hot-pink hover:text-hot-pink active:scale-[0.98] motion-reduce:active:scale-100"
             >
               <p className="font-medium">Yes, I have an event coming up</p>
-              <p className="mt-1 text-xs text-ink/60">
-                We&apos;ll personalize your recommendations.
-              </p>
+              <p className="mt-1 text-xs text-ink/60">We’ll personalize your recommendations.</p>
             </button>
             <button
               type="button"
               onClick={() => setState({ step: 2, hasEvent: false, categories: [] })}
-              className="w-full rounded-md border border-ink/30 p-4 text-left hover:border-hot-pink hover:text-hot-pink"
+              className="w-full rounded-md border border-ink/30 p-4 text-left transition-[transform,border-color,color] hover:border-hot-pink hover:text-hot-pink active:scale-[0.98] motion-reduce:active:scale-100"
             >
               <p className="font-medium">Just browsing for now</p>
-              <p className="mt-1 text-xs text-ink/60">We&apos;ll show you what&apos;s popular.</p>
+              <p className="mt-1 text-xs text-ink/60">We’ll show you what’s popular.</p>
             </button>
           </div>
         </DialogContent>
@@ -100,9 +101,9 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
     const allTypes = [...CULTURAL_EVENT_TYPES, ...GENERAL_EVENT_TYPES];
     const canContinue = state.date && state.categories.length > 0;
     return (
-      <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(true)}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-lg">
-          <h2 className="text-2xl font-semibold text-ink">Tell us about your event</h2>
+          <h2 className="text-balance text-2xl font-semibold text-ink">Tell us about your event</h2>
 
           <div className="mt-4 space-y-4">
             <label className="block">
@@ -136,8 +137,8 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
                       }}
                       className={
                         isSelected
-                          ? 'rounded-full bg-ink px-3 py-1 text-sm text-cream'
-                          : 'rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover-pink-border'
+                          ? 'rounded-full bg-ink px-3 py-1 text-sm text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
+                          : 'rounded-full border border-ink/20 px-3 py-1 text-sm text-ink hover-pink-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream'
                       }
                     >
                       {t.label}
@@ -160,9 +161,12 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               type="button"
               disabled={!canContinue}
               onClick={() => setState({ step: 2, hasEvent: true, categories: state.categories })}
-              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:bg-hot-pink disabled:opacity-50"
+              className="rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-50 motion-reduce:active:scale-100"
             >
-              Continue →
+              <span className="inline-flex items-center gap-1.5">
+                Continue
+                <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+              </span>
             </button>
           </div>
         </DialogContent>
@@ -170,13 +174,14 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
     );
   }
 
-  // Step 2 — preview vendors with hearts
+  // Step 2 — preview vendors with hearts. ESC / outside-click closes the modal
+  // WITHOUT submitting; only the explicit "Start exploring" CTA submits.
   return (
-    <Dialog open={open} onOpenChange={(o) => !o && submitOnboarding(false)}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-xl">
-        <h2 className="text-2xl font-semibold text-ink">Here&apos;s what we found</h2>
+        <h2 className="text-balance text-2xl font-semibold text-ink">Here’s what we found</h2>
         <p className="mt-2 text-sm text-ink/70">
-          Heart your favorites — they&apos;ll be saved to your shortlist.
+          Heart your favorites — they’ll be saved to your shortlist.
         </p>
 
         <SavedVendorsProvider>
@@ -185,7 +190,7 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
               <VendorCard key={v.id} vendor={v} compact />
             ))}
             {vendors.length === 0 && (
-              <p className="col-span-3 py-8 text-center text-sm text-ink/50">Loading vendors...</p>
+              <p className="col-span-3 py-8 text-center text-sm text-ink/50">Loading vendors…</p>
             )}
           </div>
         </SavedVendorsProvider>
@@ -194,9 +199,12 @@ export function CoupleOnboarding({ open, onOpenChange }: CoupleOnboardingProps):
           type="button"
           onClick={() => submitOnboarding(false)}
           disabled={submitting}
-          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream hover:bg-hot-pink"
+          className="mt-6 w-full rounded-md bg-ink py-3 font-medium text-cream transition-[transform,background-color] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100"
         >
-          Start exploring →
+          <span className="inline-flex items-center gap-1.5">
+            Start exploring
+            <ArrowRight className="size-4 translate-y-[0.5px]" aria-hidden="true" />
+          </span>
         </button>
       </DialogContent>
     </Dialog>

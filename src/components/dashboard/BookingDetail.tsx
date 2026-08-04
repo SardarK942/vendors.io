@@ -56,7 +56,8 @@ interface BookingDetailProps {
 
 function statusBadgeStyle(status: string) {
   if (status === 'deposit_paid' || status === 'completed') return 'bg-emerald-100 text-emerald-800';
-  if (status === 'pending' || status === 'accepted') return 'bg-yellow-100 text-yellow-800';
+  if (status === 'pending' || status === 'accepted' || status === 'pending_quote')
+    return 'bg-yellow-100 text-yellow-800';
   if (status === 'adjusted_quote_sent') return 'bg-blue-100 text-blue-800';
   if (status === 'adjusted_quote_declined') return 'bg-orange-100 text-orange-800';
   if (status === 'disputed') return 'bg-amber-100 text-amber-900';
@@ -266,7 +267,13 @@ export async function BookingDetail({
       {/* Pending status banner for couple */}
       {role === 'couple' && booking.status === 'pending' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          Waiting for vendor response. The vendor has 72 hours to accept or send an adjusted quote.
+          Waiting for vendor response. The vendor has 72 hours to accept or send an adjusted quote.
+        </div>
+      )}
+      {role === 'couple' && booking.status === 'pending_quote' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          Quote request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond
+          with a quote — we’ll email you and post it here.
         </div>
       )}
 
@@ -275,8 +282,8 @@ export async function BookingDetail({
         <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
           <p className="mb-2 font-medium text-emerald-800">Quote accepted!</p>
           <p className="mb-3 text-sm text-emerald-700">
-            Pay your deposit to confirm the booking. The vendor&apos;s full address and instructions
-            will appear after payment.
+            Pay your deposit to confirm the booking. The vendor’s full address and instructions will
+            appear after payment.
           </p>
         </div>
       )}
@@ -285,30 +292,36 @@ export async function BookingDetail({
       {role === 'vendor' && booking.status === 'pending' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
           <strong>Action needed:</strong> Accept this booking at the package price or send an
-          adjusted quote. You have 72 hours.
+          adjusted quote. You have 72 hours.
+        </div>
+      )}
+      {role === 'vendor' && booking.status === 'pending_quote' && (
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
+          <strong>Action needed:</strong> A couple sent a quote request. Read their notes below,
+          then send them a quote to lock in the date.
         </div>
       )}
       {role === 'vendor' && booking.status === 'accepted' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Waiting for the customer to pay the deposit. They have 72 hours; you&apos;ll get an email
-          when they pay.
+          Waiting for the customer to pay the deposit. They have 72 hours; you’ll get an email when
+          they pay.
         </div>
       )}
       {role === 'vendor' && booking.status === 'adjusted_quote_sent' && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
-          Waiting for the customer to accept or decline your adjusted quote. They have 72 hours.
+          Waiting for the customer to accept or decline your adjusted quote. They have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'adjusted_quote_declined' && (
         <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 text-sm text-orange-800">
-          <strong>Action needed:</strong> The customer declined your last quote. You have 72 hours
+          <strong>Action needed:</strong> The customer declined your last quote. You have 72 hours
           to send a revised quote — otherwise the booking will auto-cancel.
         </div>
       )}
       {role === 'vendor' && booking.status === 'couple_countered' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
           <strong>Action needed:</strong> The customer sent a counter-offer. You can adjust the
-          quote or accept their counter directly. You have 72 hours.
+          quote or accept their counter directly. You have 72 hours.
         </div>
       )}
       {role === 'vendor' && booking.status === 'deposit_paid' && (
@@ -377,6 +390,47 @@ export async function BookingDetail({
                   <p className="text-sm text-muted-foreground">Special Requests</p>
                   <p className="mt-1 text-sm">{bookingAsAny.special_requests as string}</p>
                 </div>
+              </>
+            )}
+            {(bookingAsAny.event_city as string | null) && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                    Location
+                  </p>
+                  <p className="text-sm text-ink">
+                    {bookingAsAny.event_city as string}
+                    {(bookingAsAny.venue_name as string | null) && ` · ${bookingAsAny.venue_name as string}`}
+                  </p>
+                </div>
+              </>
+            )}
+            {(bookingAsAny.budget_range as string | null) && (
+              <>
+                <Separator />
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Budget</p>
+                  <p className="text-sm text-ink">
+                    {
+                      (
+                        {
+                          lt_5k: 'Under $5k',
+                          '5k_15k': '$5k–15k',
+                          '15k_30k': '$15k–30k',
+                          gt_30k: '$30k+',
+                          discuss: 'Prefer to discuss',
+                        } as const
+                      )[bookingAsAny.budget_range as 'lt_5k' | '5k_15k' | '15k_30k' | 'gt_30k' | 'discuss']
+                    }
+                  </p>
+                </div>
+              </>
+            )}
+            {(bookingAsAny.is_multi_day as boolean) && (
+              <>
+                <Separator />
+                <p className="text-xs text-ink-soft">Multi-day event</p>
               </>
             )}
           </CardContent>

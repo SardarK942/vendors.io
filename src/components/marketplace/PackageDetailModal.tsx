@@ -8,6 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import type { PackageWithAddons } from './PackageGrid';
+import { PackagePhotoFallback } from './PackagePhotoFallback';
+import { fmtUSD } from '@/lib/intl';
 
 interface Props {
   pkg: PackageWithAddons;
@@ -22,7 +24,7 @@ interface Props {
  * - Add-on toggles with live total
  * - Gallery images
  * - vendor_notes_template preview
- * - "Continue to booking" CTA → writes signed cookie + navigates to /book
+ * - "Continue to Booking" CTA → writes signed cookie + navigates to /book
  */
 export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = true }: Props) {
   const router = useRouter();
@@ -72,24 +74,29 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
     <Dialog open onOpenChange={onClose}>
       <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{pkg.name}</DialogTitle>
+          <DialogTitle translate="no">{pkg.name}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-5">
           {/* Featured image */}
-          <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-muted">
-            <Image
-              src={pkg.featured_image_url}
-              alt={pkg.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 672px"
-            />
+          <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-muted">
+            {pkg.featured_image_url ? (
+              <Image
+                src={pkg.featured_image_url}
+                alt={pkg.name}
+                fill
+                className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                sizes="(max-width: 768px) 100vw, 672px"
+              />
+            ) : (
+              <PackagePhotoFallback name={pkg.name} />
+            )}
           </div>
 
           {/* Summary line */}
-          <p className="text-sm text-muted-foreground">
-            {pkg.duration_hours}h · up to {pkg.max_guests} guests
+          <p className="text-sm tabular-nums text-muted-foreground">
+            {pkg.duration_hours}
+            {' '}h · up to {pkg.max_guests} guests
             {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
           </p>
 
@@ -99,7 +106,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           {/* Included items */}
           {pkg.included_items.length > 0 && (
             <div>
-              <h4 className="mb-2 text-sm font-semibold">What&apos;s included</h4>
+              <h4 className="mb-2 text-sm font-semibold">What’s included</h4>
               <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                 {pkg.included_items.map((item, idx) => (
                   <li key={idx}>{item}</li>
@@ -112,12 +119,15 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           {pkg.gallery_image_urls.length > 0 && (
             <div className="grid grid-cols-2 gap-2">
               {pkg.gallery_image_urls.map((url, idx) => (
-                <div key={idx} className="relative aspect-[4/3] overflow-hidden rounded bg-muted">
+                <div
+                  key={idx}
+                  className="relative aspect-[4/3] overflow-hidden rounded-lg bg-muted"
+                >
                   <Image
                     src={url}
                     alt={`Gallery ${idx + 1}`}
                     fill
-                    className="object-cover"
+                    className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                     sizes="50vw"
                   />
                 </div>
@@ -133,22 +143,22 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
                 {pkg.addons.map((addon) => (
                   <label
                     key={addon.id}
-                    className="flex cursor-pointer items-center justify-between rounded-lg border p-3 transition-colors hover:bg-accent"
+                    className="flex min-h-10 cursor-pointer items-center justify-between gap-3 rounded-lg border p-3 transition-colors hover:bg-accent"
                   >
                     <span className="flex items-center gap-3">
                       <input
                         type="checkbox"
-                        className="rounded"
+                        className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
                         checked={toggled.has(addon.id)}
                         onChange={() => toggleAddon(addon.id)}
                       />
                       <span className="text-sm">{addon.name}</span>
                     </span>
                     <span
-                      className={`font-mono text-sm ${addon.price_delta_cents < 0 ? 'text-green-600' : ''}`}
+                      className={`text-sm tabular-nums ${addon.price_delta_cents < 0 ? 'text-green-600' : ''}`}
                     >
-                      {addon.price_delta_cents >= 0 ? '+' : ''}$
-                      {(addon.price_delta_cents / 100).toLocaleString()}
+                      {addon.price_delta_cents >= 0 ? '+' : ''}
+                      {fmtUSD(addon.price_delta_cents)}
                     </span>
                   </label>
                 ))}
@@ -172,10 +182,10 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-xl font-bold">${(total / 100).toLocaleString()}</p>
+              <p className="text-xl font-bold tabular-nums">{fmtUSD(total)}</p>
             </div>
             <Button onClick={handleContinue} disabled={loading} size="lg">
-              {loading ? 'Please wait...' : 'Continue to booking'}
+              {loading ? 'Please wait…' : 'Continue to Booking'}
             </Button>
           </div>
         </div>

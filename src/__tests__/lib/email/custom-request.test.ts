@@ -40,7 +40,7 @@ describe('sendCustomRequestEmail()', () => {
       bookingId: 'b_1',
     });
     const [send] = getRecordedSends();
-    expect(send.subject).toBe('New custom request from Sam — sangeet on 2026-07-15');
+    expect(send.subject).toBe('New quote request from Sam — sangeet on 2026-07-15');
     expect(send.html).not.toContain('a'.repeat(300));
     expect(send.html).toContain('a'.repeat(200));
   });

@@ -7,6 +7,8 @@ import {
   sendRemovalRequestTeamEmail,
   sendRemovalConfirmationVendorEmail,
 } from '@/lib/email/resend';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { verifyTurnstileToken } from '@/lib/turnstile';
 
 export const dynamic = 'force-dynamic';
 
@@ -18,6 +20,7 @@ const bodySchema = z.object({
   requester_name: z.string().nullable().optional(),
   requester_ig: z.string().nullable().optional(),
   reason: z.string().nullable().optional(),
+  turnstile_token: z.string().min(1).max(2048).nullish(),
 });
 
 const paramsSchema = z.object({
@@ -29,6 +32,12 @@ interface Props {
 }
 
 export async function POST(req: NextRequest, { params }: Props) {
+  // Public + sends up to 2 emails per call → hard IP cap to blunt reflection spam.
+  const gate = await checkRateLimit(req, 'scraped-vendor:request', { limit: 3, window: '1 h' });
+  if (!gate.ok) {
+    return NextResponse.json({ error: gate.message ?? 'rate_limit' }, { status: 429 });
+  }
+
   const rawParams = await params;
   const paramsParsed = paramsSchema.safeParse(rawParams);
   if (!paramsParsed.success) {
@@ -38,6 +47,11 @@ export async function POST(req: NextRequest, { params }: Props) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) {
     return NextResponse.json({ error: 'invalid body' }, { status: 400 });
+  }
+
+  const turnstile = await verifyTurnstileToken(parsed.data.turnstile_token, req);
+  if (!turnstile.ok) {
+    return NextResponse.json({ error: 'bot_check_failed' }, { status: 400 });
   }
 
   const vendorId = paramsParsed.data.id;

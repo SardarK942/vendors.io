@@ -19,6 +19,8 @@ export default function ReviewReceivedPreview() {
       <h2 style={{ marginBottom: '8px' }}>Review received email (vendor)</h2>
       <iframe
         srcDoc={html}
+        width={800}
+        height={800}
         style={{ width: '100%', height: '90vh', border: '1px solid #ccc', borderRadius: '6px' }}
         title="Review received — vendor"
       />

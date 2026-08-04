@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { createClient } from '@/lib/supabase/client';
 import { GoogleIcon } from './GoogleIcon';
@@ -66,7 +67,9 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="border-none bg-transparent p-0 shadow-none">
         <CardHeader>
-          <CardTitle className="font-spectral text-2xl text-ink">Welcome back</CardTitle>
+          <CardTitle className="font-spectral text-balance text-2xl text-ink">
+            Welcome back
+          </CardTitle>
           <CardDescription className="text-ink/70">Sign in to your Baazar account.</CardDescription>
         </CardHeader>
         <CardContent>
@@ -82,6 +85,9 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
                   required
                   disabled={loading}
                   autoComplete="email"
+                  inputMode="email"
+                  spellCheck={false}
+                  autoCapitalize="none"
                 />
               </div>
               <div className="grid gap-2">
@@ -94,10 +100,9 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
                     Forgot your password?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   required
                   disabled={loading}
                   autoComplete="current-password"
@@ -122,7 +127,7 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{' '}
+              Don’t have an account?{' '}
               <Link
                 href={signupHref}
                 className="font-medium underline underline-offset-4 hover-pink-text"

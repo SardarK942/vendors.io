@@ -1,6 +1,8 @@
+import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
-import { CustomRequestForm } from '@/components/booking/CustomRequestForm';
+import { CustomRequestFlow } from '@/components/booking/CustomRequestFlow';
+import { getEventOptions } from '@/lib/events/get-event-options';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,30 +29,25 @@ export default async function CustomRequestPage({ params }: RequestPageProps) {
     .eq('is_active', true)
     .maybeSingle();
 
-  if (!vendor) {
-    notFound();
-  }
+  if (!vendor) notFound();
+
+  // Load the couple's events so they can link this request to an event function.
+  const eventOptions = await getEventOptions(supabase, user.id);
 
   return (
-    <div className="mx-auto max-w-2xl py-12">
-      <p className="mb-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-hot-pink">
-        Custom request
-      </p>
-      <h1 className="font-display text-3xl font-bold tracking-[-0.018em] text-ink">
-        Tell {vendor.business_name} what you need
-      </h1>
-      <p className="mt-3 text-sm text-ink-muted">
-        Anything outside their standard packages — multi-day events, large guest counts, destination
-        coverage. They&rsquo;ll respond with a custom quote.
-      </p>
-
-      <div className="mt-10">
-        <CustomRequestForm
-          vendorSlug={slug}
-          vendorBusinessName={vendor.business_name}
-          vendorResponseSlaHours={vendor.response_sla_hours ?? null}
-        />
-      </div>
+    <div className="mx-auto max-w-3xl px-4 py-8">
+      <Link
+        href={`/vendors/${slug}`}
+        className="mb-6 inline-flex items-center gap-1 text-sm text-ink-muted hover:text-ink"
+      >
+        ← Back to {vendor.business_name}
+      </Link>
+      <CustomRequestFlow
+        vendorSlug={slug}
+        vendorBusinessName={vendor.business_name}
+        vendorResponseSlaHours={vendor.response_sla_hours ?? null}
+        eventOptions={eventOptions}
+      />
     </div>
   );
 }

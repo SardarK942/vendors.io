@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useQueryState, parseAsStringEnum, parseAsArrayOf, parseAsString } from 'nuqs';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ChevronDown } from 'lucide-react';
 import type { Database, NotificationType } from '@/types/database.types';
 import { isHighPriority } from '@/lib/notifications/high-priority-types';
 import { NotificationCard } from './NotificationCard';
@@ -52,12 +54,25 @@ function groupByBooking(notifications: NotificationRow[]): Map<string, Notificat
 
 export function NotificationsPageClient({ initial }: Props) {
   const [notifications, setNotifications] = useState<NotificationRow[]>(initial);
-  const [tab, setTab] = useState<Tab>('action');
-  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [tab, setTab] = useQueryState<Tab>(
+    'tab',
+    parseAsStringEnum<Tab>(['action', 'updates', 'archived'])
+      .withDefault('action')
+      .withOptions({ clearOnDefault: true })
+  );
+  const [collapsedList, setCollapsedList] = useQueryState(
+    'collapsed',
+    parseAsArrayOf(parseAsString).withDefault([]).withOptions({ clearOnDefault: true })
+  );
+  const collapsedGroups = useMemo(() => new Set(collapsedList), [collapsedList]);
 
   const buckets = useMemo(() => partition(notifications), [notifications]);
   const current = buckets[tab === 'action' ? 'action' : tab === 'updates' ? 'updates' : 'archived'];
   const groups = useMemo(() => groupByBooking(current), [current]);
+  const reducedMotion = useReducedMotion();
+  const chevronTransition = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.22, bounce: 0 };
 
   async function markRead(id: string) {
     setNotifications((prev) =>
@@ -74,12 +89,10 @@ export function NotificationsPageClient({ initial }: Props) {
   }
 
   function toggleGroup(key: string) {
-    setCollapsedGroups((prev) => {
-      const next = new Set(prev);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    const next = new Set(collapsedGroups);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    void setCollapsedList(Array.from(next));
   }
 
   const tabCounts = {
@@ -90,14 +103,17 @@ export function NotificationsPageClient({ initial }: Props) {
 
   return (
     <div className="space-y-4">
+      <p className="sr-only" aria-live="polite" aria-atomic="true">
+        {tabCounts.action} action needed, {tabCounts.updates} updates, {tabCounts.archived} archived
+      </p>
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           {(['action', 'updates', 'archived'] as Tab[]).map((t) => (
             <button
               key={t}
               type="button"
-              onClick={() => setTab(t)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+              onClick={() => void setTab(t)}
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-[transform,background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100 ${
                 tab === t
                   ? 'bg-primary text-primary-foreground'
                   : 'bg-muted text-muted-foreground hover:bg-accent'
@@ -105,7 +121,7 @@ export function NotificationsPageClient({ initial }: Props) {
             >
               {t === 'action' ? 'Action needed' : t === 'updates' ? 'Updates' : 'Archived'}
               {tabCounts[t] > 0 && (
-                <span className="ml-1.5 text-xs opacity-80">({tabCounts[t]})</span>
+                <span className="ml-1.5 text-xs tabular-nums opacity-80">({tabCounts[t]})</span>
               )}
             </button>
           ))}
@@ -114,7 +130,7 @@ export function NotificationsPageClient({ initial }: Props) {
           <button
             type="button"
             onClick={markAllRead}
-            className="text-sm text-muted-foreground hover:text-foreground hover:underline"
+            className="inline-flex min-h-10 items-center px-2 text-sm text-muted-foreground hover:text-foreground hover:underline"
           >
             Mark all read
           </button>
@@ -128,7 +144,7 @@ export function NotificationsPageClient({ initial }: Props) {
               ? 'Nothing needs your attention right now. 🎉'
               : tab === 'updates'
                 ? "When bookings move through their lifecycle, you'll see updates here."
-                : 'Read notifications older than 30 days appear here.'}
+                : 'Read notifications older than 30 days appear here.'}
           </p>
         ) : (
           Array.from(groups.entries()).map(([bookingId, items]) => {
@@ -144,16 +160,21 @@ export function NotificationsPageClient({ initial }: Props) {
                 >
                   <span>
                     {headerLabel}{' '}
-                    <span className="text-xs text-muted-foreground">({items.length})</span>
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      ({items.length})
+                    </span>
                   </span>
-                  {collapsed ? (
-                    <ChevronRight className="h-4 w-4" />
-                  ) : (
+                  <motion.span
+                    className="inline-flex"
+                    animate={{ rotate: collapsed ? -90 : 0 }}
+                    transition={chevronTransition}
+                    aria-hidden="true"
+                  >
                     <ChevronDown className="h-4 w-4" />
-                  )}
+                  </motion.span>
                 </button>
                 {!collapsed && (
-                  <div className="divide-y">
+                  <ul className="m-0 list-none divide-y p-0">
                     {items.map((n) => (
                       <NotificationCard
                         key={n.id}
@@ -162,7 +183,7 @@ export function NotificationsPageClient({ initial }: Props) {
                         showAllActions
                       />
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             );

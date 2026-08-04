@@ -10,6 +10,7 @@ import { DisputeDialog } from '@/components/dashboard/DisputeDialog';
 import { CancelDialog } from '@/components/dashboard/CancelDialog';
 import { DepositDialog } from '@/components/dashboard/DepositDialog';
 import { CounterModal } from '@/components/bookings/CounterModal';
+import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -37,6 +38,7 @@ export function BookingActions({
   const [cancelOpen, setCancelOpen] = useState(false);
   const [depositOpen, setDepositOpen] = useState(false);
   const [counterOpen, setCounterOpen] = useState(false);
+  const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
 
   // Hoist counter computation to avoid duplicate type casts
   const coupleCounterCount = booking.couple_counter_count ?? 0;
@@ -103,11 +105,6 @@ export function BookingActions({
   ].includes(booking.status);
 
   const handleComplete = async () => {
-    if (
-      !window.confirm('Mark this booking as complete? This releases the deposit to the vendor.')
-    ) {
-      return;
-    }
     setLoading(true);
     const res = await fetch(`/api/bookings/${booking.id}/complete`, { method: 'POST' });
     const data = await res.json().catch(() => ({}));
@@ -117,6 +114,8 @@ export function BookingActions({
       return;
     }
     toast.success('Booking marked complete.');
+    setCompleteConfirmOpen(false);
+    setLoading(false);
     router.refresh();
   };
 
@@ -141,7 +140,7 @@ export function BookingActions({
               <Button variant="secondary" onClick={() => setCounterOpen(true)} disabled={loading}>
                 Counter
               </Button>
-              <span className="text-xs text-ink/60">
+              <span className="text-xs tabular-nums text-ink/60">
                 {countersLeft} counter-offer{countersLeft === 1 ? '' : 's'} remaining
               </span>
             </div>
@@ -154,11 +153,11 @@ export function BookingActions({
 
       {role === 'couple' && booking.status === 'deposit_paid' && (
         <>
-          <Button onClick={handleComplete} disabled={loading}>
-            {loading ? 'Processing...' : 'Mark Complete'}
+          <Button onClick={() => setCompleteConfirmOpen(true)} disabled={loading}>
+            {loading ? 'Processing…' : 'Mark Complete'}
           </Button>
           <Button variant="outline" onClick={() => setDisputeOpen(true)} disabled={loading}>
-            Report an issue
+            Report an Issue
           </Button>
         </>
       )}
@@ -174,8 +173,8 @@ export function BookingActions({
       )}
 
       {booking.status === 'disputed' && (
-        <p className="text-sm text-amber-700">
-          This booking is under review. Our team will contact both parties within 3 business days.
+        <p className="text-sm text-amber-700" role="status" aria-live="polite">
+          This booking is under review. Our team will contact both parties within 3 business days.
         </p>
       )}
 
@@ -184,6 +183,7 @@ export function BookingActions({
         open={reviewOpen}
         onOpenChange={setReviewOpen}
         onSuccess={() => router.refresh()}
+        vendorName={vendorName || undefined}
       />
 
       <DisputeDialog
@@ -199,6 +199,7 @@ export function BookingActions({
         open={cancelOpen}
         onOpenChange={setCancelOpen}
         onSuccess={() => router.refresh()}
+        bookingContext={vendorName || undefined}
       />
 
       {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
@@ -222,6 +223,24 @@ export function BookingActions({
           onSuccess={() => router.refresh()}
         />
       )}
+
+      {/* High-stakes confirmation: closes the booking, finalizes the
+          transaction record, and (since PR #77) auto-verifies the vendor on
+          their first completion. Irreversible. Requires the typed word
+          COMPLETE before enabling. NOTE on copy: Baazar retains the 5%
+          deposit as the platform fee — the vendor is paid the remaining 95%
+          directly by the couple off-platform — so this action does NOT
+          "release funds" to the vendor. Don't reintroduce that wording. */}
+      <ConfirmDialog
+        open={completeConfirmOpen}
+        onOpenChange={setCompleteConfirmOpen}
+        title="Mark Booking Complete?"
+        description="This confirms the event was delivered and closes the booking. You can't undo this."
+        confirmLabel="Mark Booking Complete"
+        typedConfirm="COMPLETE"
+        busy={loading}
+        onConfirm={handleComplete}
+      />
     </div>
   );
 }

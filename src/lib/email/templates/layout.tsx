@@ -30,7 +30,13 @@ export function BaazarEmailLayout({
       >
         <Container style={{ maxWidth: 600, margin: '0 auto', padding: '32px 24px' }}>
           <Section style={{ textAlign: 'center', marginBottom: 32 }}>
-            <Img src="https://www.baazar.io/wordmark.png" alt="Baazar" width="140" height="40" />
+            <Img
+              src="https://www.baazar.io/brand/monogram.png"
+              alt="Baazar"
+              width="56"
+              height="56"
+              style={{ borderRadius: 12 }}
+            />
           </Section>
           {children}
           <Section

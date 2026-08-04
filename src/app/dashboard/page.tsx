@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
 import { EventCardGrid } from '@/components/dashboard/EventCardGrid';
 import { type EventCardData } from '@/components/dashboard/EventCard';
@@ -12,6 +13,12 @@ import { AnalyticsTeaser } from '@/components/dashboard/AnalyticsTeaser';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { BackfillBanner } from '@/components/dashboard/BackfillBanner';
 import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBanner';
+import { DashboardCalendarNudge } from '@/components/dashboard/calendar/DashboardCalendarNudge';
+import { getFeedStatus } from '@/services/calendar-feed.service';
+import { fmtDate } from '@/lib/intl';
+import { listEvents, getEventGraph } from '@/services/events.service';
+import { computeRollups } from '@/lib/events/derive';
+import { EventSummaryCard } from '@/components/events/EventSummaryCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,11 +61,7 @@ export default async function DashboardPage() {
       : null;
 
     const formattedDate = onboardingData.event_date
-      ? new Date(onboardingData.event_date).toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric',
-        })
+      ? fmtDate(onboardingData.event_date, { month: 'long', day: 'numeric', year: 'numeric' })
       : null;
 
     // Read from booking_events_public (excludes vendor_notes — Sub-project E §8).
@@ -114,6 +117,13 @@ export default async function DashboardPage() {
       };
     });
 
+    // Sub-project customer-events: most recent event's journal graph, if any.
+    // listEvents() orders by created_at desc, so [0] is the most recent.
+    const coupleEvents = await listEvents(supabase, user.id);
+    const latestEventGraph =
+      coupleEvents.length > 0 ? await getEventGraph(supabase, user.id, coupleEvents[0].id) : null;
+    const eventRollups = latestEventGraph ? computeRollups(latestEventGraph.needs) : null;
+
     return (
       <div className="space-y-6">
         {showBanner && (
@@ -127,15 +137,35 @@ export default async function DashboardPage() {
 
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Dashboard</h1>
+            <PageTitle>Home</PageTitle>
             <p className="text-muted-foreground">
               Welcome back, {profile?.full_name || user.email}
             </p>
           </div>
           <Button asChild variant="outline">
-            <Link href="/vendors">Browse vendors →</Link>
+            <Link href="/vendors">Browse Vendors →</Link>
           </Button>
         </div>
+
+        {latestEventGraph && eventRollups ? (
+          <EventSummaryCard
+            event={latestEventGraph.event}
+            functions={latestEventGraph.functions}
+            needs={latestEventGraph.needs}
+            tasks={latestEventGraph.tasks}
+            committedCents={eventRollups.totalCommittedCents}
+          />
+        ) : (
+          <div className="rounded-2xl border border-hairline bg-cream-soft/40 px-8 py-10 text-center">
+            <p className="font-display text-2xl text-ink">Plan your celebration</p>
+            <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
+              Start a journal to track functions, vendors, budget, and tasks — all in one place.
+            </p>
+            <Button asChild variant="primary" className="mt-5">
+              <Link href="/dashboard/events/new">Start planning →</Link>
+            </Button>
+          </div>
+        )}
 
         <EventCardGrid events={events} />
       </div>
@@ -151,7 +181,7 @@ export default async function DashboardPage() {
   if (!vendorProfile) {
     return (
       <div className="space-y-6">
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <PageTitle>Home</PageTitle>
         <Card className="p-6">
           <p>Finish profile setup to start receiving bookings.</p>
           <Button asChild className="mt-4">
@@ -161,6 +191,18 @@ export default async function DashboardPage() {
       </div>
     );
   }
+
+  const feedStatus = await getFeedStatus(
+    supabase,
+    vendorProfile.id,
+    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+  );
+  const { data: vpFlags } = await supabase
+    .from('vendor_profiles')
+    .select('calendar_feed_nudge_dismissed_at')
+    .eq('id', vendorProfile.id)
+    .single();
+  const nudgeDismissed = !!vpFlags?.calendar_feed_nudge_dismissed_at;
 
   const vendorIsActive = vendorProfile.is_active !== false;
 
@@ -185,26 +227,30 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
+      <DashboardCalendarNudge feedStatus={feedStatus} nudgeDismissed={nudgeDismissed} />
       <BackfillBanner show={showBackfill} />
 
       <div>
-        <h1 className="text-2xl font-bold">Dashboard</h1>
+        <PageTitle>Home</PageTitle>
         <p className="text-muted-foreground">Welcome back, {profile?.full_name || user.email}</p>
       </div>
 
-      {/* Onboarding gate (retained from A2) */}
+      {/* Custom-request flow makes packages optional — this nudge only helps vendors
+          who *do* sell fixed pricing tiers, without gating anyone else. */}
       {activePackageCount === 0 && (
         <Card className="border-yellow-200 bg-yellow-50 p-6">
-          <h2 className="font-semibold text-yellow-900">Add a package to go live</h2>
+          <h2 className="font-semibold text-yellow-900">Sell fixed pricing tiers?</h2>
           <p className="mt-1 text-sm text-yellow-800">
-            Customers can only book vendors with at least one active package.
+            You&rsquo;re already live and can receive quote requests from couples. If you sell
+            packages (like a 3-hour photobooth or a bridal MUA tier), add them so couples can book
+            them in one click.
           </p>
           <Button
             asChild
             size="lg"
             className="mt-4 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
           >
-            <Link href="/dashboard/profile/packages/new">+ Add Package</Link>
+            <Link href="/dashboard/profile/packages/new">+ Add a package</Link>
           </Button>
         </Card>
       )}

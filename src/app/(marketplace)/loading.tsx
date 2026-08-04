@@ -2,7 +2,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function MarketplaceLoading() {
   return (
-    <div className="space-y-8 py-8">
+    <div className="space-y-8 py-8" role="status" aria-live="polite">
+      <span className="sr-only">Loading…</span>
       <div className="space-y-4 text-center">
         <Skeleton className="mx-auto h-12 w-96" />
         <Skeleton className="mx-auto h-6 w-64" />

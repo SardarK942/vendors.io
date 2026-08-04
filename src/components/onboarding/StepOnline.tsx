@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
+import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -19,6 +20,8 @@ export function StepOnline({ initial, profileId, mode }: Props) {
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useUnsavedChangesGuard(JSON.stringify(data) !== JSON.stringify(initial));
 
   function handleInstagramBlur() {
     // Strip leading @ on blur
@@ -50,12 +53,14 @@ export function StepOnline({ initial, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Your online presence</h1>
+        <h1 className="text-balance text-2xl font-bold">Your online presence</h1>
         <p className="text-sm text-muted-foreground">Step 3 of 6</p>
       </div>
 
       {total >= 2 && (
-        <p className="text-sm font-medium text-hot-pink">{total} fields need attention</p>
+        <p className="text-sm font-medium text-hot-pink" role="status" aria-live="polite">
+          {total} fields need attention
+        </p>
       )}
 
       <div className="space-y-2">
@@ -71,6 +76,11 @@ export function StepOnline({ initial, profileId, mode }: Props) {
             }}
             onBlur={handleInstagramBlur}
             placeholder="yourhandle"
+            autoComplete="off"
+            spellCheck={false}
+            autoCapitalize="none"
+            autoCorrect="off"
+            inputMode="text"
           />
         </div>
         <p className="text-xs text-muted-foreground">
@@ -92,13 +102,21 @@ export function StepOnline({ initial, profileId, mode }: Props) {
             clearField('websiteUrl');
           }}
           placeholder="https://yourwebsite.com"
+          autoComplete="url"
+          inputMode="url"
+          spellCheck={false}
+          autoCapitalize="none"
         />
         {getError('websiteUrl') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('websiteUrl')}</p>
         )}
       </div>
 
-      {serverError && <p className="text-sm text-destructive">{serverError}</p>}
+      {serverError && (
+        <p className="text-sm text-destructive" role="alert" aria-live="assertive">
+          {serverError}
+        </p>
+      )}
 
       <div className="flex justify-end">
         <Button onClick={onNext} disabled={submitting}>

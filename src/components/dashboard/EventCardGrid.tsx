@@ -1,6 +1,7 @@
 'use client';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import Link from 'next/link';
+import { useQueryState, parseAsStringEnum, parseAsString } from 'nuqs';
 import { Button } from '@/components/ui/button';
 import { EventCard, type EventCardData } from './EventCard';
 import { EventCardFilters, type TimeFilter } from './EventCardFilters';
@@ -11,8 +12,16 @@ interface Props {
 }
 
 export function EventCardGrid({ events }: Props) {
-  const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
-  const [categoryFilter, setCategoryFilter] = useState<string>('');
+  const [timeFilter, setTimeFilter] = useQueryState<TimeFilter>(
+    'time',
+    parseAsStringEnum<TimeFilter>(['upcoming', 'past', 'all'])
+      .withDefault('upcoming')
+      .withOptions({ clearOnDefault: true })
+  );
+  const [categoryFilter, setCategoryFilter] = useQueryState(
+    'category',
+    parseAsString.withDefault('').withOptions({ clearOnDefault: true })
+  );
 
   const filtered = useMemo(() => {
     return events.filter((e) => {

@@ -10,6 +10,7 @@ import {
   detailsSchema,
 } from '@/lib/onboarding/validation';
 import { generateSlug } from '@/lib/utils';
+import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
 
 function slugWithSuffix(name: string): string {
   const base = generateSlug(name);
@@ -93,6 +94,10 @@ export const PATCH = withErrorBoundary(
           | 'live_music'
           | 'carts',
         bio: data.bio,
+        // Persist only when the category has a real taxonomy; otherwise store
+        // NULL so query-side filters don't accidentally match stale tags.
+        subcategories:
+          validSubcategorySlugs(data.category).size > 0 ? (data.subcategories ?? []) : null,
         slug: existingSlug ?? slugWithSuffix(data.businessName),
       };
 

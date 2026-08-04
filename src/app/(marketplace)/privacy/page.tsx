@@ -1,14 +1,19 @@
 import type { Metadata } from 'next';
+import { fmtDate } from '@/lib/intl';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — Baazar.io',
 };
 
+const LAST_UPDATED = '2026-04-18';
+
 export default function PrivacyPage() {
   return (
     <article className="prose prose-headings:font-semibold mx-auto max-w-3xl py-10">
       <h1>Privacy Policy</h1>
-      <p className="text-sm text-muted-foreground">Last updated: 2026-04-18</p>
+      <p className="text-sm text-muted-foreground">
+        Last updated: {fmtDate(`${LAST_UPDATED}T12:00:00`, { dateStyle: 'long' })}
+      </p>
 
       <p className="rounded border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
         [LAWYER REVIEW] Placeholder language for MVP. Illinois Biometric Information Privacy Act and

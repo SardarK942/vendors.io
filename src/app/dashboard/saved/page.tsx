@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { PageTitle } from '@/components/dashboard/PageTitle';
 import { getSavedVendorsForUser } from '@/services/vendor.service';
 import { VendorGrid } from '@/components/marketplace/VendorGrid';
 import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
@@ -25,9 +26,9 @@ export default async function SavedPage() {
         </p>
         <Link
           href="/vendors"
-          className="mt-4 inline-block rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream hover:bg-hot-pink"
+          className="mt-4 inline-block rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-colors hover:bg-hot-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
         >
-          Browse vendors
+          Browse Vendors
         </Link>
       </div>
     );
@@ -35,7 +36,7 @@ export default async function SavedPage() {
 
   return (
     <SavedVendorsProvider>
-      <h1 className="mb-6 text-2xl font-bold text-ink">Your saved vendors</h1>
+      <PageTitle className="mb-6">Your Saved Vendors</PageTitle>
       <VendorGrid vendors={vendors} />
     </SavedVendorsProvider>
   );

@@ -1,12 +1,14 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import type { Database, NotificationType } from '@/types/database.types';
 import { isHighPriority } from '@/lib/notifications/high-priority-types';
 import { NotificationDropdown } from './NotificationDropdown';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
@@ -90,39 +92,65 @@ export function NotificationBell({ userId }: Props) {
   }, [userId, supabase]);
 
   const unreadCount = notifications.filter((n) => !n.read_at).length;
+  const reducedMotion = useReducedMotion();
+  const badgeEnter = reducedMotion
+    ? { duration: 0 }
+    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
+  const badgeExit = reducedMotion ? { duration: 0 } : { duration: 0.15 };
 
   return (
     <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="relative rounded-md p-2 hover:bg-accent"
-        aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
-      >
-        <Bell className="h-5 w-5" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-            {unreadCount > 9 ? '9+' : unreadCount}
-          </span>
-        )}
-      </button>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            className="relative rounded-md p-2.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+            aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
+          >
+            <Bell className="h-5 w-5" aria-hidden="true" />
+            <AnimatePresence initial={false}>
+              {unreadCount > 0 && (
+                <motion.span
+                  key="badge"
+                  initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
+                  animate={{ scale: 1, opacity: 1, filter: 'blur(0px)', transition: badgeEnter }}
+                  exit={{ scale: 0.8, opacity: 0, transition: badgeExit }}
+                  className="absolute -right-1.5 -top-1 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-red-500 px-1.5 text-center text-[10px] font-semibold tabular-nums leading-none text-white"
+                  aria-live="polite"
+                  aria-atomic="true"
+                >
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+        </TooltipTrigger>
+        <TooltipContent>
+          {unreadCount > 0
+            ? `${unreadCount} unread notification${unreadCount === 1 ? '' : 's'}`
+            : 'Notifications'}
+        </TooltipContent>
+      </Tooltip>
 
-      {open && (
-        <NotificationDropdown
-          notifications={notifications}
-          onClose={() => setOpen(false)}
-          onMarkRead={(id) => {
-            setNotifications((prev) =>
-              prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
-            );
-          }}
-          onMarkAllRead={() => {
-            setNotifications((prev) =>
-              prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() }))
-            );
-          }}
-        />
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <NotificationDropdown
+            notifications={notifications}
+            onClose={() => setOpen(false)}
+            onMarkRead={(id) => {
+              setNotifications((prev) =>
+                prev.map((n) => (n.id === id ? { ...n, read_at: new Date().toISOString() } : n))
+              );
+            }}
+            onMarkAllRead={() => {
+              setNotifications((prev) =>
+                prev.map((n) => (n.read_at ? n : { ...n, read_at: new Date().toISOString() }))
+              );
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

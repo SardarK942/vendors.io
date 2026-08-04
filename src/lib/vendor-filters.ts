@@ -9,6 +9,7 @@ export interface VendorFilterParams {
   priceMin?: number; // cents
   priceMax?: number; // cents
   languages?: string[];
+  subcategories?: string[];
   years?: number;
   // events + style + cuisine etc — placeholder; not backed yet.
 }
@@ -45,6 +46,12 @@ export function parseVendorFilterParams(
 
   const lang = get('lang');
   if (lang) out.languages = lang.split(',').filter(Boolean);
+
+  const subs = get('subcategories');
+  if (subs) {
+    const arr = subs.split(',').filter(Boolean);
+    if (arr.length > 0) out.subcategories = arr;
+  }
 
   const years = Number(get('years'));
   if (Number.isFinite(years) && years > 0) out.years = years;
@@ -84,6 +91,10 @@ export function applyVendorFilters<Q extends { eq: any; gte: any; lte: any; cont
     q = q.contains('languages', filters.languages);
   }
 
+  if (filters.subcategories && filters.subcategories.length > 0) {
+    q = q.contains('subcategories', filters.subcategories);
+  }
+
   return q;
 }
 
@@ -116,6 +127,10 @@ export async function countFilteredVendors(
   if (filters.years) query = query.gte('years_in_business', filters.years);
   if (filters.languages && filters.languages.length > 0) {
     query = query.contains('languages', filters.languages);
+  }
+
+  if (filters.subcategories && filters.subcategories.length > 0) {
+    query = query.contains('subcategories', filters.subcategories);
   }
 
   const { count, error } = await query;
