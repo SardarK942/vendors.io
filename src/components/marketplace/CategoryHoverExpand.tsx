@@ -124,16 +124,20 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                     <p className="m-0 mb-3 text-sm text-cream/85">
                       Vendors are joining the platform.
                     </p>
-                    <a
-                      href="#newsletter"
+                    <button
+                      type="button"
                       className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
                       onClick={(e) => {
+                        // Not a link — scroll to the newsletter. stopPropagation keeps
+                        // the click from bubbling to the card's <Link> (avoids a nested
+                        // interactive element and an accidental navigation).
                         e.preventDefault();
+                        e.stopPropagation();
                         document.querySelector('footer')?.scrollIntoView({ behavior: 'smooth' });
                       }}
                     >
                       Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                    </a>
+                    </button>
                   </>
                 ) : (
                   <>
