@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { SearchBar } from '@/components/marketplace/SearchBar';
 import { HomepageWordmarkPanel } from '@/components/marketplace/HomepageWordmarkPanel';
+import { RotatingWord } from '@/components/marketplace/RotatingWord';
 
 export interface HomepageHeroProps {
   /** When true, render the "List your business" secondary CTA. */
@@ -25,12 +26,15 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
         </p>
 
         <h1
-          className="m-0 mb-7 font-serif font-extrabold leading-[0.92] tracking-[-0.025em] text-ink"
-          style={{ fontSize: 'clamp(44px, 6vw, 76px)' }}
+          className="m-0 mb-7 font-serif font-extrabold leading-[0.98] tracking-[-0.025em] text-ink"
+          style={{ fontSize: 'clamp(40px, 5.5vw, 68px)' }}
         >
-          All your vendors.
+          Planning your{' '}
+          <em className="font-medium italic text-hot-pink">
+            <RotatingWord words={['dream wedding', 'mehndi night', 'walima', 'celebration']} />
+          </em>
           <br />
-          <em className="font-medium italic text-hot-pink">One bazaar.</em>
+          starts here.
         </h1>
 
         <p className="m-0 mb-8 max-w-[520px] text-lg leading-[1.55] text-ink-muted">
