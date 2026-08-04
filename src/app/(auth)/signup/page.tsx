@@ -1,6 +1,7 @@
 import { parseTokenString } from '../../../../scripts/scraper/lib/claim-token';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { SignupForm } from './signup-form';
+import { AuthSplitLayout } from '@/components/auth/AuthSplitLayout';
 import type { UserRole } from '@/types';
 
 interface Props {
@@ -39,6 +40,8 @@ export default async function SignupPage({ searchParams }: Props) {
   }
 
   return (
-    <SignupForm returnTo={returnTo} prefilledRole={prefilledRole} claimContext={claimContext} />
+    <AuthSplitLayout variant={prefilledRole === 'vendor' ? 'vendor' : 'couple'}>
+      <SignupForm returnTo={returnTo} prefilledRole={prefilledRole} claimContext={claimContext} />
+    </AuthSplitLayout>
   );
 }
