@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import { listUnclaimed } from '@/lib/scraped-vendor/public';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
+import { VendorSpotlightThumbs } from '@/components/marketplace/VendorSpotlightThumbs';
 
 /**
  * "Vendor Spotlight — Featured Vendor of the Week" — H5 of the homepage Figma
@@ -70,16 +71,7 @@ export async function VendorSpotlight() {
               {location ? ` · ${location}` : ''}
             </p>
 
-            {thumbs.length > 0 && (
-              <ul className="m-0 flex list-none gap-2 p-0">
-                {thumbs.map((src, i) => (
-                  <li key={i} className="size-16 overflow-hidden rounded-lg bg-ink-soft/40">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="h-full w-full object-cover" />
-                  </li>
-                ))}
-              </ul>
-            )}
+            {thumbs.length > 0 && <VendorSpotlightThumbs srcs={thumbs} />}
 
             <div className="mt-1">
               <Link
