@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { OnboardingGate } from '@/components/onboarding/OnboardingGate';
+import { AuthCenteredLayout } from '@/components/auth/AuthCenteredLayout';
 
 export default async function SignupSuccessPage() {
   const supabase = await createServerSupabaseClient();
@@ -27,9 +28,9 @@ export default async function SignupSuccessPage() {
   }
 
   return (
-    <>
+    <AuthCenteredLayout>
       <p className="sr-only">Account created — welcome to Baazar.</p>
       <OnboardingGate role={role} onboardingCompleted={onboardingCompleted} />
-    </>
+    </AuthCenteredLayout>
   );
 }
