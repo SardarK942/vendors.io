@@ -4,12 +4,14 @@ import { AuthBrandIllustration } from './AuthBrandIllustration';
 
 /**
  * Left brand panel of the auth split-screen. Cream→haldi→pink gradient (matching the
- * Figma signup frame), baazar. wordmark, the brand handshake illustration, and a
- * variant-aware heading + benefit chips.
+ * Figma signup frame), baazar. wordmark, a variant-aware heading + benefit chips, and —
+ * on the signup variants only — the brand handshake illustration (it's the Figma
+ * *signup* visual; login stays clean, wordmark + heading + chips over the gradient).
  * Hidden below lg (AuthSplitLayout shows a compact wordmark on mobile instead).
  */
 export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
   const { heading, subcopy, chips } = AUTH_PANEL_CONTENT[variant];
+  const showIllustration = variant !== 'login';
   return (
     <aside className="relative hidden flex-col justify-between overflow-hidden bg-[linear-gradient(160deg,#fbf7ee_0%,#fff2d5_42%,#ffd9ec_78%,#ffc2e0_100%)] p-12 lg:flex">
       <Link href="/" className="relative z-10 inline-block">
@@ -27,9 +29,11 @@ export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
         </span>
       </Link>
 
-      <div className="relative z-0 flex flex-1 items-center justify-center py-8">
-        <AuthBrandIllustration className="w-full max-w-sm" />
-      </div>
+      {showIllustration && (
+        <div className="relative z-0 flex flex-1 items-center justify-center py-8">
+          <AuthBrandIllustration className="w-full max-w-sm" />
+        </div>
+      )}
 
       <div className="relative z-10 max-w-md">
         <h2 className="m-0 font-serif text-3xl font-extrabold leading-[1.05] tracking-[-0.02em] text-ink">
