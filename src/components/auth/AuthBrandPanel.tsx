@@ -59,19 +59,9 @@ export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
           {cards.map((card, i) => (
             <div
               key={card}
-              className={
-                'group flex flex-1 flex-col gap-5 rounded-2xl p-5 backdrop-blur-md transition-[transform,background-color,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(26,26,26,0.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 ' +
-                (i === 0
-                  ? 'border border-white/25 bg-cream/90 hover:bg-cream'
-                  : 'bg-cream/55 hover:bg-cream/80')
-              }
+              className="group flex flex-1 flex-col gap-5 rounded-2xl border border-white/20 bg-cream/55 p-5 backdrop-blur-md transition-[transform,background-color,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:bg-cream/75 hover:shadow-[0_14px_30px_rgba(26,26,26,0.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0"
             >
-              <span
-                className={
-                  'flex size-6 items-center justify-center rounded-full text-xs font-medium text-white transition-colors duration-200 group-hover:bg-hot-pink ' +
-                  (i === 0 ? 'bg-ink' : 'bg-ink/40')
-                }
-              >
+              <span className="flex size-6 items-center justify-center rounded-full bg-ink text-xs font-medium text-white transition-colors duration-200 group-hover:bg-hot-pink">
                 {i + 1}
               </span>
               <p className="text-sm font-semibold leading-snug text-ink">{card}</p>
