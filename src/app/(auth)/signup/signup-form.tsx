@@ -54,12 +54,18 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
       toast.error('Please accept the Terms and Privacy Policy to continue.');
       return;
     }
-    setLoading(true);
     const formData = new FormData(e.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
     const fullName = formData.get('fullName') as string;
 
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match.');
+      return;
+    }
+
+    setLoading(true);
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -113,7 +119,14 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
         ? 'Accept the Terms to continue'
         : claimContext
           ? `Sign Up and Claim ${claimContext.businessName}`
-          : `Sign up as ${role === 'couple' ? 'an event planner' : 'a vendor'}`;
+          : role === 'vendor'
+            ? 'Create Vendor Account'
+            : 'Create Account';
+
+  // Figma form register: soft gray rounded fields with bold dark labels, on the
+  // white form column. Neutral grays match the Figma; text uses the ink token.
+  const fieldClass = 'rounded-xl border-[#e5e7eb] bg-[#f6f8fa] text-ink placeholder:text-[#8a94a6]';
+  const labelClass = 'text-sm font-semibold text-ink';
 
   return (
     <Card className="border-none bg-transparent p-0 shadow-none">
@@ -131,12 +144,18 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
       ) : null}
       <CardHeader>
         <CardTitle className="font-spectral text-2xl text-ink">
-          {claimContext ? 'Claim your listing' : 'Create your account'}
+          {claimContext
+            ? 'Claim your listing'
+            : role === 'vendor'
+              ? 'Create your vendor account'
+              : 'Create your account'}
         </CardTitle>
         <CardDescription className="text-ink/70">
           {claimContext
             ? 'Create your vendor account to manage bookings and your profile.'
-            : 'Join Baazar — the marketplace for culturally-focused wedding and event vendors.'}
+            : role === 'vendor'
+              ? 'Complete the details below to start building your vendor profile.'
+              : 'Join Baazar — the marketplace for culturally-focused wedding and event vendors.'}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -202,31 +221,39 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
 
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="fullName">Full Name</Label>
+            <Label htmlFor="fullName" className={labelClass}>
+              Full Name
+            </Label>
             <Input
               id="fullName"
               name="fullName"
               required
-              placeholder="Your full name"
+              placeholder="eg. Jane Doe"
               autoComplete="name"
+              className={fieldClass}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className={labelClass}>
+              Email
+            </Label>
             <Input
               id="email"
               name="email"
               type="email"
               required
-              placeholder="you@example.com"
+              placeholder="Enter your email address"
               autoComplete="email"
               inputMode="email"
               spellCheck={false}
               autoCapitalize="none"
+              className={fieldClass}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className={labelClass}>
+              Password
+            </Label>
             <PasswordInput
               id="password"
               name="password"
@@ -234,6 +261,21 @@ export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
               minLength={8}
               placeholder="Min 8 characters"
               autoComplete="new-password"
+              className={fieldClass}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirmPassword" className={labelClass}>
+              Confirm Password
+            </Label>
+            <PasswordInput
+              id="confirmPassword"
+              name="confirmPassword"
+              required
+              minLength={8}
+              placeholder="Re-enter your password"
+              autoComplete="new-password"
+              className={fieldClass}
             />
           </div>
           <div className="flex items-start gap-2">
