@@ -13,6 +13,16 @@ import { AuthBrandIllustration } from './AuthBrandIllustration';
 export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
   const { heading, subcopy, cardsLabel, cards } = AUTH_PANEL_CONTENT[variant];
   const showIllustration = variant !== 'login';
+
+  const headingBlock = (
+    <>
+      <h2 className="max-w-[16ch] font-serif text-4xl font-extrabold leading-[1.03] tracking-[-0.02em] text-ink xl:text-5xl">
+        {heading}
+      </h2>
+      <p className="mt-4 max-w-md text-base leading-[1.55] text-ink/70">{subcopy}</p>
+    </>
+  );
+
   return (
     <aside className="relative hidden flex-col overflow-hidden bg-[linear-gradient(160deg,#fbf7ee_0%,#fff2d5_42%,#ffd9ec_78%,#ffc2e0_100%)] p-10 lg:flex xl:p-12">
       {/* Faint wedding-venue texture behind everything (matches the Figma). */}
@@ -24,32 +34,30 @@ export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
         className="pointer-events-none absolute inset-0 h-full w-full object-cover opacity-[0.06] mix-blend-luminosity"
       />
 
-      {/* Top — wordmark + heading + subcopy */}
-      <div className="relative z-10">
-        <Link href="/" className="inline-block">
-          <span
-            aria-label="Baazar"
-            className="block font-serif text-5xl font-extrabold lowercase leading-none tracking-[-0.03em] text-ink"
-          >
-            baazar
-            <span aria-hidden className="text-hot-pink">
-              .
-            </span>
+      {/* Wordmark — always at the top */}
+      <Link href="/" className="relative z-10 inline-block self-start">
+        <span
+          aria-label="Baazar"
+          className="block font-serif text-5xl font-extrabold lowercase leading-none tracking-[-0.03em] text-ink"
+        >
+          baazar
+          <span aria-hidden className="text-hot-pink">
+            .
           </span>
-        </Link>
-        <h2 className="mt-9 max-w-[16ch] font-serif text-4xl font-extrabold leading-[1.03] tracking-[-0.02em] text-ink xl:text-5xl">
-          {heading}
-        </h2>
-        <p className="mt-4 max-w-md text-base leading-[1.55] text-ink/70">{subcopy}</p>
-      </div>
+        </span>
+      </Link>
 
-      {/* Middle — full-bleed handshake (signup variants only) */}
       {showIllustration ? (
-        <div className="relative z-0 -mx-10 flex flex-1 items-center justify-center xl:-mx-12">
-          <AuthBrandIllustration className="w-full max-w-none" />
-        </div>
+        <>
+          {/* signup: heading under the wordmark, full-bleed handshake fills the middle */}
+          <div className="relative z-10 mt-9">{headingBlock}</div>
+          <div className="relative z-0 -mx-10 flex flex-1 items-center justify-center xl:-mx-12">
+            <AuthBrandIllustration className="w-full max-w-none" />
+          </div>
+        </>
       ) : (
-        <div className="flex-1" />
+        // login: heading + subcopy vertically centered in the middle (no illustration)
+        <div className="relative z-10 flex flex-1 flex-col justify-center">{headingBlock}</div>
       )}
 
       {/* Bottom — section label + numbered glass benefit cards */}

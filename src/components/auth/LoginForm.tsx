@@ -63,6 +63,10 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
   const forgotHref = `/forgot-password${redirect !== '/dashboard' ? `?redirect=${encodeURIComponent(redirect)}` : ''}`;
   const signupHref = `/signup${redirect !== '/dashboard' ? `?return_to=${encodeURIComponent(redirect)}` : ''}`;
 
+  // Matches the signup form's Figma register: soft gray rounded fields, bold labels.
+  const fieldClass = 'rounded-xl border-[#e5e7eb] bg-[#f6f8fa] text-ink placeholder:text-[#8a94a6]';
+  const labelClass = 'text-sm font-semibold text-ink';
+
   return (
     <div className={cn('flex flex-col gap-6', className)} {...props}>
       <Card className="border-none bg-transparent p-0 shadow-none">
@@ -76,23 +80,28 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
           <form onSubmit={handleEmailLogin}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className={labelClass}>
+                  Email
+                </Label>
                 <Input
                   id="email"
                   name="email"
                   type="email"
-                  placeholder="you@example.com"
+                  placeholder="Enter your email address"
                   required
                   disabled={loading}
                   autoComplete="email"
                   inputMode="email"
                   spellCheck={false}
                   autoCapitalize="none"
+                  className={fieldClass}
                 />
               </div>
               <div className="grid gap-2">
                 <div className="flex items-center">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password" className={labelClass}>
+                    Password
+                  </Label>
                   <Link
                     href={forgotHref}
                     className="ml-auto inline-block text-sm text-ink/70 underline-offset-4 hover-pink-text hover:underline"
@@ -106,6 +115,7 @@ function LoginFormInner({ className, ...props }: React.ComponentPropsWithoutRef<
                   required
                   disabled={loading}
                   autoComplete="current-password"
+                  className={fieldClass}
                 />
               </div>
               <Button
