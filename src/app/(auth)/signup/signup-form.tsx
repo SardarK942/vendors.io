@@ -18,13 +18,15 @@ interface Props {
   returnTo: string | null;
   prefilledRole: UserRole | null;
   claimContext: { businessName: string } | null;
+  /** Selected role, lifted to the page so the brand panel can follow the picker. */
+  role: UserRole | null;
+  setRole: (role: UserRole) => void;
 }
 
-export function SignupForm({ returnTo, prefilledRole, claimContext }: Props) {
+export function SignupForm({ returnTo, prefilledRole, claimContext, role, setRole }: Props) {
   const router = useRouter();
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
-  const [role, setRole] = useState<UserRole | null>(prefilledRole);
   const [agreed, setAgreed] = useState(false);
 
   // Hide the couple/vendor picker whenever the entry point already decides the
