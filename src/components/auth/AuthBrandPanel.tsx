@@ -60,13 +60,15 @@ export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
             <div
               key={card}
               className={
-                'flex flex-1 flex-col gap-5 rounded-2xl p-5 backdrop-blur-md ' +
-                (i === 0 ? 'border border-white/25 bg-cream/90' : 'bg-cream/55')
+                'group flex flex-1 flex-col gap-5 rounded-2xl p-5 backdrop-blur-md transition-[transform,background-color,box-shadow] duration-200 ease-out hover:-translate-y-1 hover:shadow-[0_14px_30px_rgba(26,26,26,0.12)] motion-reduce:transition-none motion-reduce:hover:translate-y-0 ' +
+                (i === 0
+                  ? 'border border-white/25 bg-cream/90 hover:bg-cream'
+                  : 'bg-cream/55 hover:bg-cream/80')
               }
             >
               <span
                 className={
-                  'flex size-6 items-center justify-center rounded-full text-xs font-medium text-white ' +
+                  'flex size-6 items-center justify-center rounded-full text-xs font-medium text-white transition-colors duration-200 group-hover:bg-hot-pink ' +
                   (i === 0 ? 'bg-ink' : 'bg-ink/40')
                 }
               >
