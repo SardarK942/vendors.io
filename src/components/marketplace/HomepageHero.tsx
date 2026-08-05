@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { AiSearchInput } from '@/components/marketplace/AiSearchInput';
 import { RotatingWord } from '@/components/marketplace/RotatingWord';
 import { HeroVideoBackdrop } from '@/components/marketplace/HeroVideoBackdrop';
+import { WordmarkCycle } from '@/components/layout/footer/WordmarkCycle';
 
 export interface HomepageHeroProps {
   /** When true, render the "List your business" secondary CTA. */
@@ -66,6 +67,10 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
           </div>
         </div>
       </div>
+
+      {/* Baazar language flipper — cycles the wordmark through scripts,
+          anchored bottom-right over the video. */}
+      <WordmarkCycle className="pointer-events-none absolute bottom-6 right-6 z-[1] m-0 select-none text-[clamp(40px,7vw,96px)] font-normal leading-[0.85] tracking-[-0.03em] text-cream/90 drop-shadow-[0_2px_16px_rgba(0,0,0,0.45)] lg:bottom-10 lg:right-14" />
     </section>
   );
 }
