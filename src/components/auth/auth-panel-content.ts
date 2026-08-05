@@ -14,13 +14,13 @@ export const AUTH_PANEL_CONTENT: Record<AuthPanelVariant, PanelContent> = {
     chips: ['Verified vendors', 'Secure 5% deposit', 'Your whole celebration in one place'],
   },
   vendor: {
-    heading: 'Join Baazar as a Vendor',
+    heading: 'Become a founding vendor',
     subcopy:
-      'List your business on the marketplace built for cultural weddings and reach couples who are ready to book.',
+      'It’s completely free to list — no monthly or listing fees. Our goal is to send you serious, pre-committed leads, not random inquiries.',
     chips: [
-      'No listing fees',
-      'Verified leads with a pre-committed deposit',
-      'A culture-focused vendor marketplace',
+      'Completely free — no monthly or listing fees',
+      'Serious, pre-committed leads — not random inquiries',
+      'Founding-vendor status with easy onboarding',
     ],
   },
   login: {
