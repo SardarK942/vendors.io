@@ -6,10 +6,17 @@ function noop() {}
 
 describe('DatePicker selected-day contrast', () => {
   it('applies hot-pink background and cream text to the button element of the selected day', () => {
-    // Pick a date in the currently displayed month (July 2026) so it renders.
-    const { container } = render(<DatePicker selected="2026-07-14" onSelect={noop} />);
+    // Select TODAY: DayPicker defaults to the current month, so today's cell is
+    // always rendered, and today is never disabled (the picker only disables
+    // dates strictly before today). This keeps the test deterministic across any
+    // run date — a hardcoded date rots when the calendar month rolls over.
+    const now = new Date();
+    const iso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+      now.getDate()
+    ).padStart(2, '0')}`;
+    const { container } = render(<DatePicker selected={iso} onSelect={noop} />);
     // Find the cell and button for the selected date
-    const selectedCell = container.querySelector('[data-day="2026-07-14"]');
+    const selectedCell = container.querySelector(`[data-day="${iso}"]`);
     expect(selectedCell).not.toBeNull();
     const selectedBtn = selectedCell!.querySelector('button');
     expect(selectedBtn).not.toBeNull();
