@@ -64,7 +64,7 @@ export function WhyCouplesChoose() {
         {TESTIMONIALS.map(({ quote, name, context }) => (
           <li
             key={name}
-            className="flex flex-col rounded-2xl bg-white p-7 shadow-[0px_2px_36px_rgba(0,0,0,0.07)] ring-1 ring-ink/5"
+            className="group flex flex-col rounded-2xl bg-white p-7 shadow-[0px_2px_36px_rgba(0,0,0,0.07)] ring-1 ring-ink/5 transition duration-300 hover:-translate-y-1 hover:shadow-pink-card hover:ring-hot-pink/20 motion-reduce:hover:translate-y-0"
           >
             <p className="m-0 flex-1 text-lg leading-[1.5] tracking-[-0.01em] text-ink">
               &ldquo;{quote}&rdquo;
@@ -72,7 +72,7 @@ export function WhyCouplesChoose() {
             <div className="mt-6 flex items-center gap-3">
               <span
                 aria-hidden
-                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo/10 text-sm font-semibold text-indigo"
+                className="flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo/10 text-sm font-semibold text-indigo transition-colors duration-300 group-hover:bg-hot-pink group-hover:text-cream"
               >
                 {initials(name)}
               </span>

@@ -117,9 +117,12 @@ export default async function HomePage() {
                 body: 'Vendors must respond within 72 hours. No more waiting weeks for quotes.',
               },
             ].map(({ Icon, title, body }) => (
-              <div key={title} className="text-center">
-                <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream shadow-sm ring-1 ring-ink/5">
-                  <Icon className="size-7 text-indigo" strokeWidth={1.75} />
+              <div key={title} className="group text-center">
+                <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream shadow-sm ring-1 ring-ink/5 transition duration-300 group-hover:-translate-y-1 group-hover:bg-hot-pink group-hover:shadow-pink group-hover:ring-hot-pink/30 motion-reduce:group-hover:translate-y-0">
+                  <Icon
+                    className="size-7 text-indigo transition-colors duration-300 group-hover:text-cream"
+                    strokeWidth={1.75}
+                  />
                 </div>
                 <h3 className="mt-5 text-xl font-semibold tracking-[-0.01em] text-ink">{title}</h3>
                 <p className="mx-auto mt-2 max-w-[34ch] text-base leading-[1.5] text-ink-muted">
