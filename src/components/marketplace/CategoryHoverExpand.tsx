@@ -55,7 +55,7 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                 flex: isActive ? '1 1 34rem' : '0 0 5rem',
               }}
               transition={motionTransition}
-              className="relative h-[34rem] overflow-hidden rounded-lg"
+              className="relative h-[30rem] overflow-hidden rounded-lg"
               onMouseEnter={() => setActiveIndex(i)}
             >
               <Link
