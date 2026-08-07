@@ -36,7 +36,7 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
       <div
         role="region"
         aria-label="Browse vendors by category"
-        className="mx-auto flex w-full max-w-[1600px] gap-2 px-6 lg:px-10"
+        className="mx-auto flex w-full max-w-[1560px] gap-2 px-6 lg:px-20"
       >
         {categories.map((cat, i) => {
           const isActive = i === activeIndex;
