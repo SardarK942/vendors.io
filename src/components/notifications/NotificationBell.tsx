@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Bell } from 'lucide-react';
+import { NotificationBellIcon } from '@/components/icons/NotificationBellIcon';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import type { Database, NotificationType } from '@/types/database.types';
@@ -112,7 +112,7 @@ export function NotificationBell({ userId, light = false }: Props) {
             }`}
             aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
           >
-            <Bell className="h-7 w-7" aria-hidden="true" />
+            <NotificationBellIcon className="h-7 w-7" />
             <AnimatePresence initial={false}>
               {unreadCount > 0 && (
                 <motion.span
