@@ -56,8 +56,12 @@ export function FirstBookingCelebration({
           animate={{ opacity: 1, y: 0 }}
           transition={stagger(1)}
         >
-          {vendorName} · {fmtDate(`${eventDate}T12:00:00`)} ·{' '}
-          <span className="tabular-nums">{fmtUSDWithCents(totalCents)}</span>
+          {vendorName}
+          {(() => {
+            const formattedDate = fmtDate(`${eventDate}T12:00:00`);
+            return formattedDate ? ` · ${formattedDate}` : '';
+          })()}{' '}
+          · <span className="tabular-nums">{fmtUSDWithCents(totalCents)}</span>
         </motion.p>
 
         <motion.div

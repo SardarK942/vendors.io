@@ -32,17 +32,23 @@ export const fmtCount = (n: number): string => new Intl.NumberFormat(en).format(
 export const fmtDate = (
   iso: string | Date,
   opts: Intl.DateTimeFormatOptions = { dateStyle: 'medium' }
-): string => new Intl.DateTimeFormat(en, opts).format(iso instanceof Date ? iso : new Date(iso));
+): string => {
+  const d = iso instanceof Date ? iso : new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat(en, opts).format(d);
+};
 
-export const fmtDateTime = (iso: string | Date): string =>
-  new Intl.DateTimeFormat(en, { dateStyle: 'medium', timeStyle: 'short' }).format(
-    iso instanceof Date ? iso : new Date(iso)
-  );
+export const fmtDateTime = (iso: string | Date): string => {
+  const d = iso instanceof Date ? iso : new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat(en, { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+};
 
-export const fmtTime = (iso: string | Date): string =>
-  new Intl.DateTimeFormat(en, { hour: 'numeric', minute: '2-digit' }).format(
-    iso instanceof Date ? iso : new Date(iso)
-  );
+export const fmtTime = (iso: string | Date): string => {
+  const d = iso instanceof Date ? iso : new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return new Intl.DateTimeFormat(en, { hour: 'numeric', minute: '2-digit' }).format(d);
+};
 
 /**
  * Relative time (e.g. "2 hours ago", "yesterday").
@@ -50,6 +56,7 @@ export const fmtTime = (iso: string | Date): string =>
  */
 export const fmtRelative = (iso: string | Date, now: Date = new Date()): string => {
   const target = iso instanceof Date ? iso : new Date(iso);
+  if (Number.isNaN(target.getTime())) return '';
   const diffSec = Math.round((target.getTime() - now.getTime()) / 1000);
   const rtf = new Intl.RelativeTimeFormat(en, { numeric: 'auto' });
   const abs = Math.abs(diffSec);
