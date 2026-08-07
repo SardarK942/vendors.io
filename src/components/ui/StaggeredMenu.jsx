@@ -72,17 +72,10 @@ export const StaggeredMenu = ({
       if (preContainer) {
         gsap.set(preContainer, { xPercent: 0, opacity: 1 });
       }
-      // Right-aligned two-bar menu icon: a longer thin bar on top, a shorter
-      // thicker (rounded) bar below — both aligned to the right edge.
-      gsap.set(plusH, { transformOrigin: '100% 50%', rotate: 0, x: 0, y: -3, scaleX: 1, scaleY: 1 });
-      gsap.set(plusV, {
-        transformOrigin: '100% 50%',
-        rotate: 0,
-        x: 0,
-        y: 3,
-        scaleX: 0.58,
-        scaleY: 2.2,
-      });
+      // Built-in plus lines are hidden via CSS; the visible glyph is the
+      // inlined jam:menu SVG. Keep neutral transforms on the (hidden) refs.
+      gsap.set(plusH, { transformOrigin: '50% 50%', rotate: 0 });
+      gsap.set(plusV, { transformOrigin: '50% 50%', rotate: 0 });
       gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
       gsap.set(textInner, { yPercent: 0 });
       if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: menuButtonColor });
@@ -428,6 +421,10 @@ export const StaggeredMenu = ({
           <span ref={iconRef} className="sm-icon" aria-hidden="true">
             <span ref={plusHRef} className="sm-icon-line" />
             <span ref={plusVRef} className="sm-icon-line sm-icon-line-v" />
+            {/* jam:menu (Iconify) — staggered 3-line menu glyph */}
+            <svg className="sm-menu-glyph" viewBox="-5 -7 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M1 0h5a1 1 0 1 1 0 2H1a1 1 0 1 1 0-2m7 8h5a1 1 0 0 1 0 2H8a1 1 0 1 1 0-2M1 4h12a1 1 0 0 1 0 2H1a1 1 0 1 1 0-2" />
+            </svg>
           </span>
         </button>
       </header>
