@@ -112,7 +112,7 @@ export function NotificationBell({ userId, light = false }: Props) {
             }`}
             aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
           >
-            <Bell className="h-5 w-5" aria-hidden="true" />
+            <Bell className="h-7 w-7" aria-hidden="true" />
             <AnimatePresence initial={false}>
               {unreadCount > 0 && (
                 <motion.span
