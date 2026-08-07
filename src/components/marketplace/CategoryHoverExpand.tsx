@@ -32,184 +32,186 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
   const reducedMotion = useReducedMotion();
 
   return (
-    <div
-      role="region"
-      aria-label="Browse vendors by category"
-      className="mx-auto hidden w-full max-w-[1280px] gap-1.5 px-6 py-12 lg:flex"
-    >
-      {categories.map((cat, i) => {
-        const isActive = i === activeIndex;
-        const count = counts[cat.slug] ?? 0;
-        const isComingSoon = cat.comingSoon || count === 0;
-        const href = `/vendors?category=${cat.slug}`;
-        const motionTransition = reducedMotion
-          ? { duration: 0 }
-          : { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const };
+    <div className="mx-[calc(50%-50vw)] hidden w-screen py-14 lg:block">
+      <div
+        role="region"
+        aria-label="Browse vendors by category"
+        className="mx-auto flex w-full max-w-[1600px] gap-2 px-6 lg:px-10"
+      >
+        {categories.map((cat, i) => {
+          const isActive = i === activeIndex;
+          const count = counts[cat.slug] ?? 0;
+          const isComingSoon = cat.comingSoon || count === 0;
+          const href = `/vendors?category=${cat.slug}`;
+          const motionTransition = reducedMotion
+            ? { duration: 0 }
+            : { duration: 0.32, ease: [0.22, 1, 0.36, 1] as const };
 
-        return (
-          <motion.div
-            key={cat.slug}
-            initial={false}
-            animate={{
-              flex: isActive ? '1 1 26rem' : '0 0 4rem',
-            }}
-            transition={motionTransition}
-            className="relative h-[26rem] overflow-hidden rounded-lg"
-            onMouseEnter={() => setActiveIndex(i)}
-          >
-            <Link
-              href={href}
-              aria-current={isActive ? 'true' : undefined}
-              aria-label={`${cat.label} category`}
-              className="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-              onClick={(e) => {
-                // First interaction on a collapsed tile = expand only; don't navigate.
-                // Click on the already-active tile = navigate.
-                if (!isActive) {
-                  e.preventDefault();
-                  setActiveIndex(i);
-                }
+          return (
+            <motion.div
+              key={cat.slug}
+              initial={false}
+              animate={{
+                flex: isActive ? '1 1 34rem' : '0 0 5rem',
               }}
+              transition={motionTransition}
+              className="relative h-[34rem] overflow-hidden rounded-lg"
+              onMouseEnter={() => setActiveIndex(i)}
             >
-              <Image
-                src={cat.photoUrl}
-                alt={cat.alt}
-                fill
-                sizes="(min-width: 1024px) 26rem, 100vw"
-                className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-                priority={i < 3}
-              />
-
-              {/* Dark wash when inactive (drops on active) */}
-              <div
-                className={`duration-[320ms] absolute inset-0 bg-ink/45 transition-opacity ${
-                  isActive ? 'opacity-0' : 'opacity-100'
-                }`}
-              />
-
-              {/* Bottom gradient when active (for content readability) */}
-              <div
-                className={`duration-[320ms] absolute inset-0 bg-gradient-to-t from-ink/[0.78] to-transparent transition-opacity ${
-                  isActive ? 'opacity-100' : 'opacity-0'
-                }`}
-              />
-
-              {/* Collapsed-state rotated label */}
-              <span
-                className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity duration-200 ${
-                  isActive ? 'opacity-0' : 'opacity-100'
-                }`}
+              <Link
+                href={href}
+                aria-current={isActive ? 'true' : undefined}
+                aria-label={`${cat.label} category`}
+                className="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                onClick={(e) => {
+                  // First interaction on a collapsed tile = expand only; don't navigate.
+                  // Click on the already-active tile = navigate.
+                  if (!isActive) {
+                    e.preventDefault();
+                    setActiveIndex(i);
+                  }
+                }}
               >
-                {cat.label}
-              </span>
+                <Image
+                  src={cat.photoUrl}
+                  alt={cat.alt}
+                  fill
+                  sizes="(min-width: 1024px) 26rem, 100vw"
+                  className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+                  priority={i < 3}
+                />
 
-              {/* Active-state content overlay */}
-              <AnimatePresence initial={false}>
-                {isActive && (
-                  <div className="absolute bottom-0 left-0 right-0 p-6 text-cream">
-                    {isComingSoon ? (
-                      <>
-                        <motion.div
-                          className="mb-2 flex items-center gap-2"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.1 }}
-                        >
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+                {/* Dark wash when inactive (drops on active) */}
+                <div
+                  className={`duration-[320ms] absolute inset-0 bg-ink/45 transition-opacity ${
+                    isActive ? 'opacity-0' : 'opacity-100'
+                  }`}
+                />
+
+                {/* Bottom gradient when active (for content readability) */}
+                <div
+                  className={`duration-[320ms] absolute inset-0 bg-gradient-to-t from-ink/[0.78] to-transparent transition-opacity ${
+                    isActive ? 'opacity-100' : 'opacity-0'
+                  }`}
+                />
+
+                {/* Collapsed-state rotated label */}
+                <span
+                  className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-90 whitespace-nowrap text-[11px] font-semibold uppercase tracking-[0.14em] text-cream transition-opacity duration-200 ${
+                    isActive ? 'opacity-0' : 'opacity-100'
+                  }`}
+                >
+                  {cat.label}
+                </span>
+
+                {/* Active-state content overlay */}
+                <AnimatePresence initial={false}>
+                  {isActive && (
+                    <div className="absolute bottom-0 left-0 right-0 p-6 text-cream">
+                      {isComingSoon ? (
+                        <>
+                          <motion.div
+                            className="mb-2 flex items-center gap-2"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.1 }}
+                          >
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+                              {cat.kicker}
+                            </span>
+                            <span className="rounded-full bg-ink-soft/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-cream">
+                              Joining soon
+                            </span>
+                          </motion.div>
+                          <motion.h3
+                            className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.2 }}
+                          >
+                            {cat.label}
+                          </motion.h3>
+                          <motion.p
+                            className="m-0 mb-3 text-sm text-cream/85"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.3 }}
+                          >
+                            Vendors are joining the platform.
+                          </motion.p>
+                          <motion.button
+                            type="button"
+                            className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.4 }}
+                            onClick={(e) => {
+                              // Not a link — scroll to the newsletter. stopPropagation keeps
+                              // the click from bubbling to the card's <Link> (avoids a nested
+                              // interactive element / hydration error and an accidental nav).
+                              e.preventDefault();
+                              e.stopPropagation();
+                              document.querySelector('footer')?.scrollIntoView({
+                                behavior: reducedMotion ? 'auto' : 'smooth',
+                              });
+                            }}
+                          >
+                            Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                          </motion.button>
+                        </>
+                      ) : (
+                        <>
+                          <motion.p
+                            className="m-0 mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-haldi"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.1 }}
+                          >
                             {cat.kicker}
-                          </span>
-                          <span className="rounded-full bg-ink-soft/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-cream">
-                            Joining soon
-                          </span>
-                        </motion.div>
-                        <motion.h3
-                          className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.2 }}
-                        >
-                          {cat.label}
-                        </motion.h3>
-                        <motion.p
-                          className="m-0 mb-3 text-sm text-cream/85"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.3 }}
-                        >
-                          Vendors are joining the platform.
-                        </motion.p>
-                        <motion.button
-                          type="button"
-                          className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.4 }}
-                          onClick={(e) => {
-                            // Not a link — scroll to the newsletter. stopPropagation keeps
-                            // the click from bubbling to the card's <Link> (avoids a nested
-                            // interactive element / hydration error and an accidental nav).
-                            e.preventDefault();
-                            e.stopPropagation();
-                            document.querySelector('footer')?.scrollIntoView({
-                              behavior: reducedMotion ? 'auto' : 'smooth',
-                            });
-                          }}
-                        >
-                          Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                        </motion.button>
-                      </>
-                    ) : (
-                      <>
-                        <motion.p
-                          className="m-0 mb-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-haldi"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.1 }}
-                        >
-                          {cat.kicker}
-                        </motion.p>
-                        <motion.h3
-                          className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.2 }}
-                        >
-                          {cat.label}
-                        </motion.h3>
-                        <motion.p
-                          className="m-0 mb-3 text-sm tabular-nums text-cream/85"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.3 }}
-                        >
-                          {fmtCount(count)} {plural(cat.label.toLowerCase())} in Chicago
-                        </motion.p>
-                        <motion.span
-                          className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm"
-                          initial={{ opacity: 0, y: 6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0 }}
-                          transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.4 }}
-                        >
-                          Browse {cat.label.toLowerCase()}{' '}
-                          <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                        </motion.span>
-                      </>
-                    )}
-                  </div>
-                )}
-              </AnimatePresence>
-            </Link>
-          </motion.div>
-        );
-      })}
+                          </motion.p>
+                          <motion.h3
+                            className="m-0 mb-1 font-serif text-[28px] font-bold leading-tight tracking-[-0.012em]"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.2 }}
+                          >
+                            {cat.label}
+                          </motion.h3>
+                          <motion.p
+                            className="m-0 mb-3 text-sm tabular-nums text-cream/85"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.3 }}
+                          >
+                            {fmtCount(count)} {plural(cat.label.toLowerCase())} in Chicago
+                          </motion.p>
+                          <motion.span
+                            className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm"
+                            initial={{ opacity: 0, y: 6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.4 }}
+                          >
+                            Browse {cat.label.toLowerCase()}{' '}
+                            <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+                          </motion.span>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </AnimatePresence>
+              </Link>
+            </motion.div>
+          );
+        })}
+      </div>
     </div>
   );
 }
