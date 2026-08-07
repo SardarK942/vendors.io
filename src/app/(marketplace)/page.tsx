@@ -50,9 +50,6 @@ export default async function HomePage() {
         >
           Every vendor your celebration needs.
         </h2>
-        <p className="m-0 mx-auto max-w-[540px] text-balance text-base text-ink-muted">
-          Photography, mehndi, catering, and 8 more. Hover to peek; click to browse.
-        </p>
       </header>
 
       {/* HoverExpand — desktop */}
