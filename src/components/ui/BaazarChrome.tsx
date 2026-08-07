@@ -30,7 +30,7 @@ const INK = '#1c1816';
 function BaazarWordmark() {
   return (
     <Link href="/" className="flex items-center" aria-label="Baazar home">
-      <span className="font-display text-2xl font-medium lowercase tracking-tight text-ink">
+      <span className="font-display text-3xl font-medium lowercase tracking-tight text-ink sm:text-4xl">
         baazar<span className="text-hot-pink">.</span>
       </span>
     </Link>
