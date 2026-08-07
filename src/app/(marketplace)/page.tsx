@@ -6,6 +6,7 @@ import { CategoryHoverExpandMobile } from '@/components/marketplace/CategoryHove
 import { HowItWorks } from '@/components/marketplace/HowItWorks';
 import { WhyCouplesChoose } from '@/components/marketplace/WhyCouplesChoose';
 import { VendorSpotlight } from '@/components/marketplace/VendorSpotlight';
+import { HomePreloader } from '@/components/marketplace/HomePreloader';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
 import { getCategoryVendorCounts } from '@/lib/vendor-categories/queries';
 
@@ -32,7 +33,10 @@ export default async function HomePage() {
 
   return (
     <div>
-      {/* Hero — V2 asymmetric */}
+      {/* PL-A preloader — accelerated wordmark cycle, once per session */}
+      <HomePreloader />
+
+      {/* Hero — full-bleed video backdrop */}
       <HomepageHero showVendorCta={showVendorCta} />
 
       {/* Section header */}
