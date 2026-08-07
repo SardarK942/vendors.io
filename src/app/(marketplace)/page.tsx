@@ -39,16 +39,15 @@ export default async function HomePage() {
       {/* Hero — full-bleed video backdrop */}
       <HomepageHero showVendorCta={showVendorCta} />
 
-      {/* PREVIEW: dotted pattern background behind everything after the hero */}
+      {/* Faint hot-pink dotted texture behind everything after the hero. */}
       <div className="relative">
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-0 -z-10 h-full w-screen -translate-x-1/2"
           style={{
-            backgroundColor: '#E5E5F7',
-            opacity: 0.8,
+            backgroundColor: '#FBF6EC',
             backgroundImage:
-              'radial-gradient(#444CF7 1.5px, transparent 1.5px), radial-gradient(#444CF7 1.5px, #E5E5F7 1.5px)',
+              'radial-gradient(rgba(209,0,108,0.06) 1.5px, transparent 1.5px), radial-gradient(rgba(209,0,108,0.06) 1.5px, #FBF6EC 1.5px)',
             backgroundSize: '20px 20px',
             backgroundPosition: '0 0, 10px 10px',
           }}
