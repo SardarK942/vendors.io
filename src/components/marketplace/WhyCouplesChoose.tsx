@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { Quote } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 /**
  * "Why Couples Choose Baazar" + testimonials row — H4 of the homepage redesign.
@@ -109,9 +108,12 @@ export function WhyCouplesChoose() {
       </ul>
 
       <div className="mt-10 text-center">
-        <Button size="lg" variant="outline" asChild>
-          <Link href="/vendors">Browse all vendors</Link>
-        </Button>
+        <Link
+          href="/vendors"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-ink px-6 text-sm font-semibold text-cream transition hover:-translate-y-px hover:bg-hot-pink hover:shadow-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream motion-reduce:hover:translate-y-0"
+        >
+          Browse all vendors →
+        </Link>
       </div>
     </section>
   );
