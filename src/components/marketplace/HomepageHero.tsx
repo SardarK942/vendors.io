@@ -18,13 +18,13 @@ export interface HomepageHeroProps {
  */
 export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
   return (
-    <section className="relative isolate mx-[calc(50%-50vw)] -mt-20 flex min-h-[100svh] w-screen items-center overflow-hidden pt-20">
+    <section className="relative isolate mx-[calc(50%-50vw)] -mt-20 flex min-h-[100svh] w-screen items-start overflow-hidden pt-20">
       <HeroVideoBackdrop />
 
       <div className="mx-auto w-full max-w-[1280px] px-6 py-20 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] lg:px-14 lg:py-28">
-        <div className="max-w-[760px] text-left">
+        <div className="mx-auto max-w-[820px] text-center">
           <p className="m-0 mb-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-cream/75">
-            Baazar · Chicago weddings
+            Discover. Compare. Book.
           </p>
 
           <h1
@@ -39,17 +39,17 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
             starts here.
           </h1>
 
-          <p className="m-0 mb-8 max-w-[560px] text-pretty text-lg leading-[1.55] text-cream/85">
+          <p className="m-0 mb-8 mx-auto max-w-[560px] text-pretty text-lg leading-[1.55] text-cream/85">
             Chicago&rsquo;s marketplace for{' '}
             <span className="bg-haldi box-decoration-clone px-2 pb-1 pt-0 text-ink">Cultural</span>{' '}
             wedding vendors. Discover, compare, and book with confidence.
           </p>
 
-          <div className="mb-5 max-w-[560px]">
+          <div className="mb-5 mx-auto max-w-[560px]">
             <AiSearchInput variant="hero" />
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row">
+          <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
             <Link
               href="/vendors"
               className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-hot-pink px-6 text-sm font-semibold text-cream shadow-pink transition hover:-translate-y-px hover:bg-hot-pink/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream focus-visible:ring-offset-2 focus-visible:ring-offset-ink motion-reduce:hover:translate-y-0"
@@ -67,6 +67,11 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
           </div>
         </div>
       </div>
+
+      {/* Made in Chicago — bottom-left, mirroring the language flipper. */}
+      <p className="pointer-events-none absolute bottom-8 left-6 z-[1] m-0 select-none text-[10px] font-semibold uppercase tracking-[0.16em] text-cream/80 drop-shadow-[0_1px_8px_rgba(0,0,0,0.5)] lg:bottom-12 lg:left-14">
+        Made in <span className="text-haldi">Chicago</span>
+      </p>
 
       {/* Baazar language flipper — cycles the wordmark through scripts,
           anchored bottom-right over the video. */}
