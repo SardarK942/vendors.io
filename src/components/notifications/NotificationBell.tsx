@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Bell } from 'lucide-react';
+import { NotificationBellIcon } from '@/components/icons/NotificationBellIcon';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
 import type { Database, NotificationType } from '@/types/database.types';
@@ -14,9 +14,11 @@ type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
 interface Props {
   userId: string;
+  /** Render the bell in light (cream) color — e.g. over the homepage video hero. */
+  light?: boolean;
 }
 
-export function NotificationBell({ userId }: Props) {
+export function NotificationBell({ userId, light = false }: Props) {
   const [notifications, setNotifications] = useState<NotificationRow[]>([]);
   const [open, setOpen] = useState(false);
   const supabase = createClient();
@@ -105,10 +107,12 @@ export function NotificationBell({ userId }: Props) {
           <button
             type="button"
             onClick={() => setOpen((v) => !v)}
-            className="relative rounded-md p-2.5 transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+            className={`relative rounded-md p-2.5 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
+              light ? 'text-cream hover:bg-cream/15' : 'text-ink hover:bg-accent'
+            }`}
             aria-label={unreadCount > 0 ? `Notifications (${unreadCount} unread)` : 'Notifications'}
           >
-            <Bell className="h-5 w-5" aria-hidden="true" />
+            <NotificationBellIcon className="h-7 w-7" />
             <AnimatePresence initial={false}>
               {unreadCount > 0 && (
                 <motion.span

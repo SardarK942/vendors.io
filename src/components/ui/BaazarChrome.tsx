@@ -26,11 +26,16 @@ interface MenuItem {
 const CASCADE = ['#F4ECDC', '#2E3DA3']; // cream-soft → indigo
 const ACCENT = '#D1006C'; // hot-pink
 const INK = '#1c1816';
+const CREAM = '#FBF6EC';
 
-function BaazarWordmark() {
+function BaazarWordmark({ light = false }: { light?: boolean }) {
   return (
     <Link href="/" className="flex items-center" aria-label="Baazar home">
-      <span className="font-display text-2xl font-medium lowercase tracking-tight text-ink">
+      <span
+        className={`font-display text-3xl font-medium lowercase tracking-tight transition-colors duration-300 sm:text-4xl ${
+          light ? 'text-cream' : 'text-ink'
+        }`}
+      >
         baazar<span className="text-hot-pink">.</span>
       </span>
     </Link>
@@ -42,6 +47,22 @@ export function BaazarChrome() {
   const [user, setUser] = useState<SupabaseUser | null>(null);
   const [businessState, setBusinessState] = useState<BusinessesResponse | null>(null);
   const supabase = useMemo(() => createClient(), []);
+
+  // Homepage has a full-bleed video hero the header floats over: render the
+  // logo + menu light while scrolled over the hero, dark once past it.
+  const isHome = pathname === '/';
+  const [overHero, setOverHero] = useState(isHome);
+  useEffect(() => {
+    if (!isHome) {
+      setOverHero(false);
+      return;
+    }
+    const onScroll = () => setOverHero(window.scrollY < window.innerHeight * 0.82);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [isHome]);
+  const light = isHome && overHero;
 
   useEffect(() => {
     const getUser = async () => {
@@ -125,7 +146,7 @@ export function BaazarChrome() {
             businesses={businessState.businesses}
           />
         )}
-        <NotificationBell userId={user.id} />
+        <NotificationBell userId={user.id} light={light} />
       </>
     ) : null;
 
@@ -139,10 +160,10 @@ export function BaazarChrome() {
       displayItemNumbering
       colors={CASCADE}
       accentColor={ACCENT}
-      menuButtonColor={INK}
+      menuButtonColor={light ? CREAM : INK}
       openMenuButtonColor={INK}
       changeMenuColorOnOpen={false}
-      logo={<BaazarWordmark />}
+      logo={<BaazarWordmark light={light} />}
       headerExtras={headerExtras}
     />
   );
