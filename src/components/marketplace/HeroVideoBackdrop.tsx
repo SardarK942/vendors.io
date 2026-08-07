@@ -27,17 +27,17 @@ export function HeroVideoBackdrop() {
   }, []);
 
   // Track window scroll directly (robust — the hero sits at the top of the page).
-  // As you scroll the first ~700px, the media drifts down up to 40vh, so it lags
-  // the page markedly for a prominent parallax. vh units keep it proportional
-  // across viewport heights; bounded to the 45% top overscan → no edge gap.
+  // Small drift (12vh) so the media barely lags the page → subtle parallax with
+  // near-natural framing (only ~14% over-scan → minimal zoom). vh units keep it
+  // proportional across viewport heights; bounded to the top over-scan → no gap.
   const { scrollY } = useScroll();
-  const yRaw = useTransform(scrollY, [0, 700], ['0vh', '40vh']);
+  const yRaw = useTransform(scrollY, [0, 700], ['0vh', '12vh']);
 
   return (
     <div aria-hidden className="absolute inset-0 -z-10 overflow-hidden bg-ink">
       <motion.div
         style={{ y: reducedMotion ? 0 : yRaw }}
-        className="absolute inset-x-0 top-[-45%] h-[190%] will-change-transform"
+        className="absolute inset-x-0 top-[-14%] h-[116%] will-change-transform"
       >
         {reducedMotion ? (
           // eslint-disable-next-line @next/next/no-img-element
