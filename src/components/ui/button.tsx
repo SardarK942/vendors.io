@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Slot } from '@radix-ui/react-slot';
+import { Slot, Slottable } from '@radix-ui/react-slot';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
@@ -162,18 +162,11 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       return icon;
     };
 
-    const content = isLoading ? (
-      <>
-        <Spinner className="size-3.5" />
-        {showTextWhileLoading && children}
-      </>
-    ) : (
-      <>
-        {renderIcon(iconLeading)}
-        {children}
-        {renderIcon(iconTrailing)}
-      </>
-    );
+    // Render children through <Slottable> so that with asChild the button's
+    // props/className merge onto the child element (<a>/<Link>) even though
+    // icons wrap it. (A plain fragment child breaks Radix Slot's prop merge —
+    // it can't clone a fragment — which left asChild buttons unstyled.)
+    const showChildren = !isLoading || showTextWhileLoading;
 
     return (
       <Comp
@@ -191,7 +184,9 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         aria-label={ariaLabel}
         {...props}
       >
-        {content}
+        {isLoading ? <Spinner className="size-3.5" /> : renderIcon(iconLeading)}
+        {asChild || showChildren ? <Slottable>{children}</Slottable> : null}
+        {isLoading ? null : renderIcon(iconTrailing)}
       </Comp>
     );
   }
