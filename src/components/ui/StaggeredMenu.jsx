@@ -72,9 +72,17 @@ export const StaggeredMenu = ({
       if (preContainer) {
         gsap.set(preContainer, { xPercent: 0, opacity: 1 });
       }
-      // "Stairs" — two short horizontal lines offset into a descending step.
-      gsap.set(plusH, { transformOrigin: '50% 50%', rotate: 0, x: -3.5, y: -3.5, scaleX: 0.55 });
-      gsap.set(plusV, { transformOrigin: '50% 50%', rotate: 0, x: 3.5, y: 3.5, scaleX: 0.55 });
+      // Right-aligned two-bar menu icon: a longer thin bar on top, a shorter
+      // thicker (rounded) bar below — both aligned to the right edge.
+      gsap.set(plusH, { transformOrigin: '100% 50%', rotate: 0, x: 0, y: -3, scaleX: 1, scaleY: 1 });
+      gsap.set(plusV, {
+        transformOrigin: '100% 50%',
+        rotate: 0,
+        x: 0,
+        y: 3,
+        scaleX: 0.58,
+        scaleY: 2.2,
+      });
       gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
       gsap.set(textInner, { yPercent: 0 });
       if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: menuButtonColor });
