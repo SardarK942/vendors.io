@@ -146,7 +146,7 @@ export function BaazarChrome() {
             businesses={businessState.businesses}
           />
         )}
-        <NotificationBell userId={user.id} />
+        <NotificationBell userId={user.id} light={light} />
       </>
     ) : null;
 
