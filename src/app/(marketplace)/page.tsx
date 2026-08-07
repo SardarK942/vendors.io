@@ -3,6 +3,9 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { HomepageHero } from '@/components/marketplace/HomepageHero';
 import { CategoryHoverExpand } from '@/components/marketplace/CategoryHoverExpand';
 import { CategoryHoverExpandMobile } from '@/components/marketplace/CategoryHoverExpandMobile';
+import { HowItWorks } from '@/components/marketplace/HowItWorks';
+import { WhyCouplesChoose } from '@/components/marketplace/WhyCouplesChoose';
+import { VendorSpotlight } from '@/components/marketplace/VendorSpotlight';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
 import { getCategoryVendorCounts } from '@/lib/vendor-categories/queries';
 
@@ -76,30 +79,57 @@ export default async function HomePage() {
         </a>
       </p>
 
-      {/* Trust Signals — pre-M+, deferred refresh per spec */}
-      <section className="mx-auto max-w-[1280px] rounded-xl bg-muted/50 px-6 py-12 lg:px-14">
-        <h2 className="mb-8 text-center text-2xl font-bold">Why Customers Trust Us</h2>
-        <div className="grid gap-8 sm:grid-cols-3">
-          <div className="text-center">
-            <CheckCircle className="mx-auto h-10 w-10 text-primary" />
-            <h3 className="mt-3 font-semibold">Verified Vendors</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Every vendor is verified. Real businesses, real portfolios, real pricing.
-            </p>
-          </div>
-          <div className="text-center">
-            <Shield className="mx-auto h-10 w-10 text-primary" />
-            <h3 className="mt-3 font-semibold">Secure Deposits</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Small hold deposits powered by Stripe. Full refund if vendor doesn’t confirm.
-            </p>
-          </div>
-          <div className="text-center">
-            <Clock className="mx-auto h-10 w-10 text-primary" />
-            <h3 className="mt-3 font-semibold">Fast Response</h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Vendors must respond within 72 hours. No more waiting weeks for quotes.
-            </p>
+      {/* H3 — Book your perfect vendor in three simple steps. */}
+      <HowItWorks />
+
+      {/* H4 — Why couples choose Baazar + testimonials (curated placeholders). */}
+      <WhyCouplesChoose />
+
+      {/* H5 — Vendor Spotlight (real unclaimed vendor; hidden if none). */}
+      <VendorSpotlight />
+
+      {/* H6 — Why Customers Trust Us. Re-skinned to the M+ brand per the Figma
+          redesign (frame 113:86): full-bleed cream band with a rounded top,
+          serif ink heading, white circular icon badges with indigo chrome. */}
+      <section className="mt-14 rounded-t-[2.5rem] bg-cream-soft px-6 py-16 lg:px-14">
+        <div className="mx-auto max-w-[1120px]">
+          <h2
+            className="mb-12 text-center font-serif font-bold tracking-[-0.02em] text-ink"
+            style={{ fontSize: 'clamp(28px, 3.5vw, 44px)' }}
+          >
+            Why Customers Trust Us
+          </h2>
+          <div className="grid gap-10 sm:grid-cols-3">
+            {[
+              {
+                Icon: CheckCircle,
+                title: 'Verified Vendors',
+                body: 'Every vendor is verified. Real businesses, real portfolios, real pricing.',
+              },
+              {
+                Icon: Shield,
+                title: 'Secure Deposits',
+                body: "Small hold deposits powered by Stripe. Full refund if the vendor doesn't confirm.",
+              },
+              {
+                Icon: Clock,
+                title: 'Fast Response',
+                body: 'Vendors must respond within 72 hours. No more waiting weeks for quotes.',
+              },
+            ].map(({ Icon, title, body }) => (
+              <div key={title} className="group text-center">
+                <div className="mx-auto flex size-16 items-center justify-center rounded-full bg-cream shadow-sm ring-1 ring-ink/5 transition duration-300 group-hover:-translate-y-1 group-hover:bg-hot-pink group-hover:shadow-pink group-hover:ring-hot-pink/30 motion-reduce:group-hover:translate-y-0">
+                  <Icon
+                    className="size-7 text-indigo transition-colors duration-300 group-hover:text-cream"
+                    strokeWidth={1.75}
+                  />
+                </div>
+                <h3 className="mt-5 text-xl font-semibold tracking-[-0.01em] text-ink">{title}</h3>
+                <p className="mx-auto mt-2 max-w-[34ch] text-base leading-[1.5] text-ink-muted">
+                  {body}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>

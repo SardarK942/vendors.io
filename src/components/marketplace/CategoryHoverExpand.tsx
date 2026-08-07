@@ -141,22 +141,26 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                         >
                           Vendors are joining the platform.
                         </motion.p>
-                        <motion.a
-                          href="#newsletter"
+                        <motion.button
+                          type="button"
                           className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm hover:bg-cream/25"
                           initial={{ opacity: 0, y: 6 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0 }}
                           transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.4 }}
                           onClick={(e) => {
+                            // Not a link — scroll to the newsletter. stopPropagation keeps
+                            // the click from bubbling to the card's <Link> (avoids a nested
+                            // interactive element / hydration error and an accidental nav).
                             e.preventDefault();
+                            e.stopPropagation();
                             document.querySelector('footer')?.scrollIntoView({
                               behavior: reducedMotion ? 'auto' : 'smooth',
                             });
                           }}
                         >
                           Get notified <ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
-                        </motion.a>
+                        </motion.button>
                       </>
                     ) : (
                       <>

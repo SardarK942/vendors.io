@@ -1,6 +1,6 @@
 import { parseTokenString } from '../../../../scripts/scraper/lib/claim-token';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { SignupForm } from './signup-form';
+import { SignupExperience } from './signup-experience';
 import type { UserRole } from '@/types';
 
 interface Props {
@@ -14,6 +14,13 @@ export default async function SignupPage({ searchParams }: Props) {
 
   let claimContext: { businessName: string } | null = null;
   let prefilledRole: UserRole | null = null;
+
+  // Marketing links can preselect a role via ?role=vendor|couple (e.g. /join-vendor
+  // → /signup?role=vendor). This preselects the form + brand panel but does NOT lock
+  // the role picker — only a claim token locks it (handled below, and it wins).
+  if (params.role === 'vendor' || params.role === 'couple') {
+    prefilledRole = params.role;
+  }
 
   // If the user arrived here from a /claim/<token> redirect, decode the token
   // server-side to look up the business name. The vendor row id is encoded
@@ -47,6 +54,10 @@ export default async function SignupPage({ searchParams }: Props) {
   }
 
   return (
-    <SignupForm returnTo={returnTo} prefilledRole={prefilledRole} claimContext={claimContext} />
+    <SignupExperience
+      returnTo={returnTo}
+      prefilledRole={prefilledRole}
+      claimContext={claimContext}
+    />
   );
 }
