@@ -81,13 +81,8 @@
 }
 
 .sm-toggle-textWrap {
-  position: relative;
-  display: inline-block;
-  height: 1em;
-  overflow: hidden;
-  white-space: nowrap;
-  width: var(--sm-toggle-width, auto);
-  min-width: var(--sm-toggle-width, auto);
+  /* Icon-only toggle — the "Menu"/"Close" label is hidden per the header redesign. */
+  display: none;
 }
 
 .sm-toggle-textInner {

@@ -18,7 +18,7 @@ export interface HomepageHeroProps {
  */
 export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
   return (
-    <section className="relative isolate mx-[calc(50%-50vw)] flex min-h-[88svh] w-screen items-center overflow-hidden">
+    <section className="relative isolate mx-[calc(50%-50vw)] -mt-20 flex min-h-[100svh] w-screen items-center overflow-hidden pt-20">
       <HeroVideoBackdrop />
 
       <div className="mx-auto w-full max-w-[1280px] px-6 py-20 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] lg:px-14 lg:py-28">
