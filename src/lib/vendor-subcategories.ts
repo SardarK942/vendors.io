@@ -22,11 +22,25 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'appetizer', label: 'Appetizer cart' },
     { slug: 'favor_gift', label: 'Favor / gift cart' },
   ],
+  photography: [
+    { slug: 'wedding_day', label: 'Wedding-day coverage' },
+    { slug: 'couple_engagement', label: 'Couple & engagement shoots' },
+    { slug: 'portrait_studio', label: 'Portrait & studio sessions' },
+    { slug: 'other_events', label: 'Other events & parties' },
+  ],
+  catering: [
+    { slug: 'full_service', label: 'Full-service catering' },
+    { slug: 'cakes', label: 'Cakes' },
+    { slug: 'dessert_tables', label: 'Dessert tables & sweets' },
+    { slug: 'grazing_charcuterie', label: 'Grazing & charcuterie' },
+  ],
 };
 
 /** Heading text shown in the marketplace filter sheet's subcategory section. */
 export const SUBCATEGORY_SECTION_LABEL: Record<string, string> = {
   carts: 'Cart type',
+  photography: 'Photography type',
+  catering: 'Catering type',
 };
 
 export function getSubcategoriesForCategory(

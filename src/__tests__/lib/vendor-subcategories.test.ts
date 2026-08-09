@@ -27,8 +27,8 @@ describe('getSubcategoriesForCategory', () => {
   });
 
   it('returns an empty array for categories without subcategories', () => {
-    expect(getSubcategoriesForCategory('photography')).toEqual([]);
     expect(getSubcategoriesForCategory('dj')).toEqual([]);
+    expect(getSubcategoriesForCategory('videography')).toEqual([]);
   });
 
   it('returns an empty array for null / undefined / unknown', () => {
@@ -49,12 +49,32 @@ describe('validSubcategorySlugs', () => {
   });
 
   it('returns an empty Set for categories without subcategories', () => {
-    expect(validSubcategorySlugs('photography').size).toBe(0);
+    expect(validSubcategorySlugs('dj').size).toBe(0);
   });
 });
 
 describe('SUBCATEGORY_SECTION_LABEL', () => {
   it('labels the carts section as "Cart type"', () => {
     expect(SUBCATEGORY_SECTION_LABEL.carts).toBe('Cart type');
+  });
+});
+
+describe('photography + catering subtypes', () => {
+  it('exposes photography subtypes', () => {
+    const slugs = getSubcategoriesForCategory('photography').map((s) => s.slug);
+    expect(slugs).toEqual(['wedding_day', 'couple_engagement', 'portrait_studio', 'other_events']);
+    expect(SUBCATEGORY_SECTION_LABEL.photography).toBe('Photography type');
+  });
+
+  it('exposes catering subtypes', () => {
+    const slugs = getSubcategoriesForCategory('catering').map((s) => s.slug);
+    expect(slugs).toEqual(['full_service', 'cakes', 'dessert_tables', 'grazing_charcuterie']);
+    expect(SUBCATEGORY_SECTION_LABEL.catering).toBe('Catering type');
+  });
+
+  it('validates slugs per category', () => {
+    expect(validSubcategorySlugs('photography').has('wedding_day')).toBe(true);
+    expect(validSubcategorySlugs('photography').has('cakes')).toBe(false);
+    expect(validSubcategorySlugs('videography').size).toBe(0);
   });
 });
