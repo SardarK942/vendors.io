@@ -38,27 +38,38 @@ test.describe('notifications — F end-to-end', () => {
         guest_count: 100,
         couple_full_name: 'E2E Couple',
         couple_contact_phone: '(312) 555-0100',
-        events: [{
-          sequence: 1, event_date: eventDate,
-          event_start_time: `${eventDate}T16:00:00Z`,
-          event_end_time: `${eventDate}T22:00:00Z`,
-          event_type_label: 'Wedding Ceremony',
-          address_line_1: '140 E Walton Pl', city: 'Chicago', state: 'IL', postal_code: '60611',
-          location_overridden: false,
-        }],
+        events: [
+          {
+            sequence: 1,
+            event_date: eventDate,
+            event_start_time: `${eventDate}T16:00:00Z`,
+            event_end_time: `${eventDate}T22:00:00Z`,
+            event_type_label: 'Wedding Ceremony',
+            address_line_1: '140 E Walton Pl',
+            city: 'Chicago',
+            state: 'IL',
+            postal_code: '60611',
+            location_overridden: false,
+          },
+        ],
       },
     });
     expect(res.status()).toBe(201);
 
     // Verify notification row appears for vendor
     const supabase = getServiceClient();
-    await expect.poll(async () => {
-      const { data } = await supabase
-        .from('notifications')
-        .select('id, type, title')
-        .eq('user_id', vendor!.id);
-      return data;
-    }, { timeout: 5_000 }).toHaveLength(1);
+    await expect
+      .poll(
+        async () => {
+          const { data } = await supabase
+            .from('notifications')
+            .select('id, type, title')
+            .eq('user_id', vendor!.id);
+          return data;
+        },
+        { timeout: 5_000 }
+      )
+      .toHaveLength(1);
 
     const { data: notif } = await supabase
       .from('notifications')
@@ -66,7 +77,7 @@ test.describe('notifications — F end-to-end', () => {
       .eq('user_id', vendor.id)
       .single();
     expect(notif?.type).toBe('booking_request_received');
-    expect(notif?.body).toContain('Wedding Coverage');  // package name
+    expect(notif?.body).toContain('E2E Package'); // seeded package name
 
     await coupleCtx.close();
 
@@ -81,7 +92,9 @@ test.describe('notifications — F end-to-end', () => {
 
     // Click bell → dropdown shows the notification
     await vendorPage.getByLabel(/Notifications.*1 unread/i).click();
-    await expect(vendorPage.getByText(/new booking request/i).first()).toBeVisible();
+    // Freshly seeded vendors always have first_booking_at = null, so the title
+    // is the first-booking variant ("🎉 Your first booking request!").
+    await expect(vendorPage.getByText(/first booking request/i).first()).toBeVisible();
 
     await vendorCtx.close();
   });
@@ -106,13 +119,18 @@ test.describe('notifications — F end-to-end', () => {
     await page.getByRole('button', { name: /mark all read/i }).click();
 
     // Poll DB until all are marked read
-    await expect.poll(async () => {
-      const { data } = await supabase
-        .from('notifications')
-        .select('read_at')
-        .eq('user_id', vendor!.id);
-      return data?.every((n) => n.read_at !== null);
-    }, { timeout: 5_000 }).toBe(true);
+    await expect
+      .poll(
+        async () => {
+          const { data } = await supabase
+            .from('notifications')
+            .select('read_at')
+            .eq('user_id', vendor!.id);
+          return data?.every((n) => n.read_at !== null);
+        },
+        { timeout: 5_000 }
+      )
+      .toBe(true);
 
     await ctx.close();
   });

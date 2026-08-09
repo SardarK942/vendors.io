@@ -36,7 +36,8 @@ test.describe('Vendor profile — zero packages fallback', () => {
 
     // ── Request-a-quote button present and clickable ────────────────────────
     await stickyCard.getByRole('button', { name: /request a quote/i }).click();
-    await page.waitForURL(/\/request/);
+    // v2 flow (PR #104) opens an in-page multi-step modal instead of navigating to /request.
+    await expect(page.getByRole('dialog', { name: /custom quote request/i })).toBeVisible();
 
     await ctx.close();
   });

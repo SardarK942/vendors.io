@@ -16,6 +16,9 @@ vi.mock('@/services/availability.service', () => ({
   wouldExceedCapacity: vi
     .fn()
     .mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
+  wouldExceedCapacityForEvent: vi
+    .fn()
+    .mockResolvedValue({ wouldExceed: false, capacity: 1, overlapping: 0 }),
 }));
 
 // Mock supabase server module — createServiceRoleClient is used by the vendor
@@ -583,8 +586,25 @@ describe('G5.1 — createBooking capacity pre-check', () => {
     ],
   };
 
+  it('returns 400 for a past-dated event (defense-in-depth)', async () => {
+    const supabase = makeSupabase();
+    const result = await createBooking(supabase as never, 'user-couple', {
+      ...baseInput,
+      events: [
+        {
+          ...baseInput.events[0],
+          event_date: '2020-01-01',
+          event_start_time: '2020-01-01T16:00:00Z',
+          event_end_time: '2020-01-01T22:00:00Z',
+        },
+      ],
+    });
+    expect(result.status).toBe(400);
+    expect(result.error).toContain('past');
+  });
+
   it('returns 409 when wouldExceedCapacity returns wouldExceed=true', async () => {
-    vi.mocked(availabilityService.wouldExceedCapacity).mockResolvedValueOnce({
+    vi.mocked(availabilityService.wouldExceedCapacityForEvent).mockResolvedValueOnce({
       wouldExceed: true,
       capacity: 1,
       overlapping: 1,
@@ -599,7 +619,7 @@ describe('G5.1 — createBooking capacity pre-check', () => {
   });
 
   it('proceeds normally when wouldExceedCapacity returns wouldExceed=false', async () => {
-    vi.mocked(availabilityService.wouldExceedCapacity).mockResolvedValueOnce({
+    vi.mocked(availabilityService.wouldExceedCapacityForEvent).mockResolvedValueOnce({
       wouldExceed: false,
       capacity: 1,
       overlapping: 0,

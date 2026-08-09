@@ -69,9 +69,10 @@ test.describe('Bucket A — form errors + address optional', () => {
     // Click Next without fixing the failing fields.
     await page.getByRole('button', { name: /next/i }).click();
 
-    // Summary count: flexible regex matches "1 field needs attention" (after T5)
-    // or "2 fields need attention" (today).
-    await expect(page.getByText(/\d+ fields? needs? attention/i)).toBeVisible({ timeout: 10_000 });
+    // The summary banner only renders with >= 2 errors (StepBasics.tsx). Bio's
+    // min(50) hard-validation was dropped (bio is now a soft hint), so clearing
+    // name + bio yields a single error and no summary banner — assert the inline
+    // Business-name error only.
 
     // Inline error below Business name: Zod v4 default message for min(1)
     await expect(
@@ -105,7 +106,7 @@ test.describe('Bucket A — form errors + address optional', () => {
     // The skip checkbox label in StepLocation:
     //   "I don't have a fixed address (I travel to clients)"
     // Rendered as a plain <input type="checkbox"> inside a <label> element.
-    const skipCheckbox = page.getByLabel(/I don't have a fixed address/i);
+    const skipCheckbox = page.getByLabel(/I don.t have a fixed address/i);
     await skipCheckbox.check();
 
     // Click Next — with skipAddress=true the place state is cleared to empty

@@ -29,7 +29,7 @@ test.describe('Bucket J — just browsing path', () => {
     await expect(page.getByText(/tell us about your event/i)).not.toBeVisible();
 
     // Step 2 — generic vendor preview should appear
-    await expect(page.getByText(/here's what we found/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/here.s what we found/i)).toBeVisible({ timeout: 10_000 });
 
     // [data-vendor-slug] cards rendered (0 OK in empty CI DB)
     const vendorCards = page.locator('[data-vendor-slug]');

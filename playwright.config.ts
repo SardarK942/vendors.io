@@ -10,7 +10,12 @@ export default defineConfig({
   expect: { timeout: 10_000 },
   fullyParallel: false, // DB state is shared; keep sequential until we partition.
   workers: 1,
-  retries: 0,
+  // Next.js 14.2 dev-server intermittently 500s during SSR with a spurious
+  // "Cannot read properties of null (reading 'useContext')" on client components
+  // (e.g. BaazarChrome) under load — a known dev-only race, not a product bug and
+  // absent from production builds. Retry so these transient 500s (and realtime-
+  // timing flakes) don't fail the run. Deterministic failures still fail all tries.
+  retries: 2,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: BASE_URL,

@@ -2,18 +2,40 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   buildHoldRange,
+  tstzRangeFromTimestamps,
   checkOverlap,
   wouldExceedCapacity,
   getUnavailableRanges,
 } from '@/services/availability.service';
+
+describe('tstzRangeFromTimestamps', () => {
+  it('keeps an overnight (cross-midnight) event a valid range', () => {
+    // A same-date reconstruction (buildHoldRange with date + HH:mm) would yield
+    // lower 20:00 > upper 01:00 on the same day → Postgres 22000. Full timestamps
+    // preserve the real instants, so lower < upper across the day boundary.
+    expect(tstzRangeFromTimestamps('2026-08-15T20:00:00Z', '2026-08-16T01:00:00Z')).toBe(
+      '["2026-08-15T20:00:00.000+00:00","2026-08-16T01:00:00.000+00:00")'
+    );
+  });
+
+  it('uses +00:00 (not Z) for Postgres literal parsing', () => {
+    const r = tstzRangeFromTimestamps('2026-08-15T10:00:00Z', '2026-08-15T12:00:00Z');
+    expect(r).not.toContain('Z');
+    expect(r).toContain('+00:00');
+  });
+});
 
 // ---------------------------------------------------------------------------
 // Mock factory
 // ---------------------------------------------------------------------------
 
 function mockSupabase(
-  holdsResponse: { data: { id?: string; hold_range?: string }[]; error: null } | { data: null; error: { message: string } },
-  profileResponse?: { data: { concurrent_capacity: number }; error: null } | { data: null; error: { message: string } }
+  holdsResponse:
+    | { data: { id?: string; hold_range?: string }[]; error: null }
+    | { data: null; error: { message: string } },
+  profileResponse?:
+    | { data: { concurrent_capacity: number }; error: null }
+    | { data: null; error: { message: string } }
 ) {
   return {
     from: vi.fn((table: string) => {

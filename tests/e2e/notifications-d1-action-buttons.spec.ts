@@ -271,52 +271,19 @@ test.describe('D.1 — action buttons render correctly per notification type', (
         await page.waitForLoadState('networkidle');
         await dismissWelcomeModal(page);
 
-        // Seed the notification NOW — realtime subscription will pick it up.
+        // Seed the notification, then load the notifications page. The page
+        // fetches notifications on load, so the seeded row (with its action
+        // buttons) renders deterministically — no dependency on the realtime
+        // bell badge + dropdown open/close timing, which was flaky.
         await seedNotification(userId, c.type, metadata);
-
-        // ── Open the bell dropdown ────────────────────────────────────────────
-        // Bell aria-label: "Notifications (N unread)" when N > 0.
-        // The realtime INSERT updates the badge within a few seconds.
-        // We wait up to 20 s for the badge to appear.
-        const bellWithUnread = page.getByRole('button', {
-          name: /Notifications \(\d+ unread\)/i,
-        });
-        const plainBell = page.getByRole('button', { name: /^Notifications$/i });
-
-        const bellVisible = await bellWithUnread
-          .waitFor({ state: 'visible', timeout: 20_000 })
-          .then(() => true)
-          .catch(() => false);
-
-        if (bellVisible) {
-          await bellWithUnread.click({ force: true });
-        } else {
-          // Realtime may be slow — fall back to page reload so the initial fetch picks it up.
-          await page.reload({ waitUntil: 'networkidle' });
-          await dismissWelcomeModal(page);
-
-          const bellAfterReload = await bellWithUnread
-            .waitFor({ state: 'visible', timeout: 15_000 })
-            .then(() => true)
-            .catch(() => false);
-
-          if (bellAfterReload) {
-            await bellWithUnread.click({ force: true });
-          } else {
-            // Last resort: try plain bell (no unread badge — maybe already marked read?)
-            const plainVisible = await plainBell
-              .waitFor({ state: 'visible', timeout: 5_000 })
-              .then(() => true)
-              .catch(() => false);
-            if (plainVisible) {
-              await plainBell.click({ force: true });
-            } else {
-              throw new Error(
-                `Bell button not visible for type=${c.type} actor=${c.actor}. ` +
-                  `Check that the seeded user sees notifications.`
-              );
-            }
-          }
+        await page.goto('/dashboard/notifications');
+        await page.waitForLoadState('networkidle');
+        await dismissWelcomeModal(page);
+        // Notifications split across "Action needed" / "Updates" tabs by
+        // priority. If the default (Action needed) tab has no action buttons,
+        // the seeded notification is under Updates — switch tabs.
+        if ((await page.getByTestId('notification-actions').count()) === 0) {
+          await page.getByRole('button', { name: /updates/i }).click();
         }
 
         // ── Assert primary action link label ──────────────────────────────────
@@ -331,7 +298,7 @@ test.describe('D.1 — action buttons render correctly per notification type', (
         });
         await expect(
           actionLink,
-          `[${c.type}] primary action link "${c.primaryLabel}" must be visible in dropdown`
+          `[${c.type}] primary action link "${c.primaryLabel}" must be visible on the notifications page`
         ).toBeVisible({ timeout: 6_000 });
 
         // ── Assert href ───────────────────────────────────────────────────────

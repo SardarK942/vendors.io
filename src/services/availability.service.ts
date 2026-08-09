@@ -96,6 +96,56 @@ export async function wouldExceedCapacity(
 }
 
 /**
+ * Postgres tstzrange literal from two full ISO timestamps.
+ * Unlike buildHoldRange (which reconstructs from a single date + HH:mm and so
+ * breaks for events that span midnight — start on day D, end on day D+1 →
+ * `lower > upper` → SQL 22000), this preserves the real instants, so an
+ * overnight event yields a valid range. `+00:00` (not `Z`) for literal parsing.
+ */
+export function tstzRangeFromTimestamps(startISO: string, endISO: string): string {
+  const lo = new Date(startISO).toISOString().replace('Z', '+00:00');
+  const hi = new Date(endISO).toISOString().replace('Z', '+00:00');
+  return `["${lo}","${hi}")`;
+}
+
+/**
+ * Capacity pre-check for a proposed event given full ISO start/end timestamps.
+ *
+ * MUST be called with a service-role client. vendor_calendar_holds RLS only
+ * exposes holds to the owning vendor, so a couple's session sees none and the
+ * check would always pass — silently defeating double-booking prevention on
+ * booking creation (the couple is the one hitting POST /api/bookings). Only the
+ * accept-time capacity trigger would then guard, which is too late.
+ */
+export async function wouldExceedCapacityForEvent(
+  serviceClient: Sb,
+  vendorProfileId: string,
+  startISO: string,
+  endISO: string
+): Promise<{ wouldExceed: boolean; capacity: number; overlapping: number }> {
+  const range = tstzRangeFromTimestamps(startISO, endISO);
+  const [profileResult, overlapResult] = await Promise.all([
+    serviceClient
+      .from('vendor_profiles')
+      .select('concurrent_capacity')
+      .eq('id', vendorProfileId)
+      .single(),
+    serviceClient
+      .from('vendor_calendar_holds')
+      .select('id')
+      .eq('vendor_profile_id', vendorProfileId)
+      .filter('hold_range', 'ov', range),
+  ]);
+
+  if (profileResult.error) throw profileResult.error;
+  if (overlapResult.error) throw overlapResult.error;
+  const capacity = (profileResult.data as { concurrent_capacity: number }).concurrent_capacity;
+  const overlapping = (overlapResult.data ?? []).length;
+
+  return { wouldExceed: overlapping >= capacity, capacity, overlapping };
+}
+
+/**
  * Get all holds for a vendor within a date window, used for the couple-side
  * availability calendar. Returns raw hold_range strings; the caller aggregates
  * them per date for display (privacy-preserving: no booking vs vendor-blocked

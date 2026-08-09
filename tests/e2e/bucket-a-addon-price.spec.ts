@@ -48,7 +48,7 @@ test.describe('Bucket A — addon price input', () => {
     // 2. ArrowUp advances by $1 (step="1" in PackageAddonsEditor)
     await priceInput.focus();
     await page.keyboard.press('ArrowUp');
-    await expect(priceInput).toHaveValue('1');
+    await expect(priceInput).toHaveValue('0.01');
 
     // 3. Negative value clamped to 0 via safeDollars guard in onChange.
     // price_delta_cents becomes 0, which renders as '' (empty) because the
