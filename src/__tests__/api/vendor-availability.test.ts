@@ -19,6 +19,9 @@ vi.mock('@/lib/logger', () => ({
 
 vi.mock('@/lib/supabase/server', () => ({
   createServerSupabaseClient: vi.fn(),
+  // The route reads holds with a service-role client (RLS bypass); getUnavailableRanges
+  // is mocked below, so this just needs to exist.
+  createServiceRoleClient: vi.fn(() => ({})),
 }));
 
 vi.mock('@/services/availability.service', () => ({
@@ -43,7 +46,10 @@ function buildSupabase(vendorRow: { id: string; concurrent_capacity: number } | 
           eq: () => ({
             eq: () => ({
               maybeSingle: () =>
-                Promise.resolve({ data: vendorRow, error: vendorRow ? null : { message: 'not found' } }),
+                Promise.resolve({
+                  data: vendorRow,
+                  error: vendorRow ? null : { message: 'not found' },
+                }),
             }),
           }),
         }),
