@@ -30,7 +30,7 @@ test.describe('settings — password change', () => {
 
   test('wrong current password → error toast', async ({ page }) => {
     await page.getByLabel('Current password').fill('definitely-wrong');
-    await page.getByLabel('New password').fill('newpass1234');
+    await page.getByLabel('New password', { exact: true }).fill('newpass1234');
     await page.getByLabel('Confirm new password').fill('newpass1234');
     await page.getByRole('button', { name: /Update password/ }).click();
     await expect(page.getByText(/Current password is incorrect/i)).toBeVisible();
@@ -38,7 +38,7 @@ test.describe('settings — password change', () => {
 
   test('mismatched confirm → error toast without hitting API', async ({ page }) => {
     await page.getByLabel('Current password').fill('anything');
-    await page.getByLabel('New password').fill('newpass1234');
+    await page.getByLabel('New password', { exact: true }).fill('newpass1234');
     await page.getByLabel('Confirm new password').fill('newpass9999');
     await page.getByRole('button', { name: /Update password/ }).click();
     await expect(page.getByText(/don't match/i)).toBeVisible();

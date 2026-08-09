@@ -8,7 +8,16 @@
  * needed; this spec proves the new inbox surface lights up end-to-end.
  */
 import { test, expect } from '@playwright/test';
-import { seedVendor, seedCouple, seedPackage, seedPendingBooking, cleanup, type TestVendor, type TestUser, type SeededPackage } from './helpers/seed';
+import {
+  seedVendor,
+  seedCouple,
+  seedPackage,
+  seedPendingBooking,
+  cleanup,
+  type TestVendor,
+  type TestUser,
+  type SeededPackage,
+} from './helpers/seed';
 import { loginAs } from './helpers/login';
 
 test.describe('vendor inbox', () => {
@@ -57,6 +66,6 @@ test.describe('vendor inbox', () => {
     await row.click();
 
     // Panel announces itself as a dialog with "Booking details"
-    await expect(page.getByRole('dialog', { name: /booking details/i })).toBeVisible();
+    await expect(page.getByRole('complementary', { name: /booking detail panel/i })).toBeVisible();
   });
 });

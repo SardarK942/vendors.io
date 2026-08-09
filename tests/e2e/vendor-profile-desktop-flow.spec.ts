@@ -44,7 +44,7 @@ test.describe('Vendor profile — desktop flow', () => {
     await expect(stickyCard.getByText(/\$60/)).toBeVisible(); // 5% of $1,200 = $60
 
     // ── "compare all 3 packages" link scrolls packages section into view ────
-    await stickyCard.getByText(/compare all 3 packages/i).click();
+    await stickyCard.getByText(/compare all \d+ packages/i).click();
 
     const packagesSection = page.locator('#packages-section');
 

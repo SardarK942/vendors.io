@@ -51,7 +51,7 @@ test.describe('unclaimed listing surface', () => {
 
     await page.goto(`/vendors/${slug}`);
     await expect(page.getByRole('heading', { name: /E2E Unclaimed Cart/i })).toBeVisible();
-    await expect(page.getByText(/hasn't joined Baazar/i)).toBeVisible();
+    await expect(page.getByText(/hasn.t joined Baazar/i)).toBeVisible();
 
     // Server-side track fires from useEffect; allow a moment
     await page.waitForTimeout(500);

@@ -54,7 +54,7 @@ test.describe('Bucket J — customer email/password signup flow', () => {
     await page.getByRole('button', { name: /continue/i }).click();
 
     // Step 2 — here's what we found (vendor preview)
-    await expect(page.getByText(/here's what we found/i)).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText(/here.s what we found/i)).toBeVisible({ timeout: 10_000 });
 
     // Vendor cards: the preview endpoint returns up to 3. Flexible match ≥ 1 card
     // in case the test DB has fewer than 3 published vendors.

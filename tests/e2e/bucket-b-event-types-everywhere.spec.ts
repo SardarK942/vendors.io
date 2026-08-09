@@ -78,7 +78,10 @@ test.describe('Bucket B — all 20 event types in every picker', () => {
     await ctx.close();
   });
 
-  test('marketplace AllFiltersSheet shows full event type chip list with divider', async ({
+  // Skipped: EventTypesSection is intentionally hidden in AllFiltersSheet until
+  // served_event_types filtering is wired into applyVendorFilters (see
+  // AllFiltersSheet.tsx). Re-enable this test once that ships.
+  test.skip('marketplace AllFiltersSheet shows full event type chip list with divider', async ({
     browser,
   }) => {
     const ctx = await browser.newContext();

@@ -51,18 +51,24 @@ test.describe('package-driven booking flow — happy path', () => {
   });
 
   test('vendor profile renders Packages section with seeded package', async ({ page }) => {
-    vendor = await seedVendor({ chargesEnabled: true });
+    vendor = await seedVendor({ chargesEnabled: true, publish: true });
     const pkg = await seedPackage(vendor, {
       basePriceCents: 150_000,
       addons: [{ name: 'Drone footage', priceDeltaCents: 50_000 }],
     });
 
     await page.goto(`/vendors/${vendor.vendorSlug}`);
-    // The Packages section header + the seeded package card
-    await expect(page.getByRole('heading', { name: /packages/i })).toBeVisible();
-    await expect(page.getByText('E2E Package')).toBeVisible();
+    // The packages section header + the seeded package card. Packages render in
+    // both desktop and (CSS-hidden) mobile layouts, so scope to the visible one.
+    await expect(page.getByRole('heading', { name: /choose your package/i })).toBeVisible();
+    await expect(page.getByText('E2E Package').filter({ visible: true }).first()).toBeVisible();
     // Base price renders as $1,500
-    await expect(page.getByText(/\$1,500/)).toBeVisible();
+    await expect(
+      page
+        .getByText(/\$1,500/)
+        .filter({ visible: true })
+        .first()
+    ).toBeVisible();
     expect(pkg.id).toBeTruthy();
   });
 
@@ -156,6 +162,8 @@ test.describe('package-driven booking flow — happy path', () => {
     const acceptBtn = vendorPage.getByRole('button', { name: /accept at/i }).first();
     await expect(acceptBtn).toBeVisible();
     await acceptBtn.click();
+    // Accepting now goes through a confirmation dialog — confirm it.
+    await vendorPage.getByRole('button', { name: /^accept booking$/i }).click();
 
     // The accept route may redirect or render a toast — either way, verify DB.
     // Poll for status flip (the route returns quickly; UI may take a moment).

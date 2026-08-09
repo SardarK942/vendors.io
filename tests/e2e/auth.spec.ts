@@ -15,7 +15,7 @@ test.describe('auth', () => {
   test('couple login lands on dashboard', async ({ page }) => {
     couple = await seedCouple();
     await loginAs(page, couple);
-    await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /home/i })).toBeVisible();
     // Couple dashboard shows "Account Type: couple"
     await expect(page.getByText(/couple/i).first()).toBeVisible();
   });
@@ -23,9 +23,9 @@ test.describe('auth', () => {
   test('vendor login shows vendor-scoped dashboard', async ({ page }) => {
     vendor = await seedVendor({ chargesEnabled: true });
     await loginAs(page, vendor);
-    await expect(page.getByRole('heading', { name: /dashboard/i })).toBeVisible();
-    // EarningsCard is vendor-only
-    await expect(page.getByText(/pending|available|escrow/i).first()).toBeVisible();
+    await expect(page.getByRole('heading', { name: /home/i })).toBeVisible();
+    // Operations section is vendor-only (couples have no Operations block)
+    await expect(page.getByRole('heading', { name: /operations/i })).toBeVisible();
   });
 
   test('wrong password fails', async ({ page }) => {

@@ -61,7 +61,7 @@ test.describe('Bucket F — Money attribution dashboard', () => {
     await expect(page.getByText(/\$20 in bookings/i)).toBeVisible();
 
     // Honesty footnote
-    await expect(page.getByText(/doesn't track balance collection/i)).toBeVisible();
+    await expect(page.getByText(/doesn.t track balance collection/i)).toBeVisible();
 
     await ctx.close();
   });
