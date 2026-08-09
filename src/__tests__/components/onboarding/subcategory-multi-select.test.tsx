@@ -5,7 +5,7 @@ import { SubcategoryMultiSelect } from '@/components/onboarding/SubcategoryMulti
 describe('<SubcategoryMultiSelect />', () => {
   it('renders nothing for a category without subcategories', () => {
     const { container } = render(
-      <SubcategoryMultiSelect category="photography" selected={[]} onChange={() => {}} />
+      <SubcategoryMultiSelect category="videography" selected={[]} onChange={() => {}} />
     );
     expect(container.firstChild).toBeNull();
   });

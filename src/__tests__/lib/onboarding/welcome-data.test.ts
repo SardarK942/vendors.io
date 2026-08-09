@@ -52,7 +52,7 @@ describe('welcome-data', () => {
     }
   });
 
-  it('COMMISSION_CATEGORIES has 10 entries (13 total minus 3 Coming Soon)', () => {
-    expect(COMMISSION_CATEGORIES).toHaveLength(10);
+  it('COMMISSION_CATEGORIES has 12 entries (15 total minus 3 Coming Soon)', () => {
+    expect(COMMISSION_CATEGORIES).toHaveLength(12);
   });
 });
