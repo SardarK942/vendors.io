@@ -6,6 +6,8 @@ interface SavedVendorsContextValue {
   savedIds: Set<string>;
   toggle: (vendorId: string) => Promise<{ isFirstSave: boolean; wasSaved: boolean }>;
   isLoading: boolean;
+  /** Whether a user is signed in. Heart buttons route to /login when false. */
+  authenticated: boolean;
 }
 
 const SavedVendorsContext = React.createContext<SavedVendorsContextValue | null>(null);
@@ -91,7 +93,7 @@ export function SavedVendorsProvider({
   );
 
   return (
-    <SavedVendorsContext.Provider value={{ savedIds, toggle, isLoading }}>
+    <SavedVendorsContext.Provider value={{ savedIds, toggle, isLoading, authenticated }}>
       {children}
     </SavedVendorsContext.Provider>
   );
@@ -105,6 +107,7 @@ export function useSavedVendors(): SavedVendorsContextValue {
       savedIds: new Set(),
       toggle: async () => ({ isFirstSave: false, wasSaved: false }),
       isLoading: false,
+      authenticated: true,
     };
   }
   return ctx;

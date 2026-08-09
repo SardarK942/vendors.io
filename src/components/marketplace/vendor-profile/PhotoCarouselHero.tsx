@@ -2,6 +2,7 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Heart } from 'lucide-react';
 import { useSavedVendors } from '@/components/marketplace/SavedVendorsProvider';
@@ -21,8 +22,10 @@ export function PhotoCarouselHero({
 }: PhotoCarouselHeroProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const { savedIds, toggle } = useSavedVendors();
+  const { savedIds, toggle, authenticated } = useSavedVendors();
   const isSaved = savedIds.has(vendorId);
+  const router = useRouter();
+  const pathname = usePathname();
   const reducedMotion = useReducedMotion();
   const heartTransition = reducedMotion
     ? { duration: 0 }
@@ -41,6 +44,12 @@ export function PhotoCarouselHero({
     e.preventDefault();
     e.stopPropagation();
     if (!interactive) return;
+    // Logged-out visitors can't save (the endpoint 401s and the heart would
+    // falsely stick filled). Send them to sign in and return here.
+    if (!authenticated) {
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+      return;
+    }
     await toggle(vendorId);
   }
 
