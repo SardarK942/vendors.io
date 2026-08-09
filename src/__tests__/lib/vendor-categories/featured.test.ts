@@ -3,14 +3,15 @@ import { CATEGORIES_FEATURED, type FeaturedCategory } from '@/lib/vendor-categor
 import { VENDOR_CATEGORIES } from '@/lib/utils';
 
 describe('CATEGORIES_FEATURED', () => {
-  it('has exactly 13 entries', () => {
-    expect(CATEGORIES_FEATURED).toHaveLength(13);
+  it('has exactly 15 entries', () => {
+    expect(CATEGORIES_FEATURED).toHaveLength(15);
   });
 
   it('matches the locked bride-journey order', () => {
     expect(CATEGORIES_FEATURED.map((c) => c.slug)).toEqual([
       'photography',
       'videography',
+      'content_creation',
       'hair_makeup',
       'bridal_wear',
       'mehndi',
@@ -22,6 +23,7 @@ describe('CATEGORIES_FEATURED', () => {
       'decor',
       'venue',
       'invitations',
+      'gifts',
     ]);
   });
 
