@@ -38,7 +38,12 @@ export function formatPrice(cents: number): string {
  * is overridden in CSS so the highlight remains static.
  */
 export function scrollToPackages(): void {
-  const section = document.getElementById('packages-section');
+  // VendorProfile renders a #packages-section in BOTH the mobile (`md:hidden`)
+  // and desktop (`hidden md:block`) columns, so two elements share the id.
+  // getElementById returns the FIRST in DOM order (the mobile one), which is
+  // display:none on desktop → scrollIntoView no-ops. Pick the VISIBLE section.
+  const sections = Array.from(document.querySelectorAll<HTMLElement>('#packages-section'));
+  const section = sections.find((el) => el.offsetParent !== null) ?? sections[0] ?? null;
   if (!section) return;
   const prefersReducedMotion =
     typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;

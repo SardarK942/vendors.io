@@ -46,7 +46,9 @@ test.describe('Vendor profile — desktop flow', () => {
     // ── "compare all 3 packages" link scrolls packages section into view ────
     await stickyCard.getByText(/compare all \d+ packages/i).click();
 
-    const packagesSection = page.locator('#packages-section');
+    // Two #packages-section elements exist (mobile + desktop columns); scope to
+    // the visible (desktop) one for the viewport + downstream featured-card checks.
+    const packagesSection = page.locator('#packages-section:visible');
 
     // toBeInViewport is available in Playwright ≥ 1.43; fall back to evaluate if needed.
     const hasToBeInViewport =

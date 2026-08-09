@@ -46,7 +46,12 @@ test.describe('Bucket F — wizard is 6 steps', () => {
       timeout: 45_000,
       waitUntil: 'domcontentloaded',
     });
-    await expect(page.getByText('Step 6 of 6', { exact: true })).toBeVisible({ timeout: 15_000 });
+    // Step 6 is the Review page: unlike steps 1–5 (a bare "Step N of 6" pill),
+    // StepReview embeds the counter in a sentence ("Step 6 of 6 — check everything
+    // looks right…"). Match that visible sentence (regex bridges the em dash).
+    await expect(page.getByText(/Step 6 of 6.*check everything looks right/i)).toBeVisible({
+      timeout: 15_000,
+    });
 
     // /payment-mode redirects (server-side redirect → use domcontentloaded to avoid ERR_ABORTED)
     await page.goto('/dashboard/profile/setup/payment-mode', { waitUntil: 'domcontentloaded' });

@@ -29,7 +29,17 @@ test.describe('Bucket J — first save confetti toast', () => {
     const page = await ctx.newPage();
     await loginAs(page, couple);
 
+    // SavedVendorsProvider fires GET /api/users/me/saved on mount and overwrites
+    // its saved set with the response. On the shared test DB that GET can resolve
+    // AFTER our optimistic click, clobbering the save and reverting the heart.
+    // Await it before interacting (mirrors prod, where it always completes long
+    // before a user clicks).
+    const initialSavedFetch = page.waitForResponse(
+      (r) => r.url().includes('/api/users/me/saved') && r.request().method() === 'GET',
+      { timeout: 15_000 }
+    );
     await page.goto('/vendors');
+    await initialSavedFetch;
 
     // Wait for vendor grid to load — the vendor card for our seeded vendor
     const vendorCard = page.locator(`[data-vendor-slug="${vendor.vendorSlug}"]`);

@@ -94,16 +94,25 @@ test.describe('vendor onboarding wizard', () => {
       // ── Step 3: Online ────────────────────────────────────────────────────
       await page.getByLabel(/instagram handle/i).fill('e2e_henna_co');
       await page.getByRole('button', { name: /next/i }).click();
+      await expect(page).toHaveURL(/\/setup\/details/, { timeout: 10_000 });
+
+      // ── Step 4: Profile details (languages + years + response SLA) ─────────
+      // No external creds needed — drive the UI. All three fields are required
+      // by publishGateSchema, so they must be set before Review can publish.
+      await page.getByRole('button', { name: 'Hindi' }).click();
+      await page.getByLabel('Years in business').fill('10');
+      await page.getByRole('radio', { name: 'Within 24 hours' }).check();
+      await page.getByRole('button', { name: /continue/i }).click();
       await expect(page).toHaveURL(/\/setup\/portfolio/, { timeout: 10_000 });
 
-      // ── Step 4: Portfolio — API bypass (UploadThing needs network) ────────
+      // ── Step 5: Portfolio — API bypass (UploadThing needs network) ────────
       const portfolioRes = await page.request.patch('/api/vendor-profile/setup/portfolio', {
         data: { portfolioImages: ['https://utfs.io/f/e2e-fake-portfolio.jpg'] },
       });
       expect(portfolioRes.status()).toBe(200);
       await page.goto('/dashboard/profile/setup/review');
 
-      // ── Step 5: Review & publish ──────────────────────────────────────────
+      // ── Step 6: Review & publish ──────────────────────────────────────────
       await expect(page).toHaveURL(/\/setup\/review/, { timeout: 10_000 });
       await page.getByRole('button', { name: /publish profile/i }).click();
 
@@ -126,8 +135,10 @@ test.describe('vendor onboarding wizard', () => {
   test('prefilled profile (scraper output) → skips basics/online/portfolio, resumes at location', async ({
     page,
   }) => {
-    let vendor: ReturnType<typeof seedVendorWithPartialProfile> extends Promise<infer T> ? T : never;
-    // @ts-ignore — assigned below inside try
+    let vendor: ReturnType<typeof seedVendorWithPartialProfile> extends Promise<infer T>
+      ? T
+      : never;
+    // @ts-expect-error — assigned below inside try
     vendor = null;
 
     try {
@@ -149,7 +160,16 @@ test.describe('vendor onboarding wizard', () => {
       });
       expect(locationRes.status()).toBe(200);
 
-      // Navigate to review (basics/online/portfolio already populated)
+      // ── Fill profile details via API bypass ───────────────────────────────
+      // Scraper output doesn't include languages/years/response-SLA, so after
+      // location the wizard's next gap is the details step. publishGateSchema
+      // requires these three fields, so seed them before publishing.
+      const detailsRes = await page.request.patch('/api/vendor-profile/setup/details', {
+        data: { languages: ['hindi'], years_in_business: 10, response_sla_hours: 24 },
+      });
+      expect(detailsRes.status()).toBe(200);
+
+      // Navigate to review (basics/online/portfolio/details now populated)
       await page.goto('/dashboard/profile/setup/review');
       await expect(page).toHaveURL(/\/setup\/review/, { timeout: 10_000 });
 
@@ -209,7 +229,7 @@ test.describe('vendor onboarding wizard', () => {
     page,
   }) => {
     let vendor: ReturnType<typeof seedVendorUnpublished> extends Promise<infer T> ? T : never;
-    // @ts-ignore — assigned below inside try
+    // @ts-expect-error — assigned below inside try
     vendor = null;
 
     try {
