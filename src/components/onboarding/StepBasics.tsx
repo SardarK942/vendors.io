@@ -24,7 +24,13 @@ import { SubcategoryMultiSelect } from './SubcategoryMultiSelect';
 import { getSubcategoriesForCategory } from '@/lib/vendor-subcategories';
 
 interface Props {
-  initial: { businessName: string; category: string; bio: string; subcategories: string[] };
+  initial: {
+    businessName: string;
+    category: string;
+    bio: string;
+    subcategories: string[];
+    services: string[];
+  };
   profileId: string;
   mode: 'first' | 'next';
 }

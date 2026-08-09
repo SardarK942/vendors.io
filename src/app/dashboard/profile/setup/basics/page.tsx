@@ -23,7 +23,7 @@ export default async function BasicsPage({ searchParams }: PageProps) {
 
   const { data: profile } = await supabase
     .from('vendor_profiles')
-    .select('business_name, category, bio, subcategories')
+    .select('business_name, category, bio, subcategories, services')
     .eq('id', profileId)
     .maybeSingle();
   return (
@@ -35,6 +35,8 @@ export default async function BasicsPage({ searchParams }: PageProps) {
         category: profile?.category ?? '',
         bio: profile?.bio ?? '',
         subcategories: (profile?.subcategories as string[] | null) ?? [],
+        services:
+          (profile?.services as string[] | null) ?? (profile?.category ? [profile.category] : []),
       }}
     />
   );

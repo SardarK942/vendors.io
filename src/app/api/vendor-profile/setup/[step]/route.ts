@@ -76,12 +76,15 @@ export const PATCH = withErrorBoundary(
         throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');
       }
 
+      const services = Array.from(new Set([data.category, ...(data.services ?? [])]));
+
       const payload = {
         user_id: user.id,
         business_name: data.businessName,
         category: data.category as
           | 'photography'
           | 'videography'
+          | 'content_creation'
           | 'mehndi'
           | 'hair_makeup'
           | 'dj'
@@ -92,8 +95,10 @@ export const PATCH = withErrorBoundary(
           | 'invitations'
           | 'bridal_wear'
           | 'live_music'
-          | 'carts',
+          | 'carts'
+          | 'gifts',
         bio: data.bio,
+        services,
         // Persist only when the category has a real taxonomy; otherwise store
         // NULL so query-side filters don't accidentally match stale tags.
         subcategories:
