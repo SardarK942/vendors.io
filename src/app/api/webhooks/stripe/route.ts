@@ -111,7 +111,11 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
   await supabase
     .from('stripe_events')
     .update({
-      handled_at: new Date().toISOString(),
+      // Only stamp handled_at on success. On error we leave it null so the
+      // dedup guard (which skips rows with handled_at set) lets Stripe's retry
+      // re-run the handler — matching the intent noted above. We still record
+      // the error for observability.
+      handled_at: handlerError ? null : new Date().toISOString(),
       error: handlerError,
     })
     .eq('event_id', event.id);
