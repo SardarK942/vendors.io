@@ -56,6 +56,21 @@ never wired into the app layer — an un-selectable, unlabeled orphan.
 7. **Decor stays flat** — no subtypes; signage/misc vendors live under `decor` as-is.
 8. **Subtype chips render for the PRIMARY category only** — keeps onboarding clean and avoids mixing
    subtypes from different parents in one `subcategories[]` array.
+9. **NO hard-merge of photography + videography.** They stay separate categories. Multi-service is the
+   non-destructive "soft merge": a studio stands in both lanes at once while pure specialists keep a
+   clean single lane. (Considered and rejected a combined "Photo & Video" category — lossy for the
+   common "wants only one" couple, lumps specialists, needs a destructive data migration, and fights
+   the content-creator distinction.)
+10. **Onboarding surfaces the visual cluster explicitly.** When primary is `photography`,
+    `videography`, or `content_creation`, the "also offers" prompt names the cluster directly
+    ("Do you also shoot video? Create content / reels?") — that's where ~95% of real multi-service is.
+11. **Couples get a "Photo + Video — one vendor" filter** (AND-membership: `services @>
+{photography, videography}`) so a couple can shortlist a single vendor for all camera needs. This
+    is distinct from the per-category filters, which are OR-membership.
+12. **Packages need NO changes.** The `packages` table has no category/type coupling
+    (`00015_create_packages_and_addons.sql`) — a dual studio already lists free-form "Photo only /
+    Video only / Photo + Video" packages today. Multi-service only affects browse discoverability, not
+    packages.
 
 ## Target taxonomy
 
@@ -114,6 +129,11 @@ for browse membership.
   - Primary category `Select` (now 15 options).
   - New **"Other services you offer"** multi-select (reuse `SubcategoryMultiSelect`), pre-checks the
     primary, writes `services[]`.
+  - **Visual-cluster prompt:** when the primary is `photography`, `videography`, or
+    `content_creation`, the "also offers" section leads with the visual cluster and explicit copy —
+    e.g. "Do you also shoot video? Create content / reels?" — so dual studios opt into both lanes at
+    the moment it's most natural. For non-visual primaries the multi-select still exists but stays
+    quiet (no cluster framing). Copy lives near the component, not hard-coded per category.
   - Subtype chips render conditionally for the **primary category only** (unchanged pattern; now also
     fires for `photography` and `catering`).
 
@@ -125,6 +145,12 @@ for browse membership.
   single-element set (the backfill removes this case, but keep defensive).
 - **`src/lib/vendor-categories/queries.ts`** (`getCategoryVendorCounts`) — count by `services`
   membership so a multi-service vendor counts toward each of its service tiles.
+- **"Photo + Video — one vendor" filter** — a dedicated filter affordance (not a real category value)
+  that AND-matches both services: `services @> ARRAY['photography','videography']`. Surfaces in the
+  filter UI (`use-filter-state.ts` gains a boolean flag, e.g. `photoVideoCombo`; `vendor-filters.ts`
+  applies the `@>` when set). Shown in the filter panel near the category picker with copy like
+  "One vendor for photo + video". Scope is photo+video only (couples' "all camera needs"); content
+  creation stays a separate lane.
 - **Vendor card** — optionally render a compact secondary-services hint (e.g. "+ Video, Content")
   beyond the primary label. (Polish; can defer.)
 
@@ -145,6 +171,8 @@ for browse membership.
   for photography/catering primary.
 - E2E: a vendor onboarding with primary=photography + services={photography,videography,
   content_creation} appears under all three browse filters.
+- `vendor-filters.test.ts` — the "Photo + Video — one vendor" combo filter (`@>`) returns only
+  vendors with BOTH services; excludes photo-only and video-only vendors.
 
 ## Out of scope
 
