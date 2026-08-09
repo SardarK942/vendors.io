@@ -237,7 +237,8 @@ export interface Database {
             | 'bridal_wear'
             | 'live_music'
             | 'carts'
-            | 'content_creation';
+            | 'content_creation'
+            | 'gifts';
           bio: string | null;
           service_area: string[];
           portfolio_images: string[];
@@ -276,6 +277,7 @@ export interface Database {
           calendar_feed_nudge_dismissed_at: string | null;
           first_confirmed_booking_at: string | null;
           subcategories: string[] | null;
+          services: string[] | null;
         };
         Insert: {
           id?: string;
@@ -296,7 +298,8 @@ export interface Database {
             | 'bridal_wear'
             | 'live_music'
             | 'carts'
-            | 'content_creation';
+            | 'content_creation'
+            | 'gifts';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
@@ -334,6 +337,7 @@ export interface Database {
           calendar_feed_nudge_dismissed_at?: string | null;
           first_confirmed_booking_at?: string | null;
           subcategories?: string[] | null;
+          services?: string[] | null;
         };
         Update: {
           user_id?: string;
@@ -353,7 +357,8 @@ export interface Database {
             | 'bridal_wear'
             | 'live_music'
             | 'carts'
-            | 'content_creation';
+            | 'content_creation'
+            | 'gifts';
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
@@ -390,6 +395,7 @@ export interface Database {
           calendar_feed_nudge_dismissed_at?: string | null;
           first_confirmed_booking_at?: string | null;
           subcategories?: string[] | null;
+          services?: string[] | null;
         };
         Relationships: [
           {
