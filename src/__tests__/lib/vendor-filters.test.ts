@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
 import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filters';
+import {
+  readFilterState,
+  serializeFilterState,
+} from '@/components/marketplace/filters/use-filter-state';
 
 describe('parseVendorFilterParams — subcategories', () => {
   it('parses comma-separated subcategories', () => {
@@ -84,5 +88,26 @@ describe('applyVendorFilters — services membership', () => {
     const calls: Array<[string, string, unknown]> = [];
     applyVendorFilters(fakeQuery(calls) as never, { photoVideoCombo: true });
     expect(calls).toContainEqual(['contains', 'services', ['photography', 'videography']]);
+  });
+});
+
+describe('FilterState — photoVideoCombo round-trip', () => {
+  it('serializes and re-reads photoVideoCombo', () => {
+    const params = serializeFilterState({
+      q: '',
+      category: null,
+      verified: false,
+      respondsIn: 0,
+      priceBand: null,
+      priceMin: null,
+      priceMax: null,
+      languages: [],
+      years: 0,
+      events: [],
+      subcategories: [],
+      photoVideoCombo: true,
+    });
+    expect(params.get('photoVideo')).toBe('1');
+    expect(readFilterState(params).photoVideoCombo).toBe(true);
   });
 });

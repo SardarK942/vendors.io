@@ -13,6 +13,7 @@ import { PriceSection } from './sections/PriceSection';
 import { LanguagesSection } from './sections/LanguagesSection';
 import { ExperienceSection } from './sections/ExperienceSection';
 import { CategorySpecificSection } from './sections/CategorySpecificSection';
+import { PhotoVideoComboSection } from './sections/PhotoVideoComboSection';
 import { fmtCount } from '@/lib/intl';
 
 interface AllFiltersSheetProps {
@@ -95,6 +96,7 @@ export function AllFiltersSheet({ open, onOpenChange }: AllFiltersSheetProps) {
           {/* Body */}
           <div className="flex-1 overflow-y-auto">
             <CategorySection state={state} patch={patch} />
+            <PhotoVideoComboSection state={state} patch={patch} />
             <TrustSection state={state} patch={patch} />
             <PriceSection state={state} patch={patch} />
             <LanguagesSection state={state} patch={patch} />
