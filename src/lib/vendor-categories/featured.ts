@@ -1,9 +1,9 @@
 /**
- * The 13 vendor categories featured on the homepage HoverExpand strip.
+ * The 15 vendor categories featured on the homepage HoverExpand strip.
  * Locked order (bride-journey first) and Coming Soon flags per the spec
  * at docs/superpowers/specs/2026-05-25-baazar-homepage-hero-design.md.
  *
- * The full DB-valid category list (13) lives in src/lib/utils.ts as
+ * The full DB-valid category list (15) lives in src/lib/utils.ts as
  * VENDOR_CATEGORIES. This file is the marketing-surface subset.
  */
 
@@ -38,6 +38,16 @@ export const CATEGORIES_FEATURED: readonly FeaturedCategory[] = [
     kicker: 'Visual',
     photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPOFxoUEHZicD1KWg6MSjTLJnYR98myEdeAlNo',
     alt: 'Wedding videographer with a cinema camera',
+    comingSoon: false,
+  },
+  {
+    slug: 'content_creation',
+    label: 'Content Creation / Reels',
+    kicker: 'Visual',
+    // TODO(assets): swap for a dedicated content-creator hero. Interim reuses the
+    // videography image (owned UploadThing URL) so the tile renders correctly.
+    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPOFxoUEHZicD1KWg6MSjTLJnYR98myEdeAlNo',
+    alt: 'Wedding content creator filming vertical video on a phone',
     comingSoon: false,
   },
   {
@@ -127,5 +137,15 @@ export const CATEGORIES_FEATURED: readonly FeaturedCategory[] = [
     photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPMv9lRdmgjcGt0Y28Ud3veWMADNfQ7oKupbIC',
     alt: 'Wedding invitation suite styled with ribbon and floral details',
     comingSoon: true,
+  },
+  {
+    slug: 'gifts',
+    label: 'Gifts & Favors',
+    kicker: 'Keepsakes',
+    // TODO(assets): swap for a dedicated gifts/favors hero. Interim reuses the
+    // invitations image (owned UploadThing URL) so the tile renders correctly.
+    photoUrl: 'https://iryyjgk4z6.ufs.sh/f/D4Fxxpb8A6TPMv9lRdmgjcGt0Y28Ud3veWMADNfQ7oKupbIC',
+    alt: 'Curated wedding favor boxes and gift hampers',
+    comingSoon: false,
   },
 ];
