@@ -184,10 +184,6 @@ async function runCustomer48hFollowup(): Promise<void> {
   }
 }
 
-type VendorCategory = NonNullable<
-  import('@/types/database.types').Database['public']['Tables']['vendor_profiles']['Row']['category']
->;
-
 async function getRecentActiveVendorsByCategory(
   supabase: ReturnType<typeof createServiceRoleClient>,
   category: string,
@@ -198,7 +194,7 @@ async function getRecentActiveVendorsByCategory(
     .select('*')
     .eq('is_active', true)
     .eq('onboarding_complete', true)
-    .eq('category', category as VendorCategory)
+    .overlaps('services', [category])
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(limit);
   return data ?? [];
