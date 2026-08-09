@@ -75,53 +75,60 @@ export function HomePreloader() {
   const script = WORDMARK_SCRIPTS[index];
 
   return (
-    <div
-      aria-hidden="true"
-      className={
-        'fixed inset-0 z-[200] flex flex-col items-center justify-center gap-9 bg-cream ' +
-        'ease-[cubic-bezier(0.22,1,0.36,1)] transition-[opacity,transform] ' +
-        (phase === 'exiting'
-          ? 'pointer-events-none -translate-y-3 opacity-0'
-          : 'translate-y-0 opacity-100')
-      }
-      style={{ transitionDuration: `${EXIT_MS}ms` }}
-    >
-      {/* Cycling multi-script wordmark */}
+    <>
+      {/* JS disabled → never show the overlay at all (it can't self-dismiss). */}
+      <noscript>
+        <style>{`.baazar-preloader{display:none!important}`}</style>
+      </noscript>
       <div
-        className="leading-none tracking-[-0.03em] text-ink"
-        style={{ fontSize: 'clamp(72px, 15vw, 168px)' }}
+        aria-hidden="true"
+        className={
+          'baazar-preloader baazar-preloader-failsafe ' +
+          'fixed inset-0 z-[200] flex flex-col items-center justify-center gap-9 bg-cream ' +
+          'ease-[cubic-bezier(0.22,1,0.36,1)] transition-[opacity,transform] ' +
+          (phase === 'exiting'
+            ? 'pointer-events-none -translate-y-3 opacity-0'
+            : 'translate-y-0 opacity-100')
+        }
+        style={{ transitionDuration: `${EXIT_MS}ms` }}
       >
-        <span
-          className="inline-block transition-opacity"
-          style={{
-            opacity: reducedMotion ? 1 : opacity,
-            transitionDuration: `${FADE_MS}ms`,
-            fontFamily: script.cssFamily,
-            fontSize: `${script.scaleMultiplier}em`,
-          }}
-        >
-          {script.glyph}
-          <span className="text-hot-pink">.</span>
-        </span>
-      </div>
-
-      {/* Haldi hairline progress (scaleX, never width) */}
-      <div className="h-px w-[min(280px,56vw)] overflow-hidden bg-ink/10">
+        {/* Cycling multi-script wordmark */}
         <div
-          className="h-full w-full origin-left bg-haldi"
-          style={{
-            transform: `scaleX(${reducedMotion ? 1 : fill ? 1 : 0})`,
-            transition: reducedMotion
-              ? 'none'
-              : `transform ${HOLD_MS}ms cubic-bezier(0.22,1,0.36,1)`,
-          }}
-        />
-      </div>
+          className="leading-none tracking-[-0.03em] text-ink"
+          style={{ fontSize: 'clamp(72px, 15vw, 168px)' }}
+        >
+          <span
+            className="inline-block transition-opacity"
+            style={{
+              opacity: reducedMotion ? 1 : opacity,
+              transitionDuration: `${FADE_MS}ms`,
+              fontFamily: script.cssFamily,
+              fontSize: `${script.scaleMultiplier}em`,
+            }}
+          >
+            {script.glyph}
+            <span className="text-hot-pink">.</span>
+          </span>
+        </div>
 
-      {/* Latin brand anchor */}
-      <p className="m-0 font-serif text-sm lowercase tracking-[0.02em] text-ink/55">
-        baazar<span className="text-hot-pink">.</span>
-      </p>
-    </div>
+        {/* Haldi hairline progress (scaleX, never width) */}
+        <div className="h-px w-[min(280px,56vw)] overflow-hidden bg-ink/10">
+          <div
+            className="h-full w-full origin-left bg-haldi"
+            style={{
+              transform: `scaleX(${reducedMotion ? 1 : fill ? 1 : 0})`,
+              transition: reducedMotion
+                ? 'none'
+                : `transform ${HOLD_MS}ms cubic-bezier(0.22,1,0.36,1)`,
+            }}
+          />
+        </div>
+
+        {/* Latin brand anchor */}
+        <p className="m-0 font-serif text-sm lowercase tracking-[0.02em] text-ink/55">
+          baazar<span className="text-hot-pink">.</span>
+        </p>
+      </div>
+    </>
   );
 }

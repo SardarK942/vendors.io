@@ -105,3 +105,26 @@
     text-underline-offset: 2px;
   }
 }
+
+/* --- Preloader failsafe --------------------------------------------------
+ * The homepage preloader overlay (HomePreloader) is server-rendered covering
+ * the whole page and is normally lifted by client JS after ~2.2s. If hydration
+ * crashes or the JS chunk never loads, this pure-CSS animation clears the
+ * overlay after ~4s so users are never permanently locked out of the site.
+ * Normal JS finishes well before 4s, so this only ever fires when JS is broken.
+ * (The <noscript> block in HomePreloader handles the JS-disabled case.) */
+@keyframes baazar-preloader-failsafe {
+  to {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+}
+.baazar-preloader-failsafe {
+  animation: baazar-preloader-failsafe 400ms ease 4000ms forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .baazar-preloader-failsafe {
+    animation-duration: 1ms;
+  }
+}

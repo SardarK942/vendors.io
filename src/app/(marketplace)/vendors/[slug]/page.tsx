@@ -102,7 +102,7 @@ export default async function VendorPage({ params }: VendorPageProps) {
 
   return (
     <div className="py-8">
-      <SavedVendorsProvider>
+      <SavedVendorsProvider authenticated={!!user}>
         <VendorProfile
           vendor={vendor}
           reviews={reviews ?? []}

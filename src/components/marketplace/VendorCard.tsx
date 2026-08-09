@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter, usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Heart, ArrowRight, Camera } from 'lucide-react';
 import { cn, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
@@ -45,9 +46,11 @@ export interface VendorCardProps {
 }
 
 export function VendorCard({ vendor, searchDate, compact = false }: VendorCardProps) {
-  const { savedIds, toggle } = useSavedVendors();
+  const { savedIds, toggle, authenticated } = useSavedVendors();
   const isSaved = savedIds.has(vendor.id);
   const heartRef = React.useRef<HTMLButtonElement>(null);
+  const router = useRouter();
+  const pathname = usePathname();
   const reducedMotion = useReducedMotion();
   const heartTransition = reducedMotion
     ? { duration: 0 }
@@ -66,6 +69,12 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const handleSaveClick = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    // Logged-out visitors can't save (the endpoint 401s and the heart would
+    // falsely stick filled). Send them to sign in and return here.
+    if (!authenticated) {
+      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
+      return;
+    }
     const result = await toggle(vendor.id);
     if (result.isFirstSave && result.wasSaved) {
       showHeartConfettiToast(vendor.business_name ?? 'this vendor', heartRef.current);
