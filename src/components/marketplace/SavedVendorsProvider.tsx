@@ -10,11 +10,28 @@ interface SavedVendorsContextValue {
 
 const SavedVendorsContext = React.createContext<SavedVendorsContextValue | null>(null);
 
-export function SavedVendorsProvider({ children }: { children: React.ReactNode }) {
+export function SavedVendorsProvider({
+  children,
+  authenticated = true,
+}: {
+  children: React.ReactNode;
+  /**
+   * Whether a user is signed in. When false we skip the `/api/users/me/saved`
+   * fetch entirely — that endpoint 401s for anonymous visitors, which spams a
+   * console error and wastes a request on every logged-out marketplace view.
+   * Defaults to true so authenticated mounts (dashboard, onboarding) are
+   * unaffected; public pages pass `authenticated={!!user}`.
+   */
+  authenticated?: boolean;
+}) {
   const [savedIds, setSavedIds] = React.useState<Set<string>>(new Set());
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoading, setIsLoading] = React.useState(authenticated);
 
   React.useEffect(() => {
+    if (!authenticated) {
+      setIsLoading(false);
+      return;
+    }
     let cancelled = false;
     fetch('/api/users/me/saved')
       .then((r) => (r.ok ? r.json() : { data: [] }))
@@ -34,7 +51,7 @@ export function SavedVendorsProvider({ children }: { children: React.ReactNode }
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [authenticated]);
 
   const toggle = React.useCallback(
     async (vendorId: string): Promise<{ isFirstSave: boolean; wasSaved: boolean }> => {

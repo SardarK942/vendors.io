@@ -23,6 +23,11 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const params = await searchParams;
   const supabase = await createServerSupabaseClient();
 
+  // Anonymous visitors skip the saved-vendors fetch (it 401s when logged out).
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
   // AI search: when ?q= is present, run hybrid search first to get a ranked
   // vendor-id set, then intersect with the regular filter pipeline.
   const rawQuery = typeof params.q === 'string' ? params.q.trim() : '';
@@ -45,7 +50,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   // If AI search returned no matches, short-circuit to an empty-state page.
   if (aiVendorIds !== null && aiVendorIds.length === 0) {
     return (
-      <SavedVendorsProvider>
+      <SavedVendorsProvider authenticated={!!user}>
         <div className="py-8">
           <div className="mb-6">
             <h1 className="text-balance text-2xl font-bold">Browse Vendors</h1>
@@ -141,7 +146,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const totalCount = count ?? 0;
 
   return (
-    <SavedVendorsProvider>
+    <SavedVendorsProvider authenticated={!!user}>
       <div className="py-8">
         <div className="mb-6">
           <h1 className="text-2xl font-bold">Browse Vendors</h1>
