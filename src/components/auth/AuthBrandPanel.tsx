@@ -51,8 +51,11 @@ export function AuthBrandPanel({ variant }: { variant: AuthPanelVariant }) {
         <>
           {/* signup: heading under the wordmark, full-bleed handshake fills the middle */}
           <div className="relative z-10 mt-9">{headingBlock}</div>
-          <div className="relative z-0 -mx-10 flex flex-1 items-center justify-center xl:-mx-12">
-            <AuthBrandIllustration className="w-full max-w-none" />
+          <div className="relative z-0 -mx-10 flex flex-1 items-center justify-center overflow-hidden xl:-mx-12">
+            {/* Scale the handshake up (transform, so flex-shrink can't undo it)
+                so the arms run off both edges and the flat sleeve cut-offs are
+                clipped by the container's overflow-hidden. */}
+            <AuthBrandIllustration className="w-full max-w-none origin-center scale-[1.4]" />
           </div>
         </>
       ) : (
