@@ -159,6 +159,13 @@ test.describe('D.1 — happy-path notifications + email_status', () => {
     const pastDateStr = pastDate.toISOString().slice(0, 10);
     const startIso = new Date(pastDate.getTime() - 8 * 3_600_000).toISOString();
     const endIso = new Date(pastDate.getTime() - 2 * 3_600_000).toISOString();
+    // The API rejects past-dated events (defense-in-depth), so book with a FUTURE
+    // date and backdate the event rows below (via service-role) to set up the
+    // auto-complete scenario.
+    const futureDate = new Date(Date.now() + 30 * 86_400_000);
+    const futureDateStr = futureDate.toISOString().slice(0, 10);
+    const futureStartIso = new Date(futureDate.getTime() + 16 * 3_600_000).toISOString();
+    const futureEndIso = new Date(futureDate.getTime() + 22 * 3_600_000).toISOString();
 
     const bookingRes = await couplePage.request.post('/api/bookings', {
       data: {
@@ -171,9 +178,9 @@ test.describe('D.1 — happy-path notifications + email_status', () => {
         events: [
           {
             sequence: 1,
-            event_date: pastDateStr,
-            event_start_time: startIso,
-            event_end_time: endIso,
+            event_date: futureDateStr,
+            event_start_time: futureStartIso,
+            event_end_time: futureEndIso,
             event_type_label: 'Wedding Ceremony',
             address_line_1: '140 E Walton Pl',
             city: 'Chicago',
@@ -189,6 +196,13 @@ test.describe('D.1 — happy-path notifications + email_status', () => {
     const bookingBody = await bookingRes.json();
     const bookingId: string = bookingBody.data.booking.id;
     expect(bookingId, 'bookingId must be a non-empty UUID').toBeTruthy();
+
+    // Backdate the event(s) to 3 days ago so step 4's 48 h auto-complete cutoff
+    // is exceeded (the API forbids creating past events directly).
+    await sb
+      .from('booking_events')
+      .update({ event_date: pastDateStr, event_start_time: startIso, event_end_time: endIso })
+      .eq('booking_id', bookingId);
 
     // Seed booking_request_received for vendor via service-role.
     // (The server fires this in a void IIFE but RLS blocks it in dev when the

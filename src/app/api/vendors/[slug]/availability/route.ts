@@ -5,7 +5,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server';
 import { getUnavailableRanges } from '@/services/availability.service';
 
 export const dynamic = 'force-dynamic';
@@ -64,7 +64,12 @@ export const GET = withErrorBoundary(
     oneYearOut.setFullYear(oneYearOut.getFullYear() + 1);
     const toDate = oneYearOut.toISOString().slice(0, 10);
 
-    const ranges = await getUnavailableRanges(supabase, vendor.id, today, toDate);
+    // vendor_calendar_holds RLS only exposes holds to the owning vendor, so the
+    // anonymous request client sees none — every date would look available. Read
+    // holds with a service-role client (only the privacy-preserving aggregate is
+    // returned to the caller, never raw hold rows).
+    const adminClient = createServiceRoleClient();
+    const ranges = await getUnavailableRanges(adminClient, vendor.id, today, toDate);
 
     // Privacy-preserving aggregation: group holds by date, produce per-date busy_ranges.
     // fully_blocked = sum of busy minutes for that date >= 24h * capacity.
@@ -99,10 +104,7 @@ export const GET = withErrorBoundary(
     }
 
     const unavailable = Array.from(byDate.entries()).map(([date, busy]) => {
-      const totalBusyMinutes = busy.reduce(
-        (acc, r) => acc + minutesBetween(r.start, r.end),
-        0
-      );
+      const totalBusyMinutes = busy.reduce((acc, r) => acc + minutesBetween(r.start, r.end), 0);
       const fullyBlocked = totalBusyMinutes >= 24 * 60 * vendor.concurrent_capacity;
       return {
         date,

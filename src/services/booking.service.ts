@@ -12,7 +12,7 @@ import {
   notifyCoupleCountered,
 } from '@/services/notifications.service';
 import { sendCoupleCounteredEmail } from '@/lib/email/couple-countered';
-import { wouldExceedCapacity } from '@/services/availability.service';
+import { wouldExceedCapacityForEvent } from '@/services/availability.service';
 import { deliver } from '@/lib/notifications/deliver';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { linkBookingToFunction } from '@/services/events.service';
@@ -631,20 +631,35 @@ export async function createBooking(
     }
   }
 
-  // G5.1 — Pre-check capacity for every proposed event before INSERT.
-  // event_start_time / event_end_time are full ISO datetime strings (Zod .datetime()).
-  // Extract 'HH:mm' for wouldExceedCapacity which expects date + time strings.
+  // Reject events whose start is already in the past — the couple-facing date
+  // picker prevents this, but the API must defend in depth (a past event also
+  // can't be honoured or auto-completed sanely).
+  const now = Date.now();
   for (const evt of input.events) {
-    const startHHmm = new Date(evt.event_start_time).toISOString().slice(11, 16);
-    const endHHmm = new Date(evt.event_end_time).toISOString().slice(11, 16);
-    const check = await wouldExceedCapacity(
-      supabase,
+    if (new Date(evt.event_start_time).getTime() < now) {
+      return {
+        error: `Event on ${evt.event_date} is in the past. Choose a future date.`,
+        status: 400,
+      };
+    }
+  }
+
+  // G5.1 — Pre-check capacity for every proposed event before INSERT.
+  // Uses a service-role client: vendor_calendar_holds RLS only exposes holds to
+  // the owning vendor, so the couple's client sees none and the check would be a
+  // no-op (double-booking prevention would be dead). Build the range from the
+  // full ISO timestamps so events spanning midnight stay valid.
+  const availabilityClient = createServiceRoleClient();
+  for (const evt of input.events) {
+    const check = await wouldExceedCapacityForEvent(
+      availabilityClient,
       input.vendor_profile_id,
-      evt.event_date,
-      startHHmm,
-      endHHmm
+      evt.event_start_time,
+      evt.event_end_time
     );
     if (check.wouldExceed) {
+      const startHHmm = new Date(evt.event_start_time).toISOString().slice(11, 16);
+      const endHHmm = new Date(evt.event_end_time).toISOString().slice(11, 16);
       return {
         error: `Conflict on ${evt.event_date} ${startHHmm}–${endHHmm}. This vendor is already booked at that time. Try another date or time.`,
         status: 409,
