@@ -34,6 +34,13 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'dessert_tables', label: 'Dessert tables & sweets' },
     { slug: 'grazing_charcuterie', label: 'Grazing & charcuterie' },
   ],
+  // Hair and makeup are two chips, not three: a vendor who does both selects
+  // both, and the AND-membership subcategory filter (.contains / @>) surfaces
+  // them for "Hair", "Makeup", or "Hair + Makeup" queries alike.
+  hair_makeup: [
+    { slug: 'hair', label: 'Hair' },
+    { slug: 'makeup', label: 'Makeup' },
+  ],
 };
 
 /** Heading text shown in the marketplace filter sheet's subcategory section. */
@@ -41,6 +48,7 @@ export const SUBCATEGORY_SECTION_LABEL: Record<string, string> = {
   carts: 'Cart type',
   photography: 'Photography type',
   catering: 'Catering type',
+  hair_makeup: 'Services offered',
 };
 
 export function getSubcategoriesForCategory(

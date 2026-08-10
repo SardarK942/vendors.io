@@ -78,3 +78,25 @@ describe('photography + catering subtypes', () => {
     expect(validSubcategorySlugs('videography').size).toBe(0);
   });
 });
+
+describe('hair_makeup subtypes', () => {
+  it('exposes exactly two chips: hair and makeup', () => {
+    const slugs = getSubcategoriesForCategory('hair_makeup').map((s) => s.slug);
+    expect(slugs).toEqual(['hair', 'makeup']);
+    expect(getSubcategoriesForCategory('hair_makeup').map((s) => s.label)).toEqual([
+      'Hair',
+      'Makeup',
+    ]);
+  });
+
+  it('labels the section "Services offered"', () => {
+    expect(SUBCATEGORY_SECTION_LABEL.hair_makeup).toBe('Services offered');
+  });
+
+  it('validates hair/makeup slugs', () => {
+    const valid = validSubcategorySlugs('hair_makeup');
+    expect(valid.has('hair')).toBe(true);
+    expect(valid.has('makeup')).toBe(true);
+    expect(valid.has('both')).toBe(false);
+  });
+});
