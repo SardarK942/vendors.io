@@ -51,7 +51,7 @@ jobs:
   e2e:
     name: e2e (Playwright)
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     needs: fast
     steps:
       - uses: actions/checkout@v4
@@ -84,10 +84,33 @@ jobs:
         if: steps.check.outputs.configured == 'true'
         run: npx playwright install --with-deps chromium
 
-      - name: Run E2E
+      # Build a PRODUCTION bundle for the e2e run. The dev server (`next dev`)
+      # has a known SSR `useContext` null race that flakes the suite; `next start`
+      # off a real build is deterministic. NEXT_PUBLIC_* are baked at build time,
+      # so this build must use the E2E (dev Supabase) env — it cannot reuse the
+      # `fast` job's artifact, which is built with placeholder env.
+      - name: Build (prod, E2E env)
+        if: steps.check.outputs.configured == 'true'
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.E2E_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.E2E_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.E2E_SUPABASE_SERVICE_ROLE_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.E2E_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.E2E_STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: whsec_placeholder
+          OPENAI_API_KEY: ${{ secrets.E2E_OPENAI_API_KEY }}
+          RESEND_API_KEY: ${{ secrets.E2E_RESEND_API_KEY }}
+          UPLOADTHING_TOKEN: placeholder
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+
+      - name: Run E2E (against prod build)
         if: steps.check.outputs.configured == 'true'
         run: npm run test:e2e
         env:
+          # E2E_PROD_SERVER makes playwright.config.ts start `next start` (the
+          # build above) instead of `next dev`.
+          E2E_PROD_SERVER: '1'
           # Read from GitHub repo secrets — set these once at:
           # https://github.com/SardarK942/vendors.io/settings/secrets/actions
           # All point at the DEV Supabase project + test-mode Stripe.
