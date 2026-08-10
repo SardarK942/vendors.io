@@ -41,6 +41,14 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'hair', label: 'Hair' },
     { slug: 'makeup', label: 'Makeup' },
   ],
+  // Turnkey decorators tick "Full decor" plus any specific services they offer;
+  // à-la-carte vendors (florists, sign/art makers, rental/value-add) tick just theirs.
+  decor: [
+    { slug: 'florals', label: 'Florals' },
+    { slug: 'signage', label: 'Signage & custom art' },
+    { slug: 'rentals', label: 'Value-adds' },
+    { slug: 'full_decor', label: 'Full decor' },
+  ],
 };
 
 /** Heading text shown in the marketplace filter sheet's subcategory section. */
@@ -49,6 +57,7 @@ export const SUBCATEGORY_SECTION_LABEL: Record<string, string> = {
   photography: 'Photography type',
   catering: 'Catering type',
   hair_makeup: 'Services offered',
+  decor: 'Decor type',
 };
 
 export function getSubcategoriesForCategory(

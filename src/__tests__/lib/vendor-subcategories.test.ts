@@ -100,3 +100,18 @@ describe('hair_makeup subtypes', () => {
     expect(valid.has('both')).toBe(false);
   });
 });
+
+describe('decor subtypes', () => {
+  it('exposes florals, signage, rentals, full_decor', () => {
+    const slugs = getSubcategoriesForCategory('decor').map((s) => s.slug);
+    expect(slugs).toEqual(['florals', 'signage', 'rentals', 'full_decor']);
+    expect(SUBCATEGORY_SECTION_LABEL.decor).toBe('Decor type');
+  });
+
+  it('validates decor slugs', () => {
+    const valid = validSubcategorySlugs('decor');
+    expect(valid.has('signage')).toBe(true);
+    expect(valid.has('full_decor')).toBe(true);
+    expect(valid.has('flowers')).toBe(false);
+  });
+});
