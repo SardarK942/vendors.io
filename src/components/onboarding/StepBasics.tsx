@@ -21,10 +21,17 @@ import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { ScrapedVendorMatchPrompt } from './ScrapedVendorMatchPrompt';
 import type { ScrapedVendorMatch } from '@/lib/scraped-vendor/match';
 import { SubcategoryMultiSelect } from './SubcategoryMultiSelect';
-import { getSubcategoriesForCategory } from '@/lib/vendor-subcategories';
+import { ServicesMultiSelect } from './ServicesMultiSelect';
+import { getSubcategoriesForCategory, SUBCATEGORY_SECTION_LABEL } from '@/lib/vendor-subcategories';
 
 interface Props {
-  initial: { businessName: string; category: string; bio: string; subcategories: string[] };
+  initial: {
+    businessName: string;
+    category: string;
+    bio: string;
+    subcategories: string[];
+    services: string[];
+  };
   profileId: string;
   mode: 'first' | 'next';
 }
@@ -136,7 +143,14 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         <Select
           value={data.category}
           onValueChange={(v) => {
-            setData({ ...data, category: v });
+            setData({
+              ...data,
+              category: v,
+              // Drop the old primary, add the new one; keep other services.
+              services: Array.from(
+                new Set([v, ...data.services.filter((s) => s !== data.category)])
+              ),
+            });
             clearField('category');
           }}
         >
@@ -163,11 +177,29 @@ export function StepBasics({ initial, profileId, mode }: Props) {
         )}
       </div>
 
+      {data.category && (
+        <div className="space-y-2">
+          <Label>
+            {['photography', 'videography', 'content_creation'].includes(data.category)
+              ? 'Do you also shoot video? Create content / reels?'
+              : 'Other services you offer'}
+          </Label>
+          <p className="text-xs text-ink/60">
+            Add every service you offer — you&apos;ll show up under each. You can change this later.
+          </p>
+          <ServicesMultiSelect
+            primary={data.category}
+            selected={data.services}
+            onChange={(next) => setData({ ...data, services: next })}
+          />
+        </div>
+      )}
+
       {getSubcategoriesForCategory(data.category).length > 0 && (
         <div className="space-y-2">
-          <Label>Cart types you offer</Label>
+          <Label>{SUBCATEGORY_SECTION_LABEL[data.category] ?? 'Type'}</Label>
           <p className="text-xs text-ink/60">
-            Pick the cart types your business runs. You can change this later.
+            Pick the types your business offers. You can change this later.
           </p>
           <SubcategoryMultiSelect
             category={data.category}

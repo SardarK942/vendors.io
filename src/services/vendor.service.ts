@@ -51,7 +51,7 @@ export async function getVendors(
     );
 
   if (category) {
-    query = query.eq('category', category);
+    query = query.overlaps('services', [category]);
   }
   if (serviceArea) {
     query = query.contains('service_area', [serviceArea]);
@@ -167,7 +167,7 @@ export async function getVendorsByCategory(
     .select('*')
     .eq('is_active', true)
     .eq('onboarding_complete', true)
-    .in('category', categories as VendorRow['category'][])
+    .overlaps('services', categories)
     .order('published_at', { ascending: false, nullsFirst: false })
     .limit(limit);
   if (error) throw error;

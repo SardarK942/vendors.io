@@ -2,9 +2,11 @@ import { z } from 'zod';
 import { SPOKEN_LANGUAGES } from '@/types';
 import { RESPONSE_SLA_OPTIONS } from '@/components/marketplace/filters/constants';
 import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
+import { VENDOR_CATEGORIES } from '@/lib/utils';
 
 const VALID_LANGUAGE_SLUGS = SPOKEN_LANGUAGES.map((lang) => lang.toLowerCase());
 const VALID_SLA_VALUES = RESPONSE_SLA_OPTIONS.map((o) => o.value);
+const VALID_CATEGORY_SLUGS = new Set<string>(VENDOR_CATEGORIES);
 
 const instagramHandle = z
   .string()
@@ -21,6 +23,7 @@ export const basicsSchema = z
     category: z.string().min(1),
     bio: z.string().max(500, 'Bio must be 500 characters or fewer'),
     subcategories: z.array(z.string()).optional().default([]),
+    services: z.array(z.string()).optional().default([]),
   })
   .refine(
     (d) => {
@@ -33,7 +36,11 @@ export const basicsSchema = z
       return d.subcategories.every((s) => valid.has(s));
     },
     { message: 'Invalid subcategory slug', path: ['subcategories'] }
-  );
+  )
+  .refine((d) => (d.services ?? []).every((s) => VALID_CATEGORY_SLUGS.has(s)), {
+    message: 'Invalid service',
+    path: ['services'],
+  });
 
 export const locationSchema = z.object({
   baseAddressLine1: z.string().optional(),

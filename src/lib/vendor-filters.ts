@@ -11,6 +11,8 @@ export interface VendorFilterParams {
   languages?: string[];
   subcategories?: string[];
   years?: number;
+  /** "One vendor for photo + video" — requires BOTH services. */
+  photoVideoCombo?: boolean;
   // events + style + cuisine etc — placeholder; not backed yet.
 }
 
@@ -56,6 +58,8 @@ export function parseVendorFilterParams(
   const years = Number(get('years'));
   if (Number.isFinite(years) && years > 0) out.years = years;
 
+  if (get('photoVideo') === '1') out.photoVideoCombo = true;
+
   return out;
 }
 
@@ -63,13 +67,13 @@ export function parseVendorFilterParams(
  * Apply filter params to a Supabase vendor_profiles query.
  * Returns the chained query so the caller can add ordering + range + count modes.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function applyVendorFilters<Q extends { eq: any; gte: any; lte: any; contains: any }>(
-  query: Q,
-  filters: VendorFilterParams
-): Q {
+export function applyVendorFilters<
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  Q extends { eq: any; gte: any; lte: any; contains: any; overlaps: any },
+>(query: Q, filters: VendorFilterParams): Q {
   let q = query;
-  if (filters.category) q = q.eq('category', filters.category);
+  if (filters.category) q = q.overlaps('services', [filters.category]);
+  if (filters.photoVideoCombo) q = q.contains('services', ['photography', 'videography']);
   if (filters.verified) q = q.eq('verified', true);
   if (filters.respondsIn) q = q.lte('response_sla_hours', filters.respondsIn);
   if (filters.years) q = q.gte('years_in_business', filters.years);
@@ -121,7 +125,8 @@ export async function countFilteredVendors(
     .eq('onboarding_complete', true);
 
   // Apply only non-price filters (price filtering is app-layer only)
-  if (filters.category) query = query.eq('category', filters.category);
+  if (filters.category) query = query.overlaps('services', [filters.category]);
+  if (filters.photoVideoCombo) query = query.contains('services', ['photography', 'videography']);
   if (filters.verified) query = query.eq('verified', true);
   if (filters.respondsIn) query = query.lte('response_sla_hours', filters.respondsIn);
   if (filters.years) query = query.gte('years_in_business', filters.years);

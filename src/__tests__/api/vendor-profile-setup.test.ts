@@ -230,7 +230,7 @@ describe('PATCH /api/vendor-profile/setup/[step] — basics', () => {
         select: (_cols: unknown) => ({
           eq: (_col: string, _val: string) => ({
             maybeSingle: () =>
-              Promise.resolve({ data: { id: 'vp-1', slug: 'acme-photo' }, error: null }),
+              Promise.resolve({ data: { id: 'vp-1', slug: 'acme-dj' }, error: null }),
           }),
         }),
         update: (payload: unknown) => {
@@ -245,8 +245,8 @@ describe('PATCH /api/vendor-profile/setup/[step] — basics', () => {
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
 
     const [req, ctx] = makeRequest('basics', {
-      businessName: 'Acme Photo',
-      category: 'photography',
+      businessName: 'Acme DJ',
+      category: 'dj',
       bio: 'ok',
       subcategories: ['dessert'],
     });

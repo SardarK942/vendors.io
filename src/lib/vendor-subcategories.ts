@@ -22,11 +22,42 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'appetizer', label: 'Appetizer cart' },
     { slug: 'favor_gift', label: 'Favor / gift cart' },
   ],
+  photography: [
+    { slug: 'wedding_day', label: 'Wedding-day coverage' },
+    { slug: 'couple_engagement', label: 'Couple & engagement shoots' },
+    { slug: 'portrait_studio', label: 'Portrait & studio sessions' },
+    { slug: 'other_events', label: 'Other events & parties' },
+  ],
+  catering: [
+    { slug: 'full_service', label: 'Full-service catering' },
+    { slug: 'cakes', label: 'Cakes' },
+    { slug: 'dessert_tables', label: 'Dessert tables & sweets' },
+    { slug: 'grazing_charcuterie', label: 'Grazing & charcuterie' },
+  ],
+  // Hair and makeup are two chips, not three: a vendor who does both selects
+  // both, and the AND-membership subcategory filter (.contains / @>) surfaces
+  // them for "Hair", "Makeup", or "Hair + Makeup" queries alike.
+  hair_makeup: [
+    { slug: 'hair', label: 'Hair' },
+    { slug: 'makeup', label: 'Makeup' },
+  ],
+  // Turnkey decorators tick "Full decor" plus any specific services they offer;
+  // à-la-carte vendors (florists, sign/art makers, rental/value-add) tick just theirs.
+  decor: [
+    { slug: 'florals', label: 'Florals' },
+    { slug: 'signage', label: 'Signage & custom art' },
+    { slug: 'rentals', label: 'Value-adds' },
+    { slug: 'full_decor', label: 'Full decor' },
+  ],
 };
 
 /** Heading text shown in the marketplace filter sheet's subcategory section. */
 export const SUBCATEGORY_SECTION_LABEL: Record<string, string> = {
   carts: 'Cart type',
+  photography: 'Photography type',
+  catering: 'Catering type',
+  hair_makeup: 'Services offered',
+  decor: 'Decor type',
 };
 
 export function getSubcategoriesForCategory(

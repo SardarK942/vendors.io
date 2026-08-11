@@ -23,7 +23,7 @@ export async function getCategoryVendorCounts(supabase: Sb): Promise<Record<stri
 
   const { data, error } = await supabase
     .from('vendor_profiles')
-    .select('category')
+    .select('category, services')
     .eq('is_active', true)
     .eq('onboarding_complete', true);
 
@@ -32,9 +32,12 @@ export async function getCategoryVendorCounts(supabase: Sb): Promise<Record<stri
   }
 
   for (const row of data) {
-    const cat = (row as { category: string }).category;
-    if (featuredSlugs.has(cat)) {
-      initial[cat] += 1;
+    const r = row as { category: string; services: string[] | null };
+    // Count toward every featured service the vendor offers. Fall back to the
+    // primary category for any legacy row where services wasn't backfilled.
+    const offered = r.services && r.services.length > 0 ? r.services : [r.category];
+    for (const slug of offered) {
+      if (featuredSlugs.has(slug)) initial[slug] += 1;
     }
   }
 

@@ -21,6 +21,8 @@ export interface FilterState {
   years: number; // years_in_business >= this. 0 = unset.
   events: string[]; // sorted slugs
   subcategories: string[]; // sorted slugs
+  /** "One vendor for photo + video" — requires BOTH services. */
+  photoVideoCombo: boolean;
 }
 
 const EMPTY_STATE: FilterState = {
@@ -35,6 +37,7 @@ const EMPTY_STATE: FilterState = {
   years: 0,
   events: [],
   subcategories: [],
+  photoVideoCombo: false,
 };
 
 /**
@@ -72,6 +75,7 @@ export function readFilterState(params: URLSearchParams): FilterState {
     years: parseInt0('years'),
     events: parseList('events'),
     subcategories: parseList('subcategories'),
+    photoVideoCombo: get('photoVideo') === '1',
   };
 }
 
@@ -91,6 +95,7 @@ export function serializeFilterState(state: FilterState): URLSearchParams {
   if (state.years > 0) p.set('years', String(state.years));
   if (state.events.length > 0) p.set('events', state.events.join(','));
   if (state.subcategories.length > 0) p.set('subcategories', state.subcategories.join(','));
+  if (state.photoVideoCombo) p.set('photoVideo', '1');
   return p;
 }
 

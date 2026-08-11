@@ -51,6 +51,7 @@ export function generateSlug(name: string): string {
 export const VENDOR_CATEGORIES = [
   'photography',
   'videography',
+  'content_creation',
   'mehndi',
   'hair_makeup',
   'dj',
@@ -62,11 +63,13 @@ export const VENDOR_CATEGORIES = [
   'bridal_wear',
   'live_music',
   'carts',
+  'gifts',
 ] as const;
 
 export const VENDOR_CATEGORY_LABELS: Record<string, string> = {
   photography: 'Photography',
   videography: 'Videography & Content',
+  content_creation: 'Content Creation / Reels',
   mehndi: 'Mehndi / Henna',
   hair_makeup: 'Hair & Makeup',
   dj: 'DJ',
@@ -78,6 +81,7 @@ export const VENDOR_CATEGORY_LABELS: Record<string, string> = {
   bridal_wear: 'Bridal Wear',
   live_music: 'Live Music & Performance',
   carts: 'Carts',
+  gifts: 'Gifts & Favors',
 };
 
 export const BOOKING_STATUSES = [
