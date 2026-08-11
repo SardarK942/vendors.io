@@ -10,6 +10,7 @@ import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle'
 import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButton';
 import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
 import { PricingModelChoice } from '@/components/onboarding/PricingModelChoice';
+import { PublishConfetti } from '@/components/celebration/PublishConfetti';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { fmtUSD } from '@/lib/intl';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
@@ -49,6 +50,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
   if (justOnboarded) {
     return (
       <div className="space-y-6">
+        <PublishConfetti />
         <PricingModelChoice vendorSlug={vendorSlug} />
       </div>
     );
