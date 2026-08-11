@@ -9,6 +9,10 @@ export async function updateSession(request: NextRequest) {
   const nextMode = request.nextUrl.searchParams.get('next') === 'true' ? 'next' : 'first';
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-wizard-mode', nextMode);
+  // Expose the pathname to server layouts (they don't otherwise receive it), so
+  // the dashboard shell can drop its global sidebar on the focused onboarding
+  // wizard route tree.
+  requestHeaders.set('x-pathname', request.nextUrl.pathname);
   let supabaseResponse = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(

@@ -14,14 +14,17 @@ const instagramHandle = z
   .default('')
   .transform((s) => s.replace(/^@/, '').trim())
   .pipe(
-    z.union([z.literal(''), z.string().regex(/^[A-Za-z0-9._]{1,30}$/, 'Invalid Instagram handle')])
+    z
+      .string()
+      .min(1, 'Instagram handle is required')
+      .regex(/^[A-Za-z0-9._]{1,30}$/, 'Invalid Instagram handle')
   );
 
 export const basicsSchema = z
   .object({
     businessName: z.string().min(1).max(120),
     category: z.string().min(1),
-    bio: z.string().max(500, 'Bio must be 500 characters or fewer'),
+    bio: z.string().min(1, 'Bio is required').max(500, 'Bio must be 500 characters or fewer'),
     subcategories: z.array(z.string()).optional().default([]),
     services: z.array(z.string()).optional().default([]),
   })
@@ -79,7 +82,7 @@ export const detailsSchema = z.object({
 export const publishGateSchema = z.object({
   business_name: z.string().min(1),
   category: z.string().min(1),
-  bio: z.string().max(500),
+  bio: z.string().min(1).max(500),
   base_address_line_1: z.string().optional(),
   base_city: z.string().optional(),
   base_state: z.string().optional(),

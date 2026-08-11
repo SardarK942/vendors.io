@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { basicsSchema } from '@/lib/onboarding/validation';
 
-const base = { businessName: 'Studio X', category: 'photography', bio: '' };
+const base = { businessName: 'Studio X', category: 'photography', bio: 'We shoot weddings.' };
 
 describe('basicsSchema — services', () => {
   it('accepts valid service slugs', () => {
