@@ -21,7 +21,7 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
     <section className="relative isolate mx-[calc(50%-50vw)] -mt-20 flex min-h-[100svh] w-screen items-start overflow-hidden pt-20">
       <HeroVideoBackdrop />
 
-      <div className="mx-auto w-full max-w-[1280px] px-6 py-20 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] lg:px-14 lg:py-28">
+      <div className="mx-auto w-full max-w-[1280px] px-6 pb-20 pl-[max(1.5rem,env(safe-area-inset-left))] pr-[max(1.5rem,env(safe-area-inset-right))] pt-8 lg:px-14 lg:pb-28 lg:pt-12">
         <div className="mx-auto max-w-[820px] text-center">
           <p className="m-0 mb-6 text-[11px] font-semibold uppercase tracking-[0.16em] text-cream/75">
             Discover. Compare. Book.
@@ -39,13 +39,13 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
             starts here.
           </h1>
 
-          <p className="m-0 mb-8 mx-auto max-w-[560px] text-pretty text-lg leading-[1.55] text-cream/85">
+          <p className="m-0 mx-auto mb-8 max-w-[560px] text-pretty text-lg leading-[1.55] text-cream/85">
             Chicago&rsquo;s marketplace for{' '}
             <span className="bg-haldi box-decoration-clone px-2 pb-1 pt-0 text-ink">Cultural</span>{' '}
             wedding vendors. Discover, compare, and book with confidence.
           </p>
 
-          <div className="mb-5 mx-auto max-w-[560px]">
+          <div className="mx-auto mb-5 max-w-[560px]">
             <AiSearchInput variant="hero" />
           </div>
 
