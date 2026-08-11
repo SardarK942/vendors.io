@@ -4,8 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useFormErrors } from '@/hooks/useFormErrors';
 import Link from 'next/link';
 import Image from 'next/image';
+import { ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { OnboardingPreview } from './OnboardingPreview';
+import { getPublishBlockers } from '@/lib/onboarding/publish-checklist';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import type { Database } from '@/types/database.types';
 
@@ -23,6 +25,12 @@ export function StepReview({ profile, profileId, mode }: Props) {
   const [publishing, setPublishing] = useState(false);
   const [publishError, setPublishError] = useState<string | null>(null);
   const [publishErrorStep, setPublishErrorStep] = useState<string | null>(null);
+
+  // Client-side mirror of the server publish gate — surface what's still missing
+  // BEFORE the vendor clicks Publish, instead of rejecting them afterward.
+  const blockers = getPublishBlockers(profile);
+  const canPublish = blockers.length === 0;
+
   async function onPublish() {
     setPublishing(true);
     setPublishError(null);
@@ -123,8 +131,10 @@ export function StepReview({ profile, profileId, mode }: Props) {
               <dd>
                 {profile.base_address_line_1 ? (
                   `${profile.base_address_line_1}, ${profile.base_city}, ${profile.base_state} ${profile.base_postal_code}`
+                ) : profile.base_address_skipped ? (
+                  <span className="text-muted-foreground">Travels to clients</span>
                 ) : (
-                  <span className="text-destructive">Missing</span>
+                  <span className="text-muted-foreground">Not added (optional)</span>
                 )}
               </dd>
             </div>
@@ -245,6 +255,28 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </div>
       )}
 
+      {!canPublish && (
+        <div className="rounded-lg border border-hot-pink/30 bg-hot-pink/5 p-4" aria-live="polite">
+          <p className="text-sm font-semibold text-ink">
+            Almost there — {blockers.length} thing{blockers.length === 1 ? '' : 's'} left to publish
+          </p>
+          <ul className="mt-3 space-y-1.5">
+            {blockers.map((b) => (
+              <li key={b.field}>
+                <Link
+                  href={`/dashboard/profile/setup/${b.step}`}
+                  className="group inline-flex items-center gap-2 rounded text-sm text-ink transition-colors hover:text-hot-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                >
+                  <span className="size-1.5 rounded-full bg-hot-pink" aria-hidden="true" />
+                  {b.label}
+                  <ArrowRight className="size-3.5 opacity-0 transition-opacity group-hover:opacity-100" />
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="rounded-md bg-cream/60 p-3 shadow-sm">
         <p className="text-pretty text-xs text-ink/80">
           By publishing your profile, you agree to Baazar’s terms. Customers pay a 5% deposit
@@ -254,7 +286,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
       </div>
 
       <div className="flex justify-end">
-        <Button onClick={onPublish} disabled={publishing} size="lg">
+        <Button onClick={onPublish} disabled={publishing || !canPublish} size="lg">
           {publishing ? 'Publishing…' : 'Publish Profile'}
         </Button>
       </div>
