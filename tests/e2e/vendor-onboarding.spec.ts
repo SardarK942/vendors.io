@@ -102,7 +102,8 @@ test.describe('vendor onboarding wizard', () => {
       await page.getByRole('button', { name: 'Hindi' }).click();
       await page.getByLabel('Years in business').fill('10');
       await page.getByRole('radio', { name: 'Within 24 hours' }).check();
-      await page.getByRole('button', { name: /continue/i }).click();
+      // Step-4 CTA is now "Next" (unified from "Continue").
+      await page.getByRole('button', { name: /next/i }).click();
       await expect(page).toHaveURL(/\/setup\/portfolio/, { timeout: 10_000 });
 
       // ── Step 5: Portfolio — API bypass (UploadThing needs network) ────────
