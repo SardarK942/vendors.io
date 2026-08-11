@@ -205,7 +205,7 @@ export function StepDetails({ profile, profileId, mode, isBackfill = false }: Pr
 
       <div className="flex items-center justify-end gap-3 border-t border-hairline pt-4">
         <Button type="submit" disabled={!isValid} isLoading={submitting}>
-          {isBackfill ? 'Save' : 'Continue'}
+          {isBackfill ? 'Save' : 'Next'}
         </Button>
       </div>
     </form>

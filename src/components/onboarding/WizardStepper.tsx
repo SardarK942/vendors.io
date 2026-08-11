@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Check } from 'lucide-react';
 import { nextIncompleteStep, type WizardStep, type ProfileRowShape } from '@/lib/onboarding/resume';
 
-const STEPS: { key: WizardStep; label: string }[] = [
+export const STEPS: { key: WizardStep; label: string }[] = [
   { key: 'basics', label: 'Basics' },
   { key: 'location', label: 'Location' },
   { key: 'online', label: 'Online presence' },
