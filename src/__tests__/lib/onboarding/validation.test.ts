@@ -17,9 +17,14 @@ describe('basicsSchema', () => {
     expect(r.success).toBe(true);
   });
 
-  it('accepts bio < 50 chars (min constraint removed in T5)', () => {
+  it('accepts a short (non-empty) bio', () => {
     const r = basicsSchema.safeParse({ businessName: 'X', category: 'mehndi', bio: 'short' });
     expect(r.success).toBe(true);
+  });
+
+  it('rejects an empty bio (now required)', () => {
+    const r = basicsSchema.safeParse({ businessName: 'X', category: 'mehndi', bio: '' });
+    expect(r.success).toBe(false);
   });
 
   it('rejects bio > 500 chars', () => {
@@ -65,13 +70,13 @@ describe('onlineSchema', () => {
       true
     );
   });
-  it('accepts missing instagram (optional)', () => {
+  it('rejects an empty instagram handle (now required)', () => {
     expect(
       onlineSchema.safeParse({ instagramHandle: '', websiteUrl: 'https://x.com' }).success
-    ).toBe(true);
+    ).toBe(false);
   });
-  it('accepts entirely missing instagramHandle key', () => {
-    expect(onlineSchema.safeParse({ websiteUrl: '' }).success).toBe(true);
+  it('rejects an entirely missing instagramHandle key (now required)', () => {
+    expect(onlineSchema.safeParse({ websiteUrl: '' }).success).toBe(false);
   });
   it('strips leading @ from instagram', () => {
     const r = onlineSchema.parse({ instagramHandle: '@hennaart', websiteUrl: '' });
@@ -113,6 +118,13 @@ describe('publishGateSchema (server-side guard)', () => {
     const r = publishGateSchema.safeParse({
       ...completeProfile,
       instagram_handle: null,
+    });
+    expect(r.success).toBe(false);
+  });
+  it('rejects profile with an empty bio (now required)', () => {
+    const r = publishGateSchema.safeParse({
+      ...completeProfile,
+      bio: '',
     });
     expect(r.success).toBe(false);
   });

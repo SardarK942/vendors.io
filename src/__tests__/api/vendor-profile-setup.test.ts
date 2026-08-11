@@ -311,7 +311,7 @@ describe('PATCH /api/vendor-profile/setup/[step] — online', () => {
     vi.clearAllMocks();
   });
 
-  it('returns 200 when instagramHandle is empty (now optional)', async () => {
+  it('returns 400 when instagramHandle is empty (now required)', async () => {
     const sb = buildSupabaseForUpdate();
     mockRequireUser.mockResolvedValueOnce({ user: { id: 'u-1' }, supabase: sb });
 
@@ -320,7 +320,7 @@ describe('PATCH /api/vendor-profile/setup/[step] — online', () => {
       websiteUrl: '',
     });
     const res = await PATCH(req, ctx);
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(400);
   });
 
   it('returns 200 with valid instagram handle (strips leading @)', async () => {
