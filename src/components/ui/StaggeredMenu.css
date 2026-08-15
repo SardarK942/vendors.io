@@ -31,6 +31,33 @@
   z-index: 20;
 }
 
+/* Solid variant — opaque cream bar so page content scrolls cleanly underneath
+   instead of bleeding through the transparent header. Used on every surface
+   except the homepage hero, where the header intentionally floats. */
+.staggered-menu-header.is-solid {
+  background: hsl(var(--cream, 40 65% 96%));
+  box-shadow: inset 0 -1px 0 hsl(var(--hairline, 43 41% 85%));
+}
+
+/* Hide-on-scroll — mobile only. The header slides up out of view when the
+   `.is-hidden` class is set (direction tracked in JS) and returns on scroll-up.
+   Desktop keeps the header always visible. */
+@media (max-width: 767px) {
+  .staggered-menu-header {
+    transition: transform 0.32s cubic-bezier(0.22, 1, 0.36, 1);
+    will-change: transform;
+  }
+  .staggered-menu-header.is-hidden {
+    transform: translateY(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .staggered-menu-header {
+    transition: none;
+  }
+}
+
 .staggered-menu-header > * {
   pointer-events: auto;
 }

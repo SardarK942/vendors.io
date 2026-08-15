@@ -154,6 +154,8 @@ export function BaazarChrome() {
     <StaggeredMenu
       position="right"
       isFixed
+      solidHeader={!light}
+      hideOnScroll
       items={items}
       socialItems={[]}
       displaySocials={false}

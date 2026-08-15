@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
 import { PackagePhotoFallback } from './PackagePhotoFallback';
@@ -86,31 +86,41 @@ export function PackageGrid({
                   onRequestCustomQuote();
                 }
               }}
-              className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft bg-cream-soft text-left transition-shadow hover:shadow-md"
+              className="group flex flex-col overflow-hidden rounded-xl border border-dashed border-ink-soft/60 bg-cream-soft text-left transition-[border-color,box-shadow] hover:border-indigo hover:shadow-md"
             >
-              <div className="flex aspect-[4/3] items-center justify-center bg-cream-soft outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10">
-                <span className="pl-1 font-display text-5xl font-bold tracking-[-0.02em] text-ink-soft">
-                  ?
+              {/* Intentional panel — a custom quote has no photo by nature, so
+                  this reads as bespoke rather than a missing image. */}
+              <div className="flex aspect-[4/3] flex-col items-center justify-center gap-2.5 bg-[radial-gradient(circle_at_center,rgba(46,61,163,0.05),transparent_70%)]">
+                <span className="flex h-12 w-12 items-center justify-center rounded-full bg-cream text-indigo ring-1 ring-hairline">
+                  <Sparkles className="size-5" aria-hidden="true" />
+                </span>
+                <span className="text-[11px] font-medium uppercase tracking-[0.16em] text-ink-soft">
+                  Tailored
                 </span>
               </div>
-              <div className="flex flex-1 flex-col space-y-2 p-4">
+              <div className="flex flex-1 flex-col p-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-hot-pink">
                   Quote on request
                 </p>
-                <h3 className="text-base font-semibold leading-tight text-ink" translate="no">
+                <h3
+                  className="mt-1.5 text-base font-semibold leading-tight text-ink"
+                  translate="no"
+                >
                   {p.name}
                 </h3>
-                <p className="flex-1 text-sm text-ink-muted">{p.description}</p>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-display text-lg font-medium italic text-ink">
-                    Custom
-                    <span className="ml-1 text-xs not-italic text-ink-soft">
-                      — price after vendor responds
-                    </span>
-                  </span>
-                  <span className="inline-flex items-center gap-1 text-sm text-indigo group-hover:underline">
+                <p className="mt-1.5 flex-1 text-sm leading-relaxed text-ink-muted">
+                  {p.description}
+                </p>
+                {/* Stacked footer — never a justify-between row, which wraps and
+                    misaligns in a ~210px column. */}
+                <div className="mt-4 border-t border-hairline pt-4">
+                  <p className="font-display text-lg italic text-ink">Custom pricing</p>
+                  <p className="mt-0.5 text-xs text-ink-soft">
+                    Quoted once the vendor sees your request
+                  </p>
+                  <span className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-indigo transition-[gap] group-hover:gap-2.5">
                     Request a quote
-                    <ArrowRight className="size-4 translate-y-px" aria-hidden="true" />
+                    <ArrowRight className="size-4" aria-hidden="true" />
                   </span>
                 </div>
               </div>
