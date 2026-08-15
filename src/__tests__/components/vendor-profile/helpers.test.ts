@@ -35,6 +35,24 @@ describe('getFeaturedPackage', () => {
     ];
     expect(getFeaturedPackage(packages)?.id).toBe('a');
   });
+
+  it('prefers a vendor-flagged package over the cheapest', () => {
+    const packages = [
+      { id: 'a', base_price_cents: 120_000, is_featured: false },
+      { id: 'b', base_price_cents: 250_000, is_featured: true },
+      { id: 'c', base_price_cents: 180_000, is_featured: false },
+    ];
+    expect(getFeaturedPackage(packages)?.id).toBe('b');
+  });
+
+  it('picks the cheapest among multiple flagged packages', () => {
+    const packages = [
+      { id: 'a', base_price_cents: 250_000, is_featured: true },
+      { id: 'b', base_price_cents: 120_000, is_featured: true },
+      { id: 'c', base_price_cents: 100_000, is_featured: false },
+    ];
+    expect(getFeaturedPackage(packages)?.id).toBe('b');
+  });
 });
 
 describe('calculateDeposit', () => {

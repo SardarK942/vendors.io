@@ -176,18 +176,43 @@ export type PackageAddonInput = z.infer<typeof packageAddonInputSchema>;
 export const packageLocationModeSchema = z.enum(['couple_provides', 'at_vendor']);
 export type PackageLocationModeInput = z.infer<typeof packageLocationModeSchema>;
 
+/**
+ * Capacity units a package's headline number can be expressed in. Kept in sync
+ * with the CHECK constraint on packages.capacity_unit (migration 00074) and the
+ * PackageCapacityUnit type in database.types.ts. `singular` drives the
+ * "up to N {unit}" line so it reads naturally at N=1. Only 'servings' is
+ * offered as an alternative to 'guests', and only for cart vendors — the unit
+ * selector is hidden for every other vendor type.
+ */
+export const PACKAGE_CAPACITY_UNITS = [
+  { value: 'guests', label: 'Guests', singular: 'guest' },
+  { value: 'servings', label: 'Servings', singular: 'serving' },
+] as const;
+
+export const packageCapacityUnitSchema = z.enum(['guests', 'servings']);
+export type PackageCapacityUnitInput = z.infer<typeof packageCapacityUnitSchema>;
+
+/** "up to 300 servings" / "up to 1 guest" — pluralization-aware capacity line. */
+export function formatCapacity(value: number, unit: PackageCapacityUnitInput): string {
+  const meta = PACKAGE_CAPACITY_UNITS.find((u) => u.value === unit);
+  const word = value === 1 ? (meta?.singular ?? unit) : (meta?.value ?? unit);
+  return `up to ${value} ${word}`;
+}
+
 export const createPackageSchema = z.object({
   name: z.string().min(1).max(120),
   description: z.string().min(1).max(2000),
   base_price_cents: z.number().int().positive(),
   included_items: z.array(z.string().max(200)).max(20).default([]),
   max_guests: z.number().int().positive(),
+  capacity_unit: packageCapacityUnitSchema.default('guests'),
   duration_hours: z.number().positive(),
   events_count: z.number().int().min(1).max(5).default(1),
   featured_image_url: z.string().url().nullable().optional(),
   gallery_image_urls: z.array(z.string().url()).max(2).default([]),
   vendor_notes_template: z.string().max(1000).optional().nullable(),
   location_mode: packageLocationModeSchema.default('couple_provides'),
+  is_featured: z.boolean().default(false),
   addons: z.array(packageAddonInputSchema).max(8).default([]),
 });
 export type CreatePackageInput = z.infer<typeof createPackageSchema>;

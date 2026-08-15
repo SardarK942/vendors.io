@@ -5,6 +5,7 @@ import {
   setPackageActiveState,
   hardDeletePackage,
   listPackagesForVendor,
+  reorderPackages,
 } from '@/services/packages.service';
 
 // ─── createPackage ─────────────────────────────────────────────────────────────
@@ -19,7 +20,10 @@ describe('packages.service', () => {
     });
 
     it('returns INSERT_FAILED error when package insert fails', async () => {
-      const sb = buildCreatePackageSupabase({ pkgError: { message: 'db error' }, addonsError: null });
+      const sb = buildCreatePackageSupabase({
+        pkgError: { message: 'db error' },
+        addonsError: null,
+      });
       const result = await createPackage(sb as never, 'vp-1', minimalPackageInput());
       expect(result.error?.code).toBe('INSERT_FAILED');
     });
@@ -87,6 +91,29 @@ describe('packages.service', () => {
     });
   });
 
+  // ─── reorderPackages ─────────────────────────────────────────────────────────
+
+  describe('reorderPackages', () => {
+    it('rejects an order that is not exactly the vendor’s packages', async () => {
+      const sb = buildReorderSupabase({ ownedIds: ['p1', 'p2', 'p3'] });
+      const result = await reorderPackages(sb as never, 'vp-1', ['p1', 'p2']); // missing p3
+      expect(result.error?.code).toBe('INVALID_ORDER');
+    });
+
+    it('rejects an order containing a foreign package id', async () => {
+      const sb = buildReorderSupabase({ ownedIds: ['p1', 'p2'] });
+      const result = await reorderPackages(sb as never, 'vp-1', ['p1', 'pX']);
+      expect(result.error?.code).toBe('INVALID_ORDER');
+    });
+
+    it('persists display_order for a valid full reordering', async () => {
+      const sb = buildReorderSupabase({ ownedIds: ['p1', 'p2', 'p3'] });
+      const result = await reorderPackages(sb as never, 'vp-1', ['p3', 'p1', 'p2']);
+      expect(result.error).toBeNull();
+      expect(result.data?.reordered).toBe(true);
+    });
+  });
+
   // ─── listPackagesForVendor ───────────────────────────────────────────────────
 
   describe('listPackagesForVendor', () => {
@@ -115,11 +142,13 @@ function minimalPackageInput() {
     base_price_cents: 80000,
     included_items: ['2 hours coverage'],
     max_guests: 50,
+    capacity_unit: 'guests' as const,
     duration_hours: 2,
     events_count: 1,
     featured_image_url: 'https://example.com/photo.jpg',
     gallery_image_urls: [],
     location_mode: 'couple_provides' as const,
+    is_featured: false,
     addons: [{ name: 'Drone footage', price_delta_cents: 30000 }],
   };
 }
@@ -157,7 +186,9 @@ function buildCreatePackageSupabase({
           insert: () => ({
             select: () =>
               Promise.resolve({
-                data: addonsError ? null : [{ id: 'addon-1', name: 'Drone footage', price_delta_cents: 30000 }],
+                data: addonsError
+                  ? null
+                  : [{ id: 'addon-1', name: 'Drone footage', price_delta_cents: 30000 }],
                 error: addonsError,
               }),
           }),
@@ -251,6 +282,34 @@ function buildHardDeleteSupabase({
               in: () => ({
                 limit: () => Promise.resolve({ data: activeBookings, error: null }),
               }),
+            }),
+          }),
+        };
+      }
+      return { select: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }) };
+    },
+  };
+}
+
+function buildReorderSupabase({
+  ownedIds,
+  updateError = null,
+}: {
+  ownedIds: string[];
+  updateError?: { message: string } | null;
+}) {
+  return {
+    from: (table: string) => {
+      if (table === 'packages') {
+        return {
+          // reorderPackages: .select('id').eq('vendor_profile_id', vp)
+          select: () => ({
+            eq: () => Promise.resolve({ data: ownedIds.map((id) => ({ id })), error: null }),
+          }),
+          // reorderPackages: .update({...}).eq('id', id).eq('vendor_profile_id', vp)
+          update: () => ({
+            eq: () => ({
+              eq: () => Promise.resolve({ error: updateError }),
             }),
           }),
         };

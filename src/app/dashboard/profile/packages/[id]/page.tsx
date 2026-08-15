@@ -2,8 +2,9 @@ import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
-import { PackageEditorForm } from '@/components/forms/PackageEditorForm';
+import { PackageEditorForm, type PackageInitial } from '@/components/forms/PackageEditorForm';
 import type { AddonDraft } from '@/components/forms/PackageAddonsEditor';
+import { isCartVendor } from '@/lib/vendor/is-cart';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,19 +17,23 @@ export default async function EditPackagePage({ params }: { params: { id: string
 
   const { data: pkg } = await supabase
     .from('packages')
-    .select('*, addons:package_addons(*), vendor_profiles!inner(user_id)')
+    .select('*, addons:package_addons(*), vendor_profiles!inner(user_id, category, services)')
     .eq('id', params.id)
     .single();
 
   if (!pkg) notFound();
 
-  const vp = (pkg as Record<string, unknown>).vendor_profiles as { user_id: string } | null;
+  const vp = (pkg as Record<string, unknown>).vendor_profiles as {
+    user_id: string;
+    category: string | null;
+    services: string[] | null;
+  } | null;
   if (!vp || vp.user_id !== user.id) notFound();
 
   const addons = ((pkg as Record<string, unknown>).addons as AddonDraft[] | null) ?? [];
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-5xl">
       <Link
         href="/dashboard/profile/packages"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-ink"
@@ -39,12 +44,14 @@ export default async function EditPackagePage({ params }: { params: { id: string
       <h1 className="mb-6 text-pretty text-2xl font-bold">Edit Package</h1>
       <PackageEditorForm
         mode="edit"
+        capacityUnitEditable={isCartVendor(vp.category, vp.services)}
         initial={{
           id: pkg.id,
           name: pkg.name,
           description: pkg.description,
           base_price_cents: pkg.base_price_cents,
           max_guests: pkg.max_guests,
+          capacity_unit: (pkg.capacity_unit as PackageInitial['capacity_unit']) ?? 'guests',
           duration_hours: pkg.duration_hours,
           events_count: pkg.events_count,
           featured_image_url: pkg.featured_image_url,
@@ -52,6 +59,7 @@ export default async function EditPackagePage({ params }: { params: { id: string
           included_items: (pkg.included_items as string[]) ?? [],
           vendor_notes_template: pkg.vendor_notes_template ?? null,
           location_mode: pkg.location_mode as 'couple_provides' | 'at_vendor',
+          is_featured: pkg.is_featured ?? false,
           addons,
         }}
       />

@@ -89,6 +89,8 @@ export type AdjustmentReason =
 
 export type PackageLocationMode = 'couple_provides' | 'at_vendor';
 
+export type PackageCapacityUnit = 'guests' | 'servings';
+
 export interface SelectedAddonSnapshot {
   addon_id: string;
   name: string;
@@ -454,6 +456,7 @@ export interface Database {
           base_price_cents: number;
           included_items: string[];
           max_guests: number;
+          capacity_unit: PackageCapacityUnit;
           duration_hours: number;
           events_count: number;
           featured_image_url: string | null;
@@ -462,6 +465,7 @@ export interface Database {
           location_mode: PackageLocationMode;
           display_order: number;
           is_active: boolean;
+          is_featured: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -473,6 +477,7 @@ export interface Database {
           base_price_cents: number;
           included_items?: string[];
           max_guests: number;
+          capacity_unit?: PackageCapacityUnit;
           duration_hours: number;
           events_count?: number;
           featured_image_url?: string | null;
@@ -481,6 +486,7 @@ export interface Database {
           location_mode?: PackageLocationMode;
           display_order?: number;
           is_active?: boolean;
+          is_featured?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -491,6 +497,7 @@ export interface Database {
           base_price_cents?: number;
           included_items?: string[];
           max_guests?: number;
+          capacity_unit?: PackageCapacityUnit;
           duration_hours?: number;
           events_count?: number;
           featured_image_url?: string | null;
@@ -499,6 +506,7 @@ export interface Database {
           location_mode?: PackageLocationMode;
           display_order?: number;
           is_active?: boolean;
+          is_featured?: boolean;
           updated_at?: string;
         };
         Relationships: [

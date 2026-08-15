@@ -81,7 +81,7 @@ export default async function VendorPage({ params }: VendorPageProps) {
   const { data: packagesData } = await supabase
     .from('packages')
     .select(
-      'id, name, description, base_price_cents, included_items, max_guests, duration_hours, events_count, featured_image_url, gallery_image_urls, vendor_notes_template, location_mode, addons:package_addons(id, name, price_delta_cents, display_order)'
+      'id, name, description, base_price_cents, included_items, max_guests, capacity_unit, duration_hours, events_count, featured_image_url, gallery_image_urls, vendor_notes_template, location_mode, is_featured, addons:package_addons(id, name, price_delta_cents, display_order)'
     )
     .eq('vendor_profile_id', vendor.id)
     .eq('is_active', true)

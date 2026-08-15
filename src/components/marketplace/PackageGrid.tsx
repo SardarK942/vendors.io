@@ -9,7 +9,9 @@ import { toast } from 'sonner';
 import { PackageDetailModal } from './PackageDetailModal';
 import { PackagePhotoFallback } from './PackagePhotoFallback';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
+import type { PackageCapacityUnit } from '@/types/database.types';
 import { fmtUSD } from '@/lib/intl';
+import { formatCapacity } from '@/types';
 
 export interface PackageWithAddons {
   id: string;
@@ -18,11 +20,13 @@ export interface PackageWithAddons {
   base_price_cents: number;
   duration_hours: number;
   max_guests: number;
+  capacity_unit: PackageCapacityUnit;
   events_count: number;
   featured_image_url: string | null;
   gallery_image_urls: string[];
   included_items: string[];
   vendor_notes_template: string | null;
+  is_featured: boolean;
   location_mode: 'couple_provides' | 'at_vendor';
   addons: {
     id: string;
@@ -179,7 +183,7 @@ export function PackageGrid({
                   </h3>
                   <p className="text-sm tabular-nums text-muted-foreground">
                     {p.duration_hours}
-                    {' '}h · up to {p.max_guests} guests
+                    {' '}h · {formatCapacity(p.max_guests, p.capacity_unit)}
                     {p.events_count > 1 && ` · ${p.events_count} events`}
                   </p>
                   <div className="flex items-center justify-between pt-1">

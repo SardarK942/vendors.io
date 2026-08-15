@@ -4,6 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PackageEditorForm } from '@/components/forms/PackageEditorForm';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
+import { isCartVendor } from '@/lib/vendor/is-cart';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,7 +21,7 @@ export default async function NewPackagePage() {
   if (!vendorProfile) redirect('/dashboard/profile?next=/dashboard/profile/packages/new');
 
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-5xl">
       <Link
         href="/dashboard/profile/packages"
         className="mb-4 inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-ink"
@@ -29,7 +30,10 @@ export default async function NewPackagePage() {
         Back to packages
       </Link>
       <h1 className="mb-6 text-pretty text-2xl font-bold">Add Package</h1>
-      <PackageEditorForm mode="create" />
+      <PackageEditorForm
+        mode="create"
+        capacityUnitEditable={isCartVendor(vendorProfile.category, vendorProfile.services)}
+      />
     </div>
   );
 }
