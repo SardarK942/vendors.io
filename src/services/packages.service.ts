@@ -21,6 +21,25 @@ interface ServiceResult<T> {
   error: ServiceError | null;
 }
 
+/**
+ * Enforce a single "most popular" package per vendor: unset is_featured on
+ * every other package this vendor owns. Called after a package is saved with
+ * is_featured=true. Best-effort — a failure here doesn't fail the save, and
+ * getFeaturedPackage() tolerates multiple flags by picking the cheapest.
+ */
+async function clearOtherFeatured(
+  supabase: SupabaseClient<Database>,
+  vendorProfileId: string,
+  keepPackageId: string
+): Promise<void> {
+  await supabase
+    .from('packages')
+    .update({ is_featured: false })
+    .eq('vendor_profile_id', vendorProfileId)
+    .eq('is_featured', true)
+    .neq('id', keepPackageId);
+}
+
 // ─── Create ────────────────────────────────────────────────────────────────────
 
 export async function createPackage(
@@ -59,6 +78,10 @@ export async function createPackage(
     createdAddons = (data ?? []) as Record<string, unknown>[];
   }
 
+  if (packageData.is_featured) {
+    await clearOtherFeatured(supabase, vendorProfileId, pkg.id as string);
+  }
+
   return { data: { package: pkg as Record<string, unknown>, addons: createdAddons }, error: null };
 }
 
@@ -80,7 +103,10 @@ export async function updatePackage(
     .single();
 
   if (!existing || existing.vendor_profile_id !== vendorProfileId) {
-    return { data: null, error: { code: 'NOT_FOUND_OR_FORBIDDEN', message: 'Package not found or not yours' } };
+    return {
+      data: null,
+      error: { code: 'NOT_FOUND_OR_FORBIDDEN', message: 'Package not found or not yours' },
+    };
   }
 
   const { data: pkg, error } = await supabase
@@ -91,6 +117,10 @@ export async function updatePackage(
     .single();
 
   if (error) return { data: null, error: { code: 'UPDATE_FAILED', message: error.message } };
+
+  if (packageData.is_featured) {
+    await clearOtherFeatured(supabase, vendorProfileId, packageId);
+  }
 
   // Addons replace pattern: delete all, re-insert provided
   if (addons !== undefined) {
@@ -107,7 +137,13 @@ export async function updatePackage(
     .eq('package_id', packageId)
     .order('display_order');
 
-  return { data: { package: pkg as Record<string, unknown>, addons: (currentAddons ?? []) as Record<string, unknown>[] }, error: null };
+  return {
+    data: {
+      package: pkg as Record<string, unknown>,
+      addons: (currentAddons ?? []) as Record<string, unknown>[],
+    },
+    error: null,
+  };
 }
 
 // ─── Deactivate (soft delete) ──────────────────────────────────────────────────
@@ -170,6 +206,42 @@ export async function setPackageActiveState(
   return { data: data as Record<string, unknown>, error: null };
 }
 
+// ─── Set "Most popular" flag ─────────────────────────────────────────────────────
+
+/**
+ * Toggle the vendor-chosen "Most popular" package (#3). Setting one clears the
+ * flag on the vendor's other packages so at most one is ever featured. Verifies
+ * ownership before writing.
+ */
+export async function setPackageFeatured(
+  supabase: SupabaseClient<Database>,
+  packageId: string,
+  vendorProfileId: string,
+  isFeatured: boolean
+): Promise<ServiceResult<Record<string, unknown>>> {
+  const { data, error } = await supabase
+    .from('packages')
+    .update({ is_featured: isFeatured, updated_at: new Date().toISOString() })
+    .eq('id', packageId)
+    .eq('vendor_profile_id', vendorProfileId)
+    .select('*')
+    .single();
+
+  if (error) return { data: null, error: { code: 'UPDATE_FAILED', message: error.message } };
+  if (!data) {
+    return {
+      data: null,
+      error: { code: 'NOT_FOUND_OR_FORBIDDEN', message: 'Package not found or not yours' },
+    };
+  }
+
+  if (isFeatured) {
+    await clearOtherFeatured(supabase, vendorProfileId, packageId);
+  }
+
+  return { data: data as Record<string, unknown>, error: null };
+}
+
 // ─── Hard delete ───────────────────────────────────────────────────────────────
 
 export async function hardDeletePackage(
@@ -221,6 +293,54 @@ export async function hardDeletePackage(
 
   if (error) return { data: null, error: { code: 'DELETE_FAILED', message: error.message } };
   return { data: { deleted: true }, error: null };
+}
+
+// ─── Reorder ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Persist a new package ordering by writing display_order = position for each
+ * id. The provided list must be exactly this vendor's package ids (all of them,
+ * no strays) — a guard against a client sending a partial or foreign set. Counts
+ * are tiny (a handful per vendor), so per-row updates in parallel are fine.
+ */
+export async function reorderPackages(
+  supabase: SupabaseClient<Database>,
+  vendorProfileId: string,
+  orderedIds: string[]
+): Promise<ServiceResult<{ reordered: true }>> {
+  const { data: existing, error: listErr } = await supabase
+    .from('packages')
+    .select('id')
+    .eq('vendor_profile_id', vendorProfileId);
+
+  if (listErr) return { data: null, error: { code: 'LIST_FAILED', message: listErr.message } };
+
+  const ownedIds = new Set((existing ?? []).map((p) => p.id));
+  const allOwned = orderedIds.every((id) => ownedIds.has(id));
+  if (orderedIds.length !== ownedIds.size || !allOwned) {
+    return {
+      data: null,
+      error: { code: 'INVALID_ORDER', message: 'Order must list exactly your packages.' },
+    };
+  }
+
+  const now = new Date().toISOString();
+  const results = await Promise.all(
+    orderedIds.map((id, i) =>
+      supabase
+        .from('packages')
+        .update({ display_order: i, updated_at: now })
+        .eq('id', id)
+        .eq('vendor_profile_id', vendorProfileId)
+    )
+  );
+
+  const failed = results.find((r) => r.error);
+  if (failed?.error) {
+    return { data: null, error: { code: 'UPDATE_FAILED', message: failed.error.message } };
+  }
+
+  return { data: { reordered: true }, error: null };
 }
 
 // ─── List ──────────────────────────────────────────────────────────────────────

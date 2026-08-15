@@ -10,6 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import type { PackageWithAddons } from './PackageGrid';
 import { PackagePhotoFallback } from './PackagePhotoFallback';
 import { fmtUSD } from '@/lib/intl';
+import { formatCapacity } from '@/types';
 
 interface Props {
   pkg: PackageWithAddons;
@@ -96,7 +97,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           {/* Summary line */}
           <p className="text-sm tabular-nums text-muted-foreground">
             {pkg.duration_hours}
-            {' '}h · up to {pkg.max_guests} guests
+            {' '}h · {formatCapacity(pkg.max_guests, pkg.capacity_unit)}
             {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
           </p>
 

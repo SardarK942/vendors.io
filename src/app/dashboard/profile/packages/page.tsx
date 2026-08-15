@@ -1,19 +1,17 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card } from '@/components/ui/card';
 import { PageTitle } from '@/components/dashboard/PageTitle';
 import { listPackagesForVendor } from '@/services/packages.service';
-import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
-import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButton';
-import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
+import {
+  PackageListSortable,
+  type SortablePackage,
+} from '@/components/dashboard/PackageListSortable';
 import { PricingModelChoice } from '@/components/onboarding/PricingModelChoice';
 import { PublishConfetti } from '@/components/celebration/PublishConfetti';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
-import { fmtUSD } from '@/lib/intl';
-import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +38,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
     vendorProfile.id,
     /* includeInactive */ true
   );
-  const packages = (packagesData ?? []) as unknown as PackageWithFullPreview[];
+  const packages = (packagesData ?? []) as unknown as SortablePackage[];
   const vendorSlug = vendorProfile.slug ?? '';
 
   // just_onboarded=1 shows only the pricing-model choice cards — the "Your Packages"
@@ -90,56 +88,8 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
           </Button>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {packages.map((pkg) => (
-            <PackageCard key={pkg.id} pkg={pkg} vendorSlug={vendorSlug} />
-          ))}
-        </div>
+        <PackageListSortable packages={packages} vendorSlug={vendorSlug} />
       )}
     </div>
-  );
-}
-
-// Row shape from `listPackagesForVendor` — includes addons so PackagePreviewButton
-// can render the full customer-view modal without an extra fetch.
-type PackageWithFullPreview = PackageWithAddons & { is_active: boolean };
-
-function PackageCard({ pkg, vendorSlug }: { pkg: PackageWithFullPreview; vendorSlug: string }) {
-  return (
-    <Card className={`overflow-hidden ${!pkg.is_active ? 'opacity-60' : ''}`}>
-      <div className="relative h-40 w-full">
-        {pkg.featured_image_url ? (
-          <Image
-            src={pkg.featured_image_url}
-            alt={pkg.name}
-            fill
-            className="object-cover"
-            unoptimized
-          />
-        ) : (
-          <PackagePhotoFallback name={pkg.name} />
-        )}
-      </div>
-      <CardContent className="space-y-2 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <h3 className="font-semibold leading-tight">{pkg.name}</h3>
-          {!pkg.is_active && (
-            <span className="shrink-0 text-xs uppercase text-muted-foreground">Inactive</span>
-          )}
-        </div>
-        <p className="text-sm tabular-nums text-muted-foreground">{fmtUSD(pkg.base_price_cents)}</p>
-        <p className="text-xs text-muted-foreground">
-          {pkg.duration_hours}
-          {' '}h &middot; up to {pkg.max_guests} guests
-        </p>
-        <div className="flex flex-wrap items-center gap-2 pt-2">
-          <PackagePreviewButton pkg={pkg} vendorSlug={vendorSlug} />
-          <Button size="sm" variant="outline" asChild>
-            <Link href={`/dashboard/profile/packages/${pkg.id}`}>Edit</Link>
-          </Button>
-          <PackageActiveToggle packageId={pkg.id} isActive={pkg.is_active} />
-        </div>
-      </CardContent>
-    </Card>
   );
 }

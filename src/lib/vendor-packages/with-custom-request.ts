@@ -12,12 +12,14 @@ export interface CustomRequestPackage {
   base_price_cents: null;
   included_items: null;
   max_guests: null;
+  capacity_unit: null;
   duration_hours: null;
   events_count: null;
   featured_image_url: null;
   gallery_image_urls: null;
   vendor_notes_template: null;
   location_mode: null;
+  is_featured: false;
   addons: [];
   is_custom: true;
 }
@@ -43,12 +45,14 @@ export function appendCustomRequest<T extends { id: string }>(
     base_price_cents: null,
     included_items: null,
     max_guests: null,
+    capacity_unit: null,
     duration_hours: null,
     events_count: null,
     featured_image_url: null,
     gallery_image_urls: null,
     vendor_notes_template: null,
     location_mode: null,
+    is_featured: false,
     addons: [],
     is_custom: true,
   };

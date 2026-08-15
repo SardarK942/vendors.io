@@ -3,15 +3,29 @@ import { DEPOSIT_RATE } from '@/lib/utils';
 export interface PackageLike {
   id: string;
   base_price_cents: number | null;
+  is_featured?: boolean | null;
 }
 
+function cheapest<T extends PackageLike>(packages: T[]): T | null {
+  if (packages.length === 0) return null;
+  return packages.reduce((min, current) => {
+    const minPrice = min.base_price_cents ?? Infinity;
+    const currPrice = current.base_price_cents ?? Infinity;
+    return currPrice < minPrice ? current : min;
+  });
+}
+
+/**
+ * The "Most popular" package. A vendor may explicitly flag one (is_featured);
+ * we honor that, picking the cheapest among flagged rows if several are set
+ * (the service enforces a single flag, but this stays robust if that drifts).
+ * When no package is flagged, we fall back to the cheapest — the historical
+ * behavior — so existing vendors see no change until they opt in.
+ */
 export function getFeaturedPackage<T extends PackageLike>(packages: T[]): T | null {
   if (packages.length === 0) return null;
-  return packages.reduce((cheapest, current) => {
-    const cheapPrice = cheapest.base_price_cents ?? Infinity;
-    const currPrice = current.base_price_cents ?? Infinity;
-    return currPrice < cheapPrice ? current : cheapest;
-  });
+  const flagged = packages.filter((p) => p.is_featured);
+  return cheapest(flagged.length > 0 ? flagged : packages);
 }
 
 export function calculateDeposit(totalCents: number): number {

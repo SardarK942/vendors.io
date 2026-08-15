@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { EventRow, type EventRowData } from './EventRow';
 import Image from 'next/image';
 import { fmtUSD } from '@/lib/intl';
+import { formatCapacity, type PackageCapacityUnitInput } from '@/types';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 
 interface Addon {
@@ -23,6 +24,7 @@ interface PackageProps {
   base_price_cents: number;
   events_count: number;
   max_guests: number;
+  capacity_unit: PackageCapacityUnitInput;
   duration_hours: number;
   featured_image_url: string | null;
   vendor_notes_template?: string | null;
@@ -205,7 +207,7 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
                 </p>
                 <p className="text-sm text-muted-foreground">
                   {pkg.duration_hours}
-                  {' '}h · up to {pkg.max_guests} guests
+                  {' '}h · {formatCapacity(pkg.max_guests, pkg.capacity_unit)}
                   {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
                 </p>
               </div>
