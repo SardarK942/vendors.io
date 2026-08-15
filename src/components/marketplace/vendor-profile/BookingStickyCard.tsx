@@ -35,9 +35,12 @@ export function BookingStickyCard({
     return (
       <aside
         data-testid="vendor-sticky-card"
-        className="sticky top-6 z-30 rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]"
+        className="sticky top-6 z-30 rounded-lg border border-hairline bg-cream-soft p-5 shadow-[rgba(27,20,20,0.04)_0_2px_6px_0,rgba(27,20,20,0.10)_0_4px_16px_0]"
       >
-        <p className="text-sm text-ink">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+          Request to book
+        </p>
+        <p className="mt-2 text-sm leading-relaxed text-ink">
           Every booking with this vendor starts with a custom quote. Send your event details and
           they&rsquo;ll get back to you with pricing.
         </p>
@@ -65,7 +68,7 @@ export function BookingStickyCard({
   return (
     <aside
       data-testid="vendor-sticky-card"
-      className="sticky top-6 z-30 rounded-2xl bg-white p-5 shadow-[0_1px_2px_rgba(0,0,0,0.06),0_8px_24px_rgba(0,0,0,0.08)]"
+      className="sticky top-6 z-30 rounded-lg border border-hairline bg-cream-soft p-5 shadow-[rgba(27,20,20,0.04)_0_2px_6px_0,rgba(27,20,20,0.10)_0_4px_16px_0]"
     >
       <span className="inline-block rounded-full bg-hot-pink/10 px-2.5 py-1 text-xs font-medium text-hot-pink">
         Most popular
@@ -81,7 +84,7 @@ export function BookingStickyCard({
       <p className="mt-6 text-3xl font-bold tabular-nums text-ink">{formatPrice(total)}</p>
       <p className="text-xs text-ink/60">Total cost (everything included)</p>
 
-      <div className="my-4 rounded-md bg-cream p-3 text-center text-xs text-ink">
+      <div className="my-4 rounded-md border border-hairline bg-cream p-3 text-center text-xs text-ink">
         Pay <b className="tabular-nums text-hot-pink">{formatPrice(deposit)}</b> deposit today.{' '}
         <span className="text-ink/80">
           Vendor will arrange the remaining{' '}

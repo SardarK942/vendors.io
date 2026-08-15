@@ -26,6 +26,8 @@ export interface StaggeredMenuProps {
   accentColor?: string;
   changeMenuColorOnOpen?: boolean;
   isFixed?: boolean;
+  solidHeader?: boolean;
+  hideOnScroll?: boolean;
   closeOnClickAway?: boolean;
   headerExtras?: ReactNode;
   onMenuOpen?: () => void;

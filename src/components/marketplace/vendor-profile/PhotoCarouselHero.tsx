@@ -2,34 +2,18 @@
 
 import { useState, useRef } from 'react';
 import Image from 'next/image';
-import { useRouter, usePathname } from 'next/navigation';
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Heart } from 'lucide-react';
-import { useSavedVendors } from '@/components/marketplace/SavedVendorsProvider';
 
 interface PhotoCarouselHeroProps {
   images: string[];
   businessName: string;
-  vendorId: string;
-  interactive: boolean;
+  // Retained for call-site compatibility; save now lives on VendorHero.
+  vendorId?: string;
+  interactive?: boolean;
 }
 
-export function PhotoCarouselHero({
-  images,
-  businessName,
-  vendorId,
-  interactive,
-}: PhotoCarouselHeroProps) {
+export function PhotoCarouselHero({ images, businessName }: PhotoCarouselHeroProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
-  const { savedIds, toggle, authenticated } = useSavedVendors();
-  const isSaved = savedIds.has(vendorId);
-  const router = useRouter();
-  const pathname = usePathname();
-  const reducedMotion = useReducedMotion();
-  const heartTransition = reducedMotion
-    ? { duration: 0 }
-    : { type: 'spring' as const, duration: 0.3, bounce: 0 };
 
   if (images.length === 0) return null;
 
@@ -40,21 +24,11 @@ export function PhotoCarouselHero({
     setActiveIdx(idx);
   }
 
-  async function handleHeart(e: React.MouseEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!interactive) return;
-    // Logged-out visitors can't save (the endpoint 401s and the heart would
-    // falsely stick filled). Send them to sign in and return here.
-    if (!authenticated) {
-      router.push(`/login?redirect=${encodeURIComponent(pathname)}`);
-      return;
-    }
-    await toggle(vendorId);
-  }
-
   return (
-    <div data-testid="photo-carousel-hero" className="relative h-[220px] w-full overflow-hidden">
+    <div
+      data-testid="photo-carousel-hero"
+      className="relative h-[240px] w-full overflow-hidden rounded-lg"
+    >
       <div
         ref={scrollerRef}
         onScroll={handleScroll}
@@ -68,42 +42,19 @@ export function PhotoCarouselHero({
               alt={`${businessName} portfolio ${i + 1}`}
               fill
               sizes="100vw"
-              className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+              className="object-cover"
               priority={i === 0}
             />
           </div>
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={handleHeart}
-        disabled={!interactive}
-        aria-label={isSaved ? 'Unsave vendor' : 'Save vendor'}
-        className="absolute right-3 top-3 flex h-10 w-10 items-center justify-center rounded-full bg-ink/70 backdrop-blur transition-[transform,background-color] hover:bg-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100"
-      >
-        <AnimatePresence initial={false} mode="popLayout">
-          <motion.span
-            key={isSaved ? 'filled' : 'outline'}
-            initial={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
-            animate={{ scale: 1, opacity: 1, filter: 'blur(0px)' }}
-            exit={{ scale: 0.25, opacity: 0, filter: 'blur(4px)' }}
-            transition={heartTransition}
-            className="inline-flex"
-            aria-hidden="true"
-          >
-            <Heart className={`h-4 w-4 ${isSaved ? 'fill-red-500 text-red-500' : 'text-white'}`} />
-          </motion.span>
-        </AnimatePresence>
-      </button>
-
       <div
         className="absolute bottom-3 right-3 rounded-md bg-ink/70 px-2 py-1 text-xs text-cream"
         aria-live="polite"
         aria-atomic="true"
       >
-        {activeIdx + 1}
-        {' '}/ {images.length}
+        {activeIdx + 1} / {images.length}
       </div>
 
       <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">

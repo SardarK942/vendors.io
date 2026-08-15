@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion';
 import './StaggeredMenu.css';
@@ -20,6 +20,8 @@ export const StaggeredMenu = ({
   accentColor = '#5227FF',
   changeMenuColorOnOpen = true,
   isFixed = false,
+  solidHeader = false,
+  hideOnScroll = false,
   closeOnClickAway = true,
   headerExtras,
   onMenuOpen,
@@ -27,6 +29,35 @@ export const StaggeredMenu = ({
 }) => {
   const [open, setOpen] = useState(false);
   const openRef = useRef(false);
+
+  // Hide-on-scroll (mobile): the header slips away as you scroll down and
+  // returns the moment you scroll up, freeing reading room on long pages. The
+  // translate itself is gated to mobile in CSS; here we only track direction.
+  const [headerHidden, setHeaderHidden] = useState(false);
+  const lastScrollYRef = useRef(0);
+  useEffect(() => {
+    if (!hideOnScroll) return;
+    lastScrollYRef.current = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      const last = lastScrollYRef.current;
+      if (openRef.current || y < 80) {
+        setHeaderHidden(false);
+      } else if (y > last + 6) {
+        setHeaderHidden(true);
+      } else if (y < last - 6) {
+        setHeaderHidden(false);
+      }
+      lastScrollYRef.current = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, [hideOnScroll]);
+  // Never keep the header hidden while the menu is open.
+  useEffect(() => {
+    if (open) setHeaderHidden(false);
+  }, [open]);
+
   const prefersReducedMotion = usePrefersReducedMotion();
   const prefersReducedMotionRef = useRef(prefersReducedMotion);
   prefersReducedMotionRef.current = prefersReducedMotion;
@@ -386,7 +417,14 @@ export const StaggeredMenu = ({
           return arr.map((c, i) => <div key={i} className="sm-prelayer" style={{ background: c }} />);
         })()}
       </div>
-      <header className="staggered-menu-header" aria-label="Main navigation header">
+      <header
+        className={
+          'staggered-menu-header' +
+          (solidHeader ? ' is-solid' : '') +
+          (headerHidden ? ' is-hidden' : '')
+        }
+        aria-label="Main navigation header"
+      >
         <div className="sm-logo" aria-label="Logo">
           {logo ?? (
             <img

@@ -5,10 +5,8 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { ArrowRight, Star } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Star, ArrowLeft } from 'lucide-react';
 import type { Database } from '@/types/database.types';
-import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 
 import { OwnerBanner } from '@/components/marketplace/OwnerBanner';
 import { ExitPreviewPill } from '@/components/marketplace/ExitPreviewPill';
@@ -18,6 +16,9 @@ import { CustomRequestModal } from '@/components/booking/CustomRequestModal';
 import type { EventOption } from '@/components/events/EventFunctionSelect';
 
 import { IdentityPanel } from './IdentityPanel';
+import { VendorHero } from './VendorHero';
+import { HowBookingWorks } from './HowBookingWorks';
+import { CustomRequestPanel } from './CustomRequestPanel';
 import { PhotoGalleryHero } from './PhotoGalleryHero';
 import { PhotoCarouselHero } from './PhotoCarouselHero';
 import { BookingStickyCard } from './BookingStickyCard';
@@ -82,6 +83,49 @@ export function VendorProfile({
 
   const images = vendor.portfolio_images ?? [];
   const hasReviews = vendor.review_count > 0 && vendor.average_rating != null;
+  // A single image is shown on the hero plate; only render a portfolio gallery
+  // when there is genuinely more than one photo to show.
+  const hasGallery = images.length >= 2;
+
+  const packagesSection =
+    packages.length > 0 ? (
+      <div id="packages-section" className="border-t border-hairline pt-8">
+        <h2 className="font-display text-2xl font-bold text-ink">Choose your package</h2>
+        <p className="mt-1.5 text-pretty text-sm text-ink/70">
+          Compare side-by-side. All prices include setup, breakdown, and one attendant.
+        </p>
+        <div className="mt-5">
+          <PackageGrid
+            packages={packages}
+            vendorSlug={vendor.slug ?? ''}
+            interactive={interactive}
+            featuredPackageId={featured?.id}
+            onRequestCustomQuote={() => setCustomRequestOpen(true)}
+          />
+        </div>
+        <p className="mt-4 text-center text-sm">
+          Don&rsquo;t see what you need?{' '}
+          <Link
+            href={`/vendors/${vendor.slug}/request`}
+            onClick={(e) => {
+              e.preventDefault();
+              setCustomRequestOpen(true);
+            }}
+            className="text-ink underline hover-pink-text"
+          >
+            Request a quote &rarr;
+          </Link>
+        </p>
+      </div>
+    ) : (
+      <div id="packages-section" className="border-t border-hairline pt-8">
+        <CustomRequestPanel
+          vendorSlug={vendor.slug ?? ''}
+          interactive={interactive}
+          onRequest={() => setCustomRequestOpen(true)}
+        />
+      </div>
+    );
 
   return (
     <>
@@ -92,153 +136,64 @@ export function VendorProfile({
         />
       )}
 
-      <div className="mx-auto max-w-6xl px-4 py-4 pb-24 md:pb-4">
-        {/* Breadcrumb */}
-        <nav className="mb-4 text-xs text-ink/60">
-          <Link href="/vendors" className="hover-pink-text">
-            {VENDOR_CATEGORY_LABELS[vendor.category] || vendor.category}
+      <div className="relative">
+        {/* Faint hot-pink dotted texture behind the profile — the same element
+            the homepage uses below its hero, for continuity and to lift the
+            flat-cream ground so thin content doesn't read as empty. Opaque hero
+            band + cards sit on top of it. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-full w-screen -translate-x-1/2"
+          style={{
+            backgroundColor: '#FBF6EC',
+            backgroundImage:
+              'radial-gradient(rgba(209,0,108,0.06) 1.5px, transparent 1.5px), radial-gradient(rgba(209,0,108,0.06) 1.5px, #FBF6EC 1.5px)',
+            backgroundSize: '20px 20px',
+            backgroundPosition: '0 0, 10px 10px',
+          }}
+        />
+
+        <div className="mx-auto max-w-6xl px-4 py-4 pb-24 md:pb-4">
+          {/* Back to the marketplace list. Explicit affordance — a breadcrumb
+              read as too subtle to serve as the way back. */}
+          <Link
+            href="/vendors"
+            className="mb-5 inline-flex items-center gap-1.5 text-sm font-medium text-ink/70 transition-colors hover-pink-text"
+          >
+            <ArrowLeft className="size-4" aria-hidden="true" />
+            Browse vendors
           </Link>
-          <span className="mx-1">·</span>
-          <span>{vendor.service_area?.[0] || 'Chicago'}</span>
-          <span className="mx-1">·</span>
-          <span translate="no">{vendor.business_name}</span>
-        </nav>
 
-        {/* Mobile carousel + bio + packages (single column) */}
-        <div className="md:hidden">
-          <PhotoCarouselHero
-            images={images}
-            businessName={vendor.business_name ?? 'Vendor'}
-            vendorId={vendor.id}
-            interactive={interactive}
-          />
-          <div className="mt-6 space-y-8">
-            <IdentityPanel vendor={vendor} />
-            {packages.length > 0 ? (
-              <div id="packages-section">
-                <h2 className="font-spectral text-xl font-semibold text-ink">
-                  Choose your package
-                </h2>
-                <p className="mt-1 text-pretty text-xs text-ink/70">
-                  Compare side-by-side. All prices include setup, breakdown, and one attendant.
-                </p>
-                <div className="mt-4">
-                  <PackageGrid
-                    packages={packages}
-                    vendorSlug={vendor.slug ?? ''}
-                    interactive={interactive}
-                    featuredPackageId={featured?.id}
-                    onRequestCustomQuote={() => setCustomRequestOpen(true)}
-                  />
-                </div>
-                <p className="mt-4 text-center text-xs">
-                  Don’t see what you need?{' '}
-                  <Link
-                    href={`/vendors/${vendor.slug}/request`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      setCustomRequestOpen(true);
-                    }}
-                    className="text-ink underline hover-pink-text"
-                  >
-                    Request a quote →
-                  </Link>
-                </p>
-              </div>
-            ) : (
-              <div id="packages-section">
-                <h2 className="font-spectral text-xl font-semibold text-ink">Custom quote</h2>
-                <p className="mt-1 text-pretty text-xs text-ink/70">
-                  This vendor builds every quote around your event. Tell them your date, guest
-                  count, and what you need — they’ll come back with pricing.
-                </p>
-                <div className="mt-4">
-                  <Button asChild className="w-full" size="lg" disabled={!interactive}>
-                    <Link
-                      href={`/vendors/${vendor.slug}/request`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCustomRequestOpen(true);
-                      }}
-                    >
-                      <span className="inline-flex items-center gap-1.5">
-                        Request a quote
-                        <ArrowRight className="size-4" aria-hidden="true" />
-                      </span>
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
+          {/* Universal ink brand-band masthead */}
+          <VendorHero vendor={vendor} interactive={interactive} />
 
-        {/* Desktop split layout */}
-        <div className="hidden md:block">
-          <div className="grid grid-cols-[1.6fr_1fr] gap-8">
-            <div className="space-y-8">
-              <PhotoGalleryHero images={images} businessName={vendor.business_name ?? 'Vendor'} />
+          {/* Portfolio gallery — only when there is more than the plate image */}
+          {hasGallery && (
+            <div className="mt-4">
+              <div className="md:hidden">
+                <PhotoCarouselHero
+                  images={images}
+                  businessName={vendor.business_name ?? 'Vendor'}
+                  vendorId={vendor.id}
+                  interactive={interactive}
+                />
+              </div>
+              <div className="hidden md:block">
+                <PhotoGalleryHero images={images} businessName={vendor.business_name ?? 'Vendor'} />
+              </div>
+            </div>
+          )}
+
+          {/* Content + sticky rail. Rail is desktop-only; mobile uses the fixed
+            bottom bar. Left column holds the vendor's own content (About +
+            packages/custom quote). */}
+          <div className="mt-8 grid gap-8 md:grid-cols-[1.6fr_1fr] lg:gap-12">
+            <div className="min-w-0 space-y-10">
               <IdentityPanel vendor={vendor} />
-
-              {packages.length > 0 ? (
-                <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
-                  <h2 className="font-spectral text-xl font-semibold text-ink">
-                    Choose your package
-                  </h2>
-                  <p className="mt-1 text-pretty text-xs text-ink/70">
-                    Compare side-by-side. All prices include setup, breakdown, and one attendant.
-                  </p>
-                  <div className="mt-4">
-                    <PackageGrid
-                      packages={packages}
-                      vendorSlug={vendor.slug ?? ''}
-                      interactive={interactive}
-                      featuredPackageId={featured?.id}
-                      onRequestCustomQuote={() => setCustomRequestOpen(true)}
-                    />
-                  </div>
-                  <p className="mt-4 text-center text-xs">
-                    Don’t see what you need?{' '}
-                    <Link
-                      href={`/vendors/${vendor.slug}/request`}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        setCustomRequestOpen(true);
-                      }}
-                      className="text-ink underline hover-pink-text"
-                    >
-                      Request a quote →
-                    </Link>
-                  </p>
-                </div>
-              ) : (
-                <div id="packages-section" className="pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
-                  <h2 className="font-spectral text-xl font-semibold text-ink">Custom quote</h2>
-                  <p className="mt-1 max-w-md text-pretty text-xs text-ink/70">
-                    This vendor builds every quote around your event. Tell them your date, guest
-                    count, and what you need — they’ll come back with pricing.
-                  </p>
-                  <div className="mt-4">
-                    <Button asChild size="lg" disabled={!interactive}>
-                      <Link
-                        href={`/vendors/${vendor.slug}/request`}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setCustomRequestOpen(true);
-                        }}
-                      >
-                        <span className="inline-flex items-center gap-1.5">
-                          Request a quote
-                          <ArrowRight className="size-4" aria-hidden="true" />
-                        </span>
-                      </Link>
-                    </Button>
-                  </div>
-                </div>
-              )}
+              {packagesSection}
             </div>
 
-            <div>
+            <div className="hidden md:block">
               <BookingStickyCard
                 vendor={vendor}
                 packages={packages}
@@ -247,56 +202,65 @@ export function VendorProfile({
               />
             </div>
           </div>
-        </div>
 
-        {/* Reviews — full-width below everything on both layouts */}
-        {hasReviews && (
-          <div id="reviews-section" className="mt-12 pt-8 shadow-[0_-1px_0_rgba(0,0,0,0.06)]">
-            <div className="mb-6 flex items-center gap-3">
-              <h2 className="font-spectral text-xl font-semibold text-ink">Reviews</h2>
-              <span className="text-2xl font-bold tabular-nums text-ink">
-                {vendor.average_rating!.toFixed(1)}
-              </span>
-              <span className="flex text-amber-400">
-                {[1, 2, 3, 4, 5].map((n) => (
-                  <Star
-                    key={n}
-                    className={`h-5 w-5 ${
-                      n <= Math.round(vendor.average_rating!) ? 'fill-current' : 'fill-none'
-                    }`}
-                  />
-                ))}
-              </span>
-              <span className="text-sm tabular-nums text-ink/60">
-                ({vendor.review_count} reviews)
-              </span>
-            </div>
-
-            <div className="space-y-4">
-              {reviews.map((r) => (
-                <article key={r.id} className="rounded-lg border border-ink/10 bg-white p-4">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="flex items-center gap-1.5 font-semibold text-ink">
-                      <span className="flex text-amber-400">
-                        {[1, 2, 3, 4, 5].map((n) => (
-                          <Star
-                            key={n}
-                            className={`h-3.5 w-3.5 ${n <= Math.round(r.rating_overall) ? 'fill-current' : 'fill-none'}`}
-                          />
-                        ))}
-                      </span>
-                      {reviewerName(r.users)}
-                    </span>
-                    <span className="text-xs text-ink/50">{fmtDate(r.created_at)}</span>
-                  </div>
-                  {r.comment && (
-                    <p className="mt-2 whitespace-pre-wrap text-sm text-ink/85">{r.comment}</p>
-                  )}
-                </article>
-              ))}
-            </div>
+          {/* Trust band — full width so the four steps breathe and the page
+            stays balanced even for thin vendors with a short sticky rail. */}
+          <div className="mt-12">
+            <HowBookingWorks responseSlaHours={vendor.response_sla_hours} />
           </div>
-        )}
+
+          {/* Reviews — full-width below everything on both layouts */}
+          {hasReviews && (
+            <div id="reviews-section" className="mt-12 border-t border-hairline pt-8">
+              <div className="mb-6 flex items-center gap-3">
+                <h2 className="font-display text-2xl font-bold text-ink">Reviews</h2>
+                <span className="text-2xl font-bold tabular-nums text-ink">
+                  {vendor.average_rating!.toFixed(1)}
+                </span>
+                <span className="flex text-amber-400">
+                  {[1, 2, 3, 4, 5].map((n) => (
+                    <Star
+                      key={n}
+                      className={`h-5 w-5 ${
+                        n <= Math.round(vendor.average_rating!) ? 'fill-current' : 'fill-none'
+                      }`}
+                    />
+                  ))}
+                </span>
+                <span className="text-sm tabular-nums text-ink/60">
+                  ({vendor.review_count} reviews)
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                {reviews.map((r) => (
+                  <article
+                    key={r.id}
+                    className="rounded-lg border border-hairline bg-cream-soft p-5"
+                  >
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1.5 font-semibold text-ink">
+                        <span className="flex text-amber-400">
+                          {[1, 2, 3, 4, 5].map((n) => (
+                            <Star
+                              key={n}
+                              className={`h-3.5 w-3.5 ${n <= Math.round(r.rating_overall) ? 'fill-current' : 'fill-none'}`}
+                            />
+                          ))}
+                        </span>
+                        {reviewerName(r.users)}
+                      </span>
+                      <span className="text-xs text-ink/50">{fmtDate(r.created_at)}</span>
+                    </div>
+                    {r.comment && (
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-ink/85">{r.comment}</p>
+                    )}
+                  </article>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mobile sticky bottom bar (rendered outside main padding) */}
