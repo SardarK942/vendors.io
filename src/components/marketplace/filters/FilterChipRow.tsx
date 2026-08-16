@@ -5,12 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Chip } from './Chip';
-import { CategoryDropdown } from './CategoryDropdown';
 import { PriceDropdown } from './PriceDropdown';
 import { LanguagesDropdown } from './LanguagesDropdown';
 import { PRICE_BANDS } from './constants';
 import { useFilterState, type FilterDropdown } from './use-filter-state';
-import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import { getSubcategoriesForCategory, SUBCATEGORY_SECTION_LABEL } from '@/lib/vendor-subcategories';
 
 export interface FilterChipRowProps {
@@ -64,9 +62,6 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const priceBandLabel = state.priceBand
     ? `Price · ${PRICE_BANDS.find((b) => b.slug === state.priceBand)?.shorthand ?? ''}`
     : 'Price';
-  const categoryLabel = state.category
-    ? `Category · ${VENDOR_CATEGORY_LABELS[state.category] ?? state.category}`
-    : 'Category';
 
   return (
     <div
@@ -74,23 +69,7 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
       role="toolbar"
       aria-label="Filter vendors"
     >
-      {/* Category — first chip, per product direction */}
-      <Popover open={activeDropdown === 'category'} onOpenChange={openHandler('category')}>
-        <PopoverTrigger asChild>
-          <Chip variant="dropdown" isActive={activeDropdown === 'category' || !!state.category}>
-            {categoryLabel}
-          </Chip>
-        </PopoverTrigger>
-        <PopoverContent align="start" sideOffset={8} className={PANEL_CLASSES}>
-          <CategoryDropdown
-            selected={state.category}
-            onSelect={(c) => {
-              apply({ category: c, subcategories: [] });
-              setActiveDropdown(null);
-            }}
-          />
-        </PopoverContent>
-      </Popover>
+      {/* Category now lives in the CategoryIconBar above this row. */}
 
       {/* Verified */}
       <Chip

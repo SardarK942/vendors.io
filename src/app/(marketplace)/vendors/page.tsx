@@ -147,45 +147,60 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
 
   return (
     <SavedVendorsProvider authenticated={!!user}>
-      <div className="py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Browse Vendors</h1>
-          <p className="tabular-nums text-muted-foreground" aria-live="polite" aria-atomic="true">
-            {fmtCount(totalCount)} vendor{totalCount !== 1 ? 's' : ''}
-            {rawQuery && (
-              <>
-                {' '}
-                for &ldquo;<span className="text-ink">{rawQuery}</span>&rdquo;
-              </>
-            )}
-          </p>
-        </div>
-
-        <FilterShell initialQuery={rawQuery} />
-        <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-8 flex justify-center gap-2">
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <a
-                key={p}
-                href={`/vendors?${new URLSearchParams({
-                  ...(rawQuery ? { q: rawQuery } : {}),
-                  ...(category ? { category } : {}),
-                  page: String(p),
-                }).toString()}`}
-                className={`rounded border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
-                  p === page
-                    ? 'border-primary bg-primary text-primary-foreground'
-                    : 'hover:bg-muted'
-                }`}
-              >
-                {p}
-              </a>
-            ))}
+      <div className="relative">
+        {/* Faint hot-pink dotted texture behind the listing — the same element
+            the homepage and vendor profile use, for continuity. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-0 -z-10 h-full w-screen -translate-x-1/2"
+          style={{
+            backgroundColor: '#FBF6EC',
+            backgroundImage:
+              'radial-gradient(rgba(209,0,108,0.06) 1.5px, transparent 1.5px), radial-gradient(rgba(209,0,108,0.06) 1.5px, #FBF6EC 1.5px)',
+            backgroundSize: '20px 20px',
+            backgroundPosition: '0 0, 10px 10px',
+          }}
+        />
+        <div className="py-8">
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">Browse Vendors</h1>
+            <p className="tabular-nums text-muted-foreground" aria-live="polite" aria-atomic="true">
+              {fmtCount(totalCount)} vendor{totalCount !== 1 ? 's' : ''}
+              {rawQuery && (
+                <>
+                  {' '}
+                  for &ldquo;<span className="text-ink">{rawQuery}</span>&rdquo;
+                </>
+              )}
+            </p>
           </div>
-        )}
+
+          <FilterShell initialQuery={rawQuery} />
+          <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-8 flex justify-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+                <a
+                  key={p}
+                  href={`/vendors?${new URLSearchParams({
+                    ...(rawQuery ? { q: rawQuery } : {}),
+                    ...(category ? { category } : {}),
+                    page: String(p),
+                  }).toString()}`}
+                  className={`rounded border px-3 py-1 text-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
+                    p === page
+                      ? 'border-primary bg-primary text-primary-foreground'
+                      : 'hover:bg-muted'
+                  }`}
+                >
+                  {p}
+                </a>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </SavedVendorsProvider>
   );
