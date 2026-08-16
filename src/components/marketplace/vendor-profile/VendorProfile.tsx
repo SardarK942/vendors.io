@@ -23,6 +23,7 @@ import { PhotoGalleryHero } from './PhotoGalleryHero';
 import { PhotoCarouselHero } from './PhotoCarouselHero';
 import { BookingStickyCard } from './BookingStickyCard';
 import { BookingBottomBar } from './BookingBottomBar';
+import { VendorSocials } from './VendorSocials';
 import { getFeaturedPackage } from './helpers';
 import { fmtDate } from '@/lib/intl';
 
@@ -183,6 +184,10 @@ export function VendorProfile({
               </div>
             </div>
           )}
+
+          {/* Instagram + website — the desktop rail carries these, but the rail
+              is hidden on mobile, so surface them here on mobile only. */}
+          <VendorSocials vendor={vendor} className="mt-6 md:hidden" />
 
           {/* Content + sticky rail. Rail is desktop-only; mobile uses the fixed
             bottom bar. Left column holds the vendor's own content (About +
