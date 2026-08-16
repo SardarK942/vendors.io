@@ -33,6 +33,17 @@ import {
 } from './helpers/seed';
 import { loginAs } from './helpers/login';
 
+// Distinct FUTURE days per scenario, computed at run time. Hardcoded calendar
+// dates rot into the past (createBooking rejects past-dated events → 400), which
+// silently broke this spec on a date rollover. Offsets keep each test on its own
+// day so bookings never collide across scenarios in the shared test DB.
+const isoDay = (offsetDays: number) =>
+  new Date(Date.now() + offsetDays * 86_400_000).toISOString().slice(0, 10);
+const DAY_1 = isoDay(30); // Test 1 — overlap on one day
+const DAY_2 = isoDay(45); // Test 2 — concurrency, same slot
+const DAY_3 = isoDay(60); // Test 3 — multi-team capacity
+const DAY_4 = isoDay(75); // Test 4 — full-day block
+
 // ─── Test 1 ───────────────────────────────────────────────────────────────────
 // Couple submits booking; same time slot rejected after accept; different time accepted.
 test('calendar: couple submits booking; overlapping slot rejected; different slot accepted', async ({
@@ -65,9 +76,9 @@ test('calendar: couple submits booking; overlapping slot rejected; different slo
         events: [
           {
             sequence: 1,
-            event_date: '2026-08-15',
-            event_start_time: '2026-08-15T10:00:00Z',
-            event_end_time: '2026-08-15T12:00:00Z',
+            event_date: DAY_1,
+            event_start_time: `${DAY_1}T10:00:00Z`,
+            event_end_time: `${DAY_1}T12:00:00Z`,
             event_type_label: 'Wedding Ceremony',
             address_line_1: '140 E Walton Pl',
             city: 'Chicago',
@@ -115,9 +126,9 @@ test('calendar: couple submits booking; overlapping slot rejected; different slo
         events: [
           {
             sequence: 1,
-            event_date: '2026-08-15',
-            event_start_time: '2026-08-15T11:00:00Z',
-            event_end_time: '2026-08-15T13:00:00Z',
+            event_date: DAY_1,
+            event_start_time: `${DAY_1}T11:00:00Z`,
+            event_end_time: `${DAY_1}T13:00:00Z`,
             event_type_label: 'Wedding Ceremony',
             address_line_1: '140 E Walton Pl',
             city: 'Chicago',
@@ -142,9 +153,9 @@ test('calendar: couple submits booking; overlapping slot rejected; different slo
         events: [
           {
             sequence: 1,
-            event_date: '2026-08-15',
-            event_start_time: '2026-08-15T14:00:00Z',
-            event_end_time: '2026-08-15T16:00:00Z',
+            event_date: DAY_1,
+            event_start_time: `${DAY_1}T14:00:00Z`,
+            event_end_time: `${DAY_1}T16:00:00Z`,
             event_type_label: 'Wedding Ceremony',
             address_line_1: '140 E Walton Pl',
             city: 'Chicago',
@@ -162,7 +173,10 @@ test('calendar: couple submits booking; overlapping slot rejected; different slo
     // Explicit hold cleanup before cascade-delete, to avoid FK ordering issues
     if (vendor) {
       const sb = getServiceClient();
-      await sb.from('vendor_calendar_holds').delete().eq('vendor_profile_id', vendor.vendorProfileId);
+      await sb
+        .from('vendor_calendar_holds')
+        .delete()
+        .eq('vendor_profile_id', vendor.vendorProfileId);
     }
     await cleanup(vendor, coupleA, coupleB);
   }
@@ -191,14 +205,14 @@ test('calendar: concurrency — capacity=1, parallel accepts, exactly one wins',
 
     // Seed 2 pending bookings for the same time slot directly (bypasses API pre-check)
     const { bookingId: bookingId1 } = await seedPendingBooking(vendor, coupleA, pkg, {
-      eventDate: '2026-09-10',
-      startTime: '2026-09-10T10:00:00Z',
-      endTime: '2026-09-10T12:00:00Z',
+      eventDate: DAY_2,
+      startTime: `${DAY_2}T10:00:00Z`,
+      endTime: `${DAY_2}T12:00:00Z`,
     });
     const { bookingId: bookingId2 } = await seedPendingBooking(vendor, coupleB, pkg, {
-      eventDate: '2026-09-10',
-      startTime: '2026-09-10T10:00:00Z',
-      endTime: '2026-09-10T12:00:00Z',
+      eventDate: DAY_2,
+      startTime: `${DAY_2}T10:00:00Z`,
+      endTime: `${DAY_2}T12:00:00Z`,
     });
 
     // Vendor logs in; fire both accept calls in parallel
@@ -230,7 +244,10 @@ test('calendar: concurrency — capacity=1, parallel accepts, exactly one wins',
   } finally {
     if (vendor) {
       const sb = getServiceClient();
-      await sb.from('vendor_calendar_holds').delete().eq('vendor_profile_id', vendor.vendorProfileId);
+      await sb
+        .from('vendor_calendar_holds')
+        .delete()
+        .eq('vendor_profile_id', vendor.vendorProfileId);
     }
     await cleanup(vendor, coupleA, coupleB);
   }
@@ -259,19 +276,19 @@ test('calendar: multi-team capacity=2 — accepts 2 overlapping, rejects 3rd', a
 
     // Seed 3 pending bookings for the same slot (bypass pre-check)
     const { bookingId: bookingId1 } = await seedPendingBooking(vendor, coupleA, pkg, {
-      eventDate: '2026-09-20',
-      startTime: '2026-09-20T14:00:00Z',
-      endTime: '2026-09-20T17:00:00Z',
+      eventDate: DAY_3,
+      startTime: `${DAY_3}T14:00:00Z`,
+      endTime: `${DAY_3}T17:00:00Z`,
     });
     const { bookingId: bookingId2 } = await seedPendingBooking(vendor, coupleB, pkg, {
-      eventDate: '2026-09-20',
-      startTime: '2026-09-20T14:00:00Z',
-      endTime: '2026-09-20T17:00:00Z',
+      eventDate: DAY_3,
+      startTime: `${DAY_3}T14:00:00Z`,
+      endTime: `${DAY_3}T17:00:00Z`,
     });
     const { bookingId: bookingId3 } = await seedPendingBooking(vendor, coupleC, pkg, {
-      eventDate: '2026-09-20',
-      startTime: '2026-09-20T14:00:00Z',
-      endTime: '2026-09-20T17:00:00Z',
+      eventDate: DAY_3,
+      startTime: `${DAY_3}T14:00:00Z`,
+      endTime: `${DAY_3}T17:00:00Z`,
     });
 
     const vendorCtx = await browser.newContext();
@@ -300,7 +317,10 @@ test('calendar: multi-team capacity=2 — accepts 2 overlapping, rejects 3rd', a
   } finally {
     if (vendor) {
       const sb = getServiceClient();
-      await sb.from('vendor_calendar_holds').delete().eq('vendor_profile_id', vendor.vendorProfileId);
+      await sb
+        .from('vendor_calendar_holds')
+        .delete()
+        .eq('vendor_profile_id', vendor.vendorProfileId);
     }
     await cleanup(vendor, coupleA, coupleB, coupleC);
   }
@@ -323,7 +343,7 @@ test('calendar: vendor blocks full day → availability endpoint shows date as f
     await loginAs(vendorPage, vendor);
 
     const blockRes = await vendorPage.request.post('/api/vendor-calendar/block', {
-      data: { mode: 'full_day', date: '2026-10-05' },
+      data: { mode: 'full_day', date: DAY_4 },
     });
     expect(blockRes.status(), 'block POST should return 201').toBe(201);
 
@@ -333,20 +353,15 @@ test('calendar: vendor blocks full day → availability endpoint shows date as f
     const anonCtx = await browser.newContext();
     const anonPage = await anonCtx.newPage();
 
-    const availRes = await anonPage.request.get(
-      `/api/vendors/${vendor.vendorSlug}/availability`
-    );
+    const availRes = await anonPage.request.get(`/api/vendors/${vendor.vendorSlug}/availability`);
     expect(availRes.status(), 'availability GET should return 200').toBe(200);
 
     const body = await availRes.json();
     const unavailable: Array<{ date: string; fully_blocked: boolean }> = body.unavailable ?? [];
 
-    const blockedDay = unavailable.find((d) => d.date === '2026-10-05');
+    const blockedDay = unavailable.find((d) => d.date === DAY_4);
     expect(blockedDay, 'blocked date should appear in unavailable array').toBeTruthy();
-    expect(
-      blockedDay?.fully_blocked,
-      '2026-10-05 should be marked fully_blocked'
-    ).toBe(true);
+    expect(blockedDay?.fully_blocked, `${DAY_4} should be marked fully_blocked`).toBe(true);
 
     // Optional UI assertion: AvailabilityCalendar renders the date as disabled.
     // Skipped here because the calendar fetches availability on mount and greys
@@ -357,7 +372,10 @@ test('calendar: vendor blocks full day → availability endpoint shows date as f
   } finally {
     if (vendor) {
       const sb = getServiceClient();
-      await sb.from('vendor_calendar_holds').delete().eq('vendor_profile_id', vendor.vendorProfileId);
+      await sb
+        .from('vendor_calendar_holds')
+        .delete()
+        .eq('vendor_profile_id', vendor.vendorProfileId);
     }
     await cleanup(vendor);
   }

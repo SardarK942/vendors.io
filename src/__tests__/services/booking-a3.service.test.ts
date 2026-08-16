@@ -11,6 +11,12 @@ import {
 } from '@/services/booking.service';
 import * as availabilityService from '@/services/availability.service';
 
+// createBooking rejects past-dated events, so these tests must target a future
+// date. This was hardcoded as '2026-08-15', which silently became a *past* date
+// on the 2026-08-16 calendar rollover and 400'd every "success" case. Compute a
+// comfortably-future date at run time so the suite never rots again.
+const FUTURE_DATE = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
 // Mock availability service — capacity pre-check. Default: no conflict.
 vi.mock('@/services/availability.service', () => ({
   wouldExceedCapacity: vi
@@ -201,9 +207,9 @@ describe('createBooking', () => {
       events: [
         {
           sequence: 1,
-          event_date: '2026-08-15',
-          event_start_time: '2026-08-15T16:00:00Z',
-          event_end_time: '2026-08-15T22:00:00Z',
+          event_date: FUTURE_DATE,
+          event_start_time: `${FUTURE_DATE}T16:00:00Z`,
+          event_end_time: `${FUTURE_DATE}T22:00:00Z`,
           event_type_label: 'Walima',
           address_line_1: '123 Main St',
           city: 'Chicago',
@@ -233,9 +239,9 @@ describe('createBooking', () => {
       events: [
         {
           sequence: 1,
-          event_date: '2026-08-15',
-          event_start_time: '2026-08-15T16:00:00Z',
-          event_end_time: '2026-08-15T22:00:00Z',
+          event_date: FUTURE_DATE,
+          event_start_time: `${FUTURE_DATE}T16:00:00Z`,
+          event_end_time: `${FUTURE_DATE}T22:00:00Z`,
           event_type_label: 'Walima',
           address_line_1: '123 Main St',
           city: 'Chicago',
@@ -268,9 +274,9 @@ describe('createBooking', () => {
 
     const threeEvents = [1, 2, 3].map((seq) => ({
       sequence: seq,
-      event_date: '2026-08-15',
-      event_start_time: '2026-08-15T16:00:00Z',
-      event_end_time: '2026-08-15T22:00:00Z',
+      event_date: FUTURE_DATE,
+      event_start_time: `${FUTURE_DATE}T16:00:00Z`,
+      event_end_time: `${FUTURE_DATE}T22:00:00Z`,
       event_type_label: 'Event',
       address_line_1: '123 Main St',
       city: 'Chicago',
@@ -314,9 +320,9 @@ describe('createBooking', () => {
       events: [
         {
           sequence: 1,
-          event_date: '2026-08-15',
-          event_start_time: '2026-08-15T16:00:00Z',
-          event_end_time: '2026-08-15T22:00:00Z',
+          event_date: FUTURE_DATE,
+          event_start_time: `${FUTURE_DATE}T16:00:00Z`,
+          event_end_time: `${FUTURE_DATE}T22:00:00Z`,
           event_type_label: 'Walima',
           address_line_1: '123 Main St',
           city: 'Chicago',
@@ -377,9 +383,9 @@ describe('createBooking', () => {
 
     const threeEvents = [1, 2, 3].map((seq) => ({
       sequence: seq,
-      event_date: '2026-08-15',
-      event_start_time: '2026-08-15T16:00:00Z',
-      event_end_time: '2026-08-15T22:00:00Z',
+      event_date: FUTURE_DATE,
+      event_start_time: `${FUTURE_DATE}T16:00:00Z`,
+      event_end_time: `${FUTURE_DATE}T22:00:00Z`,
       event_type_label: seq === 1 ? 'Mehndi' : seq === 2 ? 'Nikah' : 'Walima',
       address_line_1: '123 Main St',
       city: 'Chicago',
@@ -573,9 +579,9 @@ describe('G5.1 — createBooking capacity pre-check', () => {
     events: [
       {
         sequence: 1,
-        event_date: '2026-08-15',
-        event_start_time: '2026-08-15T10:00:00Z',
-        event_end_time: '2026-08-15T12:00:00Z',
+        event_date: FUTURE_DATE,
+        event_start_time: `${FUTURE_DATE}T10:00:00Z`,
+        event_end_time: `${FUTURE_DATE}T12:00:00Z`,
         event_type_label: 'Wedding',
         address_line_1: '123 Main St',
         city: 'Chicago',
@@ -615,7 +621,7 @@ describe('G5.1 — createBooking capacity pre-check', () => {
     const result = await createBooking(supabase as never, 'user-couple', baseInput);
 
     expect(result.status).toBe(409);
-    expect(result.error).toContain('Conflict on 2026-08-15');
+    expect(result.error).toContain(`Conflict on ${FUTURE_DATE}`);
   });
 
   it('proceeds normally when wouldExceedCapacity returns wouldExceed=false', async () => {
