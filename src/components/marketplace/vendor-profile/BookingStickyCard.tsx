@@ -1,8 +1,9 @@
 'use client';
 
 import { Button } from '@/components/ui/button';
-import { ArrowRight, ChevronDown, ExternalLink, Instagram } from 'lucide-react';
+import { ArrowRight, ChevronDown } from 'lucide-react';
 import type { Database } from '@/types/database.types';
+import { VendorSocials } from './VendorSocials';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
 import {
   getFeaturedPackage,
@@ -56,7 +57,10 @@ export function BookingStickyCard({
           </span>
         </Button>
         <TrustRow vendor={vendor} />
-        <Socials vendor={vendor} />
+        <VendorSocials
+          vendor={vendor}
+          className="mt-3 justify-center pt-3 text-xs shadow-[inset_0_1px_0_rgba(0,0,0,0.04)]"
+        />
       </aside>
     );
   }
@@ -116,37 +120,11 @@ export function BookingStickyCard({
       )}
 
       <TrustRow vendor={vendor} />
-      <Socials vendor={vendor} />
+      <VendorSocials
+        vendor={vendor}
+        className="mt-3 justify-center pt-3 text-xs shadow-[inset_0_1px_0_rgba(0,0,0,0.04)]"
+      />
     </aside>
-  );
-}
-
-function Socials({ vendor }: { vendor: VendorRow }) {
-  if (!vendor.instagram_handle && !vendor.website_url) return null;
-  return (
-    <div className="mt-3 flex items-center justify-center gap-4 pt-3 text-xs shadow-[inset_0_1px_0_rgba(0,0,0,0.04)]">
-      {vendor.instagram_handle && (
-        <a
-          href={`https://instagram.com/${vendor.instagram_handle}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          translate="no"
-          className="flex items-center gap-1 text-ink/70 hover-pink-text"
-        >
-          <Instagram className="h-3.5 w-3.5" aria-hidden="true" />@{vendor.instagram_handle}
-        </a>
-      )}
-      {vendor.website_url && (
-        <a
-          href={vendor.website_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-1 text-ink/70 hover-pink-text"
-        >
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" /> Website
-        </a>
-      )}
-    </div>
   );
 }
 
