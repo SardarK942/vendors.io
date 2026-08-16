@@ -22,20 +22,29 @@ export interface CategoryHoverExpandProps {
   counts: Record<string, number>;
 }
 
-function plural(label: string): string {
-  if (label.endsWith('y')) return label.slice(0, -1) + 'ies';
-  return label + 's';
-}
-
 export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandProps) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const reducedMotion = useReducedMotion();
+
+  // Drive the active slat from real pointer MOVEMENT, not per-slat mouseenter.
+  // onMouseEnter fires whenever a slat's edge slides under a *stationary* cursor
+  // — which is exactly what the expand animation does — creating a feedback loop
+  // that flickers the active slat back and forth. onPointerMove only fires when
+  // the pointer actually moves, so a settled cursor never re-triggers.
+  function handlePointerMove(e: React.PointerEvent<HTMLDivElement>) {
+    if (e.pointerType === 'touch') return; // lg+ only, but ignore stray touch drags
+    const slat = (e.target as HTMLElement).closest<HTMLElement>('[data-cat-index]');
+    if (!slat) return;
+    const idx = Number(slat.dataset.catIndex);
+    if (!Number.isNaN(idx)) setActiveIndex(idx);
+  }
 
   return (
     <div className="mx-[calc(50%-50vw)] hidden w-screen py-14 lg:block">
       <div
         role="region"
         aria-label="Browse vendors by category"
+        onPointerMove={handlePointerMove}
         className="mx-auto flex w-full max-w-[1560px] gap-2 px-6 lg:px-20"
       >
         {categories.map((cat, i) => {
@@ -50,19 +59,24 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
           return (
             <motion.div
               key={cat.slug}
+              data-cat-index={i}
               initial={false}
+              // Flex-GROW ratios (basis 0), not fixed rem widths: 15 slats at a
+              // fixed 5rem collapsed + 34rem active overflow typical laptop
+              // widths, squishing the active slat. Ratios always fill the row
+              // proportionally at any width — active ≈ 6× a collapsed slat.
               animate={{
-                flex: isActive ? '1 1 34rem' : '0 0 5rem',
+                flex: isActive ? '6 1 0%' : '1 1 0%',
               }}
               transition={motionTransition}
-              className="relative h-[30rem] overflow-hidden rounded-lg"
-              onMouseEnter={() => setActiveIndex(i)}
+              className="relative h-[30rem] min-w-[2.75rem] overflow-hidden rounded-lg"
             >
               <Link
                 href={href}
                 aria-current={isActive ? 'true' : undefined}
                 aria-label={`${cat.label} category`}
                 className="absolute inset-0 block focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                onFocus={() => setActiveIndex(i)}
                 onClick={(e) => {
                   // First interaction on a collapsed tile = expand only; don't navigate.
                   // Click on the already-active tile = navigate.
@@ -190,7 +204,7 @@ export function CategoryHoverExpand({ categories, counts }: CategoryHoverExpandP
                             exit={{ opacity: 0 }}
                             transition={{ ...motionTransition, delay: reducedMotion ? 0 : 0.3 }}
                           >
-                            {fmtCount(count)} {plural(cat.label.toLowerCase())} in Chicago
+                            {fmtCount(count)} vendor{count === 1 ? '' : 's'} in Chicago
                           </motion.p>
                           <motion.span
                             className="inline-flex items-center gap-2 rounded-full bg-cream/[0.16] px-3.5 py-2 text-sm font-semibold text-cream backdrop-blur-sm"
