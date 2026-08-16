@@ -5,9 +5,15 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { Heart, ArrowRight, Camera } from 'lucide-react';
+import { Heart, ArrowRight, BadgeCheck } from 'lucide-react';
 import { cn, VENDOR_CATEGORY_LABELS } from '@/lib/utils';
-import { formatShortDate, formatWeddingCount, formatPriceFromCents } from './vendor-card-helpers';
+import {
+  formatShortDate,
+  formatWeddingCount,
+  formatPriceFromCents,
+  monogram,
+} from './vendor-card-helpers';
+import { getCategoryIcon } from '@/lib/vendor-category-visual';
 import { useSavedVendors } from './SavedVendorsProvider';
 import { showHeartConfettiToast } from '@/components/celebration/HeartConfetti';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -58,6 +64,7 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
 
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
+  const CategoryIcon = getCategoryIcon(vendor.category);
   const neighborhood = vendor.base_city ?? vendor.service_area?.[0] ?? 'Chicago';
   const respondsIn = vendor.response_sla_hours
     ? `Responds in ${vendor.response_sla_hours} h`
@@ -111,32 +118,41 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
             )}
           />
         ) : (
-          <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-ink-muted">
-            <Camera className="size-8 stroke-current" strokeWidth={1.5} aria-hidden="true" />
-            <span className="text-xs">Photo coming soon</span>
+          /* Photo-less fallback — a category-themed tile (glyph + monogram) so a
+             cart reads differently from a mehndi artist even without a photo.
+             Faint hot-pink dot field ties it to the profile page's ground. */
+          <div
+            className="flex h-full w-full flex-col items-center justify-center gap-2.5 bg-cream-soft"
+            style={{
+              backgroundImage: 'radial-gradient(rgba(209,0,108,0.06) 1.2px, transparent 1.2px)',
+              backgroundSize: '16px 16px',
+            }}
+          >
+            <CategoryIcon
+              className={cn('text-ink/25', compact ? 'size-6' : 'size-11')}
+              strokeWidth={1.25}
+              aria-hidden="true"
+            />
+            {!compact && (
+              <span className="font-display text-xl font-bold text-ink/30" translate="no">
+                {monogram(vendor.business_name)}
+              </span>
+            )}
           </div>
         )}
 
-        {/* Verified pill — hidden in compact mode to save space */}
-        {vendor.verified && !compact && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span
-                tabIndex={0}
-                className={cn(
-                  'absolute left-3 top-3 inline-flex cursor-help items-center gap-1.5',
-                  'rounded-full border border-ink/10 bg-cream/95 px-2.5 py-1 backdrop-blur',
-                  'text-[11px] font-semibold tracking-wide text-ink'
-                )}
-              >
-                <span aria-hidden="true" className="size-[7px] rounded-full bg-indigo" />
-                Verified
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>
-              Identity, insurance, and references confirmed by Baazar.
-            </TooltipContent>
-          </Tooltip>
+        {/* Category chip — always visible so the vendor TYPE reads at a glance */}
+        {!compact && (
+          <span
+            className={cn(
+              'absolute left-3 top-3 inline-flex items-center gap-1.5',
+              'rounded-full border border-ink/10 bg-cream/95 px-2.5 py-1 backdrop-blur',
+              'text-[11px] font-semibold uppercase tracking-[0.06em] text-ink'
+            )}
+          >
+            <CategoryIcon className="size-3.5 text-indigo" strokeWidth={2.25} aria-hidden="true" />
+            {categoryLabel}
+          </span>
         )}
 
         {/* "Available {date}" haldi pill — conditional, hidden in compact */}
@@ -213,19 +229,28 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
 
       {/* Body */}
       <div className={cn('px-[18px] pb-5', compact ? 'py-2.5' : 'py-4')}>
-        {!compact && (
-          <div className="mb-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-indigo">
-            {categoryLabel}
-          </div>
-        )}
         <h3
           className={cn(
-            'font-display font-bold leading-[1.18] tracking-[-0.014em] text-ink',
+            'flex items-start gap-1.5 font-display font-bold leading-[1.18] tracking-[-0.014em] text-ink',
             compact ? 'text-[15px]' : 'mb-2 text-[21px]'
           )}
           translate="no"
         >
-          {vendor.business_name}
+          <span>{vendor.business_name}</span>
+          {vendor.verified && !compact && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <BadgeCheck
+                  tabIndex={0}
+                  className="mt-[3px] size-[18px] shrink-0 cursor-help text-indigo"
+                  aria-label="Verified vendor"
+                />
+              </TooltipTrigger>
+              <TooltipContent>
+                Identity, insurance, and references confirmed by Baazar.
+              </TooltipContent>
+            </Tooltip>
+          )}
         </h3>
         {compact ? (
           /* Compact: single-line metadata — neighborhood + category only */
