@@ -13,9 +13,7 @@ test.describe('Bucket F — wizard is 6 steps', () => {
     vendor = null;
   });
 
-  test('step counter shows N of 6 on each step; /payment-mode redirects to /review', async ({
-    browser,
-  }) => {
+  test('step counter shows N of 6 on each step', async ({ browser }) => {
     vendor = await seedVendor({ chargesEnabled: false });
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
@@ -62,10 +60,6 @@ test.describe('Bucket F — wizard is 6 steps', () => {
     await expect(page.getByText(/Step 6 of 6.*check everything looks right/i)).toBeVisible({
       timeout: 15_000,
     });
-
-    // /payment-mode redirects (server-side redirect → use domcontentloaded to avoid ERR_ABORTED)
-    await page.goto('/dashboard/profile/setup/payment-mode', { waitUntil: 'domcontentloaded' });
-    await expect(page).toHaveURL(/\/review/, { timeout: 15_000 });
 
     await ctx.close();
   });

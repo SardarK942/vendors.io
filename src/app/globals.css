@@ -138,3 +138,16 @@ body[data-scroll-locked] .js-booking-bottom-bar,
 body[data-menu-open] .js-booking-bottom-bar {
   display: none !important;
 }
+
+/* --- iOS zoom guard ------------------------------------------------------
+ * Mobile Safari auto-zooms when focus lands on a form control whose font is
+ * under 16px. The shared Input/Textarea already use text-base on mobile, but
+ * raw <input class="text-sm"> (e.g. the booking event fields) slip through.
+ * Enforce the 16px mobile minimum globally; components keep smaller text on md+. */
+@media (max-width: 767px) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

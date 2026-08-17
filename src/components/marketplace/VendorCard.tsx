@@ -55,6 +55,9 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const { savedIds, toggle, authenticated } = useSavedVendors();
   const isSaved = savedIds.has(vendor.id);
   const heartRef = React.useRef<HTMLButtonElement>(null);
+  // Fall back to the category tile if the hero image URL fails to load (e.g. an
+  // expired hosted URL) instead of showing the browser's broken-image box.
+  const [imgError, setImgError] = React.useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const reducedMotion = useReducedMotion();
@@ -107,11 +110,12 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
           compact ? 'max-h-[110px]' : 'aspect-[4/5]'
         )}
       >
-        {heroImage ? (
+        {heroImage && !imgError ? (
           <Image
             src={heroImage}
             alt={`${vendor.business_name} — ${categoryLabel}`}
             fill
+            onError={() => setImgError(true)}
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
             className={cn(
               'duration-[320ms] ease-[cubic-bezier(.22,1,.36,1)] object-cover transition-transform',

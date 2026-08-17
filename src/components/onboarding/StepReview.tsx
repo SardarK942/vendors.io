@@ -199,14 +199,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
           {profile.portfolio_images.length > 0 ? (
             <div className="flex flex-wrap gap-2">
               {profile.portfolio_images.map((url) => (
-                <Image
-                  key={url}
-                  src={url}
-                  alt="Portfolio"
-                  width={80}
-                  height={80}
-                  className="h-20 w-20 rounded object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
-                />
+                <PortfolioThumb key={url} url={url} />
               ))}
             </div>
           ) : (
@@ -291,5 +284,28 @@ export function StepReview({ profile, profileId, mode }: Props) {
         </Button>
       </div>
     </div>
+  );
+}
+
+/** Portfolio thumbnail that falls back to a neutral tile if the URL 404s. */
+function PortfolioThumb({ url }: { url: string }) {
+  const [err, setErr] = useState(false);
+  if (err) {
+    return (
+      <div
+        className="h-20 w-20 rounded bg-cream-soft outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+        aria-hidden="true"
+      />
+    );
+  }
+  return (
+    <Image
+      src={url}
+      alt="Portfolio"
+      width={80}
+      height={80}
+      onError={() => setErr(true)}
+      className="h-20 w-20 rounded object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
+    />
   );
 }

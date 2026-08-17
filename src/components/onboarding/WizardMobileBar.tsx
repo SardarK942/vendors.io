@@ -32,7 +32,7 @@ export function WizardMobileBar({ profile }: { profile: VendorRow }) {
         {prev ? (
           <Link
             href={`/dashboard/profile/setup/${prev.key}`}
-            className="-ml-1 inline-flex items-center gap-1 rounded px-1 py-1 text-sm text-ink/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
+            className="-ml-2 inline-flex min-h-[40px] items-center gap-1 rounded px-2 py-2 text-sm text-ink/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
           >
             <ChevronLeft className="size-4" />
             Back
@@ -48,14 +48,14 @@ export function WizardMobileBar({ profile }: { profile: VendorRow }) {
             type="button"
             onClick={() => setShowPreview((v) => !v)}
             aria-expanded={showPreview}
-            className="inline-flex items-center gap-1 rounded px-1 py-1 text-sm text-ink/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
+            className="inline-flex min-h-[40px] items-center gap-1 rounded px-2 py-2 text-sm text-ink/70 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
           >
             <Eye className="size-4" />
             Preview
           </button>
           <Link
             href="/dashboard"
-            className="rounded px-1 py-1 text-sm text-ink/70 underline hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
+            className="-mr-2 inline-flex min-h-[40px] items-center rounded px-2 py-2 text-sm text-ink/70 underline hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo"
           >
             Save &amp; exit
           </Link>
