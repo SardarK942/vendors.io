@@ -81,7 +81,7 @@ export function EventTypeAutocomplete({ value, onChange, className, inputId }: P
             onKeyDown={(e) => {
               if (e.key === 'Escape') setOpen(false);
             }}
-            placeholder="e.g. Mehndi, Walima, Sangeet, Birthday"
+            placeholder="e.g. Mehndi, Walima, Sangeet"
             className={cn(
               'w-full rounded border p-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
               className

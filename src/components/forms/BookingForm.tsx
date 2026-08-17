@@ -85,6 +85,9 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
   const [events, setEvents] = useState<EventRowData[]>(() => [makeBlankEvent(1)]);
   const [coupleFullName, setCoupleFullName] = useState('');
   const [couplePhone, setCouplePhone] = useState('');
+  // Fall back to the name tile if the package image URL fails to load (e.g. an
+  // expired hosted URL), instead of showing the browser's broken-image box.
+  const [thumbError, setThumbError] = useState(false);
   // Bucket B T6: per-event guest counts keyed by event sequence (1-indexed)
   const [guestCounts, setGuestCounts] = useState<Record<number, number>>(() =>
     Object.fromEntries(Array.from({ length: pkg.events_count }, (_, i) => [i + 1, 50]))
@@ -180,11 +183,12 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
           <CardContent className="space-y-3">
             <div className="flex items-start gap-4">
               <div className="relative h-16 w-24 shrink-0 overflow-hidden rounded bg-cream-soft">
-                {pkg.featured_image_url ? (
+                {pkg.featured_image_url && !thumbError ? (
                   <Image
                     src={pkg.featured_image_url}
                     alt={pkg.name}
                     fill
+                    onError={() => setThumbError(true)}
                     className="object-cover outline outline-1 -outline-offset-1 outline-black/10 dark:outline-white/10"
                   />
                 ) : (

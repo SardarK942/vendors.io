@@ -41,7 +41,9 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
       return;
     }
     const nextParam = mode === 'next' ? '?next=true' : '';
-    router.push(`/dashboard/profile/setup/payment-mode${nextParam}`);
+    // Straight to review — the old payment-mode step is gone (unified payment
+    // model), it only redirected here anyway.
+    router.push(`/dashboard/profile/setup/review${nextParam}`);
   }
 
   return (
