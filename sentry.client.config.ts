@@ -15,5 +15,13 @@ if (dsn) {
     replaysSessionSampleRate: 0,
     // Don't double-send console.error — structured logger handles that server-side.
     integrations: [],
+    // In-app browsers (Instagram/Facebook WebViews) inject a navigation logger
+    // that throws when it can't postMessage to the native layer during the
+    // OAuth redirect. The redirect still succeeds — this is instrumentation
+    // noise from the host app, not a Baazar bug. Drop it so it stops paging us.
+    ignoreErrors: [
+      /Java exception was raised during method invocation/i,
+      /Error invoking postMessage/i,
+    ],
   });
 }
