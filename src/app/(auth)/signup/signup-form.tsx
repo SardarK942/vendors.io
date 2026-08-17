@@ -28,6 +28,10 @@ export function SignupForm({ returnTo, prefilledRole, claimContext, role, setRol
   const supabase = createClient();
   const [loading, setLoading] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  // When email confirmation is required, signUp returns no session — we flip to
+  // an inline "check your inbox" state instead of dropping the user on /login.
+  const [sentTo, setSentTo] = useState<string | null>(null);
+  const [resending, setResending] = useState(false);
 
   // Hide the couple/vendor picker whenever the entry point already decides the
   // role: a /claim/<token> URL (locked to 'vendor'), or an explicit
@@ -68,7 +72,7 @@ export function SignupForm({ returnTo, prefilledRole, claimContext, role, setRol
     }
 
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -83,8 +87,29 @@ export function SignupForm({ returnTo, prefilledRole, claimContext, role, setRol
       return;
     }
 
-    toast.success('Account created! Check your email to confirm.');
+    // No session → email confirmation is required. Show the inline "check your
+    // inbox" screen. When confirmation is disabled, signUp returns a session and
+    // the user is already authenticated; fall through to /login, which
+    // middleware bounces to the dashboard.
+    if (!data.session) {
+      setSentTo(email);
+      setLoading(false);
+      return;
+    }
+
     router.push(`/login${returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : ''}`);
+  };
+
+  const handleResend = async () => {
+    if (!sentTo || resending) return;
+    setResending(true);
+    const { error } = await supabase.auth.resend({ type: 'signup', email: sentTo });
+    setResending(false);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success('Confirmation email resent.');
   };
 
   const handleGoogleSignup = async () => {
@@ -129,6 +154,45 @@ export function SignupForm({ returnTo, prefilledRole, claimContext, role, setRol
   // white form column. Neutral grays match the Figma; text uses the ink token.
   const fieldClass = 'rounded-xl border-[#e5e7eb] bg-[#f6f8fa] text-ink placeholder:text-[#8a94a6]';
   const labelClass = 'text-sm font-semibold text-ink';
+
+  if (sentTo) {
+    return (
+      <Card className="border-none bg-transparent p-0 shadow-none" role="status" aria-live="polite">
+        <CardHeader>
+          <CardTitle className="font-spectral text-2xl text-ink">Check your inbox</CardTitle>
+          <CardDescription className="text-ink/70">
+            We sent a confirmation link to <span className="font-medium text-ink">{sentTo}</span>.
+            Click it to finish creating your account, then you can sign in.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="rounded-xl border border-ink/10 bg-cream/40 p-4 text-sm text-ink/70">
+            Didn&rsquo;t get it? Check your spam folder, or{' '}
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={resending}
+              className="rounded font-medium text-primary underline underline-offset-4 hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream disabled:opacity-60"
+            >
+              {resending ? 'Resending…' : 'resend the email'}
+            </button>
+            .
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            <Link
+              href={`/login${returnTo ? `?return_to=${encodeURIComponent(returnTo)}` : ''}`}
+              className="font-medium text-primary underline-offset-4 hover:underline"
+            >
+              <span aria-hidden="true" className="inline-block -translate-x-0.5">
+                ←
+              </span>{' '}
+              Back to sign in
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="border-none bg-transparent p-0 shadow-none">
