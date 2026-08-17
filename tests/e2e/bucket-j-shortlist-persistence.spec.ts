@@ -32,7 +32,19 @@ test.describe('Bucket J — shortlist persists across sessions', () => {
     const ctx1 = await browser.newContext();
     const page1 = await ctx1.newPage();
     await loginAs(page1, couple);
+
+    // SavedVendorsProvider fires GET /api/users/me/saved on mount and overwrites
+    // its saved set with the response. On the shared test DB that GET can resolve
+    // AFTER our optimistic click, clobbering the save and reverting the heart to
+    // "Save vendor" — an intermittent flake. Await it before clicking (mirrors
+    // bucket-j-customer-first-save-celebration.spec.ts + prod, where the GET
+    // always completes long before a user clicks).
+    const initialSavedFetch = page1.waitForResponse(
+      (r) => r.url().includes('/api/users/me/saved') && r.request().method() === 'GET',
+      { timeout: 15_000 }
+    );
     await page1.goto('/vendors');
+    await initialSavedFetch;
 
     const vendorCard1 = page1.locator(`[data-vendor-slug="${vendor.vendorSlug}"]`);
     await expect(vendorCard1).toBeVisible({ timeout: 15_000 });
