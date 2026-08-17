@@ -312,6 +312,9 @@
   display: inline-block;
   text-decoration: none;
   padding-right: 1.4em;
+  /* Keep each label on one line — a wrapped label ("Browse Vendors") let the
+     absolutely-positioned ::after number detach into the top-right corner. */
+  white-space: nowrap;
 }
 
 .staggered-menu-panel .sm-socials-list .sm-socials-link {
@@ -386,7 +389,9 @@
     right: 0;
   }
   .sm-panel-item {
-    font-size: 2.5rem;
+    /* 2rem keeps the longest label ("Browse Vendors") on one line down to
+       ~320px so nowrap never overflows the panel. */
+    font-size: 2rem;
   }
 }
 

@@ -128,3 +128,13 @@
     animation-duration: 1ms;
   }
 }
+
+/* --- Mobile booking bar vs. overlays ------------------------------------
+ * The vendor-profile mobile BookingBottomBar is position:fixed z-50. When an
+ * overlay opens it must not paint over it: the package-detail modal footer or
+ * the full-screen mobile menu. Radix overlays set body[data-scroll-locked];
+ * StaggeredMenu sets body[data-menu-open]. Hide the bar for either. */
+body[data-scroll-locked] .js-booking-bottom-bar,
+body[data-menu-open] .js-booking-bottom-bar {
+  display: none !important;
+}

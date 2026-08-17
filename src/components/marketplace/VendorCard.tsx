@@ -65,7 +65,9 @@ export function VendorCard({ vendor, searchDate, compact = false }: VendorCardPr
   const heroImage = vendor.portfolio_images?.[0];
   const categoryLabel = VENDOR_CATEGORY_LABELS[vendor.category] ?? vendor.category;
   const CategoryIcon = getCategoryIcon(vendor.category);
-  const neighborhood = vendor.base_city ?? vendor.service_area?.[0] ?? 'Chicago';
+  // `||` (with trim), not `??` — an empty-string base_city slips past `??` and
+  // renders a blank neighborhood, orphaning the "· Responds" separator.
+  const neighborhood = vendor.base_city?.trim() || vendor.service_area?.[0]?.trim() || 'Chicago';
   const respondsIn = vendor.response_sla_hours
     ? `Responds in ${vendor.response_sla_hours} h`
     : null;

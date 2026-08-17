@@ -19,7 +19,10 @@ export function FilterShell({ initialQuery }: FilterShellProps) {
   const [sheetOpen, setSheetOpen] = React.useState(false);
   return (
     <>
-      <div className="sticky top-16 z-30 -mx-4 mb-6 space-y-3 bg-cream/95 px-4 py-3 shadow-[0_1px_0_rgba(27,20,20,0.06),0_8px_12px_-12px_rgba(27,20,20,0.08)] backdrop-blur supports-[backdrop-filter]:bg-cream/80 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      {/* Not sticky on mobile — pinning all three rows (search + category bar +
+          chips ≈ ⅓ of the viewport) ate too much screen. Static below sm so it
+          scrolls away; pinned from sm up where there's room. */}
+      <div className="relative z-30 -mx-4 mb-6 space-y-3 bg-cream/95 px-4 py-3 shadow-[0_1px_0_rgba(27,20,20,0.06),0_8px_12px_-12px_rgba(27,20,20,0.08)] backdrop-blur supports-[backdrop-filter]:bg-cream/80 sm:sticky sm:top-16 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <AiSearchInput variant="sticky" defaultValue={initialQuery} className="max-w-[640px]" />
         <CategoryIconBar />
         <FilterChipRow onOpenSheet={() => setSheetOpen(true)} />
