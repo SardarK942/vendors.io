@@ -19,8 +19,7 @@ import { IdentityPanel } from './IdentityPanel';
 import { VendorHero } from './VendorHero';
 import { HowBookingWorks } from './HowBookingWorks';
 import { CustomRequestPanel } from './CustomRequestPanel';
-import { PhotoGalleryHero } from './PhotoGalleryHero';
-import { PhotoCarouselHero } from './PhotoCarouselHero';
+import { VendorGallery } from './VendorGallery';
 import { BookingStickyCard } from './BookingStickyCard';
 import { BookingBottomBar } from './BookingBottomBar';
 import { VendorSocials } from './VendorSocials';
@@ -168,20 +167,10 @@ export function VendorProfile({
           {/* Universal ink brand-band masthead */}
           <VendorHero vendor={vendor} interactive={interactive} />
 
-          {/* Portfolio gallery — only when there is more than the plate image */}
+          {/* Portfolio gallery — clickable, opens a full-screen lightbox */}
           {hasGallery && (
             <div className="mt-4">
-              <div className="md:hidden">
-                <PhotoCarouselHero
-                  images={images}
-                  businessName={vendor.business_name ?? 'Vendor'}
-                  vendorId={vendor.id}
-                  interactive={interactive}
-                />
-              </div>
-              <div className="hidden md:block">
-                <PhotoGalleryHero images={images} businessName={vendor.business_name ?? 'Vendor'} />
-              </div>
+              <VendorGallery images={images} businessName={vendor.business_name ?? 'Vendor'} />
             </div>
           )}
 
