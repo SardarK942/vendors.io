@@ -6,12 +6,14 @@ import Image from 'next/image';
 interface PhotoCarouselHeroProps {
   images: string[];
   businessName: string;
+  /** Open the lightbox at the given index. */
+  onOpen?: (index: number) => void;
   // Retained for call-site compatibility; save now lives on VendorHero.
   vendorId?: string;
   interactive?: boolean;
 }
 
-export function PhotoCarouselHero({ images, businessName }: PhotoCarouselHeroProps) {
+export function PhotoCarouselHero({ images, businessName, onOpen }: PhotoCarouselHeroProps) {
   const [activeIdx, setActiveIdx] = useState(0);
   const scrollerRef = useRef<HTMLDivElement>(null);
 
@@ -36,7 +38,13 @@ export function PhotoCarouselHero({ images, businessName }: PhotoCarouselHeroPro
         style={{ scrollbarWidth: 'none' }}
       >
         {images.map((img, i) => (
-          <div key={i} className="relative h-full w-full shrink-0 snap-start">
+          <button
+            key={i}
+            type="button"
+            onClick={() => onOpen?.(i)}
+            aria-label={`View ${businessName} photo ${i + 1} of ${images.length}`}
+            className="relative h-full w-full shrink-0 cursor-zoom-in snap-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-cream"
+          >
             <Image
               src={img}
               alt={`${businessName} portfolio ${i + 1}`}
@@ -45,7 +53,7 @@ export function PhotoCarouselHero({ images, businessName }: PhotoCarouselHeroPro
               className="object-cover"
               priority={i === 0}
             />
-          </div>
+          </button>
         ))}
       </div>
 
