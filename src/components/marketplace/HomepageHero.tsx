@@ -32,20 +32,23 @@ export function HomepageHero({ showVendorCta }: HomepageHeroProps) {
             style={{ fontSize: 'clamp(44px, 6vw, 80px)' }}
           >
             Planning your{' '}
-            <em className="font-medium italic text-hot-pink">
+            {/* Lighter hot-pink tint + tight dark halo: brand hot-pink (~41%
+                lightness) reads as dark-on-dark over the video scrim. This
+                hero-only variant stays legible on any frame. */}
+            <em className="font-medium italic text-[#ff67ab] [text-shadow:0_1px_2px_rgba(0,0,0,0.55),0_2px_18px_rgba(0,0,0,0.45)]">
               <RotatingWord words={['dream wedding', 'mehndi night', 'walima', 'celebration']} />
             </em>
             <br />
             starts here.
           </h1>
 
-          <p className="m-0 mb-8 mx-auto max-w-[560px] text-pretty text-lg leading-[1.55] text-cream/85">
+          <p className="m-0 mx-auto mb-8 max-w-[560px] text-pretty text-lg leading-[1.55] text-cream/85">
             Chicago&rsquo;s marketplace for{' '}
             <span className="bg-haldi box-decoration-clone px-2 pb-1 pt-0 text-ink">Cultural</span>{' '}
             wedding vendors. Discover, compare, and book with confidence.
           </p>
 
-          <div className="mb-5 mx-auto max-w-[560px]">
+          <div className="mx-auto mb-5 max-w-[560px]">
             <AiSearchInput variant="hero" />
           </div>
 

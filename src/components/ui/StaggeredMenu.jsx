@@ -58,6 +58,16 @@ export const StaggeredMenu = ({
     if (open) setHeaderHidden(false);
   }, [open]);
 
+  // Signal open state to the rest of the page via a body attribute so fixed
+  // overlays (e.g. the mobile BookingBottomBar) can hide themselves while the
+  // menu covers the screen. Radix overlays already set body[data-scroll-locked];
+  // this is the equivalent for our custom menu.
+  useEffect(() => {
+    if (open) document.body.setAttribute('data-menu-open', '');
+    else document.body.removeAttribute('data-menu-open');
+    return () => document.body.removeAttribute('data-menu-open');
+  }, [open]);
+
   const prefersReducedMotion = usePrefersReducedMotion();
   const prefersReducedMotionRef = useRef(prefersReducedMotion);
   prefersReducedMotionRef.current = prefersReducedMotion;
