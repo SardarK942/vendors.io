@@ -10,9 +10,20 @@ import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import {
   sendCustomer48hFollowupEmail,
   sendVendor48hFollowupEmail,
+  sendVendorOnboardingNudge1,
+  sendVendorOnboardingNudge2,
   type SuggestedVendor,
 } from '@/lib/email/resend';
 import { getRecentActiveVendors } from '@/services/vendor.service';
+import { createClient } from '@supabase/supabase-js';
+import {
+  liveUserIds,
+  selectUnconfirmedVendorNudge,
+  selectOnboardingNudge24h,
+  selectOnboardingNudge7d,
+  DEFAULT_BATCH_CAP,
+  type NudgeUser,
+} from '@/lib/onboarding/nudge-candidates';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,6 +89,11 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     await runVendor48hFollowup();
   } catch (err) {
     console.error('[cron] vendor 48h followup failed:', err);
+  }
+  try {
+    await runVendorOnboardingNudges();
+  } catch (err) {
+    console.error('[cron] vendor onboarding nudges failed:', err);
   }
 
   const ended = Date.now();
@@ -231,6 +247,121 @@ async function runVendor48hFollowup(): Promise<void> {
       .from('vendor_profiles')
       .update({ followup_48h_sent_at: new Date().toISOString() })
       .eq('id', vp.id);
+  }
+}
+
+/**
+ * Vendor onboarding nudges (spec 2026-08-21-vendor-onboarding-nudge-design):
+ *   A) unconfirmed vendors        → re-send branded confirmation (auth.resend)
+ *   B1) confirmed, never live      → "finish your profile" (first reminder)
+ *   B2) still not live 6d after B1 → last-call reminder
+ * Shared data is fetched once; each segment runs in its own try/catch so one
+ * failure doesn't block the others. Each segment is capped per run.
+ */
+async function runVendorOnboardingNudges(): Promise<void> {
+  const supabase = createServiceRoleClient();
+
+  // Vendor users + their nudge markers.
+  const { data: vendorRows } = await supabase
+    .from('users')
+    .select(
+      'id, email, full_name, role, created_at, confirm_nudge_sent_at, onboarding_nudge_24h_sent_at, onboarding_nudge_7d_sent_at'
+    )
+    .eq('role', 'vendor');
+
+  // Confirmation state (auth schema isn't exposed via PostgREST) — build a set
+  // of confirmed user ids from the Admin API.
+  const confirmedIds = new Set<string>();
+  for (let page = 1; ; page++) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) break;
+    for (const u of data.users) if (u.email_confirmed_at) confirmedIds.add(u.id);
+    if (data.users.length < 1000) break;
+  }
+
+  // Live = any completed profile.
+  const { data: profiles } = await supabase
+    .from('vendor_profiles')
+    .select('user_id, onboarding_complete');
+  const live = liveUserIds(profiles ?? []);
+
+  const users: NudgeUser[] = (vendorRows ?? []).map((u) => ({
+    id: u.id,
+    email: u.email,
+    full_name: u.full_name,
+    role: u.role,
+    created_at: u.created_at,
+    confirmed: confirmedIds.has(u.id),
+    confirm_nudge_sent_at: u.confirm_nudge_sent_at,
+    onboarding_nudge_24h_sent_at: u.onboarding_nudge_24h_sent_at,
+    onboarding_nudge_7d_sent_at: u.onboarding_nudge_7d_sent_at,
+  }));
+  const now = Date.now();
+
+  // Anon client for public auth operations (resend confirmation).
+  const anon = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  );
+
+  // ── Segment A: re-send confirmation ────────────────────────────────────────
+  try {
+    const candidates = selectUnconfirmedVendorNudge(users, now);
+    if (candidates.length === DEFAULT_BATCH_CAP) {
+      console.log('[cron] unconfirmed-vendor nudge hit batch cap; remainder next run');
+    }
+    for (const u of candidates) {
+      if (!u.email) continue;
+      const { error } = await anon.auth.resend({ type: 'signup', email: u.email });
+      if (error) {
+        console.error('[cron] resend confirmation failed for', u.id, error.message);
+        continue;
+      }
+      await supabase
+        .from('users')
+        .update({ confirm_nudge_sent_at: new Date().toISOString() })
+        .eq('id', u.id);
+    }
+  } catch (err) {
+    console.error('[cron] segment A (unconfirmed) failed:', err);
+  }
+
+  // ── Segment B step 1 ───────────────────────────────────────────────────────
+  try {
+    const candidates = selectOnboardingNudge24h(users, live, now);
+    if (candidates.length === DEFAULT_BATCH_CAP) {
+      console.log('[cron] onboarding nudge (step 1) hit batch cap; remainder next run');
+    }
+    for (const u of candidates) {
+      if (!u.email) continue;
+      const ok = await sendVendorOnboardingNudge1(u.email, u.id);
+      if (!ok) continue;
+      await supabase
+        .from('users')
+        .update({ onboarding_nudge_24h_sent_at: new Date().toISOString() })
+        .eq('id', u.id);
+    }
+  } catch (err) {
+    console.error('[cron] segment B step 1 failed:', err);
+  }
+
+  // ── Segment B step 2 ───────────────────────────────────────────────────────
+  try {
+    const candidates = selectOnboardingNudge7d(users, live, now);
+    if (candidates.length === DEFAULT_BATCH_CAP) {
+      console.log('[cron] onboarding nudge (step 2) hit batch cap; remainder next run');
+    }
+    for (const u of candidates) {
+      if (!u.email) continue;
+      const ok = await sendVendorOnboardingNudge2(u.email, u.id);
+      if (!ok) continue;
+      await supabase
+        .from('users')
+        .update({ onboarding_nudge_7d_sent_at: new Date().toISOString() })
+        .eq('id', u.id);
+    }
+  } catch (err) {
+    console.error('[cron] segment B step 2 failed:', err);
   }
 }
 

@@ -9,6 +9,8 @@ import { Customer48hFollowupTemplate, SuggestedVendor } from './templates/custom
 import { VendorWelcomeTemplate } from './templates/vendor-welcome';
 import { Vendor48hFollowupTemplate } from './templates/vendor-followup-48h';
 import { VendorFirstBookingTemplate } from './templates/vendor-first-booking';
+import { VendorOnboardingNudge1Template } from './templates/vendor-onboarding-nudge-1';
+import { VendorOnboardingNudge2Template } from './templates/vendor-onboarding-nudge-2';
 
 export type { SuggestedVendor };
 
@@ -555,6 +557,37 @@ export async function sendVendor48hFollowupEmail(
   return sendEmail({
     to: vendorEmail,
     subject: 'Tips for getting your first Baazar booking',
+    html,
+  });
+}
+
+/**
+ * Segment B step 1 — first "finish your profile" reminder for a confirmed
+ * vendor who signed up but never published. Timing-agnostic copy.
+ */
+export async function sendVendorOnboardingNudge1(
+  vendorEmail: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(<VendorOnboardingNudge1Template unsubscribeToken={unsubscribeToken} />);
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Your Baazar profile isn’t live yet',
+    html,
+  });
+}
+
+/** Segment B step 2 — last-call reminder (~6 days after step 1). */
+export async function sendVendorOnboardingNudge2(
+  vendorEmail: string,
+  userId: string
+): Promise<boolean> {
+  const unsubscribeToken = buildUnsubscribeToken(userId);
+  const html = await render(<VendorOnboardingNudge2Template unsubscribeToken={unsubscribeToken} />);
+  return sendEmail({
+    to: vendorEmail,
+    subject: 'Last reminder: finish your Baazar profile',
     html,
   });
 }
