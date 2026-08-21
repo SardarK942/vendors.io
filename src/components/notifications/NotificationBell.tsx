@@ -29,15 +29,24 @@ export function NotificationBell({ userId, light = false }: Props) {
     let cancelled = false;
 
     async function loadInitial() {
-      const { data } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(10);
-      if (cancelled) return;
-      setNotifications((data ?? []) as NotificationRow[]);
-      isInitialLoad.current = false;
+      try {
+        const { data } = await supabase
+          .from('notifications')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
+          .limit(10);
+        if (cancelled) return;
+        setNotifications((data ?? []) as NotificationRow[]);
+        isInitialLoad.current = false;
+      } catch {
+        // The underlying fetch can reject ("Load failed" / "Failed to fetch")
+        // when a navigation aborts it in-flight — common right after login when
+        // the header mounts and we immediately redirect to /dashboard, and in
+        // in-app browsers (Instagram/FB WebViews). Swallow it: the bell simply
+        // shows no notifications until the next load, and realtime still arms.
+        if (!cancelled) isInitialLoad.current = false;
+      }
     }
     loadInitial();
 
