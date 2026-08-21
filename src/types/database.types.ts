@@ -175,6 +175,9 @@ export interface Database {
           first_booking_at: string | null;
           dashboard_welcome_dismissed_at: string | null;
           followup_48h_sent_at: string | null;
+          confirm_nudge_sent_at: string | null;
+          onboarding_nudge_24h_sent_at: string | null;
+          onboarding_nudge_7d_sent_at: string | null;
         };
         Insert: {
           id: string;
@@ -192,6 +195,9 @@ export interface Database {
           first_booking_at?: string | null;
           dashboard_welcome_dismissed_at?: string | null;
           followup_48h_sent_at?: string | null;
+          confirm_nudge_sent_at?: string | null;
+          onboarding_nudge_24h_sent_at?: string | null;
+          onboarding_nudge_7d_sent_at?: string | null;
         };
         Update: {
           id?: string;
@@ -208,6 +214,9 @@ export interface Database {
           first_booking_at?: string | null;
           dashboard_welcome_dismissed_at?: string | null;
           followup_48h_sent_at?: string | null;
+          confirm_nudge_sent_at?: string | null;
+          onboarding_nudge_24h_sent_at?: string | null;
+          onboarding_nudge_7d_sent_at?: string | null;
         };
         Relationships: [
           {
