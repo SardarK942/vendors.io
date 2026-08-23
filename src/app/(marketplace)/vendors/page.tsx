@@ -66,9 +66,17 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
 
   // NOTE: vendor_packages_price_band is a VIEW — PostgREST cannot resolve FK joins
   // to views. Price band is fetched in a separate parallel query and merged by vendor id.
+  // Select only the columns the card + ordering actually read — not `*`, which
+  // shipped ~50 columns per row including the heavy `searchable_text` blob and
+  // the 9 `calendar_feed_*` columns no consumer here touches. Derived fields
+  // (confirmed_wedding_count, is_available_for_date, vendor_packages_price_band)
+  // are merged in below from separate queries, so they are intentionally absent.
   let query = supabase
     .from('vendor_profiles')
-    .select('*', { count: 'exact' })
+    .select(
+      'id, slug, business_name, category, verified, portfolio_images, base_city, service_area, response_sla_hours, total_bookings',
+      { count: 'exact' }
+    )
     .eq('is_active', true)
     .eq('onboarding_complete', true);
 
@@ -84,16 +92,23 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   const searchDateParam =
     typeof params.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(params.date) ? params.date : null;
 
-  // Run vendors + enrichments + price band in parallel.
-  const [{ data: vendors, count }, { data: enrichments }, { data: priceBands }] = await Promise.all(
-    [
-      query,
-      supabase.rpc('vendor_list_enrichments', { p_search_date: searchDateParam }),
-      supabase
+  // Run vendors + enrichments in parallel. The enrichments RPC keys off the
+  // search date, not the vendor set, so it can go here.
+  const [{ data: vendors, count }, { data: enrichments }] = await Promise.all([
+    query,
+    supabase.rpc('vendor_list_enrichments', { p_search_date: searchDateParam }),
+  ]);
+
+  // Price band runs AFTER the vendor query so it can be bounded to the 20 rows
+  // on this page (`.in(...)`) instead of fetching a band row for the ENTIRE
+  // catalog on every load. Skip the round-trip entirely when the page is empty.
+  const vendorIds = (vendors ?? []).map((v) => v.id);
+  const { data: priceBands } = vendorIds.length
+    ? await supabase
         .from('vendor_packages_price_band')
-        .select('vendor_profile_id, min_price_cents, max_price_cents'),
-    ]
-  );
+        .select('vendor_profile_id, min_price_cents, max_price_cents')
+        .in('vendor_profile_id', vendorIds)
+    : { data: null };
 
   const totalPages = Math.ceil((count ?? 0) / limit);
 
