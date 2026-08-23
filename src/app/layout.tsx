@@ -39,10 +39,11 @@ const dmMono = DM_Mono({
 // Wordmark cycle fonts (DESIGN.md typography.wordmark-*) — used by the footer
 // WordmarkCycle component and any future hero wordmark surfaces.
 const tiroDevanagari = Tiro_Devanagari_Hindi({
-  subsets: ['latin', 'devanagari'],
+  // Wordmark renders only the devanagari glyph "बाज़ार" at 400/normal
+  // (WordmarkCycle + HomepageWordmarkPanel) — latin subset and italic are unused.
+  subsets: ['devanagari'],
   variable: '--font-wordmark-deva',
   weight: ['400'],
-  style: ['normal', 'italic'],
   display: 'swap',
 });
 
@@ -54,10 +55,10 @@ const notoNastaliqUrdu = Noto_Nastaliq_Urdu({
 });
 
 const amiri = Amiri({
+  // Wordmark renders the naskh glyph "بازار" at 400/normal only — 700 + italic unused.
   subsets: ['arabic'],
   variable: '--font-wordmark-naskh',
-  weight: ['400', '700'],
-  style: ['normal', 'italic'],
+  weight: ['400'],
   display: 'swap',
 });
 

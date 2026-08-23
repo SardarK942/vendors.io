@@ -1,13 +1,29 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
+    // Serve AVIF first (≈20-30% smaller than WebP) with WebP fallback; the
+    // optimizer negotiates per-request via the Accept header.
+    formats: ['image/avif', 'image/webp'],
+    // Vendor photos are content-addressed (UploadThing keys change on replace),
+    // so optimized variants can be cached aggressively. Default is 60s.
+    minimumCacheTTL: 2678400, // 31 days
+    // Explicit allowlist (replaces the former `**` catch-all, which made the
+    // optimizer an open image proxy). These are the only hosts that actually
+    // feed <Image> in prod — verified 2026-08-23 against portfolio_images +
+    // scraped_vendors.photos. Raw <img> paths (scraped/unclaimed cards) are
+    // unaffected; they bypass the optimizer entirely.
     remotePatterns: [
-      // UploadThing hosts (new region-specific + legacy)
+      // UploadThing — vendor uploads (dominant source: ~5.6k live)
       { protocol: 'https', hostname: '*.ufs.sh', pathname: '/f/**' },
       { protocol: 'https', hostname: 'utfs.io', pathname: '/f/**' },
       { protocol: 'https', hostname: '*.utfs.io', pathname: '/f/**' },
-      // Allow any HTTPS image (some vendors may paste URLs from Instagram/their site)
-      { protocol: 'https', hostname: '**' },
+      // Google Places photo proxy — scraped/curated vendor photos (~5.2k)
+      { protocol: 'https', hostname: 'maps.googleapis.com' },
+      // Instagram / Facebook CDN — scraped vendor photos + rehost expiry hosts
+      // (see scripts/scraper/rehost-photos.ts EXPIRY_HOST_PATTERNS)
+      { protocol: 'https', hostname: '*.cdninstagram.com' },
+      { protocol: 'https', hostname: '*.fbcdn.net' },
+      { protocol: 'https', hostname: 'lookaside.instagram.com' },
     ],
   },
 };
