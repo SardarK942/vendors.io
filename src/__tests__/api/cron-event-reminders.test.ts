@@ -55,18 +55,27 @@ interface TableData {
 
 function buildSupabase(tables: TableData, coupleEmail: string | null = 'couple@test.com') {
   const updateCalls: Record<string, unknown[]> = {};
+  const inCalls: Record<string, unknown[]> = {};
+  // The route now resolves couple emails via ONE admin.listUsers pass (id→email
+  // map) instead of a per-event getUserById. Derive the page from the events
+  // fixture so every couple in the run maps to `coupleEmail`.
+  const users = (
+    (tables.events as { couple_user_id: string }[] | undefined) ?? []
+  ).map((e) => ({ id: e.couple_user_id, email: coupleEmail }));
   return {
     auth: {
       admin: {
-        getUserById: vi.fn().mockResolvedValue({ data: { user: { email: coupleEmail } } }),
+        listUsers: vi.fn().mockResolvedValue({ data: { users }, error: null }),
       },
     },
     from: vi.fn((table: keyof TableData) =>
       chain({ data: tables[table] ?? [], error: null }, (prop, args) => {
         if (prop === 'update') (updateCalls[table as string] ??= []).push(args[0]);
+        if (prop === 'in') (inCalls[table as string] ??= []).push(args);
       })
     ),
     updateCalls,
+    inCalls,
   };
 }
 
@@ -414,51 +423,90 @@ describe('POST /api/cron/event-reminders', () => {
   });
 
   it('isolates one failing event so the rest of the run still completes', async () => {
-    const events = [
-      { id: 'bad', couple_user_id: 'u-bad', name: 'Broken Event' },
-      { id: 'e1', couple_user_id: 'u1', name: 'Aisha & Omar' },
-    ];
-    const taskForE1 = {
-      id: 't1',
-      event_id: 'e1',
-      event_function_id: null,
-      title: 'Book decor',
-      due_date: '2026-07-20',
-      completed_at: null,
-      due_soon_notified_at: null,
-      overdue_notified_at: null,
-      sort: 0,
-      created_at: '',
-      updated_at: '',
-    };
-    const sb = {
-      auth: {
-        admin: { getUserById: vi.fn().mockResolvedValue({ data: { user: { email: null } } }) },
-      },
-      from: vi.fn((table: string) => {
-        if (table === 'events') return chain({ data: events, error: null });
-        if (table === 'event_tasks') {
-          return {
-            select: () => ({
-              eq: (_col: string, eventId: string) =>
-                eventId === 'bad'
-                  ? Promise.reject(new Error('boom'))
-                  : Promise.resolve({ data: [taskForE1], error: null }),
-            }),
-            update: () => ({ eq: () => Promise.resolve({ data: null, error: null }) }),
-          };
-        }
-        // event_functions (and anything else): empty result is enough for this test.
-        return chain({ data: [], error: null });
-      }),
-    };
+    // Tasks + functions are now batched with .in() across all events, so a
+    // per-event *fetch* failure is no longer possible. The surviving invariant
+    // is that a failing per-event *notify* (outside the inner due-soon guard)
+    // aborts only that event's processing — here the overdue notify for the
+    // "bad" event throws, but the healthy event's due-soon reminder still fires.
+    notifyEventTaskOverdueMock.mockImplementation((_sb, userId: string) =>
+      userId === 'u-bad'
+        ? Promise.reject(new Error('boom'))
+        : Promise.resolve({ id: 'notif-overdue' })
+    );
+    const sb = buildSupabase({
+      events: [
+        { id: 'bad', couple_user_id: 'u-bad', name: 'Broken Event' },
+        { id: 'e1', couple_user_id: 'u1', name: 'Aisha & Omar' },
+      ],
+      event_tasks: [
+        {
+          id: 't-bad-overdue',
+          event_id: 'bad',
+          event_function_id: null,
+          title: 'Confirm caterer',
+          due_date: '2026-07-01',
+          completed_at: null,
+          due_soon_notified_at: null,
+          overdue_notified_at: null,
+          sort: 0,
+          created_at: '',
+          updated_at: '',
+        },
+        {
+          id: 't-good',
+          event_id: 'e1',
+          event_function_id: null,
+          title: 'Book decor',
+          due_date: '2026-07-20',
+          completed_at: null,
+          due_soon_notified_at: null,
+          overdue_notified_at: null,
+          sort: 0,
+          created_at: '',
+          updated_at: '',
+        },
+      ],
+      event_functions: [],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    mockedCreateServiceRoleClient.mockReturnValue(sb as any);
+
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-18T00:00:00Z'));
+    let body: { sent: { dueSoon: number; overdue: number; countdown: number } };
+    try {
+      const res = await POST(makeRequest('test-secret'));
+      expect(res.status).toBe(200);
+      body = await res.json();
+    } finally {
+      vi.useRealTimers();
+    }
+
+    // The healthy event still gets processed despite the first event throwing;
+    // the bad event's overdue never counts because its notify aborted.
+    expect(body.sent.dueSoon).toBe(1);
+    expect(body.sent.overdue).toBe(0);
+  });
+
+  it('batches tasks + functions with a single .in() query across all events', async () => {
+    const sb = buildSupabase({
+      events: [
+        { id: 'e1', couple_user_id: 'u1', name: 'Aisha & Omar' },
+        { id: 'e2', couple_user_id: 'u2', name: 'Sara & Bilal' },
+      ],
+      event_tasks: [],
+      event_functions: [],
+    });
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mockedCreateServiceRoleClient.mockReturnValue(sb as any);
 
     const res = await POST(makeRequest('test-secret'));
     expect(res.status).toBe(200);
-    const body = await res.json();
-    // The second (healthy) event still gets processed despite the first throwing.
-    expect(body.sent.dueSoon).toBe(1);
+
+    // One .in('event_id', [all ids]) per child table — not one query per event.
+    expect(sb.inCalls.event_tasks).toEqual([['event_id', ['e1', 'e2']]]);
+    expect(sb.inCalls.event_functions).toEqual([['event_id', ['e1', 'e2']]]);
+    // Couple emails resolved via a single admin.listUsers pass, not per-event.
+    expect(sb.auth.admin.listUsers).toHaveBeenCalledTimes(1);
   });
 });

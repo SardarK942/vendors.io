@@ -29,8 +29,15 @@ vi.mock('@/lib/supabase/server', () => ({
   createServiceRoleClient: vi.fn(() => ({
     auth: {
       admin: {
-        getUserById: vi.fn(async (_id: string) => ({
-          data: { user: { email: 'mock@example.com' } },
+        // autoCompleteBookings now resolves emails via a single paginated
+        // listUsers pass instead of per-booking getUserById.
+        listUsers: vi.fn(async () => ({
+          data: {
+            users: [
+              { id: 'couple-user-id', email: 'couple@example.com' },
+              { id: 'vendor-user-id', email: 'vendor@example.com' },
+            ],
+          },
           error: null,
         })),
       },
@@ -67,6 +74,9 @@ vi.mock('@/services/notifications.service', () => ({
 }));
 
 import { autoCompleteBookings } from '@/services/payment.service';
+import { createServiceRoleClient } from '@/lib/supabase/server';
+
+const mockedCreateServiceRoleClient = vi.mocked(createServiceRoleClient);
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 const PAST = new Date(Date.now() - 72 * 60 * 60 * 1000).toISOString(); // 72h ago — past cutoff
@@ -137,6 +147,40 @@ function makeMockSupabase(
 }
 
 describe('autoCompleteBookings (per-event)', () => {
+  it('batches the admin email lookup once across many due bookings (no per-booking round-trip)', async () => {
+    mockedCreateServiceRoleClient.mockClear();
+    // Two distinct bookings, each due — the old code did getUserById per booking
+    // for the vendor. Now a single admin client / listUsers pass serves them all.
+    const mockSb = makeMockSupabase([
+      { id: 'booking-a', booking_events: [{ id: 'ev-a', event_end_time: PAST, completed_at: null }] },
+      { id: 'booking-b', booking_events: [{ id: 'ev-b', event_end_time: PAST, completed_at: null }] },
+    ]);
+
+    await autoCompleteBookings(mockSb as never);
+
+    // Exactly one admin client is created for the whole run (the batched lookup),
+    // not one per booking.
+    expect(mockedCreateServiceRoleClient).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not open an admin client when every couple_email is on-row and there is no vendor id to resolve', async () => {
+    mockedCreateServiceRoleClient.mockClear();
+    // couple_email is on-row (enriched default) and we null out the vendor user id,
+    // so nothing needs an auth lookup → no admin client at all.
+    const mockSb = makeMockSupabase([
+      {
+        id: 'booking-c',
+        // @ts-expect-error deliberately override vendor to have no user_id
+        vendor_profiles: { user_id: null, business_name: 'Test Vendor' },
+        booking_events: [{ id: 'ev-c', event_end_time: PAST, completed_at: null }],
+      },
+    ]);
+
+    await autoCompleteBookings(mockSb as never);
+
+    expect(mockedCreateServiceRoleClient).not.toHaveBeenCalled();
+  });
+
   it('marks due events complete and completes the booking when all events done', async () => {
     const mockSb = makeMockSupabase([
       {

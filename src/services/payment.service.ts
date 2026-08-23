@@ -734,10 +734,37 @@ export async function autoCompleteBookings(
     )
     .eq('status', 'deposit_paid');
 
+  const bookingList = bookings ?? [];
+
+  // Batch the auth-email lookups. The per-booking getUserById ×2 is replaced by a
+  // single paginated admin.listUsers pass → id→email map. We only need it for the
+  // user ids that could still require an email: couple ids missing an on-row
+  // couple_email, plus every vendor user id. `couple_email` already lives on the
+  // booking row, so many couple lookups were avoidable and stay avoided here.
+  const emailById = new Map<string, string | null>();
+  const idsNeedingEmail = new Set<string>();
+  for (const b of bookingList) {
+    const bvp = b.vendor_profiles as unknown as { user_id: string; business_name: string };
+    const coupleEmailOnRow = (b as unknown as { couple_email: string | null }).couple_email;
+    if (b.couple_user_id && !coupleEmailOnRow) idsNeedingEmail.add(b.couple_user_id);
+    if (bvp?.user_id) idsNeedingEmail.add(bvp.user_id);
+  }
+  if (idsNeedingEmail.size > 0) {
+    const sbAdmin = createServiceRoleClient();
+    for (let page = 1; ; page++) {
+      const { data, error } = await sbAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+      if (error) break;
+      for (const u of data.users) {
+        if (idsNeedingEmail.has(u.id)) emailById.set(u.id, u.email ?? null);
+      }
+      if (data.users.length < 1000) break;
+    }
+  }
+
   let eventsCompleted = 0;
   let bookingsCompleted = 0;
 
-  for (const b of bookings ?? []) {
+  for (const b of bookingList) {
     const events =
       (b.booking_events as {
         id: string;
@@ -760,16 +787,13 @@ export async function autoCompleteBookings(
       );
     eventsCompleted += dueNow.length;
 
-    // Fetch emails for couple + vendor (needed for email sends below).
-    const sbAdmin = createServiceRoleClient();
+    // Emails for couple + vendor (needed for email sends below), resolved from the
+    // prefetched map — same values the per-booking getUserById calls returned:
+    // prefer the on-row couple_email, else the map, else undefined.
     const coupleEmail =
       (b as unknown as { couple_email: string | null }).couple_email ??
-      (b.couple_user_id
-        ? (await sbAdmin.auth.admin.getUserById(b.couple_user_id)).data.user?.email
-        : undefined);
-    const vendorEmailResult = bvp.user_id
-      ? (await sbAdmin.auth.admin.getUserById(bvp.user_id)).data.user?.email
-      : undefined;
+      (b.couple_user_id ? (emailById.get(b.couple_user_id) ?? undefined) : undefined);
+    const vendorEmailResult = bvp.user_id ? (emailById.get(bvp.user_id) ?? undefined) : undefined;
     const vendorDisplayName = bvp.business_name;
     const coupleDisplayName =
       (b as unknown as { couple_full_name: string | null }).couple_full_name ?? 'your couple';
