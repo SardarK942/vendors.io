@@ -6,9 +6,10 @@ import { X } from 'lucide-react';
 
 const DISMISSED_KEY = 'baazar_analytics_notice_dismissed';
 
-// Purely informational — never gates analytics. PostHogProvider inits
-// unconditionally at module scope regardless of whether this notice is
-// shown, dismissed, or never mounted.
+// Purely informational — never gates analytics. Renders ONLY when PostHog is
+// actually configured (NEXT_PUBLIC_POSTHOG_KEY set): when analytics is dormant
+// (local dev, CI, unwired previews) there is nothing to notice, and the fixed
+// bottom bar must not sit over the page's interactive elements.
 export function AnalyticsNotice() {
   const [mounted, setMounted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
@@ -18,7 +19,8 @@ export function AnalyticsNotice() {
     setMounted(true);
   }, []);
 
-  if (!mounted || dismissed) return null;
+  const analyticsEnabled = Boolean(process.env.NEXT_PUBLIC_POSTHOG_KEY);
+  if (!analyticsEnabled || !mounted || dismissed) return null;
 
   const handleDismiss = () => {
     window.localStorage.setItem(DISMISSED_KEY, '1');
