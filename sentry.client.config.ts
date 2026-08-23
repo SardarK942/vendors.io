@@ -11,8 +11,10 @@ if (dsn) {
     dsn,
     environment: process.env.NEXT_PUBLIC_VERCEL_ENV || 'development',
     tracesSampleRate: 0.1,
-    replaysOnErrorSampleRate: 1.0,
-    replaysSessionSampleRate: 0,
+    // No Session Replay: `integrations: []` never registers it, so the replay
+    // sample rates were dead config that only kept the ~50KB Replay bundle from
+    // tree-shaking out. Drop them to shed that weight. Re-add replayIntegration()
+    // + the sample rates together if Replay is ever wanted.
     // Don't double-send console.error — structured logger handles that server-side.
     integrations: [],
     // In-app browsers (Instagram/Facebook WebViews) inject a navigation logger
