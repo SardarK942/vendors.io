@@ -2,9 +2,13 @@ import type { MetadataRoute } from 'next';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 // Canonical production host. The apex (baazar.io) 307-redirects to www, so the
-// sitemap must list www URLs to match the indexed host. Falls back to the app
-// URL env in preview/dev.
-const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.baazar.io').replace(/\/$/, '');
+// sitemap must list www URLs — otherwise every entry is a redirect and Search
+// Console flags them as "Page with redirect". NEXT_PUBLIC_APP_URL is set to the
+// apex in prod, so upgrade a bare apex host to www; other hosts (localhost in
+// dev/preview) pass through untouched.
+const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.baazar.io')
+  .replace(/\/$/, '')
+  .replace(/^https:\/\/baazar\.io$/, 'https://www.baazar.io');
 
 // Regenerate at most once an hour so newly-published vendors get picked up
 // without hitting the DB on every crawl.
