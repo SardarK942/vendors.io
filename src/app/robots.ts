@@ -1,8 +1,11 @@
 import type { MetadataRoute } from 'next';
 
 // Same canonical host derivation as sitemap.ts — apex 307-redirects to www, so
-// crawlers should treat www as canonical. Falls back to the app URL env.
-const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.baazar.io').replace(/\/$/, '');
+// crawlers should treat www as canonical. NEXT_PUBLIC_APP_URL is the apex in
+// prod, so upgrade a bare apex host to www; other hosts pass through untouched.
+const SITE_URL = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.baazar.io')
+  .replace(/\/$/, '')
+  .replace(/^https:\/\/baazar\.io$/, 'https://www.baazar.io');
 
 // Routes kept out of the search index: private app, backend, dev/test, one-time
 // links, and auth utility pages. This is crawl guidance, NOT access control —
