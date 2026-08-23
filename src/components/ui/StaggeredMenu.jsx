@@ -1,9 +1,21 @@
 'use client';
 
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { gsap } from 'gsap';
 import { usePrefersReducedMotion } from '@/hooks/use-prefers-reduced-motion';
 import './StaggeredMenu.css';
+
+// gsap powers only the open/close choreography — the closed/at-rest state is
+// pure CSS now (see StaggeredMenu.css). So we lazy-load gsap on the first menu
+// interaction: the header (and most sessions, which never open the menu) never
+// pays gsap's ~50KB+ parse/download. Module-scoped so the animation callbacks
+// below can reference `gsap` unchanged once it resolves.
+let gsap = null;
+let gsapPromise = null;
+function ensureGsap() {
+  if (gsap) return Promise.resolve(gsap);
+  if (!gsapPromise) gsapPromise = import('gsap').then((m) => (gsap = m.gsap));
+  return gsapPromise;
+}
 
 export const StaggeredMenu = ({
   position = 'right',
@@ -91,38 +103,47 @@ export const StaggeredMenu = ({
   const toggleBtnRef = useRef(null);
   const busyRef = useRef(false);
   const itemEntranceTweenRef = useRef(null);
+  const gsapInitedRef = useRef(false);
 
+  // Once gsap loads, claim ownership of the panel/prelayer transforms with an
+  // explicit xPercent + x:0. The CSS closed-state uses translateX(100%), which
+  // gsap would otherwise misread as x:440px and stack on top of its xPercent —
+  // leaving "open" (xPercent:0) parked at the CSS translate. This resets to the
+  // same visual position (xPercent 100, x 0) so the open/close tweens land right.
+  const initGsapState = useCallback(() => {
+    if (gsapInitedRef.current || !gsap) return;
+    gsapInitedRef.current = true;
+    const panel = panelRef.current;
+    const preContainer = preLayersRef.current;
+    const layers = preLayerElsRef.current;
+    const offscreen = position === 'left' ? -100 : 100;
+    if (panel) gsap.set([panel, ...layers], { xPercent: offscreen, x: 0, opacity: 1 });
+    if (preContainer) gsap.set(preContainer, { xPercent: 0, x: 0, opacity: 1 });
+  }, [position]);
+
+  // Collect the prelayer elements for the open/close tweens. No gsap here — the
+  // closed/at-rest positioning is pure CSS, and gsap loads on first open. The
+  // icon/text/plus refs sit at their natural CSS rest state (rotate 0, yPercent
+  // 0), which is exactly what the removed gsap.set calls used to establish.
   useLayoutEffect(() => {
-    const ctx = gsap.context(() => {
-      const panel = panelRef.current;
-      const preContainer = preLayersRef.current;
-      const plusH = plusHRef.current;
-      const plusV = plusVRef.current;
-      const icon = iconRef.current;
-      const textInner = textInnerRef.current;
-      if (!panel || !plusH || !plusV || !icon || !textInner) return;
+    const preContainer = preLayersRef.current;
+    preLayerElsRef.current = preContainer
+      ? Array.from(preContainer.querySelectorAll('.sm-prelayer'))
+      : [];
+  }, [position]);
 
-      let preLayers = [];
-      if (preContainer) {
-        preLayers = Array.from(preContainer.querySelectorAll('.sm-prelayer'));
-      }
-      preLayerElsRef.current = preLayers;
-
-      const offscreen = position === 'left' ? -100 : 100;
-      gsap.set([panel, ...preLayers], { xPercent: offscreen, opacity: 1 });
-      if (preContainer) {
-        gsap.set(preContainer, { xPercent: 0, opacity: 1 });
-      }
-      // Built-in plus lines are hidden via CSS; the visible glyph is the
-      // inlined jam:menu SVG. Keep neutral transforms on the (hidden) refs.
-      gsap.set(plusH, { transformOrigin: '50% 50%', rotate: 0 });
-      gsap.set(plusV, { transformOrigin: '50% 50%', rotate: 0 });
-      gsap.set(icon, { rotate: 0, transformOrigin: '50% 50%' });
-      gsap.set(textInner, { yPercent: 0 });
-      if (toggleBtnRef.current) gsap.set(toggleBtnRef.current, { color: menuButtonColor });
-    });
-    return () => ctx.revert();
-  }, [menuButtonColor, position]);
+  // Kill any in-flight tweens on unmount (replaces the old gsap.context revert).
+  useEffect(
+    () => () => {
+      openTlRef.current?.kill();
+      closeTweenRef.current?.kill();
+      spinTweenRef.current?.kill();
+      textCycleAnimRef.current?.kill();
+      colorTweenRef.current?.kill();
+      itemEntranceTweenRef.current?.kill();
+    },
+    [],
+  );
 
   const buildOpenTimeline = useCallback(() => {
     const panel = panelRef.current;
@@ -319,15 +340,15 @@ export const StaggeredMenu = ({
     [openMenuButtonColor, menuButtonColor, changeMenuColorOnOpen, safeDur],
   );
 
+  // Runs on mount + prop change (before gsap is loaded), so set the colour
+  // directly rather than via gsap. gsap-driven colour tweens still happen on
+  // toggle in animateColor().
   React.useEffect(() => {
-    if (toggleBtnRef.current) {
-      if (changeMenuColorOnOpen) {
-        const targetColor = openRef.current ? openMenuButtonColor : menuButtonColor;
-        gsap.set(toggleBtnRef.current, { color: targetColor });
-      } else {
-        gsap.set(toggleBtnRef.current, { color: menuButtonColor });
-      }
-    }
+    const btn = toggleBtnRef.current;
+    if (!btn) return;
+    const targetColor =
+      changeMenuColorOnOpen && openRef.current ? openMenuButtonColor : menuButtonColor;
+    btn.style.color = targetColor;
   }, [changeMenuColorOnOpen, menuButtonColor, openMenuButtonColor]);
 
   const animateText = useCallback(
@@ -361,33 +382,47 @@ export const StaggeredMenu = ({
     [safeDur],
   );
 
-  const toggleMenu = useCallback(() => {
+  const toggleMenu = useCallback(async () => {
     const target = !openRef.current;
     openRef.current = target;
     setOpen(target);
-    if (target) {
-      onMenuOpen?.();
-      playOpen();
-    } else {
-      onMenuClose?.();
-      playClose();
-    }
+    if (target) onMenuOpen?.();
+    else onMenuClose?.();
+    // Load gsap on first interaction, then run the choreography. Only the very
+    // first open pays the (fast) chunk fetch; the panel is already CSS-parked
+    // off-screen, so nothing flashes while it resolves.
+    await ensureGsap();
+    initGsapState();
+    if (target) playOpen();
+    else playClose();
     animateIcon(target);
     animateColor(target);
     animateText(target);
-  }, [playOpen, playClose, animateIcon, animateColor, animateText, onMenuOpen, onMenuClose]);
+  }, [
+    playOpen,
+    playClose,
+    animateIcon,
+    animateColor,
+    animateText,
+    onMenuOpen,
+    onMenuClose,
+    initGsapState,
+  ]);
 
-  const closeMenu = useCallback(() => {
+  const closeMenu = useCallback(async () => {
     if (openRef.current) {
       openRef.current = false;
       setOpen(false);
       onMenuClose?.();
+      // gsap is already loaded here (the menu is open), but await defensively.
+      await ensureGsap();
+      initGsapState();
       playClose();
       animateIcon(false);
       animateColor(false);
       animateText(false);
     }
-  }, [playClose, animateIcon, animateColor, animateText, onMenuClose]);
+  }, [playClose, animateIcon, animateColor, animateText, onMenuClose, initGsapState]);
 
   React.useEffect(() => {
     if (!closeOnClickAway || !open) return;

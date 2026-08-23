@@ -167,13 +167,22 @@
   padding: 6em 2em 2em 2em;
   overflow-y: auto;
   z-index: 10;
+  /* Closed/at-rest state is now pure CSS (matches what gsap used to set on
+     mount: xPercent 100 / opacity 1) so gsap can stay unloaded until the first
+     open. gsap's open tween takes over seamlessly from translateX(100%). */
+  opacity: 1;
+  transform: translateX(100%);
+  pointer-events: none;
+}
+
+.staggered-menu-wrapper[data-open] .staggered-menu-panel {
   pointer-events: auto;
-  opacity: 0;
 }
 
 [data-position='left'] .staggered-menu-panel {
   right: auto;
   left: 0;
+  transform: translateX(-100%);
   box-shadow: 8px 0 32px hsl(var(--ink, 24 11% 10%) / 0.08);
 }
 
@@ -185,7 +194,9 @@
   width: clamp(280px, 38vw, 440px);
   pointer-events: none;
   z-index: 5;
-  opacity: 0;
+  /* Container visible at rest (gsap set opacity:1 on mount); its child layers
+     are the ones parked off-screen below. */
+  opacity: 1;
 }
 
 [data-position='left'] .sm-prelayers {
@@ -199,8 +210,14 @@
   right: 0;
   height: 100%;
   width: 100%;
-  transform: translateX(0);
-  opacity: 0;
+  /* Parked off-screen at rest (matches gsap xPercent 100); the open timeline
+     slides each layer in with a stagger. */
+  transform: translateX(100%);
+  opacity: 1;
+}
+
+[data-position='left'] .sm-prelayer {
+  transform: translateX(-100%);
 }
 
 .sm-panel-inner {
