@@ -16,7 +16,7 @@ import {
   type ViewsRegistry,
 } from './family-drawer';
 import { PhotoThumbnailGrid } from './PhotoThumbnailGrid';
-import { useUploadThing } from '@/lib/uploadthing';
+import { useUploadThing, requestUtDelete } from '@/lib/uploadthing';
 
 interface PhotoUploaderDrawerProps {
   value: string[];
@@ -141,7 +141,10 @@ function ManageView() {
   });
 
   function removeAt(idx: number) {
+    const removed = value[idx];
     onChange(value.filter((_, i) => i !== idx));
+    // Best-effort blob reclaim — never blocks the UI or throws (see requestUtDelete).
+    if (removed) void requestUtDelete([removed]);
   }
 
   function setPrimary(idx: number) {

@@ -18,6 +18,7 @@ import {
 import { PackageAddonsEditor, type AddonDraft } from '@/components/forms/PackageAddonsEditor';
 import { PackageLivePreview } from '@/components/forms/PackageLivePreview';
 import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
+import { requestUtDelete } from '@/lib/uploadthing';
 import { PACKAGE_CAPACITY_UNITS, type PackageCapacityUnitInput } from '@/types';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -219,7 +220,15 @@ export function PackageEditorForm({ mode, initial, capacityUnitEditable = false 
               </p>
               <PhotoUploaderDrawer
                 value={featuredImageUrl ? [featuredImageUrl] : []}
-                onChange={(urls) => setFeaturedImageUrl(urls[0] ?? '')}
+                onChange={(urls) => {
+                  const nextUrl = urls[0] ?? '';
+                  // Reclaim the previous blob when it's swapped for a different
+                  // one. Best-effort — never blocks the swap (see requestUtDelete).
+                  if (featuredImageUrl && featuredImageUrl !== nextUrl) {
+                    void requestUtDelete([featuredImageUrl]);
+                  }
+                  setFeaturedImageUrl(nextUrl);
+                }}
                 endpoint="packageFeatureImage"
                 maxFiles={1}
                 maxSizeMb={4}

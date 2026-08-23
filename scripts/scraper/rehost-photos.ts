@@ -8,7 +8,7 @@ const EXPIRY_HOST_PATTERNS = [
   /lookaside\.instagram\.com/i,
 ];
 
-const STABLE_HOST_PATTERNS = [/utfs\.io/i, /uploadthing\.com/i];
+export const STABLE_HOST_PATTERNS = [/utfs\.io/i, /uploadthing\.com/i, /ufs\.sh/i];
 
 /** Returns true if a URL points at a CDN where it could expire (IG, Google photo proxy). */
 export function isCdnExpiryRisk(url: string): boolean {
