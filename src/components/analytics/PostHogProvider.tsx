@@ -1,15 +1,16 @@
 'use client';
-import { useEffect } from 'react';
 import posthog from 'posthog-js';
 import { PostHogProvider as PHProvider } from 'posthog-js/react';
 import { Suspense } from 'react';
 import { PostHogPageView } from './PostHogPageView';
 import { PostHogIdentify } from './PostHogIdentify';
 
-export function PostHogProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-    if (!key || posthog.__loaded) return; // dormant when unconfigured
+// Init at module scope (not in a child useEffect) so posthog is loaded before
+// PostHogPageView's effect runs — React fires child effects before parent
+// effects, so a useEffect-based init here would drop the initial pageview.
+if (typeof window !== 'undefined') {
+  const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+  if (key && !posthog.__loaded) {
     posthog.init(key, {
       api_host: '/ingest',
       ui_host: 'https://us.posthog.com',
@@ -20,8 +21,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
       person_profiles: 'always',
       session_recording: { maskAllInputs: true, maskTextSelector: '[data-ph-mask]' },
     });
-  }, []);
+  }
+}
 
+export function PostHogProvider({ children }: { children: React.ReactNode }) {
   return (
     <PHProvider client={posthog}>
       <Suspense fallback={null}>
