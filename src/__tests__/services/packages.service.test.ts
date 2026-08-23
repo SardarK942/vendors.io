@@ -264,7 +264,15 @@ function buildHardDeleteSupabase({
           select: (_cols: unknown) => ({
             eq: () => ({
               eq: () => ({
+                // Check 1: active-package count guard (.select().eq().eq().neq()).
                 neq: () => Promise.resolve({ count: otherActiveCount, error: null }),
+                // Blob-cleanup read before delete (.select().eq().eq().maybeSingle()).
+                // No UT URLs → best-effort delete is a no-op.
+                maybeSingle: () =>
+                  Promise.resolve({
+                    data: { featured_image_url: null, gallery_image_urls: null },
+                    error: null,
+                  }),
               }),
             }),
           }),
