@@ -10,7 +10,11 @@ import { PostHogIdentify } from './PostHogIdentify';
 // effects, so a useEffect-based init here would drop the initial pageview.
 if (typeof window !== 'undefined') {
   const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  if (key && !posthog.__loaded) {
+  // Honor Global Privacy Control alongside respect_dnt below — the privacy
+  // policy discloses opt-out via either DNT or GPC, so both must actually
+  // suppress init.
+  const gpc = (navigator as Navigator & { globalPrivacyControl?: boolean }).globalPrivacyControl;
+  if (key && !posthog.__loaded && !gpc) {
     posthog.init(key, {
       api_host: '/ingest',
       ui_host: 'https://us.posthog.com',
