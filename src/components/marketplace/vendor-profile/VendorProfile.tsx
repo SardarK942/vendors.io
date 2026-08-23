@@ -1,7 +1,7 @@
 // src/components/marketplace/vendor-profile/VendorProfile.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -25,6 +25,8 @@ import { BookingBottomBar } from './BookingBottomBar';
 import { VendorSocials } from './VendorSocials';
 import { getFeaturedPackage } from './helpers';
 import { fmtDate } from '@/lib/intl';
+import { track } from '@/lib/analytics/track';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -66,6 +68,10 @@ export function VendorProfile({
   const interactive = (interactiveProp ?? (!isOwner || previewMode)) && showBookingButton;
   const showBanner = isOwner && !previewMode;
   const featured = getFeaturedPackage(packages);
+
+  useEffect(() => {
+    track(ANALYTICS_EVENTS.VENDOR_PROFILE_VIEWED, { slug: vendor.slug });
+  }, [vendor.slug]);
 
   function handleRequestBooking(pkgId: string | null) {
     if (!interactive) {

@@ -4,6 +4,8 @@ import * as React from 'react';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { CustomRequestFlow } from './CustomRequestFlow';
 import type { EventOption } from '@/components/events/EventFunctionSelect';
+import { track } from '@/lib/analytics/track';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 
 export interface CustomRequestModalProps {
   open: boolean;
@@ -22,6 +24,12 @@ export function CustomRequestModal({
   vendorResponseSlaHours,
   eventOptions,
 }: CustomRequestModalProps) {
+  // Fires once per open — covers every trigger that flips `open` to true
+  // (package grid card, sticky rail, bottom bar, no-packages panel).
+  React.useEffect(() => {
+    if (open) track(ANALYTICS_EVENTS.QUOTE_REQUEST_STARTED);
+  }, [open]);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl overflow-hidden bg-cream p-0">
