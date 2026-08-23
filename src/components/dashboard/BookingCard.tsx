@@ -88,7 +88,11 @@ export function BookingCard({ booking, role, bookingEvents }: BookingCardProps) 
           {/* Show contact info only when revealed */}
           {role === 'vendor' && booking.couple_contact_revealed && (
             <div className="rounded bg-green-50 p-2 text-sm">
-              {booking.couple_contact_phone && <p>Phone: {booking.couple_contact_phone}</p>}
+              {booking.couple_contact_phone && (
+                <p>
+                  Phone: <span data-ph-mask="">{booking.couple_contact_phone}</span>
+                </p>
+              )}
             </div>
           )}
         </CardContent>

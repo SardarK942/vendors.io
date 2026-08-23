@@ -74,17 +74,24 @@ export function CalendarHoldsList({ holds }: Props) {
       <ul className="divide-y divide-ink/10 text-sm">
         {items.map((h) => {
           const { date, startTime, endTime, fullDay } = parseRange(h.hold_range);
-          const label =
-            h.hold_type === 'booking'
-              ? `${h.booking_events?.event_type_label ?? 'Booking'} for ${h.booking_events?.bookings.couple_full_name ?? '—'}`
-              : 'Personal block';
           const timeStr = fullDay ? '(full day)' : `${startTime} – ${endTime}`;
           return (
             <li key={h.id} className="flex items-center justify-between px-3 py-2">
               <span className="tabular-nums">
                 <span className="font-medium">{fmtDate(`${date}T12:00:00`)}</span>
                 <span className="ml-2 text-muted-foreground">{timeStr}</span>
-                <span className="ml-2">— {label}</span>
+                <span className="ml-2">
+                  {h.hold_type === 'booking' ? (
+                    <>
+                      — {h.booking_events?.event_type_label ?? 'Booking'} for{' '}
+                      <span data-ph-mask="">
+                        {h.booking_events?.bookings.couple_full_name ?? '—'}
+                      </span>
+                    </>
+                  ) : (
+                    '— Personal block'
+                  )}
+                </span>
                 <span
                   className={`ml-2 text-xs ${h.hold_type === 'booking' ? 'text-green-600' : 'text-amber-600'}`}
                 >

@@ -3,7 +3,6 @@ export const ANALYTICS_EVENTS = {
   SIGNUP_STARTED: 'signup_started',
   SIGNUP_SUBMITTED: 'signup_submitted',
   SIGNUP_CONFIRMATION_SENT: 'signup_confirmation_sent',
-  ONBOARDING_STEP_COMPLETED: 'onboarding_step_completed',
   ONBOARDING_PUBLISH_BLOCKED: 'onboarding_publish_blocked',
   ONBOARDING_PUBLISHED: 'onboarding_published',
   VENDOR_PROFILE_VIEWED: 'vendor_profile_viewed',

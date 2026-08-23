@@ -399,7 +399,7 @@ export async function BookingDetail({
                   <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
                     Location
                   </p>
-                  <p className="text-sm text-ink">
+                  <p className="text-sm text-ink" data-ph-mask="">
                     {bookingAsAny.event_city as string}
                     {(bookingAsAny.venue_name as string | null) && ` · ${bookingAsAny.venue_name as string}`}
                   </p>
@@ -468,9 +468,11 @@ export async function BookingDetail({
                     )}
                   </div>
                   {ev.location_name && (
-                    <p className="text-xs text-muted-foreground">{ev.location_name}</p>
+                    <p className="text-xs text-muted-foreground" data-ph-mask="">
+                      {ev.location_name}
+                    </p>
                   )}
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground" data-ph-mask="">
                     {ev.address_line_1}, {ev.city}, {ev.state} {ev.postal_code}
                   </p>
                 </div>
@@ -491,7 +493,10 @@ export async function BookingDetail({
                 <div className="rounded-lg bg-green-50 p-4">
                   <p className="text-sm font-medium text-green-800">Contact Information</p>
                   {(bookingAsAny.couple_contact_phone as string | null) && (
-                    <p className="text-sm">Phone: {bookingAsAny.couple_contact_phone as string}</p>
+                    <p className="text-sm">
+                      Phone:{' '}
+                      <span data-ph-mask="">{bookingAsAny.couple_contact_phone as string}</span>
+                    </p>
                   )}
                 </div>
               )}

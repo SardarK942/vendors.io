@@ -20,11 +20,16 @@ function FullRow({ ev }: { ev: OperationsEvent }) {
         <div className="font-medium">
           {fmtDate(ev.event_date)} · {ev.event_start_time?.slice(11, 16)}
         </div>
-        <div className="text-sm text-muted-foreground">{ev.couple_full_name}</div>
+        <div className="text-sm text-muted-foreground" data-ph-mask="">
+          {ev.couple_full_name}
+        </div>
       </div>
       <div className="mt-1 text-sm text-muted-foreground">
-        {ev.address_line_1}
-        {ev.city ? `, ${ev.city}` : ''} · {ev.package_label ?? 'Booking'}
+        <span data-ph-mask="">
+          {ev.address_line_1}
+          {ev.city ? `, ${ev.city}` : ''}
+        </span>{' '}
+        · {ev.package_label ?? 'Booking'}
       </div>
       {ev.guest_count_override !== null && (
         <div className="mt-2 text-xs text-muted-foreground">
@@ -40,7 +45,7 @@ function CompactRow({ ev }: { ev: OperationsEvent }) {
     <div className="flex items-center gap-3 rounded border bg-card px-3 py-2 text-sm">
       <span className="font-medium">{fmtDate(ev.event_date)}</span>
       <span className="text-muted-foreground">·</span>
-      <span>{ev.couple_full_name}</span>
+      <span data-ph-mask="">{ev.couple_full_name}</span>
       <span className="ml-auto truncate text-muted-foreground">
         {ev.package_label}
         {ev.guest_count_override !== null && ` · ${ev.guest_count_override} guests`}
