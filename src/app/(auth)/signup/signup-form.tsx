@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -13,6 +13,8 @@ import { Separator } from '@/components/ui/separator';
 import { createClient } from '@/lib/supabase/client';
 import { GoogleIcon } from '@/components/auth/GoogleIcon';
 import type { UserRole } from '@/types';
+import { track } from '@/lib/analytics/track';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 
 interface Props {
   returnTo: string | null;
@@ -32,6 +34,10 @@ export function SignupForm({ returnTo, prefilledRole, claimContext, role, setRol
   // an inline "check your inbox" state instead of dropping the user on /login.
   const [sentTo, setSentTo] = useState<string | null>(null);
   const [resending, setResending] = useState(false);
+
+  useEffect(() => {
+    track(ANALYTICS_EVENTS.SIGNUP_STARTED);
+  }, []);
 
   // Hide the couple/vendor picker whenever the entry point already decides the
   // role: a /claim/<token> URL (locked to 'vendor'), or an explicit
@@ -87,11 +93,14 @@ export function SignupForm({ returnTo, prefilledRole, claimContext, role, setRol
       return;
     }
 
+    track(ANALYTICS_EVENTS.SIGNUP_SUBMITTED, { role: role ?? prefilledRole ?? 'unknown' });
+
     // No session → email confirmation is required. Show the inline "check your
     // inbox" screen. When confirmation is disabled, signUp returns a session and
     // the user is already authenticated; fall through to /login, which
     // middleware bounces to the dashboard.
     if (!data.session) {
+      track(ANALYTICS_EVENTS.SIGNUP_CONFIRMATION_SENT);
       setSentTo(email);
       setLoading(false);
       return;

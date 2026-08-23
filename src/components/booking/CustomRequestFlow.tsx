@@ -7,6 +7,8 @@ import { Step1Shape } from './steps/Step1Shape';
 import { Step2Details } from './steps/Step2Details';
 import { Step3Review } from './steps/Step3Review';
 import type { EventOption } from '@/components/events/EventFunctionSelect';
+import { track } from '@/lib/analytics/track';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 
 export type CustomEvent = {
   id: string;
@@ -85,6 +87,7 @@ export function CustomRequestFlow({
         setSubmitError('We couldn’t send your request — please try again.');
         return;
       }
+      track(ANALYTICS_EVENTS.QUOTE_REQUEST_SUBMITTED);
       setSuccessBookingId(json.booking_id);
     } catch {
       setSubmitError('We couldn’t send your request — please try again.');

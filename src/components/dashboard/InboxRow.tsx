@@ -33,7 +33,9 @@ export function InboxRow({ data }: { data: InboxRowData }) {
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <div className="truncate font-semibold">{data.coupleName}</div>
+          <div className="truncate font-semibold" data-ph-mask="">
+            {data.coupleName}
+          </div>
           <div className="truncate text-sm text-muted-foreground">{data.packageLabel}</div>
         </div>
         <div className="shrink-0 text-right">

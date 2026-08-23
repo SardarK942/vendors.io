@@ -13,6 +13,8 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { DEPOSIT_RATE, formatPrice } from '@/lib/utils';
+import { track } from '@/lib/analytics/track';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 
 interface DepositDialogProps {
   bookingId: string;
@@ -38,6 +40,7 @@ export function DepositDialog({
   const handleSubmit = async () => {
     if (!agreed) return;
     setLoading(true);
+    track(ANALYTICS_EVENTS.DEPOSIT_STARTED, { bookingId });
     const res = await fetch(`/api/bookings/${bookingId}/deposit`, { method: 'POST' });
     const data = await res.json().catch(() => ({}));
 
@@ -48,6 +51,9 @@ export function DepositDialog({
     }
 
     if (data.data?.checkoutUrl) {
+      // deposit_completed fires on actual payment success, not here — see
+      // DepositSuccessTracker (rendered on the booking detail page, which
+      // Stripe's success_url redirects back to with ?payment=success).
       window.location.href = data.data.checkoutUrl;
     } else {
       toast.error('Could not redirect to checkout. Please try again.');

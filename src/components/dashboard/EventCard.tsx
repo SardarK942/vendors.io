@@ -104,7 +104,9 @@ export function EventCard({ data }: Props) {
             <p style={{ fontSize: '12px' }}>
               {fmtTimeRange(data.eventStartTime, data.eventEndTime)}
             </p>
-            <p style={{ fontSize: '11px', opacity: 0.8 }}>{addressLine}</p>
+            <p style={{ fontSize: '11px', opacity: 0.8 }} data-ph-mask="">
+              {addressLine}
+            </p>
             <p style={{ fontSize: '11px' }}>
               <span
                 style={{

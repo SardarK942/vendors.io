@@ -10,6 +10,8 @@ import { OnboardingPreview } from './OnboardingPreview';
 import { getPublishBlockers } from '@/lib/onboarding/publish-checklist';
 import { VENDOR_CATEGORY_LABELS } from '@/lib/utils';
 import type { Database } from '@/types/database.types';
+import { track } from '@/lib/analytics/track';
+import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -50,6 +52,7 @@ export function StepReview({ profile, profileId, mode }: Props) {
     });
     setPublishing(false);
     if (res.ok) {
+      track(ANALYTICS_EVENTS.ONBOARDING_PUBLISHED);
       // Clean up the sessionStorage stash now that the publish has read it.
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem(`wizard:stripe_mode:${profileId}`);
@@ -58,6 +61,9 @@ export function StepReview({ profile, profileId, mode }: Props) {
       return;
     }
     const json = await res.json().catch(() => ({ error: 'Publish failed' }));
+    track(ANALYTICS_EVENTS.ONBOARDING_PUBLISH_BLOCKED, {
+      reason: json.field ?? json.error ?? 'unknown',
+    });
     setPublishError(json.error ?? json.message ?? 'Publish failed');
     // Map field name to step
     const field: string = json.field ?? '';
