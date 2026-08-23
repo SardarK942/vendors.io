@@ -51,13 +51,9 @@ export function DepositDialog({
     }
 
     if (data.data?.checkoutUrl) {
-      // No client-side signal exists for actual Stripe payment completion —
-      // that's confirmed off-site by the user on Stripe's page and finalized
-      // server-side via the Stripe webhook (src/app/api/webhooks/stripe/route.ts),
-      // which the track() helper (client-only) can't reach. This fires at the
-      // nearest available client success point: the checkout session was
-      // created and we're handing off to Stripe.
-      track(ANALYTICS_EVENTS.DEPOSIT_COMPLETED, { bookingId });
+      // deposit_completed fires on actual payment success, not here — see
+      // DepositSuccessTracker (rendered on the booking detail page, which
+      // Stripe's success_url redirects back to with ?payment=success).
       window.location.href = data.data.checkoutUrl;
     } else {
       toast.error('Could not redirect to checkout. Please try again.');

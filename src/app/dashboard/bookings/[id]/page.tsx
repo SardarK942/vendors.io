@@ -1,9 +1,10 @@
-import type { ReactNode } from 'react';
+import { Suspense, type ReactNode } from 'react';
 import { BookingDetail } from '@/components/dashboard/BookingDetail';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { getFeedStatus } from '@/services/calendar-feed.service';
 import { PostFirstBookingPrompt } from '@/components/dashboard/calendar/PostFirstBookingPrompt';
+import { DepositSuccessTracker } from '@/components/analytics/DepositSuccessTracker';
 
 interface BookingDetailPageProps {
   params: Promise<{ id: string }>;
@@ -68,6 +69,9 @@ export default async function BookingDetailPage({ params, searchParams }: Bookin
 
   return (
     <>
+      <Suspense fallback={null}>
+        <DepositSuccessTracker bookingId={id} />
+      </Suspense>
       {prompt}
       <BookingDetail
         bookingId={id}

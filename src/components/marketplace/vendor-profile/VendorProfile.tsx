@@ -70,8 +70,12 @@ export function VendorProfile({
   const featured = getFeaturedPackage(packages);
 
   useEffect(() => {
+    // Skip the vendor's own views (both the owner-banner state and while
+    // they're using the "preview as a customer" toggle) — this event should
+    // only measure real prospective-customer traffic.
+    if (isOwner) return;
     track(ANALYTICS_EVENTS.VENDOR_PROFILE_VIEWED, { slug: vendor.slug });
-  }, [vendor.slug]);
+  }, [vendor.slug, isOwner]);
 
   function handleRequestBooking(pkgId: string | null) {
     if (!interactive) {
