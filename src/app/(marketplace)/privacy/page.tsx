@@ -78,8 +78,11 @@ export default function PrivacyPage() {
 
       <h2>5. Cookies</h2>
       <p>
-        We use strictly necessary cookies for authentication and session management. We do not use
-        advertising, tracking, or analytics cookies at this time.
+        We use strictly necessary cookies for authentication and session management. We also use{' '}
+        <strong>PostHog</strong> for product analytics and session replay, so we can see how the
+        product is used and improve it. Session recordings are masked — we never capture form input
+        values or payment data. You can opt out at any time by enabling Do-Not-Track or Global
+        Privacy Control in your browser, or by emailing hello@baazar.io.
       </p>
 
       <h2>6. Security</h2>

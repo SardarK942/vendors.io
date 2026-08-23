@@ -11,6 +11,7 @@ import {
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
 import { Toaster } from '@/components/ui/sonner';
 import { PostHogProvider } from '@/components/analytics/PostHogProvider';
+import { AnalyticsNotice } from '@/components/analytics/AnalyticsNotice';
 import './globals.css';
 
 // Baazar TY-C typography — DESIGN.md frontmatter typography block.
@@ -100,6 +101,7 @@ export default function RootLayout({
             {children}
             <Toaster richColors position="top-right" />
           </NuqsAdapter>
+          <AnalyticsNotice />
         </PostHogProvider>
       </body>
     </html>
