@@ -20,6 +20,7 @@ import {
 import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS, generateSlug } from '@/lib/utils';
 import { createClient } from '@/lib/supabase/client';
 import { SubcategoryMultiSelect } from '@/components/onboarding/SubcategoryMultiSelect';
+import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 import { getSubcategoriesForCategory } from '@/lib/vendor-subcategories';
 import type { Database } from '@/types/database.types';
 import {
@@ -59,6 +60,9 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
   const [baseAddressPublic, setBaseAddressPublic] = useState<boolean>(
     Boolean((vendorProfile as Record<string, unknown> | null)?.base_address_public)
   );
+  const [portfolioImages, setPortfolioImages] = useState<string[]>(
+    vendorProfile?.portfolio_images ?? []
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -78,6 +82,9 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
       instagram_handle: (formData.get('instagram') as string) || null,
       website_url: (formData.get('website') as string) || null,
       response_sla_hours: Number(formData.get('sla')) || 48,
+      years_in_business:
+        (formData.get('years') as string) === '' ? null : Number(formData.get('years') as string),
+      portfolio_images: portfolioImages,
       // A2: base address fields
       base_address_line_1: baseAddress.address_line_1 || null,
       base_city: baseAddress.city || null,
@@ -256,6 +263,37 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               defaultValue={vendorProfile?.response_sla_hours || 48}
               inputMode="numeric"
               autoComplete="off"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="years">Years in business</Label>
+            <Input
+              id="years"
+              name="years"
+              type="number"
+              min={0}
+              max={100}
+              defaultValue={vendorProfile?.years_in_business ?? ''}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="e.g. 5"
+            />
+            <p className="text-xs text-muted-foreground">Shown on your public profile.</p>
+          </div>
+
+          {/* Portfolio photos — reuses the onboarding uploader (add / remove / reorder) */}
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <h3 className="font-medium">Portfolio photos</h3>
+              <p className="text-pretty text-xs text-muted-foreground">
+                Add, remove, or reorder the photos shown on your public profile.
+              </p>
+            </div>
+            <PhotoUploaderDrawer
+              value={portfolioImages}
+              onChange={setPortfolioImages}
+              endpoint="portfolioImage"
             />
           </div>
 

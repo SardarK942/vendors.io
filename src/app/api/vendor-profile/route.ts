@@ -17,6 +17,7 @@ const patchVendorProfileSchema = z.object({
   instagram_handle: z.string().max(50).optional().nullable(),
   website_url: z.string().url().optional().nullable().or(z.literal('')),
   response_sla_hours: z.number().int().positive().optional(),
+  years_in_business: z.number().int().min(0).max(100).optional().nullable(),
   portfolio_images: z.array(z.string().url()).optional(),
   // base_address fields
   base_address_line_1: z.string().max(200).optional().nullable(),
