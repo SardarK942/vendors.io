@@ -23,7 +23,11 @@ describe('parseVendorFilterParams — subcategories', () => {
 });
 
 describe('applyVendorFilters — subcategories', () => {
-  it('calls .contains("subcategories", [...]) when subcategories present', () => {
+  // Multi-select within a subcategory facet is OR, not AND: selecting
+  // "Dessert" + "Beverage" means dessert OR beverage carts, not carts that
+  // are BOTH. That's array overlap (.overlaps), not superset (.contains).
+  // The "one vendor does both" case has its own toggle (photoVideoCombo).
+  it('calls .overlaps("subcategories", [...]) when subcategories present', () => {
     const calls: Array<[string, string, unknown]> = [];
     const fake = {
       eq: () => fake,
@@ -33,12 +37,16 @@ describe('applyVendorFilters — subcategories', () => {
         calls.push(['contains', col, val]);
         return fake;
       },
+      overlaps: (col: string, val: unknown) => {
+        calls.push(['overlaps', col, val]);
+        return fake;
+      },
     };
     applyVendorFilters(fake as never, { subcategories: ['dessert', 'beverage'] });
-    expect(calls).toEqual([['contains', 'subcategories', ['dessert', 'beverage']]]);
+    expect(calls).toEqual([['overlaps', 'subcategories', ['dessert', 'beverage']]]);
   });
 
-  it('does not call .contains for empty array or undefined', () => {
+  it('does not filter subcategories for empty array or undefined', () => {
     const calls: string[] = [];
     const fake = {
       eq: () => fake,
@@ -46,6 +54,10 @@ describe('applyVendorFilters — subcategories', () => {
       lte: () => fake,
       contains: () => {
         calls.push('contains');
+        return fake;
+      },
+      overlaps: () => {
+        calls.push('overlaps');
         return fake;
       },
     };

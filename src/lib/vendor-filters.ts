@@ -95,8 +95,12 @@ export function applyVendorFilters<
     q = q.contains('languages', filters.languages);
   }
 
+  // OR within the facet: selecting Dessert + Beverage means dessert OR
+  // beverage carts (array overlap), not carts that are BOTH (superset). A
+  // vendor is rarely tagged with two cart types, so .contains collapsed
+  // results. The "one vendor does both" need has its own toggle above.
   if (filters.subcategories && filters.subcategories.length > 0) {
-    q = q.contains('subcategories', filters.subcategories);
+    q = q.overlaps('subcategories', filters.subcategories);
   }
 
   return q;
@@ -134,8 +138,9 @@ export async function countFilteredVendors(
     query = query.contains('languages', filters.languages);
   }
 
+  // OR within the facet — see applyVendorFilters for rationale.
   if (filters.subcategories && filters.subcategories.length > 0) {
-    query = query.contains('subcategories', filters.subcategories);
+    query = query.overlaps('subcategories', filters.subcategories);
   }
 
   const { count, error } = await query;
