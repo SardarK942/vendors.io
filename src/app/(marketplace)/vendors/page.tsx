@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VendorGrid } from '@/components/marketplace/VendorGrid';
 import { FilterShell } from '@/components/marketplace/filters/FilterShell';
+import { PhotoVideoComboCallout } from '@/components/marketplace/filters/PhotoVideoComboCallout';
 import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filters';
 import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
 import { hybridSearch } from '@/lib/ai/search';
@@ -191,6 +192,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
           </div>
 
           <FilterShell initialQuery={rawQuery} />
+          <PhotoVideoComboCallout />
           <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
 
           {/* Pagination */}

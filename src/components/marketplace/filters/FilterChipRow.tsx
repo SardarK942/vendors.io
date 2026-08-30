@@ -42,11 +42,6 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
   const activeCategory = searchParams.get('category');
   const categoryHasSubs = getSubcategoriesForCategory(activeCategory).length > 0;
   const subcatCount = state.subcategories.length;
-  // The "one vendor for photo + video" combo only makes sense while browsing
-  // Photography or Videography — surface it inline there instead of burying it
-  // in the sheet. The sheet keeps its switch, so the filter is never stranded
-  // when the user switches to a category where this chip is hidden.
-  const showPhotoVideoCombo = activeCategory === 'photography' || activeCategory === 'videography';
 
   // Commit pending language changes to URL when the Languages dropdown closes.
   // (Languages is multi-select; toggling chips uses patch() during the dropdown
@@ -93,17 +88,6 @@ export function FilterChipRow({ className, onOpenSheet }: FilterChipRowProps) {
       >
         Responds &lt; 24h
       </Chip>
-
-      {/* Photo + video combo — contextual to Photography / Videography */}
-      {showPhotoVideoCombo && (
-        <Chip
-          variant="toggle"
-          isActive={state.photoVideoCombo}
-          onClick={() => apply({ photoVideoCombo: !state.photoVideoCombo })}
-        >
-          Photo + video
-        </Chip>
-      )}
 
       {/* Price */}
       <Popover open={activeDropdown === 'price'} onOpenChange={openHandler('price')}>
