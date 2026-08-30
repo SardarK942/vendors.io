@@ -1,20 +1,27 @@
 'use client';
 
 import { getSubcategoriesForCategory, SUBCATEGORY_SECTION_LABEL } from '@/lib/vendor-subcategories';
-import { getSubcategoryIcon } from '@/lib/vendor-subcategory-visual';
 import { cn } from '@/lib/utils';
 import { useFilterState } from './use-filter-state';
 
 /**
  * Inline subcategory drill-in, mounted under CategoryIconBar in FilterShell.
  * Appears ON the page the moment a category with a registered subcategory
- * taxonomy is active — no need to open the All-filters sheet. Renders nothing
- * otherwise (so the sticky band doesn't grow for Video / Reels / DJ / etc.).
+ * taxonomy is active. Renders nothing otherwise (so the sticky band doesn't
+ * grow for Video / Reels / DJ / etc.).
+ *
+ * Treatment is deliberately QUIETER than the category bar above it — a level
+ * deeper, not a competing row. It borrows the category bar's own language
+ * (muted text, hot-pink hover, ink + underline on select) rather than a
+ * solid-ink pill, so it reads as parent -> child. An indigo section kicker
+ * ("CART TYPE") on the left carries the parent relationship. No glyphs: the
+ * category row owns the one glyph moment; the label text is already
+ * unambiguous. See the #152 critique.
  *
  * Shares FilterState with the sheet: toggling here writes the same
  * ?subcategories= param via apply(), so the inline strip and the sheet's
- * "Cart type" section stay perfectly in sync. Multi-select, matching the
- * AND-membership subcategory filter.
+ * subcategory section stay in sync. Multi-select, matching the AND-membership
+ * subcategory filter.
  */
 export function SubcategoryStrip() {
   const { state, apply } = useFilterState();
@@ -34,11 +41,13 @@ export function SubcategoryStrip() {
     <div
       role="group"
       aria-label={heading}
-      className="flex gap-2 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="flex items-center gap-x-5 overflow-x-auto [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
     >
+      <span className="shrink-0 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+        {heading}
+      </span>
       {options.map((opt) => {
         const isOn = selected.includes(opt.slug);
-        const Icon = getSubcategoryIcon(opt.slug);
         return (
           <button
             key={opt.slug}
@@ -46,14 +55,13 @@ export function SubcategoryStrip() {
             aria-pressed={isOn}
             onClick={() => toggle(opt.slug)}
             className={cn(
-              'inline-flex shrink-0 items-center gap-2 rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors',
+              'shrink-0 whitespace-nowrap border-b-2 pb-1 pt-1 text-sm transition-colors',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
               isOn
-                ? 'border-ink bg-ink text-cream'
-                : 'border-hairline bg-cream text-ink hover:border-hot-pink hover:text-hot-pink'
+                ? 'border-ink font-medium text-ink'
+                : 'border-transparent text-ink-muted hover:text-hot-pink'
             )}
           >
-            <Icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
             {opt.label}
           </button>
         );
