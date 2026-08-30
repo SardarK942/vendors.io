@@ -66,7 +66,7 @@ describe('<PhotoVideoComboCallout />', () => {
     mockState({ category: 'photography', photoVideoCombo: true });
     render(<PhotoVideoComboCallout />);
     expect(screen.getByText(/showing studios that do both/i)).toBeInTheDocument();
-    const cta = screen.getByRole('button', { name: /show all studios/i });
+    const cta = screen.getByRole('button', { name: /show all photographers/i });
     expect(cta).toHaveAttribute('aria-pressed', 'true');
   });
 
@@ -80,7 +80,7 @@ describe('<PhotoVideoComboCallout />', () => {
   it('clears the combo filter from the on state', () => {
     mockState({ category: 'photography', photoVideoCombo: true });
     render(<PhotoVideoComboCallout />);
-    fireEvent.click(screen.getByRole('button', { name: /show all studios/i }));
+    fireEvent.click(screen.getByRole('button', { name: /show all photographers/i }));
     expect(apply).toHaveBeenCalledWith({ photoVideoCombo: false });
   });
 });

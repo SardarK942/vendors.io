@@ -24,6 +24,9 @@ export function PhotoVideoComboCallout() {
   if (!relevant) return null;
 
   const on = state.photoVideoCombo;
+  // Clearing the filter returns to the full category list, so name it after the
+  // active category (photographers / videographers), not the generic "studios".
+  const allLabel = state.category === 'videography' ? 'videographers' : 'photographers';
 
   return (
     <div
@@ -67,7 +70,7 @@ export function PhotoVideoComboCallout() {
         {on ? (
           <>
             <X className="size-3.5" strokeWidth={2.5} aria-hidden="true" />
-            Show all studios
+            Show all {allLabel}
           </>
         ) : (
           <>
