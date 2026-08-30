@@ -91,8 +91,11 @@ export function applyVendorFilters<
   // (which also stored price URL params without filtering on them).
   // Follow-up PR will implement option (b) or (c).
 
+  // OR within the facet: "team can communicate in ANY of these" (sheet copy),
+  // so a vendor speaking any one selected language matches — array overlap,
+  // not superset.
   if (filters.languages && filters.languages.length > 0) {
-    q = q.contains('languages', filters.languages);
+    q = q.overlaps('languages', filters.languages);
   }
 
   // OR within the facet: selecting Dessert + Beverage means dessert OR
@@ -134,8 +137,9 @@ export async function countFilteredVendors(
   if (filters.verified) query = query.eq('verified', true);
   if (filters.respondsIn) query = query.lte('response_sla_hours', filters.respondsIn);
   if (filters.years) query = query.gte('years_in_business', filters.years);
+  // OR within the facet — see applyVendorFilters for rationale.
   if (filters.languages && filters.languages.length > 0) {
-    query = query.contains('languages', filters.languages);
+    query = query.overlaps('languages', filters.languages);
   }
 
   // OR within the facet — see applyVendorFilters for rationale.

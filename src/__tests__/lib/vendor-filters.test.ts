@@ -101,6 +101,14 @@ describe('applyVendorFilters — services membership', () => {
     applyVendorFilters(fakeQuery(calls) as never, { photoVideoCombo: true });
     expect(calls).toContainEqual(['contains', 'services', ['photography', 'videography']]);
   });
+
+  // "Vendor team can communicate in ANY of these" — OR, so array overlap.
+  it('filters languages via overlap (ANY selected language), not superset', () => {
+    const calls: Array<[string, string, unknown]> = [];
+    applyVendorFilters(fakeQuery(calls) as never, { languages: ['hindi', 'urdu'] });
+    expect(calls).toContainEqual(['overlaps', 'languages', ['hindi', 'urdu']]);
+    expect(calls.some(([m, col]) => m === 'contains' && col === 'languages')).toBe(false);
+  });
 });
 
 describe('FilterState — photoVideoCombo round-trip', () => {
