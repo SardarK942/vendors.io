@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import type { CreatePackageInput, UpdatePackageInput } from '@/types';
+import { deleteUtByUrls } from '@/lib/uploadthing';
 
 const ACTIVE_BOOKING_STATUSES = [
   'pending',
@@ -284,6 +285,15 @@ export async function hardDeletePackage(
     };
   }
 
+  // Grab the package's UploadThing blobs before the row is gone so we can
+  // reclaim them after a successful delete.
+  const { data: media } = await supabase
+    .from('packages')
+    .select('featured_image_url, gallery_image_urls')
+    .eq('id', packageId)
+    .eq('vendor_profile_id', vendorProfileId)
+    .maybeSingle();
+
   // Safe to hard delete; FK ON DELETE SET NULL clears bookings.package_id on historical rows.
   const { error } = await supabase
     .from('packages')
@@ -292,6 +302,25 @@ export async function hardDeletePackage(
     .eq('vendor_profile_id', vendorProfileId);
 
   if (error) return { data: null, error: { code: 'DELETE_FAILED', message: error.message } };
+
+  // Best-effort blob cleanup — the row is already gone, so a delete failure here
+  // must never fail the operation (it just leaves an orphan for the sweep).
+  if (media) {
+    const urls: string[] = [];
+    if (media.featured_image_url) urls.push(media.featured_image_url);
+    const gallery = media.gallery_image_urls;
+    if (Array.isArray(gallery)) {
+      for (const g of gallery) if (typeof g === 'string') urls.push(g);
+    }
+    if (urls.length > 0) {
+      try {
+        await deleteUtByUrls(urls);
+      } catch (e) {
+        console.error('[packages] blob cleanup failed for deleted package', packageId, e);
+      }
+    }
+  }
+
   return { data: { deleted: true }, error: null };
 }
 
