@@ -204,7 +204,7 @@ describe('recordPoll', () => {
             })),
             update: vi.fn((patch: any) => ({
               eq: vi.fn(() => ({
-                eq: vi.fn(() => {
+                in: vi.fn(() => {
                   updated = patch;
                   return Promise.resolve({ error: null });
                 }),
@@ -230,6 +230,51 @@ describe('recordPoll', () => {
     expect(updated.calendar_feed_connected_via_ua).toBe('Google-Calendar-Importer');
   });
 
+  it('flips not_connected→connected when vendor pasted the feed URL without going through the intent modal', async () => {
+    let updated: any = null;
+    const sb: any = {
+      from: vi.fn((table: string) => {
+        if (table === 'vendor_calendar_feed_polls') {
+          return { insert: vi.fn(() => Promise.resolve({ error: null })) };
+        }
+        if (table === 'vendor_profiles') {
+          return {
+            select: vi.fn(() => ({
+              eq: vi.fn(() => ({
+                single: vi.fn(() =>
+                  Promise.resolve({
+                    data: { calendar_feed_state: 'not_connected' },
+                    error: null,
+                  })
+                ),
+              })),
+            })),
+            update: vi.fn((patch: any) => ({
+              eq: vi.fn(() => ({
+                in: vi.fn(() => {
+                  updated = patch;
+                  return Promise.resolve({ error: null });
+                }),
+              })),
+            })),
+          };
+        }
+        return {};
+      }),
+    };
+
+    await recordPoll({
+      supabase: sb,
+      vendorProfileId: 'vendor-1',
+      userAgent: 'Google-Calendar-Importer',
+      ipHash: 'abc',
+      statusReturned: 200,
+    });
+
+    expect(updated?.calendar_feed_state).toBe('connected');
+    expect(updated?.calendar_feed_connected_via_ua).toBe('Google-Calendar-Importer');
+  });
+
   it('does NOT flip state when vendor is already connected', async () => {
     let updated: any = null;
     const sb: any = {
@@ -248,7 +293,7 @@ describe('recordPoll', () => {
             })),
             update: vi.fn((patch: any) => ({
               eq: vi.fn(() => ({
-                eq: vi.fn(() => {
+                in: vi.fn(() => {
                   updated = patch;
                   return Promise.resolve({ error: null });
                 }),
