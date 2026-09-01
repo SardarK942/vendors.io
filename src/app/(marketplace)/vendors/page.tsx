@@ -2,7 +2,11 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { VendorGrid } from '@/components/marketplace/VendorGrid';
 import { FilterShell } from '@/components/marketplace/filters/FilterShell';
 import { PhotoVideoComboCallout } from '@/components/marketplace/filters/PhotoVideoComboCallout';
-import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filters';
+import {
+  parseVendorFilterParams,
+  applyVendorFilters,
+  countPhotoVideoStudios,
+} from '@/lib/vendor-filters';
 import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
 import { hybridSearch } from '@/lib/ai/search';
 import type { VendorCardProps } from '@/components/marketplace/VendorCard';
@@ -95,10 +99,16 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
 
   // Run vendors + enrichments in parallel. The enrichments RPC keys off the
   // search date, not the vendor set, so it can go here.
-  const [{ data: vendors, count }, { data: enrichments }] = await Promise.all([
-    query,
-    supabase.rpc('vendor_list_enrichments', { p_search_date: searchDateParam }),
-  ]);
+  // The photo+video callout only shows on Photography / Videography, so only
+  // pay for the dual-studio count there. Runs in parallel with the main query.
+  const showComboContext = category === 'photography' || category === 'videography';
+
+  const [{ data: vendors, count }, { data: enrichments }, photoVideoStudioCount] =
+    await Promise.all([
+      query,
+      supabase.rpc('vendor_list_enrichments', { p_search_date: searchDateParam }),
+      showComboContext ? countPhotoVideoStudios(supabase) : Promise.resolve(0),
+    ]);
 
   // Price band runs AFTER the vendor query so it can be bounded to the 20 rows
   // on this page (`.in(...)`) instead of fetching a band row for the ENTIRE
@@ -192,7 +202,7 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
           </div>
 
           <FilterShell initialQuery={rawQuery} />
-          <PhotoVideoComboCallout />
+          <PhotoVideoComboCallout hasPhotoVideoStudios={photoVideoStudioCount > 0} />
           <VendorGrid vendors={enrichedVendors} searchDate={searchDateParam ?? undefined} />
 
           {/* Pagination */}

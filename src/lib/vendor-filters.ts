@@ -151,3 +151,21 @@ export async function countFilteredVendors(
   if (error) throw error;
   return count ?? 0;
 }
+
+/**
+ * Count active vendors whose services include BOTH photography and videography.
+ * Used to gate the "one team for photo + video" callout: don't invite couples
+ * into an empty result when no dual studios exist yet. The set is independent of
+ * the active category (a dual studio surfaces under both), so no category filter
+ * is applied here.
+ */
+export async function countPhotoVideoStudios(supabase: SupabaseClient): Promise<number> {
+  const { count, error } = await supabase
+    .from('vendor_profiles')
+    .select('id', { count: 'exact', head: true })
+    .eq('is_active', true)
+    .eq('onboarding_complete', true)
+    .contains('services', ['photography', 'videography']);
+  if (error) throw error;
+  return count ?? 0;
+}

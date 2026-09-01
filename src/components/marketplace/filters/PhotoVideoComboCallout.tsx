@@ -18,12 +18,21 @@ import { useFilterState } from './use-filter-state';
  * Renders nothing for every other category, so it never clutters unrelated
  * browsing.
  */
-export function PhotoVideoComboCallout() {
-  const { state, apply } = useFilterState();
-  const relevant = state.category === 'photography' || state.category === 'videography';
-  if (!relevant) return null;
+interface PhotoVideoComboCalloutProps {
+  /**
+   * Whether any active vendor actually offers both photography and videography.
+   * Gates the invitation so it never leads couples into an empty result; the
+   * callout stays visible while the filter is already on so its clear remains
+   * reachable.
+   */
+  hasPhotoVideoStudios: boolean;
+}
 
+export function PhotoVideoComboCallout({ hasPhotoVideoStudios }: PhotoVideoComboCalloutProps) {
+  const { state, apply } = useFilterState();
   const on = state.photoVideoCombo;
+  const relevant = state.category === 'photography' || state.category === 'videography';
+  if (!relevant || (!hasPhotoVideoStudios && !on)) return null;
   // Clearing the filter returns to the full category list, so name it after the
   // active category (photographers / videographers), not the generic "studios".
   const allLabel = state.category === 'videography' ? 'videographers' : 'photographers';

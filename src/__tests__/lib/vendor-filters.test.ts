@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { parseVendorFilterParams, applyVendorFilters } from '@/lib/vendor-filters';
+import {
+  parseVendorFilterParams,
+  applyVendorFilters,
+  countPhotoVideoStudios,
+} from '@/lib/vendor-filters';
 import {
   readFilterState,
   serializeFilterState,
@@ -129,5 +133,53 @@ describe('FilterState — photoVideoCombo round-trip', () => {
     });
     expect(params.get('photoVideo')).toBe('1');
     expect(readFilterState(params).photoVideoCombo).toBe(true);
+  });
+});
+
+describe('countPhotoVideoStudios', () => {
+  function fakeSupabase(count: number | null, error: unknown = null) {
+    const calls: Array<[string, unknown, unknown]> = [];
+    // Chainable stub; the final .contains() resolves to the PostgREST shape.
+    const chain: Record<string, unknown> = {
+      select: (col: string, opts: unknown) => {
+        calls.push(['select', col, opts]);
+        return chain;
+      },
+      eq: (col: string, val: unknown) => {
+        calls.push(['eq', col, val]);
+        return chain;
+      },
+      contains: (col: string, val: unknown) => {
+        calls.push(['contains', col, val]);
+        return Promise.resolve({ count, error });
+      },
+    };
+    const supabase = {
+      from: (table: string) => {
+        calls.push(['from', table, undefined]);
+        return chain;
+      },
+    };
+    return { supabase, calls };
+  }
+
+  it('queries active dual studios via services contains BOTH', async () => {
+    const { supabase, calls } = fakeSupabase(3);
+    const n = await countPhotoVideoStudios(supabase as never);
+    expect(n).toBe(3);
+    expect(calls).toContainEqual(['from', 'vendor_profiles', undefined]);
+    expect(calls).toContainEqual(['eq', 'is_active', true]);
+    expect(calls).toContainEqual(['eq', 'onboarding_complete', true]);
+    expect(calls).toContainEqual(['contains', 'services', ['photography', 'videography']]);
+  });
+
+  it('returns 0 when count is null', async () => {
+    const { supabase } = fakeSupabase(null);
+    expect(await countPhotoVideoStudios(supabase as never)).toBe(0);
+  });
+
+  it('throws on query error', async () => {
+    const { supabase } = fakeSupabase(null, new Error('boom'));
+    await expect(countPhotoVideoStudios(supabase as never)).rejects.toThrow('boom');
   });
 });
