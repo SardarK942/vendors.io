@@ -27,27 +27,45 @@ describe('parseVendorFilterParams — subcategories', () => {
 });
 
 describe('applyVendorFilters — subcategories', () => {
-  // Multi-select within a subcategory facet is OR, not AND: selecting
-  // "Dessert" + "Beverage" means dessert OR beverage carts, not carts that
-  // are BOTH. That's array overlap (.overlaps), not superset (.contains).
-  // The "one vendor does both" case has its own toggle (photoVideoCombo).
-  it('calls .overlaps("subcategories", [...]) when subcategories present', () => {
+  function fakeQuery(calls: Array<[string, string, unknown]>) {
+    const fake: Record<string, unknown> = {};
+    for (const m of ['eq', 'gte', 'lte', 'contains', 'overlaps']) {
+      fake[m] = (col: string, val: unknown) => {
+        calls.push([m, col, val]);
+        return fake;
+      };
+    }
+    return fake;
+  }
+
+  // "Type" facets match ANY selected (OR / overlaps): Dessert + Beverage means
+  // dessert OR beverage carts, not carts that are BOTH.
+  it('uses .overlaps for a "type" facet (no category)', () => {
     const calls: Array<[string, string, unknown]> = [];
-    const fake = {
-      eq: () => fake,
-      gte: () => fake,
-      lte: () => fake,
-      contains: (col: string, val: unknown) => {
-        calls.push(['contains', col, val]);
-        return fake;
-      },
-      overlaps: (col: string, val: unknown) => {
-        calls.push(['overlaps', col, val]);
-        return fake;
-      },
-    };
-    applyVendorFilters(fake as never, { subcategories: ['dessert', 'beverage'] });
+    applyVendorFilters(fakeQuery(calls) as never, { subcategories: ['dessert', 'beverage'] });
     expect(calls).toEqual([['overlaps', 'subcategories', ['dessert', 'beverage']]]);
+  });
+
+  it('uses .overlaps for a "type" category (carts)', () => {
+    const calls: Array<[string, string, unknown]> = [];
+    applyVendorFilters(fakeQuery(calls) as never, {
+      category: 'carts',
+      subcategories: ['dessert', 'beverage'],
+    });
+    expect(calls).toContainEqual(['overlaps', 'subcategories', ['dessert', 'beverage']]);
+    expect(calls).not.toContainEqual(['contains', 'subcategories', ['dessert', 'beverage']]);
+  });
+
+  // "Services offered" facet (hair_makeup) matches ALL selected (AND / contains):
+  // Hair + Makeup finds one artist who does both.
+  it('uses .contains for a "services offered" facet (hair_makeup)', () => {
+    const calls: Array<[string, string, unknown]> = [];
+    applyVendorFilters(fakeQuery(calls) as never, {
+      category: 'hair_makeup',
+      subcategories: ['hair', 'makeup'],
+    });
+    expect(calls).toContainEqual(['contains', 'subcategories', ['hair', 'makeup']]);
+    expect(calls).not.toContainEqual(['overlaps', 'subcategories', ['hair', 'makeup']]);
   });
 
   it('does not filter subcategories for empty array or undefined', () => {

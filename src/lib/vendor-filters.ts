@@ -1,5 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { PRICE_BANDS, type PriceBand } from '@/components/marketplace/filters/constants';
+import { SUBCATEGORY_MATCH_ALL_CATEGORIES } from '@/lib/vendor-subcategories';
 
 export interface VendorFilterParams {
   category?: string;
@@ -98,12 +99,16 @@ export function applyVendorFilters<
     q = q.overlaps('languages', filters.languages);
   }
 
-  // OR within the facet: selecting Dessert + Beverage means dessert OR
-  // beverage carts (array overlap), not carts that are BOTH (superset). A
-  // vendor is rarely tagged with two cart types, so .contains collapsed
-  // results. The "one vendor does both" need has its own toggle above.
+  // Subcategory facet semantics depend on the category. "Type" facets (carts,
+  // photography, ...) match ANY selected — Dessert + Beverage means dessert OR
+  // beverage carts (array overlap). "Services offered" facets (hair_makeup)
+  // match ALL selected — Hair + Makeup means one artist who does BOTH (array
+  // superset). See SUBCATEGORY_MATCH_ALL_CATEGORIES.
   if (filters.subcategories && filters.subcategories.length > 0) {
-    q = q.overlaps('subcategories', filters.subcategories);
+    const matchAll = !!filters.category && SUBCATEGORY_MATCH_ALL_CATEGORIES.has(filters.category);
+    q = matchAll
+      ? q.contains('subcategories', filters.subcategories)
+      : q.overlaps('subcategories', filters.subcategories);
   }
 
   return q;
@@ -122,32 +127,17 @@ export async function countFilteredVendors(
   supabase: SupabaseClient,
   filters: VendorFilterParams
 ): Promise<number> {
-  let query = supabase
+  // Reuse applyVendorFilters so the count footer can never drift from the actual
+  // results: the same non-price filter chain (category, combo, verified,
+  // respondsIn, years, languages, subcategories) is applied in exactly one place.
+  // Price is app-layer only (see NOTE above) and applyVendorFilters skips it too.
+  const base = supabase
     .from('vendor_profiles')
-    .select('id', {
-      count: 'exact',
-      head: true,
-    })
+    .select('id', { count: 'exact', head: true })
     .eq('is_active', true)
     .eq('onboarding_complete', true);
 
-  // Apply only non-price filters (price filtering is app-layer only)
-  if (filters.category) query = query.overlaps('services', [filters.category]);
-  if (filters.photoVideoCombo) query = query.contains('services', ['photography', 'videography']);
-  if (filters.verified) query = query.eq('verified', true);
-  if (filters.respondsIn) query = query.lte('response_sla_hours', filters.respondsIn);
-  if (filters.years) query = query.gte('years_in_business', filters.years);
-  // OR within the facet — see applyVendorFilters for rationale.
-  if (filters.languages && filters.languages.length > 0) {
-    query = query.overlaps('languages', filters.languages);
-  }
-
-  // OR within the facet — see applyVendorFilters for rationale.
-  if (filters.subcategories && filters.subcategories.length > 0) {
-    query = query.overlaps('subcategories', filters.subcategories);
-  }
-
-  const { count, error } = await query;
+  const { count, error } = await applyVendorFilters(base, filters);
   if (error) throw error;
   return count ?? 0;
 }

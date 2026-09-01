@@ -20,8 +20,9 @@ import { useFilterState } from './use-filter-state';
  *
  * Shares FilterState with the sheet: toggling here writes the same
  * ?subcategories= param via apply(), so the inline strip and the sheet's
- * subcategory section stay in sync. Multi-select, matching the AND-membership
- * subcategory filter.
+ * subcategory section stay in sync. Multi-select; how multiple selections match
+ * is per-category (ANY for "type" facets, ALL for "services offered" like hair
+ * & makeup) and lives in applyVendorFilters, not here.
  */
 export function SubcategoryStrip() {
   const { state, apply } = useFilterState();
@@ -29,7 +30,7 @@ export function SubcategoryStrip() {
   const options = getSubcategoriesForCategory(category);
   if (options.length === 0) return null;
 
-  const selected = state.subcategories ?? [];
+  const selected = state.subcategories;
   const heading = (category && SUBCATEGORY_SECTION_LABEL[category]) || 'Type';
 
   function toggle(slug: string) {

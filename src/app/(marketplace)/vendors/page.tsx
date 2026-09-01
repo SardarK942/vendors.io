@@ -100,8 +100,12 @@ export default async function VendorsPage({ searchParams }: VendorsPageProps) {
   // Run vendors + enrichments in parallel. The enrichments RPC keys off the
   // search date, not the vendor set, so it can go here.
   // The photo+video callout only shows on Photography / Videography, so only
-  // pay for the dual-studio count there. Runs in parallel with the main query.
-  const showComboContext = category === 'photography' || category === 'videography';
+  // pay for the dual-studio count there. Gate on the URL category (not the
+  // AI-hinted `category`, which the client can't see) so the count query and the
+  // client-rendered callout agree — otherwise an AI search that resolves to
+  // photography would run the count but render nothing.
+  const urlCategory = typeof params.category === 'string' ? params.category : null;
+  const showComboContext = urlCategory === 'photography' || urlCategory === 'videography';
 
   const [{ data: vendors, count }, { data: enrichments }, photoVideoStudioCount] =
     await Promise.all([
