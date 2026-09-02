@@ -35,8 +35,9 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'grazing_charcuterie', label: 'Grazing & charcuterie' },
   ],
   // Hair and makeup are two chips, not three: a vendor who does both selects
-  // both, and the AND-membership subcategory filter (.contains / @>) surfaces
-  // them for "Hair", "Makeup", or "Hair + Makeup" queries alike.
+  // both. This is a "services offered" facet (see SUBCATEGORY_MATCH_ALL_CATEGORIES),
+  // so selecting "Hair + Makeup" matches ALL (AND) — one artist who does both —
+  // unlike "type" facets (carts, photography) which match ANY (OR).
   hair_makeup: [
     { slug: 'hair', label: 'Hair' },
     { slug: 'makeup', label: 'Makeup' },
@@ -50,6 +51,16 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'full_decor', label: 'Full decor' },
   ],
 };
+
+/**
+ * Categories whose subcategory facet is a "services offered" list — selecting
+ * multiple chips means the vendor offers ALL of them (AND / array superset), so
+ * "Hair + Makeup" finds one artist who does both. Every other category is a
+ * "type" facet where multiple chips mean ANY (OR / array overlap): "Dessert +
+ * Beverage" cart returns dessert OR beverage carts. Consumed by
+ * applyVendorFilters to pick .contains vs .overlaps.
+ */
+export const SUBCATEGORY_MATCH_ALL_CATEGORIES: ReadonlySet<string> = new Set(['hair_makeup']);
 
 /** Heading text shown in the marketplace filter sheet's subcategory section. */
 export const SUBCATEGORY_SECTION_LABEL: Record<string, string> = {
