@@ -1,0 +1,41 @@
+[
+  {
+    "query": "punjabi wedding photographer in naperville",
+    "expectedSlugs": ["eval-lens-and-light"]
+  },
+  {
+    "query": "gujarati photographer for a reception in schaumburg",
+    "expectedSlugs": ["eval-golden-hour-films"]
+  },
+  { "query": "tamil wedding photographer chicago", "expectedSlugs": ["eval-frame-forty"] },
+  {
+    "query": "urdu speaking cinematic wedding videographer aurora",
+    "expectedSlugs": ["eval-motion-reel-co"]
+  },
+  { "query": "bridal mehndi artist on devon avenue", "expectedSlugs": ["eval-henna-by-anaya"] },
+  { "query": "arabic henna for a sangeet in naperville", "expectedSlugs": ["eval-mehndi-maven"] },
+  {
+    "query": "punjabi bridal hair and makeup artist schaumburg",
+    "expectedSlugs": ["eval-glow-by-simran"]
+  },
+  {
+    "query": "arabic speaking bridal makeup for a walima",
+    "expectedSlugs": ["eval-kohl-and-rouge"]
+  },
+  { "query": "punjabi bhangra dj with dhol for a sangeet", "expectedSlugs": ["eval-dj-dhol-raj"] },
+  {
+    "query": "halal north indian wedding caterer in naperville",
+    "expectedSlugs": ["eval-saffron-spoon"]
+  },
+  {
+    "query": "halal mughlai catering for a walima on devon",
+    "expectedSlugs": ["eval-tandoor-table"]
+  },
+  { "query": "mandap and floral decor in schaumburg", "expectedSlugs": ["eval-marigold-decor"] },
+  { "query": "360 spinner photo booth in chicago", "expectedSlugs": ["eval-spin-360-booth"] },
+  {
+    "query": "dessert and chai cart for a mehndi in naperville",
+    "expectedSlugs": ["eval-rolling-sweets"]
+  },
+  { "query": "lehenga and sherwani bridal wear on devon", "expectedSlugs": ["eval-regal-threads"] }
+]

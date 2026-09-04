@@ -34,6 +34,10 @@
     "curate:insert": "tsx --env-file-if-exists=.env.local scripts/curate/add-vendor.ts insert",
     "curate:batch-lookup": "tsx --env-file-if-exists=.env.local scripts/curate/batch-lookup.ts",
     "curate:batch-insert": "tsx --env-file-if-exists=.env.local scripts/curate/batch-insert.ts",
+    "ai:reembed": "tsx --env-file-if-exists=.env.local scripts/reembed-vendors.ts",
+    "ai:eval": "tsx --env-file-if-exists=.env.local scripts/ai-eval/run.ts",
+    "ai:seed-eval": "tsx --env-file-if-exists=.env.local scripts/ai-eval/seed-dev.ts",
+    "ai:eval-cleanup": "tsx --env-file-if-exists=.env.local scripts/ai-eval/cleanup-dev.ts",
     "prepare": "husky"
   },
   "lint-staged": {

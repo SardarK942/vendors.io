@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
-import { generateEmbeddingsBatch } from '@/lib/ai/embeddings';
+import { generateEmbeddingsBatch, buildVendorEmbeddingText } from '@/lib/ai/embeddings';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 
 export const dynamic = 'force-dynamic';
@@ -33,7 +33,9 @@ async function run(request: NextRequest) {
 
   const { data: vendors, error } = await supabase
     .from('vendor_profiles')
-    .select('id, business_name, bio, category')
+    .select(
+      'id, business_name, bio, category, subcategories, services, service_area, base_city, languages, served_event_types, years_in_business'
+    )
     .is('embedding', null)
     .limit(BATCH);
 
@@ -43,9 +45,7 @@ async function run(request: NextRequest) {
   }
 
   // Build the same input shape the admin route uses so embeddings stay consistent.
-  const inputs = vendors.map((v) =>
-    `${v.business_name ?? ''} - ${v.category ?? ''} - ${v.bio ?? ''}`.trim()
-  );
+  const inputs = vendors.map((v) => buildVendorEmbeddingText(v));
 
   const embeddings = await generateEmbeddingsBatch(inputs);
 

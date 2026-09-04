@@ -84,7 +84,8 @@ Respond ONLY with valid JSON, no markdown.`,
 export async function semanticSearch(
   supabase: SupabaseClient<Database>,
   query: string,
-  matchCount: number = 20
+  matchCount: number = 20,
+  category?: string
 ): Promise<(VendorRow & { similarity: number })[]> {
   const embedding = await generateEmbedding(query);
 
@@ -92,10 +93,14 @@ export async function semanticSearch(
   // ~0.15-0.25 against vendor embeddings that encode (business_name | category |
   // bio) — even when topically perfect. Doc-to-doc same-category sits at ~0.6,
   // so 0.15 is a safe floor for "topically related". Tune up if recall is noisy.
+  // `p_category` filters inside the RPC (before LIMIT) so a category-scoped query
+  // retrieves the top matches *in that category* rather than the global top-N
+  // then discarding — undefined means no filter.
   const { data, error } = await supabase.rpc('search_vendors_semantic', {
     query_embedding: JSON.stringify(embedding),
     match_count: matchCount,
     similarity_threshold: 0.15,
+    p_category: category,
   });
 
   if (error) {
@@ -156,7 +161,9 @@ export async function hybridSearch(
 
   const parsedQuery = await parseSearchQuery(query);
 
-  let results = await semanticSearch(supabase, parsedQuery.searchText);
+  // Widen the candidate pool (40) so the soft location filter below still has
+  // rows to work with, and push category into the RPC so it filters before LIMIT.
+  let results = await semanticSearch(supabase, parsedQuery.searchText, 40, parsedQuery.category);
 
   if (results.length < 5) {
     const fallbackResults = await fullTextSearch(supabase, parsedQuery.searchText);
