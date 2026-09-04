@@ -16,6 +16,12 @@ export type { SuggestedVendor };
 
 const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 
+// Single source of truth for "where a human reaches us": the reply-to on every
+// outbound send (so replies to the noreply@ From land somewhere real) AND the
+// destination for internal ops notifications. Backed by a Google Workspace
+// alias on baazar.io. Override with OPS_INBOX_EMAIL if it ever needs to differ.
+const CONTACT_EMAIL = process.env.OPS_INBOX_EMAIL || 'hello@baazar.io';
+
 export function escapeHtml(s: string | null | undefined): string {
   if (s === null || s === undefined) return '';
   return s
@@ -43,6 +49,7 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
     const { error } = await client().emails.send({
       from: FROM_EMAIL,
       to: options.to,
+      replyTo: CONTACT_EMAIL,
       subject: options.subject,
       html: options.html,
     });
@@ -438,7 +445,7 @@ export async function sendCancellationEmail(
 
 // ─── K-2: Unclaimed listing ownership requests ────────────────────────────────
 
-const OPS_INBOX = process.env.OPS_INBOX_EMAIL || 'hello@baazar.io';
+const OPS_INBOX = CONTACT_EMAIL;
 
 /** Fired when a vendor clicks "I own this business" → "Get help claiming". */
 export async function sendClaimRequestTeamEmail(
@@ -665,6 +672,7 @@ export async function sendWithRecord(args: {
   const { data, error } = await resend.emails.send({
     from: FROM_EMAIL,
     to: args.to,
+    replyTo: CONTACT_EMAIL,
     subject: args.subject,
     html: args.html,
   });
