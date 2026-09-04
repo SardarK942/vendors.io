@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { stripe } from '@/lib/stripe/client';
+import { probeResend } from '@/lib/email/resend-health';
 
 export const dynamic = 'force-dynamic';
 
@@ -32,20 +33,9 @@ export async function GET() {
     }),
   ]);
 
-  // Resend health check — non-fatal: failing marks degraded but not 503
-  const apiKey = process.env.RESEND_API_KEY;
-  let resend: 'ok' | 'failing' | 'unset' = 'unset';
-  if (apiKey) {
-    try {
-      const res = await fetch('https://api.resend.com/domains', {
-        headers: { Authorization: `Bearer ${apiKey}` },
-        signal: AbortSignal.timeout(3000),
-      });
-      resend = res.ok ? 'ok' : 'failing';
-    } catch {
-      resend = 'failing';
-    }
-  }
+  // Resend health check — non-fatal: failing marks degraded but not 503.
+  // Probes send scope (POST /emails), not /domains — see probeResend for why.
+  const resend = await probeResend(process.env.RESEND_API_KEY);
 
   const criticalOk = supabase.ok && stripeCheck.ok;
   const allOk = criticalOk && resend !== 'failing';
