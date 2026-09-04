@@ -1709,7 +1709,12 @@ export interface Database {
     };
     Functions: {
       search_vendors_semantic: {
-        Args: { query_embedding: string; match_count: number; similarity_threshold: number };
+        Args: {
+          query_embedding: string;
+          match_count: number;
+          similarity_threshold: number;
+          p_category?: string | null;
+        };
         Returns: (Database['public']['Tables']['vendor_profiles']['Row'] & {
           similarity: number;
         })[];
