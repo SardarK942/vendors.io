@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateEmbedding } from '@/lib/ai/embeddings';
+import { generateEmbedding, buildVendorEmbeddingText } from '@/lib/ai/embeddings';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 
@@ -23,7 +23,11 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
   const body = await request.json().catch(() => ({}));
   const forceRefresh = body?.forceRefresh === true;
 
-  let query = supabase.from('vendor_profiles').select('id, business_name, bio, category');
+  let query = supabase
+    .from('vendor_profiles')
+    .select(
+      'id, business_name, bio, category, subcategories, services, service_area, base_city, languages, served_event_types, years_in_business'
+    );
   if (!forceRefresh) query = query.is('embedding', null);
 
   const { data: vendors, error } = await query;
@@ -40,7 +44,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
 
   for (const vendor of vendors) {
     try {
-      const text = `${vendor.business_name} ${vendor.bio ?? ''} ${vendor.category}`;
+      const text = buildVendorEmbeddingText(vendor);
       const embedding = await generateEmbedding(text);
 
       const { error: updateError } = await supabase
