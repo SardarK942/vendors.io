@@ -5,7 +5,16 @@ import { generateEmbedding } from './embeddings';
 import { getCached, setCached } from './search-cache';
 import { logger } from '@/lib/logger';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+// Lazily construct the client so importing this module never requires the key.
+// The eager form threw "Missing credentials" at import time when OPENAI_API_KEY
+// was absent, which crashed the Next build in any environment missing the key
+// (e.g. Vercel Preview) — the /vendors route imports this module. Constructing
+// on first use defers that to call sites, which are wrapped and degrade.
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+  return _openai;
+}
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -40,7 +49,7 @@ function parseBudgetCents(hint: string | undefined): number | undefined {
  */
 export async function parseSearchQuery(query: string): Promise<ParsedQuery> {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
@@ -87,7 +96,17 @@ export async function semanticSearch(
   matchCount: number = 20,
   category?: string
 ): Promise<(VendorRow & { similarity: number })[]> {
-  const embedding = await generateEmbedding(query);
+  // Embedding is the one hard dependency on OpenAI in the search path. If it
+  // fails (invalid/rotated key, outage, rate limit, timeout), degrade to the
+  // full-text tier instead of throwing — an unwrapped throw here 500s the whole
+  // /vendors page for every ?q= search. Return [] so hybridSearch falls back.
+  let embedding: number[];
+  try {
+    embedding = await generateEmbedding(query);
+  } catch (err) {
+    logger.error('[ai.search] generateEmbedding failed — degrading to full-text', err, { query });
+    return [];
+  }
 
   // Threshold = 0.15. Short user queries (one or two words) typically cosine at
   // ~0.15-0.25 against vendor embeddings that encode (business_name | category |
