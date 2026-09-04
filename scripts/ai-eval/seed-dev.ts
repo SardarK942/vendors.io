@@ -12,7 +12,12 @@
  * Idempotent: deletes any prior seed (slug prefix `eval-`) + the seed auth user
  * before re-inserting. SAFETY: refuses to run against the prod project ref.
  *
- * Usage (dev):  npm run ai:seed-eval
+ * TRANSIENT — clean up when done: `npm run ai:eval-cleanup`. The e2e suite runs
+ * against this same dev DB, and extra active vendors push test-created vendors
+ * off the first page of /vendors (20/page), breaking marketplace-visibility
+ * specs. Never leave the seed in place across a CI run.
+ *
+ * Usage (dev):  npm run ai:seed-eval  →  ai:eval / ai:reembed  →  ai:eval-cleanup
  * Requires NEXT_PUBLIC_SUPABASE_URL (dev), SUPABASE_SERVICE_ROLE_KEY, OPENAI_API_KEY.
  */
 import { createClient } from '@supabase/supabase-js';
