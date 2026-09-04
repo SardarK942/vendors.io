@@ -5,7 +5,16 @@ import { generateEmbedding } from './embeddings';
 import { getCached, setCached } from './search-cache';
 import { logger } from '@/lib/logger';
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+// Lazily construct the client so importing this module never requires the key.
+// The eager form threw "Missing credentials" at import time when OPENAI_API_KEY
+// was absent, which crashed the Next build in any environment missing the key
+// (e.g. Vercel Preview) — the /vendors route imports this module. Constructing
+// on first use defers that to call sites, which are wrapped and degrade.
+let _openai: OpenAI | null = null;
+function getOpenAI(): OpenAI {
+  if (!_openai) _openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY! });
+  return _openai;
+}
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -40,7 +49,7 @@ function parseBudgetCents(hint: string | undefined): number | undefined {
  */
 export async function parseSearchQuery(query: string): Promise<ParsedQuery> {
   try {
-    const response = await openai.chat.completions.create({
+    const response = await getOpenAI().chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
