@@ -87,7 +87,17 @@ export async function semanticSearch(
   matchCount: number = 20,
   category?: string
 ): Promise<(VendorRow & { similarity: number })[]> {
-  const embedding = await generateEmbedding(query);
+  // Embedding is the one hard dependency on OpenAI in the search path. If it
+  // fails (invalid/rotated key, outage, rate limit, timeout), degrade to the
+  // full-text tier instead of throwing — an unwrapped throw here 500s the whole
+  // /vendors page for every ?q= search. Return [] so hybridSearch falls back.
+  let embedding: number[];
+  try {
+    embedding = await generateEmbedding(query);
+  } catch (err) {
+    logger.error('[ai.search] generateEmbedding failed — degrading to full-text', err, { query });
+    return [];
+  }
 
   // Threshold = 0.15. Short user queries (one or two words) typically cosine at
   // ~0.15-0.25 against vendor embeddings that encode (business_name | category |

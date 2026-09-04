@@ -11,8 +11,10 @@ vi.mock('openai', () => ({
 vi.mock('@/lib/ai/embeddings', () => ({
   generateEmbedding: vi.fn().mockResolvedValue(new Array(1536).fill(0)),
 }));
+vi.mock('@/lib/logger', () => ({ logger: { error: vi.fn(), warn: vi.fn(), info: vi.fn() } }));
 
 import { semanticSearch } from '@/lib/ai/search';
+import { generateEmbedding } from '@/lib/ai/embeddings';
 
 describe('semanticSearch', () => {
   it('forwards the category to the RPC as p_category', async () => {
@@ -35,5 +37,19 @@ describe('semanticSearch', () => {
 
     const args = rpc.mock.calls[0][1] as { p_category?: string };
     expect(args.p_category).toBeUndefined();
+  });
+
+  it('degrades to [] (does not throw, never hits the RPC) when embedding generation fails', async () => {
+    // Simulates an OpenAI 401 / outage — must not 500 the /vendors page.
+    (generateEmbedding as unknown as ReturnType<typeof vi.fn>).mockRejectedValueOnce(
+      new Error('401 Your API key has been invalidated.')
+    );
+    const rpc = vi.fn().mockResolvedValue({ data: [{ id: 'x' }], error: null });
+    const supabase = { rpc } as never;
+
+    const res = await semanticSearch(supabase, 'henna artist', 40, 'mehndi');
+
+    expect(res).toEqual([]);
+    expect(rpc).not.toHaveBeenCalled();
   });
 });
