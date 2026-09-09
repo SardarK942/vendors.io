@@ -1,9 +1,10 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   getFeaturedPackage,
   calculateDeposit,
   calculateRemaining,
   formatPrice,
+  proceedToBooking,
 } from '@/components/marketplace/vendor-profile/helpers';
 
 describe('getFeaturedPackage', () => {
@@ -74,5 +75,43 @@ describe('formatPrice', () => {
     expect(formatPrice(120_000)).toBe('$1,200');
     expect(formatPrice(9_000)).toBe('$90');
     expect(formatPrice(0)).toBe('$0');
+  });
+});
+
+describe('proceedToBooking', () => {
+  const fetchMock = vi.fn();
+
+  beforeEach(() => {
+    vi.stubGlobal('fetch', fetchMock);
+    fetchMock.mockReset();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('writes the booking-selection cookie BEFORE navigating (the missing step)', async () => {
+    fetchMock.mockResolvedValue({ ok: true } as Response);
+    const navigate = vi.fn();
+
+    await proceedToBooking('strings-ice-cream-cart', 'pkg-mochi', navigate);
+
+    // Must POST the signed-cookie selection — this is what the /book page reads.
+    expect(fetchMock).toHaveBeenCalledWith('/api/booking-selection', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ package_id: 'pkg-mochi', selected_addons: [] }),
+    });
+    // Then navigate (no query param — /book reads the cookie, not ?package=).
+    expect(navigate).toHaveBeenCalledWith('/vendors/strings-ice-cream-cart/book');
+  });
+
+  it('does not navigate when the selection POST fails', async () => {
+    fetchMock.mockResolvedValue({ ok: false } as Response);
+    const navigate = vi.fn();
+
+    await proceedToBooking('strings-ice-cream-cart', 'pkg-mochi', navigate);
+
+    expect(navigate).not.toHaveBeenCalled();
   });
 });
