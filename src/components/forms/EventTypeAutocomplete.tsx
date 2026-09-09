@@ -56,12 +56,19 @@ interface Props {
 export function EventTypeAutocomplete({ value, onChange, className, inputId }: Props) {
   const [open, setOpen] = React.useState(false);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  // When a pick refocuses the input (below), the input's onFocus would otherwise
+  // fire and reopen the list we just closed. This flag suppresses that one reopen.
+  const suppressReopenRef = React.useRef(false);
 
   const handlePick = (label: string) => {
     onChange(label);
     setOpen(false);
-    // Restore focus to the input so users can keep typing/tabbing.
+    // Restore focus to the input so users can keep typing/tabbing — but a mouse
+    // pick moves focus to the popover first, so this focus() re-triggers onFocus.
+    // Guard it so the just-closed list doesn't immediately spring back open.
+    suppressReopenRef.current = true;
     inputRef.current?.focus();
+    suppressReopenRef.current = false;
   };
 
   return (
@@ -76,7 +83,10 @@ export function EventTypeAutocomplete({ value, onChange, className, inputId }: P
               onChange(v);
               if (!open) setOpen(true);
             }}
-            onFocus={() => setOpen(true)}
+            onFocus={() => {
+              if (suppressReopenRef.current) return;
+              setOpen(true);
+            }}
             onBlur={() => setOpen(false)}
             onKeyDown={(e) => {
               if (e.key === 'Escape') setOpen(false);
