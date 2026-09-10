@@ -9,6 +9,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { BookingForm } from '@/components/forms/BookingForm';
 
 // ── Next.js mocks ──────────────────────────────────────────────────
@@ -110,6 +111,21 @@ describe('BookingForm guest count', () => {
     );
     const input1 = screen.getByLabelText(/guests for event 1/i) as HTMLInputElement;
     expect(input1.value).toBe('50');
+  });
+
+  it('lets the user clear the guest-count field instead of snapping back to 1', async () => {
+    const user = userEvent.setup();
+    render(
+      <BookingForm vendor={VENDOR} pkg={SINGLE_EVENT_PKG} selectedAddons={[]} eventOptions={[]} />
+    );
+    const input = screen.getByLabelText(/how many guests/i) as HTMLInputElement;
+
+    await user.clear(input);
+    // The field must be genuinely empty — not forced to "1" — so the user can retype.
+    expect(input.value).toBe('');
+
+    await user.type(input, '200');
+    expect(input.value).toBe('200');
   });
 
   it('does NOT render the old "Total Guest Count" label for single-event', () => {
