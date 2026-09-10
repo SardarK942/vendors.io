@@ -1,9 +1,19 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import type { CreatedFunction } from '@/services/events.service';
+import { attachBookingToFunction } from '@/lib/events/attach-booking';
 import { EVENT_TYPES } from '@/types';
 import { StepBasics } from './StepBasics';
 import { StepFunctions } from './StepFunctions';
@@ -71,9 +81,25 @@ function ProgressDots({ step }: { step: number }) {
   );
 }
 
+function fmtFnDate(d: string | null): string {
+  if (!d) return 'date TBD';
+  return new Date(`${d}T00:00:00`).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 export function EventWizard({ coupleName, defaultCity = '' }: EventWizardProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  // When arriving from "Start your celebration plan →" on a booking, this carries
+  // the booking to fold into the new plan once it's created (book-first, plan-after).
+  const attachBookingId = searchParams.get('attachBooking');
   const [submitting, setSubmitting] = useState(false);
+  // Option C: after creating a multi-function event, ask which function the
+  // carried booking belongs to before finishing.
+  const [pendingAttach, setPendingAttach] = useState<{
+    eventId: string;
+    functions: CreatedFunction[];
+  } | null>(null);
+  const [selectedFn, setSelectedFn] = useState('');
   const [state, setState] = useState<WizardState>(() => ({
     step: 1,
     name: coupleName ? `${coupleName}'s Wedding` : '',
@@ -134,12 +160,45 @@ export function EventWizard({ coupleName, defaultCity = '' }: EventWizardProps) 
         setSubmitting(false);
         return;
       }
-      const { eventId } = (await res.json()) as { eventId: string };
+      const { eventId, functions } = (await res.json()) as {
+        eventId: string;
+        functions: CreatedFunction[];
+      };
+
+      // Book-first, plan-after: fold the carried booking into the new plan.
+      if (attachBookingId && functions.length > 0) {
+        if (functions.length === 1) {
+          await attachBookingToFunction(attachBookingId, functions[0].id);
+          toast.success(`Added your booking to ${functions[0].label}.`);
+          router.push(`/dashboard/events/${eventId}`);
+          return;
+        }
+        // Option C: more than one function — ask which one the booking is for.
+        setSelectedFn(functions[0].id);
+        setPendingAttach({ eventId, functions });
+        setSubmitting(false);
+        return;
+      }
+
       router.push(`/dashboard/events/${eventId}`);
     } catch {
       toast.error('Could not create your event. Please try again.');
       setSubmitting(false);
     }
+  }
+
+  async function confirmAttach() {
+    if (!pendingAttach || !attachBookingId) return;
+    setSubmitting(true);
+    const ok = await attachBookingToFunction(attachBookingId, selectedFn);
+    const fn = pendingAttach.functions.find((f) => f.id === selectedFn);
+    if (ok) {
+      toast.success(`Added your booking to ${fn?.label ?? 'your plan'}.`);
+    } else {
+      // The event exists; only the link failed — they can attach it from the plan.
+      toast.error('Could not attach the booking — you can add it from your plan.');
+    }
+    router.push(`/dashboard/events/${pendingAttach.eventId}`);
   }
 
   function handleSkip() {
@@ -243,6 +302,50 @@ export function EventWizard({ coupleName, defaultCity = '' }: EventWizardProps) 
           </div>
         </div>
       </footer>
+
+      {/* Option C: which function is the carried booking for? */}
+      <Dialog
+        open={pendingAttach !== null}
+        onOpenChange={(open) => {
+          // Dismissing without choosing still finishes — land them on the plan,
+          // with the booking unattached (recoverable from the plan's link picker).
+          if (!open && pendingAttach) router.push(`/dashboard/events/${pendingAttach.eventId}`);
+        }}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Which part of your celebration is this booking for?</DialogTitle>
+            <DialogDescription>We’ll add it there. You can move it anytime.</DialogDescription>
+          </DialogHeader>
+          <div role="radiogroup" className="grid gap-2">
+            {pendingAttach?.functions.map((f) => (
+              <label
+                key={f.id}
+                className={
+                  selectedFn === f.id
+                    ? 'flex cursor-pointer items-center gap-2 rounded-lg border-[1.5px] border-indigo bg-indigo/5 px-4 py-2.5 text-sm font-semibold text-indigo'
+                    : 'flex cursor-pointer items-center gap-2 rounded-lg border-[1.5px] border-hairline px-4 py-2.5 text-sm text-ink hover:border-indigo/50'
+                }
+              >
+                <input
+                  type="radio"
+                  name="attach-fn"
+                  value={f.id}
+                  checked={selectedFn === f.id}
+                  onChange={() => setSelectedFn(f.id)}
+                  className="accent-indigo"
+                />
+                {f.label} · {fmtFnDate(f.date)}
+              </label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button type="button" onClick={confirmAttach} disabled={submitting || !selectedFn}>
+              Add to plan &amp; finish
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

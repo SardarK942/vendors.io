@@ -9,11 +9,19 @@ import { logger } from '@/lib/logger';
 type Sb = SupabaseClient<Database>;
 type Result<T> = { data?: T; error?: string; status: number };
 
+/** A created function, returned so callers can offer a "which function?" picker. */
+export interface CreatedFunction {
+  id: string;
+  sequence: number;
+  label: string;
+  date: string | null;
+}
+
 export async function createEventWithGraph(
   supabase: Sb,
   coupleUserId: string,
   input: CreateEventInput
-): Promise<Result<{ eventId: string }>> {
+): Promise<Result<{ eventId: string; functions: CreatedFunction[] }>> {
   const { data: event, error: eventError } = await supabase
     .from('events')
     .insert({
@@ -29,7 +37,9 @@ export async function createEventWithGraph(
     return { error: eventError?.message ?? 'Failed to create event', status: 500 };
 
   // Rollback helper: cascades wipe the whole graph.
-  const rollback = async (msg: string): Promise<Result<{ eventId: string }>> => {
+  const rollback = async (
+    msg: string
+  ): Promise<Result<{ eventId: string; functions: CreatedFunction[] }>> => {
     await supabase.from('events').delete().eq('id', event.id);
     return { error: msg, status: 500 };
   };
@@ -46,7 +56,7 @@ export async function createEventWithGraph(
         guest_estimate: f.guest_estimate ?? null,
       }))
     )
-    .select('id, sequence');
+    .select('id, sequence, label, date');
   if (fnError || !fns) return rollback(fnError?.message ?? 'Failed to create functions');
 
   const fnIdByIndex = new Map(fns.map((f) => [f.sequence - 1, f.id]));
@@ -91,7 +101,11 @@ export async function createEventWithGraph(
     if (error) return rollback(error.message);
   }
 
-  return { data: { eventId: event.id }, status: 201 };
+  const functions: CreatedFunction[] = [...fns]
+    .sort((a, b) => a.sequence - b.sequence)
+    .map((f) => ({ id: f.id, sequence: f.sequence, label: f.label, date: f.date }));
+
+  return { data: { eventId: event.id, functions }, status: 201 };
 }
 
 export async function listEvents(supabase: Sb, coupleUserId: string): Promise<EventRow[]> {

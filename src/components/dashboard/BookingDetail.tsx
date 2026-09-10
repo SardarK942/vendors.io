@@ -15,6 +15,8 @@ import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import Link from 'next/link';
 import { FirstBookingCelebration } from '@/components/celebration/FirstBookingCelebration';
+import { getEventOptions } from '@/lib/events/get-event-options';
+import { CelebrationPlanNudge } from '@/components/dashboard/CelebrationPlanNudge';
 
 function GuestCountSection({
   events,
@@ -109,6 +111,17 @@ export async function BookingDetail({
           .eq('booking_request_id', booking.id)
           .maybeSingle()
       : { data: null };
+
+  // "Book first, plan after": nudge the couple to fold this booking into a
+  // celebration plan, unless it's already attached or the booking is dead.
+  const bookingEventFunctionId =
+    (booking as unknown as { event_function_id: string | null }).event_function_id ?? null;
+  const showPlanNudge =
+    role === 'couple' &&
+    bookingEventFunctionId === null &&
+    !booking.status.endsWith('cancelled') &&
+    booking.status !== 'expired';
+  const planEventOptions = showPlanNudge ? await getEventOptions(supabase, user.id) : [];
 
   // Load booking events.
   // Couple reads from booking_events_public (excludes vendor_notes — Sub-project E §8).
@@ -250,6 +263,15 @@ export async function BookingDetail({
         </div>
       )}
 
+      {/* "Book first, plan after" — fold this booking into a celebration plan */}
+      {showPlanNudge && (
+        <CelebrationPlanNudge
+          bookingId={booking.id}
+          vendorName={vendorProfile?.business_name ?? 'this vendor'}
+          eventOptions={planEventOptions}
+        />
+      )}
+
       {/* Adjustment review — shown when couple needs to accept/decline */}
       {role === 'couple' && booking.status === 'adjusted_quote_sent' && (
         <AdjustmentReview
@@ -272,8 +294,8 @@ export async function BookingDetail({
       )}
       {role === 'couple' && booking.status === 'pending_quote' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          Quote request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond
-          with a quote — we’ll email you and post it here.
+          Quote request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond with
+          a quote — we’ll email you and post it here.
         </div>
       )}
 
@@ -401,7 +423,8 @@ export async function BookingDetail({
                   </p>
                   <p className="text-sm text-ink" data-ph-mask="">
                     {bookingAsAny.event_city as string}
-                    {(bookingAsAny.venue_name as string | null) && ` · ${bookingAsAny.venue_name as string}`}
+                    {(bookingAsAny.venue_name as string | null) &&
+                      ` · ${bookingAsAny.venue_name as string}`}
                   </p>
                 </div>
               </>
@@ -410,7 +433,9 @@ export async function BookingDetail({
               <>
                 <Separator />
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Budget</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                    Budget
+                  </p>
                   <p className="text-sm text-ink">
                     {
                       (
@@ -421,7 +446,14 @@ export async function BookingDetail({
                           gt_30k: '$30k+',
                           discuss: 'Prefer to discuss',
                         } as const
-                      )[bookingAsAny.budget_range as 'lt_5k' | '5k_15k' | '15k_30k' | 'gt_30k' | 'discuss']
+                      )[
+                        bookingAsAny.budget_range as
+                          | 'lt_5k'
+                          | '5k_15k'
+                          | '15k_30k'
+                          | 'gt_30k'
+                          | 'discuss'
+                      ]
                     }
                   </p>
                 </div>
