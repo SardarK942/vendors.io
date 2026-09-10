@@ -140,10 +140,12 @@ export async function BookingDetail({
     event_start_time: string;
     event_end_time: string;
     location_name: string | null;
-    address_line_1: string;
+    // Nullable for couples: booking_events_public redacts a private at_vendor
+    // street/ZIP until the deposit is paid (vendor reads the raw table, non-null).
+    address_line_1: string | null;
     city: string;
     state: string;
-    postal_code: string;
+    postal_code: string | null;
     completed_at: string | null;
     guest_count_override: number | null;
     vendor_notes?: string | null;
@@ -272,8 +274,8 @@ export async function BookingDetail({
       )}
       {role === 'couple' && booking.status === 'pending_quote' && (
         <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
-          Quote request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond
-          with a quote — we’ll email you and post it here.
+          Quote request sent to {vendorProfile?.business_name ?? 'the vendor'}. They’ll respond with
+          a quote — we’ll email you and post it here.
         </div>
       )}
 
@@ -401,7 +403,8 @@ export async function BookingDetail({
                   </p>
                   <p className="text-sm text-ink" data-ph-mask="">
                     {bookingAsAny.event_city as string}
-                    {(bookingAsAny.venue_name as string | null) && ` · ${bookingAsAny.venue_name as string}`}
+                    {(bookingAsAny.venue_name as string | null) &&
+                      ` · ${bookingAsAny.venue_name as string}`}
                   </p>
                 </div>
               </>
@@ -410,7 +413,9 @@ export async function BookingDetail({
               <>
                 <Separator />
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Budget</p>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">
+                    Budget
+                  </p>
                   <p className="text-sm text-ink">
                     {
                       (
@@ -421,7 +426,14 @@ export async function BookingDetail({
                           gt_30k: '$30k+',
                           discuss: 'Prefer to discuss',
                         } as const
-                      )[bookingAsAny.budget_range as 'lt_5k' | '5k_15k' | '15k_30k' | 'gt_30k' | 'discuss']
+                      )[
+                        bookingAsAny.budget_range as
+                          | 'lt_5k'
+                          | '5k_15k'
+                          | '15k_30k'
+                          | 'gt_30k'
+                          | 'discuss'
+                      ]
                     }
                   </p>
                 </div>
@@ -472,9 +484,19 @@ export async function BookingDetail({
                       {ev.location_name}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground" data-ph-mask="">
-                    {ev.address_line_1}, {ev.city}, {ev.state} {ev.postal_code}
-                  </p>
+                  {ev.address_line_1 ? (
+                    <p className="text-xs text-muted-foreground" data-ph-mask="">
+                      {ev.address_line_1}, {ev.city}, {ev.state} {ev.postal_code}
+                    </p>
+                  ) : (
+                    // Private at_vendor address — redacted until the deposit is paid.
+                    <p className="text-xs text-muted-foreground" data-ph-mask="">
+                      {ev.city}, {ev.state}
+                      <span className="mt-0.5 block text-[11px] italic text-ink-muted">
+                        Exact address shared once your deposit is paid.
+                      </span>
+                    </p>
+                  )}
                 </div>
               ))}
             </CardContent>

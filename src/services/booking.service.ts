@@ -16,6 +16,7 @@ import { wouldExceedCapacityForEvent } from '@/services/availability.service';
 import { deliver } from '@/lib/notifications/deliver';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { linkBookingToFunction } from '@/services/events.service';
+import { resolveStoredEventAddress } from '@/lib/booking/stored-event-address';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
 
@@ -606,7 +607,7 @@ export async function createBooking(
   // Fetch package + verify it's active
   const { data: pkg } = await supabase
     .from('packages')
-    .select('id, name, base_price_cents, events_count, is_active')
+    .select('id, name, base_price_cents, events_count, is_active, location_mode')
     .eq('id', input.package_id)
     .single();
 
@@ -667,6 +668,50 @@ export async function createBooking(
     }
   }
 
+  // Resolve the address to STORE for each event. at_vendor events are backfilled
+  // from the vendor's base address (the couple-facing booking_events_public view
+  // redacts it until deposit when the vendor keeps it private); couple_provides
+  // events must carry a complete address. We only fetch the vendor's base address
+  // when the package is at_vendor — couple_provides never needs it.
+  const locationMode =
+    (pkg as { location_mode?: 'couple_provides' | 'at_vendor' }).location_mode ?? 'couple_provides';
+
+  let vendorBase: {
+    business_name: string | null;
+    base_address_line_1: string | null;
+    base_city: string | null;
+    base_state: string | null;
+    base_postal_code: string | null;
+    base_google_place_id: string | null;
+    base_address_public: boolean;
+  } | null = null;
+  if (locationMode === 'at_vendor') {
+    const { data } = await supabase
+      .from('vendor_profiles')
+      .select(
+        'business_name, base_address_line_1, base_city, base_state, base_postal_code, base_google_place_id, base_address_public'
+      )
+      .eq('id', input.vendor_profile_id)
+      .single();
+    vendorBase = data;
+  }
+
+  const resolvedAddresses = input.events.map((e) =>
+    resolveStoredEventAddress(e, locationMode, vendorBase ?? {})
+  );
+  const missingIdx = resolvedAddresses.findIndex(
+    (a) => !a.address_line_1 || !a.city || !a.state || !a.postal_code
+  );
+  if (missingIdx !== -1) {
+    return {
+      error:
+        locationMode === 'at_vendor'
+          ? "This vendor hasn't finished setting up their location. Please try another vendor or contact support."
+          : `Event ${missingIdx + 1} needs a complete location — street, city, state, and ZIP.`,
+      status: 400,
+    };
+  }
+
   const expiresAt = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
 
   // Insert booking
@@ -695,8 +740,18 @@ export async function createBooking(
     return { error: bookingError?.message ?? 'Failed to create booking', status: 500 };
   }
 
-  // Insert booking_events
-  const eventRows = input.events.map((e) => ({ ...e, booking_id: booking.id }));
+  // Insert booking_events with the resolved (server-authoritative) addresses.
+  // location_is_private flags an at_vendor event whose vendor keeps their base
+  // address private — the booking_events_public view redacts it until deposit.
+  const eventRows = input.events.map((e, i) => ({
+    ...e,
+    ...resolvedAddresses[i],
+    location_is_private:
+      locationMode === 'at_vendor' &&
+      vendorBase?.base_address_public !== true &&
+      !e.location_overridden,
+    booking_id: booking.id,
+  }));
   const { data: events, error: eventsError } = await supabase
     .from('booking_events')
     .insert(eventRows)

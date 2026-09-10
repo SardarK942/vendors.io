@@ -240,10 +240,14 @@ export const bookingEventInputSchema = z
     event_end_time: z.string().datetime(),
     event_type_label: z.string().min(1).max(80),
     location_name: z.string().max(120).optional().nullable(),
-    address_line_1: z.string().min(1).max(200),
-    city: z.string().min(1).max(80),
-    state: z.string().min(1).max(80),
-    postal_code: z.string().min(1).max(20),
+    // Address is optional here because at_vendor packages hide the inputs — the
+    // server backfills those events from the vendor's base address, and enforces
+    // that couple_provides events actually carry an address (it knows the
+    // package's location_mode; this schema doesn't). See createBooking.
+    address_line_1: z.string().max(200).optional().default(''),
+    city: z.string().max(80).optional().default(''),
+    state: z.string().max(80).optional().default(''),
+    postal_code: z.string().max(20).optional().default(''),
     google_place_id: z.string().optional().nullable(),
     guest_count_override: z.number().int().positive().optional().nullable(),
     location_overridden: z.boolean().default(false),

@@ -577,6 +577,9 @@ export interface Database {
           google_place_id: string | null;
           guest_count_override: number | null;
           location_overridden: boolean;
+          // True when this event's stored address is a vendor's private base
+          // address — redacted from the couple by booking_events_public until deposit.
+          location_is_private: boolean;
           completed_at: string | null;
           created_at: string;
           vendor_notes: string | null;
@@ -597,6 +600,7 @@ export interface Database {
           google_place_id?: string | null;
           guest_count_override?: number | null;
           location_overridden?: boolean;
+          location_is_private?: boolean;
           completed_at?: string | null;
           created_at?: string;
           vendor_notes?: string | null;
@@ -615,6 +619,7 @@ export interface Database {
           google_place_id?: string | null;
           guest_count_override?: number | null;
           location_overridden?: boolean;
+          location_is_private?: boolean;
           completed_at?: string | null;
           vendor_notes?: string | null;
         };
