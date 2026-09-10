@@ -43,7 +43,10 @@ export default async function BookPage({ params }: BookPageProps) {
   const { data: vendorRaw } = await supabase
     .from('vendor_profiles')
     .select(
-      'id, slug, business_name, base_city, base_state, base_address_line_1, base_postal_code, base_google_place_id, base_address_public'
+      // Only the coarse city/state reach the couple's browser. The exact street
+      // address is filled server-side at booking time (createBooking) and gated
+      // behind the deposit — never shipped to the client here.
+      'id, slug, business_name, base_city, base_state'
     )
     .eq('slug', slug)
     .single();

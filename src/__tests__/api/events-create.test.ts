@@ -95,6 +95,29 @@ describe('createBookingSchema', () => {
     expect(createBookingSchema.safeParse(localTimes).success).toBe(true);
   });
 
+  it('accepts an event with no address (at_vendor — server backfills it)', () => {
+    const atVendor = {
+      vendor_profile_id: '11111111-1111-4111-8111-111111111111',
+      package_id: '22222222-2222-4222-8222-222222222222',
+      guest_count: 60,
+      couple_full_name: 'Aisha Khan',
+      couple_contact_phone: '(555) 123-4567',
+      events: [
+        {
+          sequence: 1,
+          event_date: '2026-09-10',
+          event_start_time: '2026-09-10T16:00:00Z',
+          event_end_time: '2026-09-10T22:00:00Z',
+          event_type_label: 'Nikah',
+          // no address_line_1 / city / state / postal_code — vendor location
+        },
+      ],
+    };
+    const parsed = createBookingSchema.parse(atVendor);
+    expect(parsed.events[0].address_line_1).toBe('');
+    expect(parsed.events[0].postal_code).toBe('');
+  });
+
   it('accepts optional event_function_id', () => {
     const base = {
       vendor_profile_id: '11111111-1111-4111-8111-111111111111',

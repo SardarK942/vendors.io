@@ -153,10 +153,12 @@ export async function BookingDetail({
     event_start_time: string;
     event_end_time: string;
     location_name: string | null;
-    address_line_1: string;
+    // Nullable for couples: booking_events_public redacts a private at_vendor
+    // street/ZIP until the deposit is paid (vendor reads the raw table, non-null).
+    address_line_1: string | null;
     city: string;
     state: string;
-    postal_code: string;
+    postal_code: string | null;
     completed_at: string | null;
     guest_count_override: number | null;
     vendor_notes?: string | null;
@@ -504,9 +506,19 @@ export async function BookingDetail({
                       {ev.location_name}
                     </p>
                   )}
-                  <p className="text-xs text-muted-foreground" data-ph-mask="">
-                    {ev.address_line_1}, {ev.city}, {ev.state} {ev.postal_code}
-                  </p>
+                  {ev.address_line_1 ? (
+                    <p className="text-xs text-muted-foreground" data-ph-mask="">
+                      {ev.address_line_1}, {ev.city}, {ev.state} {ev.postal_code}
+                    </p>
+                  ) : (
+                    // Private at_vendor address — redacted until the deposit is paid.
+                    <p className="text-xs text-muted-foreground" data-ph-mask="">
+                      {ev.city}, {ev.state}
+                      <span className="mt-0.5 block text-[11px] italic text-ink-muted">
+                        Exact address shared once your deposit is paid.
+                      </span>
+                    </p>
+                  )}
                 </div>
               ))}
             </CardContent>
