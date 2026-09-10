@@ -236,8 +236,12 @@ export const bookingEventInputSchema = z
   .object({
     sequence: z.number().int().min(1),
     event_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Must be YYYY-MM-DD'),
-    event_start_time: z.string().datetime(),
-    event_end_time: z.string().datetime(),
+    // The booking form sends TZ-naive local times (`2026-09-10T16:00:00`, no Z)
+    // on purpose (see makeBlankEvent/EventRow). Accept local, Z, and offset
+    // forms so real submissions validate — plain .datetime() rejected no-Z and
+    // 400'd every booking made through the UI.
+    event_start_time: z.string().datetime({ local: true, offset: true }),
+    event_end_time: z.string().datetime({ local: true, offset: true }),
     event_type_label: z.string().min(1).max(80),
     location_name: z.string().max(120).optional().nullable(),
     address_line_1: z.string().min(1).max(200),

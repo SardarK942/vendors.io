@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { EventRow, type EventRowData } from './EventRow';
 import Image from 'next/image';
 import { fmtUSD } from '@/lib/intl';
+import { formatBookingValidationError } from '@/lib/booking/validation-message';
 import { formatCapacity, type PackageCapacityUnitInput } from '@/types';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 
@@ -154,7 +155,13 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
       const json = await res.json();
 
       if (!res.ok) {
-        setError(json.error ?? 'Failed to submit booking. Please try again.');
+        // The API returns a generic "Validation failed" plus a Zod `details`
+        // payload — turn that into a field-named message the couple can act on.
+        if (json.error === 'Validation failed' && json.details) {
+          setError(formatBookingValidationError(json.details));
+        } else {
+          setError(json.error ?? 'Failed to submit booking. Please try again.');
+        }
         return;
       }
 
