@@ -15,6 +15,8 @@ import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
 import Link from 'next/link';
 import { FirstBookingCelebration } from '@/components/celebration/FirstBookingCelebration';
+import { getEventOptions } from '@/lib/events/get-event-options';
+import { CelebrationPlanNudge } from '@/components/dashboard/CelebrationPlanNudge';
 
 function GuestCountSection({
   events,
@@ -109,6 +111,17 @@ export async function BookingDetail({
           .eq('booking_request_id', booking.id)
           .maybeSingle()
       : { data: null };
+
+  // "Book first, plan after": nudge the couple to fold this booking into a
+  // celebration plan, unless it's already attached or the booking is dead.
+  const bookingEventFunctionId =
+    (booking as unknown as { event_function_id: string | null }).event_function_id ?? null;
+  const showPlanNudge =
+    role === 'couple' &&
+    bookingEventFunctionId === null &&
+    !booking.status.endsWith('cancelled') &&
+    booking.status !== 'expired';
+  const planEventOptions = showPlanNudge ? await getEventOptions(supabase, user.id) : [];
 
   // Load booking events.
   // Couple reads from booking_events_public (excludes vendor_notes — Sub-project E §8).
@@ -250,6 +263,15 @@ export async function BookingDetail({
             {(bookingAsAny.package_name_snapshot as string) ?? 'Package'}
           </span>
         </div>
+      )}
+
+      {/* "Book first, plan after" — fold this booking into a celebration plan */}
+      {showPlanNudge && (
+        <CelebrationPlanNudge
+          bookingId={booking.id}
+          vendorName={vendorProfile?.business_name ?? 'this vendor'}
+          eventOptions={planEventOptions}
+        />
       )}
 
       {/* Adjustment review — shown when couple needs to accept/decline */}

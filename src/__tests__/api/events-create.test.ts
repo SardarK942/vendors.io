@@ -69,6 +69,32 @@ describe('createEventSchema', () => {
 });
 
 describe('createBookingSchema', () => {
+  it('accepts the TZ-naive local times the booking form actually sends', () => {
+    // The form produces `${date}T${HH}:${MM}:00` with no trailing Z (see
+    // makeBlankEvent / EventRow) — this must validate, or every booking 400s.
+    const localTimes = {
+      vendor_profile_id: '11111111-1111-4111-8111-111111111111',
+      package_id: '22222222-2222-4222-8222-222222222222',
+      guest_count: 50,
+      couple_full_name: 'Aisha Khan',
+      couple_contact_phone: '(555) 123-4567',
+      events: [
+        {
+          sequence: 1,
+          event_date: '2026-09-10',
+          event_start_time: '2026-09-10T16:00:00', // no Z
+          event_end_time: '2026-09-10T22:00:00', // no Z
+          event_type_label: 'Wedding',
+          address_line_1: '123 Main St',
+          city: 'Chicago',
+          state: 'IL',
+          postal_code: '60601',
+        },
+      ],
+    };
+    expect(createBookingSchema.safeParse(localTimes).success).toBe(true);
+  });
+
   it('accepts an event with no address (at_vendor — server backfills it)', () => {
     const atVendor = {
       vendor_profile_id: '11111111-1111-4111-8111-111111111111',

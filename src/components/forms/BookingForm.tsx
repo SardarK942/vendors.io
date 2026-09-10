@@ -8,6 +8,8 @@ import { Separator } from '@/components/ui/separator';
 import { EventRow, type EventRowData } from './EventRow';
 import Image from 'next/image';
 import { fmtUSD } from '@/lib/intl';
+import { formatBookingValidationError } from '@/lib/booking/validation-message';
+import { formatUsPhoneInput, US_PHONE_PATTERN } from '@/lib/phone';
 import { formatCapacity, type PackageCapacityUnitInput } from '@/types';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 
@@ -88,9 +90,11 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
   // Fall back to the name tile if the package image URL fails to load (e.g. an
   // expired hosted URL), instead of showing the browser's broken-image box.
   const [thumbError, setThumbError] = useState(false);
-  // Bucket B T6: per-event guest counts keyed by event sequence (1-indexed)
-  const [guestCounts, setGuestCounts] = useState<Record<number, number>>(() =>
-    Object.fromEntries(Array.from({ length: pkg.events_count }, (_, i) => [i + 1, 50]))
+  // Bucket B T6: per-event guest counts keyed by event sequence (1-indexed).
+  // Stored as the raw input string so the field can be cleared mid-edit instead
+  // of snapping back to a forced value; parsed to a number at submit time.
+  const [guestCounts, setGuestCounts] = useState<Record<number, string>>(() =>
+    Object.fromEntries(Array.from({ length: pkg.events_count }, (_, i) => [i + 1, '50']))
   );
   const [specialRequests, setSpecialRequests] = useState('');
   const [eventFunctionId, setEventFunctionId] = useState<string | null>(null);
@@ -127,7 +131,10 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
     try {
       // Bucket B T6: aggregate per-event counts for bookings.guest_count (sum).
       // Each event's guest_count_override is populated from the per-event input.
-      const totalGuestCount = Object.values(guestCounts).reduce((sum, n) => sum + n, 0);
+      const totalGuestCount = Object.values(guestCounts).reduce(
+        (sum, n) => sum + (parseInt(n, 10) || 0),
+        0
+      );
       const payload = {
         vendor_profile_id: vendor.id,
         package_id: pkg.id,
@@ -141,7 +148,7 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
           ...ev,
           sequence: i + 1,
           // Per-event guest count stored in guest_count_override on booking_events.
-          guest_count_override: isSingleEvent ? null : (guestCounts[i + 1] ?? 50),
+          guest_count_override: isSingleEvent ? null : parseInt(guestCounts[i + 1] ?? '', 10) || 50,
         })),
       };
 
@@ -154,7 +161,13 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
       const json = await res.json();
 
       if (!res.ok) {
-        setError(json.error ?? 'Failed to submit booking. Please try again.');
+        // The API returns a generic "Validation failed" plus a Zod `details`
+        // payload — turn that into a field-named message the couple can act on.
+        if (json.error === 'Validation failed' && json.details) {
+          setError(formatBookingValidationError(json.details));
+        } else {
+          setError(json.error ?? 'Failed to submit booking. Please try again.');
+        }
         return;
       }
 
@@ -302,10 +315,12 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
                 id={phoneId}
                 type="tel"
                 required
+                pattern={US_PHONE_PATTERN}
+                title="Enter a 10-digit US phone number, e.g. (555) 123-4567"
                 className="w-full rounded-md border p-2 text-sm"
-                placeholder="+1 (555) 000-0000"
+                placeholder="(555) 000-0000"
                 value={couplePhone}
-                onChange={(e) => setCouplePhone(e.target.value)}
+                onChange={(e) => setCouplePhone(formatUsPhoneInput(e.target.value))}
                 autoComplete="tel"
                 inputMode="tel"
               />
@@ -324,10 +339,8 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
                   inputMode="numeric"
                   autoComplete="off"
                   className="w-full rounded-md border p-2 text-sm"
-                  value={guestCounts[1]}
-                  onChange={(e) =>
-                    setGuestCounts({ ...guestCounts, 1: parseInt(e.target.value, 10) || 1 })
-                  }
+                  value={guestCounts[1] ?? ''}
+                  onChange={(e) => setGuestCounts({ ...guestCounts, 1: e.target.value })}
                 />
               </div>
             ) : (
@@ -347,11 +360,11 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
                       inputMode="numeric"
                       autoComplete="off"
                       className="w-full rounded-md border p-2 text-sm"
-                      value={guestCounts[seq]}
+                      value={guestCounts[seq] ?? ''}
                       onChange={(e) =>
                         setGuestCounts({
                           ...guestCounts,
-                          [seq]: parseInt(e.target.value, 10) || 1,
+                          [seq]: e.target.value,
                         })
                       }
                     />
