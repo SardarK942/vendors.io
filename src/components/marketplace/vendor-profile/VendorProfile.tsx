@@ -23,7 +23,7 @@ import { VendorGallery } from './VendorGallery';
 import { BookingStickyCard } from './BookingStickyCard';
 import { BookingBottomBar } from './BookingBottomBar';
 import { VendorSocials } from './VendorSocials';
-import { getFeaturedPackage } from './helpers';
+import { getFeaturedPackage, proceedToBooking } from './helpers';
 import { fmtDate } from '@/lib/intl';
 import { track } from '@/lib/analytics/track';
 import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
@@ -83,8 +83,9 @@ export function VendorProfile({
       return;
     }
     if (pkgId) {
-      // Booking-form route expects a selected package — push with query so the form pre-selects
-      router.push(`/vendors/${vendor.slug}/book?package=${pkgId}`);
+      // The /book page reads the selected package from a signed cookie, not a
+      // query param — write it first, then navigate (see proceedToBooking).
+      void proceedToBooking(vendor.slug ?? '', pkgId, (href) => router.push(href));
     } else {
       // Zero-packages fallback OR vendor sticky card "send a custom request"
       setCustomRequestOpen(true);

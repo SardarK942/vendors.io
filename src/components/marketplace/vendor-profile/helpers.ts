@@ -28,6 +28,30 @@ export function getFeaturedPackage<T extends PackageLike>(packages: T[]): T | nu
   return cheapest(flagged.length > 0 ? flagged : packages);
 }
 
+/**
+ * Hands a package selection off to the booking flow.
+ *
+ * The /book page reads the selected package from an HMAC-signed cookie (set via
+ * POST /api/booking-selection), NOT from a query param — if the cookie is absent
+ * it redirects straight back to the vendor profile. So we MUST write that cookie
+ * before navigating, otherwise the "Request Booking" CTA appears to do nothing.
+ *
+ * The sticky card / bottom bar only ever proceed with the featured package and
+ * no add-ons; the add-on-aware path lives in PackageDetailModal.handleContinue.
+ */
+export async function proceedToBooking(
+  slug: string,
+  packageId: string,
+  navigate: (href: string) => void
+): Promise<void> {
+  const res = await fetch('/api/booking-selection', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ package_id: packageId, selected_addons: [] }),
+  });
+  if (res.ok) navigate(`/vendors/${slug}/book`);
+}
+
 export function calculateDeposit(totalCents: number): number {
   return Math.round(totalCents * DEPOSIT_RATE);
 }
