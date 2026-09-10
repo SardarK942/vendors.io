@@ -19,18 +19,22 @@ function fmtDate(d: string | null): string {
 
 export function EventFunctionSelect({ options, value, onChange }: Props) {
   if (options.length === 0) {
+    // Book first, plan after: don't send the user into the event wizard mid-
+    // booking (it abandons this form). We invite them to plan once the request
+    // is placed — see CelebrationPlanNudge on the booking detail page.
     return (
       <p className="text-sm text-ink-soft">
-        Planning a celebration?{' '}
-        <a href="/dashboard/events/new" className="font-semibold text-indigo hover:underline">
-          Set up your event →
-        </a>
+        You can add this booking to a celebration plan after you book.
       </p>
     );
   }
   return (
     <fieldset className="grid gap-2">
       <legend className="text-sm font-semibold text-ink">Which event is this for?</legend>
+      <p className="text-xs text-ink-soft">
+        Attaching links this booking to your plan, so your budget, checklist, and booked-vendor list
+        stay in sync.
+      </p>
       {options.length > 1 && (
         <p className="text-xs text-ink-soft">{options.map((o) => o.eventName).join(' · ')}</p>
       )}
