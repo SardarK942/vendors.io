@@ -39,8 +39,14 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protect dashboard routes — redirect to login if not authenticated
-  if (!user && request.nextUrl.pathname.startsWith('/dashboard')) {
+  // Protect dashboard + admin routes — redirect to login if not authenticated.
+  // (The definitive admin role check lives in src/app/admin/layout.tsx; middleware
+  // only handles the logged-out bounce since it can't cheaply read the DB role.)
+  if (
+    !user &&
+    (request.nextUrl.pathname.startsWith('/dashboard') ||
+      request.nextUrl.pathname.startsWith('/admin'))
+  ) {
     const url = request.nextUrl.clone();
     url.pathname = '/login';
     url.searchParams.set('redirect', request.nextUrl.pathname);
