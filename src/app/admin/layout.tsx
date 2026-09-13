@@ -31,6 +31,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               Internal
             </span>
           </div>
+          <nav className="hidden items-center gap-4 text-sm sm:flex">
+            <Link href="/admin" className="text-ink/60 hover:text-ink">
+              Unfinished
+            </Link>
+            <Link href="/admin/onboarding" className="text-ink/60 hover:text-ink">
+              Onboarding
+            </Link>
+          </nav>
           <Link href="/dashboard" className="text-sm text-ink/60 hover:text-ink">
             ← Back to dashboard
           </Link>
