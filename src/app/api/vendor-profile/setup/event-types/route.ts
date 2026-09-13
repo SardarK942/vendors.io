@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { invalidateEmbeddingOnContentChange } from '@/lib/ai/embeddings';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,9 +17,10 @@ export async function PATCH(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'auth' }, { status: 401 });
 
+  // served_event_types feeds the embedding; null the vector for a cron rebuild.
   await supabase
     .from('vendor_profiles')
-    .update({ served_event_types: types })
+    .update(invalidateEmbeddingOnContentChange({ served_event_types: types }))
     .eq('user_id', user.id);
 
   return NextResponse.json({ ok: true });

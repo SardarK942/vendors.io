@@ -61,6 +61,43 @@ export function buildVendorEmbeddingText(vendor: VendorEmbeddingInput): string {
 }
 
 /**
+ * The vendor_profiles columns buildVendorEmbeddingText() reads. This list is the
+ * single source of truth for "what feeds the vector" — keep it in lockstep with
+ * the function above so embedding invalidation can't silently drift from what the
+ * embedding actually encodes.
+ */
+export const EMBEDDING_SOURCE_FIELDS = [
+  'business_name',
+  'category',
+  'subcategories',
+  'services',
+  'service_area',
+  'base_city',
+  'languages',
+  'served_event_types',
+  'years_in_business',
+  'bio',
+] as const;
+
+/**
+ * Stale-embedding guard for vendor_profiles UPDATE/INSERT payloads.
+ *
+ * Embeddings are write-once (the hourly cron only fills `embedding IS NULL`), so
+ * a vendor who edits their bio/category/etc. after being embedded would keep a
+ * vector built from the OLD text forever — the search would rank them on content
+ * they no longer have. To prevent that, any write that changes an embedding-source
+ * field also nulls `embedding`, which puts the row back in the cron's queue for a
+ * fresh vector within the hour. Writes that touch no source field (pause toggle,
+ * instagram handle, portfolio images) are returned unchanged — no needless churn.
+ */
+export function invalidateEmbeddingOnContentChange<T extends Record<string, unknown>>(
+  payload: T
+): T | (T & { embedding: null }) {
+  const touchesSource = EMBEDDING_SOURCE_FIELDS.some((field) => field in payload);
+  return touchesSource ? { ...payload, embedding: null } : payload;
+}
+
+/**
  * Generate an embedding vector for a given text using text-embedding-3-small.
  * Cost: ~$0.00002 per 1K tokens ($1 per 50M tokens).
  */
