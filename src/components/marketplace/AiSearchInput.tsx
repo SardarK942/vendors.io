@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Search, ArrowRight } from 'lucide-react';
+import { Search, ArrowRight, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export type AiSearchVariant = 'hero' | 'sticky';
@@ -59,6 +59,18 @@ export function AiSearchInput({
     router.push(`/vendors${qs ? `?${qs}` : ''}`);
   }, [value, router, searchParams]);
 
+  const clear = React.useCallback(() => {
+    setValue('');
+    // Drop q (and pagination) from the URL but keep every other filter, so the
+    // list resets to the active category instead of staying stuck at 0 results.
+    const params = new URLSearchParams(searchParams?.toString() ?? '');
+    params.delete('q');
+    params.delete('page');
+    const qs = params.toString();
+    router.push(`/vendors${qs ? `?${qs}` : ''}`);
+    inputRef.current?.focus();
+  }, [router, searchParams]);
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -99,6 +111,20 @@ export function AiSearchInput({
           isHero ? 'text-base' : 'text-sm'
         )}
       />
+      {value.trim() && (
+        <button
+          type="button"
+          aria-label="Clear search"
+          onClick={clear}
+          className={cn(
+            'flex shrink-0 items-center justify-center rounded-full text-ink/50 transition-colors',
+            'hover:bg-ink/5 hover:text-ink focus:outline-none focus-visible:ring-2 focus-visible:ring-ink/30',
+            isHero ? 'h-9 w-9' : 'h-7 w-7'
+          )}
+        >
+          <X className={isHero ? 'h-4 w-4' : 'h-3.5 w-3.5'} />
+        </button>
+      )}
       <button
         type="submit"
         aria-label="Search"
