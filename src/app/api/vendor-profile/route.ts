@@ -4,6 +4,7 @@ import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
 import { VENDOR_CATEGORIES } from '@/lib/utils';
+import { invalidateEmbeddingOnContentChange } from '@/lib/ai/embeddings';
 
 // Historical note: this route previously refused is_active=true when the vendor
 // had zero active packages (409 NO_ACTIVE_PACKAGES). Removed because the custom-
@@ -66,7 +67,9 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
 
   const { data, error } = await supabase
     .from('vendor_profiles')
-    .update({ ...parsed, updated_at: new Date().toISOString() })
+    // Null the vector if this edit changes any embedding-source field, so the
+    // hourly cron rebuilds it — otherwise search keeps ranking on stale content.
+    .update(invalidateEmbeddingOnContentChange({ ...parsed, updated_at: new Date().toISOString() }))
     .eq('id', existing.id)
     .select('*')
     .single();

@@ -70,7 +70,12 @@ export const POST = withErrorBoundary(async (req: Request) => {
       is_active: true,
       published_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-    })
+      // Belt-and-suspenders: force a fresh embedding of the final published
+      // profile. The hourly cron only fills `embedding IS NULL`, and a profile
+      // may have been embedded mid-onboarding (before the bio was written), so
+      // nulling here guarantees the live vector reflects the published content.
+      embedding: null,
+    } as Record<string, unknown>)
     .eq('id', profileRow.id);
 
   if (updateError) throw new HttpError(500, updateError.message);

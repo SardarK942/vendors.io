@@ -11,6 +11,7 @@ import {
 } from '@/lib/onboarding/validation';
 import { generateSlug } from '@/lib/utils';
 import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
+import { invalidateEmbeddingOnContentChange } from '@/lib/ai/embeddings';
 
 function slugWithSuffix(name: string): string {
   const base = generateSlug(name);
@@ -107,7 +108,13 @@ export const PATCH = withErrorBoundary(
       };
 
       const { error } = profileId
-        ? await supabase.from('vendor_profiles').update(payload).eq('id', profileId)
+        ? // Editing basics (name/category/bio/services/subcategories) changes the
+          // embedding source — null the vector so the cron rebuilds it. A fresh
+          // insert already has a null embedding, so it needs no invalidation.
+          await supabase
+            .from('vendor_profiles')
+            .update(invalidateEmbeddingOnContentChange(payload))
+            .eq('id', profileId)
         : await supabase.from('vendor_profiles').insert(payload);
 
       if (error) throw new HttpError(500, error.message);
@@ -129,17 +136,20 @@ export const PATCH = withErrorBoundary(
         throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');
       }
 
+      // base_city feeds the embedding, so this write invalidates the vector.
       const { error } = await supabase
         .from('vendor_profiles')
-        .update({
-          base_address_line_1: data.baseAddressLine1,
-          base_city: data.baseCity,
-          base_state: data.baseState,
-          base_postal_code: data.basePostalCode,
-          base_google_place_id: data.baseGooglePlaceId,
-          base_address_public: data.baseAddressPublic,
-          base_address_skipped: data.baseAddressSkipped ?? false,
-        })
+        .update(
+          invalidateEmbeddingOnContentChange({
+            base_address_line_1: data.baseAddressLine1,
+            base_city: data.baseCity,
+            base_state: data.baseState,
+            base_postal_code: data.basePostalCode,
+            base_google_place_id: data.baseGooglePlaceId,
+            base_address_public: data.baseAddressPublic,
+            base_address_skipped: data.baseAddressSkipped ?? false,
+          })
+        )
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
@@ -199,13 +209,16 @@ export const PATCH = withErrorBoundary(
         throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');
       }
 
+      // languages + years_in_business feed the embedding; invalidate the vector.
       const { error } = await supabase
         .from('vendor_profiles')
-        .update({
-          languages: data.languages,
-          years_in_business: data.years_in_business,
-          response_sla_hours: data.response_sla_hours,
-        })
+        .update(
+          invalidateEmbeddingOnContentChange({
+            languages: data.languages,
+            years_in_business: data.years_in_business,
+            response_sla_hours: data.response_sla_hours,
+          })
+        )
         .eq('id', profileId);
 
       if (error) throw new HttpError(500, error.message);
