@@ -11,6 +11,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ExportButtons } from '@/components/admin/ExportButtons';
+import { StatTile } from '@/components/admin/StatTile';
 import { buildUnfinishedRow, emailList, type UnfinishedRow } from '@/lib/admin/unfinished-profiles';
 import { toCsv } from '@/lib/admin/csv';
 
@@ -123,16 +124,5 @@ export default async function AdminOverviewPage() {
         </CardContent>
       </Card>
     </div>
-  );
-}
-
-function StatTile({ label, value }: { label: string; value: string | number }) {
-  return (
-    <Card>
-      <CardContent className="pt-6">
-        <div className="text-3xl font-bold tabular-nums">{value}</div>
-        <div className="mt-1 text-sm text-ink/60">{label}</div>
-      </CardContent>
-    </Card>
   );
 }

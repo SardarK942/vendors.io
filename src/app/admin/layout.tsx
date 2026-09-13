@@ -38,6 +38,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <Link href="/admin/onboarding" className="text-ink/60 hover:text-ink">
               Onboarding
             </Link>
+            <Link href="/admin/marketplace" className="text-ink/60 hover:text-ink">
+              Marketplace
+            </Link>
+            <Link href="/admin/bookings" className="text-ink/60 hover:text-ink">
+              Bookings
+            </Link>
           </nav>
           <Link href="/dashboard" className="text-sm text-ink/60 hover:text-ink">
             ← Back to dashboard
