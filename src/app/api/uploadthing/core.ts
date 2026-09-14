@@ -19,14 +19,17 @@ async function requireAuthedUser() {
 }
 
 export const ourFileRouter = {
-  portfolioImage: f({ image: { maxFileSize: '4MB', maxFileCount: 10 } })
+  // 16MB per image: iPhone photos (48MP, and HEIC that iOS transcodes to JPEG on
+  // pick) routinely exceed 4MB. At 4MB a single oversized photo made the whole
+  // multi-file batch reject, which surfaced as "selected photos, none uploaded".
+  portfolioImage: f({ image: { maxFileSize: '16MB', maxFileCount: 10 } })
     .middleware(requireAuthedUser)
     .onUploadComplete(async ({ file, metadata }) => {
       console.log('Upload complete:', file.url, 'by', metadata.userId);
       return { url: file.url };
     }),
   // Stub for T14 — package feature image uploads (same config as portfolioImage)
-  packageFeatureImage: f({ image: { maxFileSize: '4MB', maxFileCount: 1 } })
+  packageFeatureImage: f({ image: { maxFileSize: '16MB', maxFileCount: 1 } })
     .middleware(requireAuthedUser)
     .onUploadComplete(async ({ file, metadata }) => {
       console.log('Package feature image upload complete:', file.url, 'by', metadata.userId);

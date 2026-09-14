@@ -83,7 +83,7 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
         }}
         endpoint="portfolioImage"
         maxFiles={10}
-        maxSizeMb={4}
+        maxSizeMb={16}
         showPrimarySelector
         triggerLabel={{ empty: 'Upload portfolio photos', manage: 'Manage photos' }}
       />
