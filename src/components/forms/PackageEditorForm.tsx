@@ -222,7 +222,7 @@ export function PackageEditorForm({ mode, initial, capacityUnitEditable = false 
                 onChange={(urls) => setFeaturedImageUrl(urls[0] ?? '')}
                 endpoint="packageFeatureImage"
                 maxFiles={1}
-                maxSizeMb={4}
+                maxSizeMb={16}
                 triggerLabel={{ empty: 'Upload feature image', manage: 'Change feature image' }}
               />
             </fieldset>

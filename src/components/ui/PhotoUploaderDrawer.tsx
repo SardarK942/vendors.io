@@ -1,5 +1,5 @@
 'use client';
-import { createContext, useContext, useRef, useState, useEffect } from 'react';
+import { createContext, useContext, useRef, useState, useEffect, type ReactNode } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { Upload, Plus } from 'lucide-react';
 import {
@@ -17,6 +17,22 @@ import {
 } from './family-drawer';
 import { PhotoThumbnailGrid } from './PhotoThumbnailGrid';
 import { useUploadThing } from '@/lib/uploadthing';
+import { partitionSelectedFiles, selectionWarning, uploadErrorMessage } from '@/lib/photo-upload';
+
+/** Inline, theme-aware notice shown when a selection is partially skipped or an
+ *  upload fails — replaces the old silent console.error path. */
+function UploadNotice({ tone, children }: { tone: 'warn' | 'error'; children: ReactNode }) {
+  return (
+    <p
+      role="alert"
+      className={`mt-3 rounded-md px-3 py-2 text-xs ${
+        tone === 'error' ? 'bg-hot-pink/10 text-hot-pink' : 'bg-haldi/20 text-ink'
+      }`}
+    >
+      {children}
+    </p>
+  );
+}
 
 interface PhotoUploaderDrawerProps {
   value: string[];
@@ -50,6 +66,8 @@ function DefaultView() {
   const { setView } = useFamilyDrawer();
   const { value, onChange, endpoint, maxFiles, maxSizeMb } = useUploader();
   const [isDragging, setIsDragging] = useState(false);
+  const [warning, setWarning] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef(value);
 
@@ -65,14 +83,19 @@ function DefaultView() {
     },
     onUploadError: (err) => {
       console.error('Upload failed:', err);
+      setError(uploadErrorMessage(err));
     },
   });
 
   function handleFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const remaining = maxFiles - value.length;
-    const accepted = Array.from(files).slice(0, remaining);
-    startUpload(accepted);
+    setError(null);
+    const result = partitionSelectedFiles(Array.from(files), {
+      remainingSlots: maxFiles - value.length,
+      maxSizeMb,
+    });
+    setWarning(selectionWarning(result, maxSizeMb));
+    if (result.accepted.length > 0) startUpload(result.accepted);
   }
 
   return (
@@ -119,13 +142,17 @@ function DefaultView() {
           onChange={(e) => handleFiles(e.target.files)}
         />
       </button>
+      {error && <UploadNotice tone="error">{error}</UploadNotice>}
+      {warning && <UploadNotice tone="warn">{warning}</UploadNotice>}
     </div>
   );
 }
 
 function ManageView() {
   const { setView, close } = useFamilyDrawer();
-  const { value, onChange, endpoint, maxFiles, showPrimarySelector } = useUploader();
+  const { value, onChange, endpoint, maxFiles, maxSizeMb, showPrimarySelector } = useUploader();
+  const [warning, setWarning] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const valueRef = useRef(value);
 
@@ -137,6 +164,10 @@ function ManageView() {
     onClientUploadComplete: (res) => {
       const newUrls = res.map((r) => r.url);
       onChange([...valueRef.current, ...newUrls].slice(0, maxFiles));
+    },
+    onUploadError: (err) => {
+      console.error('Upload failed:', err);
+      setError(uploadErrorMessage(err));
     },
   });
 
@@ -153,9 +184,13 @@ function ManageView() {
 
   function handleAddFiles(files: FileList | null) {
     if (!files || files.length === 0) return;
-    const remaining = maxFiles - value.length;
-    if (remaining <= 0) return;
-    startUpload(Array.from(files).slice(0, remaining));
+    setError(null);
+    const result = partitionSelectedFiles(Array.from(files), {
+      remainingSlots: maxFiles - value.length,
+      maxSizeMb,
+    });
+    setWarning(selectionWarning(result, maxSizeMb));
+    if (result.accepted.length > 0) startUpload(result.accepted);
   }
 
   return (
@@ -185,6 +220,9 @@ function ManageView() {
           </>
         )}
       </div>
+
+      {error && <UploadNotice tone="error">{error}</UploadNotice>}
+      {warning && <UploadNotice tone="warn">{warning}</UploadNotice>}
 
       <PhotoThumbnailGrid
         urls={value}
@@ -218,7 +256,7 @@ export function PhotoUploaderDrawer({
   onChange,
   endpoint,
   maxFiles = 10,
-  maxSizeMb = 4,
+  maxSizeMb = 16,
   showPrimarySelector = false,
   triggerLabel = { empty: 'Upload photos', manage: 'Manage photos' },
 }: PhotoUploaderDrawerProps) {
