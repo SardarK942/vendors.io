@@ -202,6 +202,7 @@ export async function updateVendorProfile(
       bio: input.bio,
       service_area: input.serviceArea,
       portfolio_images: input.portfolioImages,
+      portfolio_videos: input.portfolioVideos,
       instagram_handle: input.instagramHandle,
       website_url: input.websiteUrl || null,
       response_sla_hours: input.responseSlaHours,

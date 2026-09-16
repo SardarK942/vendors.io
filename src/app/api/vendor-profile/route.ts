@@ -12,7 +12,7 @@ import { invalidateEmbeddingOnContentChange } from '@/lib/ai/embeddings';
 // send quote requests to zero-package vendors — the gate was blocking legit
 // quote-only vendors (caterers, venues, planners) from resuming after a pause.
 
-const patchVendorProfileSchema = z.object({
+export const vendorProfileUpdateSchema = z.object({
   business_name: z.string().min(2).max(100).optional(),
   category: z.enum(VENDOR_CATEGORIES).optional(),
   bio: z.string().max(2000).optional().nullable(),
@@ -22,6 +22,7 @@ const patchVendorProfileSchema = z.object({
   response_sla_hours: z.number().int().positive().optional(),
   years_in_business: z.number().int().min(0).max(100).optional().nullable(),
   portfolio_images: z.array(z.string().url()).optional(),
+  portfolio_videos: z.array(z.string()).max(3).optional(),
   // base_address fields
   base_address_line_1: z.string().max(200).optional().nullable(),
   base_city: z.string().max(80).optional().nullable(),
@@ -36,7 +37,7 @@ const patchVendorProfileSchema = z.object({
 
 export const PATCH = withErrorBoundary(async (request: NextRequest) => {
   const { user, supabase } = await requireUser();
-  const parsed = patchVendorProfileSchema.parse(await request.json());
+  const parsed = vendorProfileUpdateSchema.parse(await request.json());
 
   // Find vendor profile by user_id
   const { data: existing } = await supabase

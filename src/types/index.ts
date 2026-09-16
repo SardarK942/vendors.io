@@ -24,6 +24,7 @@ export const vendorProfileSchema = z.object({
   bio: z.string().max(2000).optional(),
   serviceArea: z.array(z.string()).default(['Chicago']),
   portfolioImages: z.array(z.string().url()).default([]),
+  portfolioVideos: z.array(z.string()).max(3).optional(),
   instagramHandle: z.string().max(50).optional(),
   websiteUrl: z.string().url().optional().or(z.literal('')),
   responseSlaHours: z.number().int().positive().default(48),
