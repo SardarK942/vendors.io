@@ -78,13 +78,18 @@ ALTER TABLE vendor_profiles
 
 ## Environment / secrets
 
-Server-only (never `NEXT_PUBLIC_`):
+Secrets — server-only (never `NEXT_PUBLIC_`):
 
 - `CLOUDFLARE_ACCOUNT_ID`
 - `CLOUDFLARE_STREAM_API_TOKEN` (scoped to Stream:Edit)
-- `CLOUDFLARE_STREAM_CUSTOMER_SUBDOMAIN` (the `customer-<code>` used to build playback/thumbnail URLs; confirm exact value from dashboard/API during impl)
 
-Added to `.env.local` (dev) + Vercel (prod). Token is sensitive — see [[secrets_rotation_pending_2026_05_21]] discipline; keep server-only.
+Public (the customer subdomain appears in every viewer-facing media URL, so the
+client needs it to build thumbnail/playback URLs):
+
+- `NEXT_PUBLIC_CLOUDFLARE_STREAM_SUBDOMAIN` (the `customer-<code>`; confirm exact value from dashboard/API during impl)
+
+Added to `.env.local` (dev) + Vercel (prod). The **token** is sensitive — see
+[[secrets_rotation_pending_2026_05_21]] discipline; keep it server-only.
 
 ## Upload / edit path
 
