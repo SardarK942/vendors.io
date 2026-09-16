@@ -33,11 +33,14 @@ export async function createDirectUpload(opts?: {
   return { uploadURL: json.result.uploadURL, uid: json.result.uid };
 }
 
+const STREAM_UID_RE = /^[a-f0-9]{32}$/;
+
 export async function getVideoStatus(
   uid: string
 ): Promise<{ uid: string; readyToStream: boolean }> {
+  if (!STREAM_UID_RE.test(uid)) throw new Error('Invalid Stream uid');
   const { accountId, token } = cfServerConfig();
-  const res = await fetch(`${CF_API}/accounts/${accountId}/stream/${uid}`, {
+  const res = await fetch(`${CF_API}/accounts/${accountId}/stream/${encodeURIComponent(uid)}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) throw new Error(`Cloudflare video status failed: ${res.status}`);

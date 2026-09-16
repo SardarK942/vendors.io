@@ -10,6 +10,13 @@ export async function POST(req: NextRequest) {
   } = await supabase.auth.getUser();
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
+  const { data: vendorProfile } = await supabase
+    .from('vendor_profiles')
+    .select('id')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  if (!vendorProfile) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
   const gate = await checkRateLimit(
     req,
     'stream:direct-upload',

@@ -14,8 +14,17 @@ const mockedClient = vi.mocked(createServerSupabaseClient);
 const mockedRl = vi.mocked(checkRateLimit);
 const mockedCreate = vi.mocked(createDirectUpload);
 
-function client(user: { id: string } | null) {
-  return { auth: { getUser: () => Promise.resolve({ data: { user }, error: null }) } };
+function client(user: { id: string } | null, vendorProfile: { id: string } | null = { id: 'vp1' }) {
+  return {
+    auth: { getUser: () => Promise.resolve({ data: { user }, error: null }) },
+    from: () => ({
+      select: () => ({
+        eq: () => ({
+          maybeSingle: () => Promise.resolve({ data: vendorProfile, error: null }),
+        }),
+      }),
+    }),
+  };
 }
 function req() {
   return new NextRequest('http://localhost/api/stream/direct-upload', { method: 'POST' });
@@ -27,6 +36,13 @@ it('401 when not signed in', async () => {
   mockedClient.mockResolvedValue(client(null) as never);
   const res = await POST(req());
   expect(res.status).toBe(401);
+});
+
+it('403 when the user has no vendor profile', async () => {
+  mockedClient.mockResolvedValue(client({ id: 'u1' }, null) as never);
+  const res = await POST(req());
+  expect(res.status).toBe(403);
+  expect(mockedRl).not.toHaveBeenCalled();
 });
 
 it('429 when rate limited', async () => {

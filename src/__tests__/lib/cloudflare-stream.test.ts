@@ -43,11 +43,19 @@ it('createDirectUpload throws on non-ok response', async () => {
 });
 
 it('getVideoStatus maps readyToStream', async () => {
+  const validUid = 'a'.repeat(32);
   vi.stubGlobal(
     'fetch',
     vi.fn().mockResolvedValue({ ok: true, json: async () => ({ result: { readyToStream: true } }) })
   );
-  expect(await getVideoStatus('vid-1')).toEqual({ uid: 'vid-1', readyToStream: true });
+  expect(await getVideoStatus(validUid)).toEqual({ uid: validUid, readyToStream: true });
+});
+
+it('getVideoStatus rejects an invalid uid without calling fetch', async () => {
+  const fetchMock = vi.fn();
+  vi.stubGlobal('fetch', fetchMock);
+  await expect(getVideoStatus('bad/uid')).rejects.toThrow(/invalid/i);
+  expect(fetchMock).not.toHaveBeenCalled();
 });
 
 it('builds thumbnail and iframe URLs from the customer subdomain', () => {

@@ -31,7 +31,7 @@ export function StreamVideoUploader({ value, onChange, maxClips }: Props) {
       if (!upRes.ok) throw new Error('upload');
 
       // Poll until Cloudflare has transcoded the clip.
-      for (let i = 0; i < 30; i++) {
+      for (let i = 0; i < 60; i++) {
         const s = await fetch(`/api/stream/status/${uid}`);
         if (s.ok) {
           const { readyToStream } = (await s.json()) as { readyToStream: boolean };
@@ -70,6 +70,7 @@ export function StreamVideoUploader({ value, onChange, maxClips }: Props) {
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
+          e.target.value = '';
           if (f) void handleFile(f);
         }}
       />
