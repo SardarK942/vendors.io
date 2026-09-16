@@ -66,6 +66,7 @@ export const onlineSchema = z.object({
 
 export const portfolioSchema = z.object({
   portfolioImages: z.array(z.string().url()).min(1, 'At least 1 portfolio image is required'),
+  portfolioVideos: z.array(z.string()).max(3).optional(),
 });
 
 export const detailsSchema = z.object({

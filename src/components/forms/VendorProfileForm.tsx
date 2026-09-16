@@ -21,6 +21,7 @@ import { VENDOR_CATEGORIES, VENDOR_CATEGORY_LABELS, generateSlug } from '@/lib/u
 import { createClient } from '@/lib/supabase/client';
 import { SubcategoryMultiSelect } from '@/components/onboarding/SubcategoryMultiSelect';
 import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
+import { StreamVideoUploader } from '@/components/ui/StreamVideoUploader';
 import { getSubcategoriesForCategory } from '@/lib/vendor-subcategories';
 import type { Database } from '@/types/database.types';
 import {
@@ -63,6 +64,9 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
   const [portfolioImages, setPortfolioImages] = useState<string[]>(
     vendorProfile?.portfolio_images ?? []
   );
+  const [portfolioVideos, setPortfolioVideos] = useState<string[]>(
+    vendorProfile?.portfolio_videos ?? []
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -85,6 +89,7 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
       years_in_business:
         (formData.get('years') as string) === '' ? null : Number(formData.get('years') as string),
       portfolio_images: portfolioImages,
+      portfolio_videos: portfolioVideos,
       // A2: base address fields
       base_address_line_1: baseAddress.address_line_1 || null,
       base_city: baseAddress.city || null,
@@ -294,6 +299,21 @@ export function VendorProfileForm({ vendorProfile }: VendorProfileFormProps) {
               value={portfolioImages}
               onChange={setPortfolioImages}
               endpoint="portfolioImage"
+            />
+          </div>
+
+          {/* Portfolio videos — Cloudflare Stream direct-upload clips */}
+          <div className="space-y-3 border-t pt-4">
+            <div>
+              <h3 className="font-medium">Portfolio videos (optional)</h3>
+              <p className="text-pretty text-xs text-muted-foreground">
+                Add up to 3 short clips shown on your public profile.
+              </p>
+            </div>
+            <StreamVideoUploader
+              value={portfolioVideos}
+              onChange={setPortfolioVideos}
+              maxClips={3}
             />
           </div>
 

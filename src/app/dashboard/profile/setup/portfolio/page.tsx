@@ -22,7 +22,7 @@ export default async function PortfolioPage({ searchParams }: PageProps) {
 
   const { data: profile } = await supabase
     .from('vendor_profiles')
-    .select('portfolio_images')
+    .select('portfolio_images, portfolio_videos')
     .eq('id', profileId)
     .maybeSingle();
   return (
@@ -31,6 +31,7 @@ export default async function PortfolioPage({ searchParams }: PageProps) {
       mode={mode}
       initial={{
         portfolioImages: profile?.portfolio_images ?? [],
+        portfolioVideos: profile?.portfolio_videos ?? [],
       }}
     />
   );
