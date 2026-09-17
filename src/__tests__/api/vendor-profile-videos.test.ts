@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { vendorProfileUpdateSchema } from '@/app/api/vendor-profile/route';
+import { vendorProfileUpdateSchema } from '@/app/api/vendor-profile/schema';
 
 describe('vendorProfileUpdateSchema portfolio_videos', () => {
   it('accepts up to 3 video uids', () => {
