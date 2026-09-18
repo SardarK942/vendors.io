@@ -21,5 +21,8 @@ export const vendorProfileUpdateSchema = z.object({
   base_address_public: z.boolean().optional(),
   // pause toggle
   is_active: z.boolean().optional(),
-  subcategories: z.array(z.string()).optional(),
+  // Nullable: the profile form sends `null` for categories that have no
+  // subcategory taxonomy. Without this, those vendors got "Validation failed"
+  // on every profile save (pre-existing bug surfaced during video testing).
+  subcategories: z.array(z.string()).optional().nullable(),
 });

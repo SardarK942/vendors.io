@@ -23,7 +23,7 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
     .single();
   if (!existing) throw new HttpError(403, 'No vendor profile for this user');
 
-  if (parsed.subcategories !== undefined) {
+  if (parsed.subcategories != null) {
     // Validate subcategories against the category this request will end up with:
     // the new category if it's being changed in the same PATCH, else the stored
     // one (re-loaded so we don't trust client input for the fallback).
