@@ -10,19 +10,35 @@ function videoFile(name: string, sizeMb = 5): File {
 
 const OLD_ENV = { ...process.env };
 
+// The file upload leg uses XMLHttpRequest (for real progress); mock it so send()
+// reports 100% and completes 200.
+class MockXHR {
+  upload: {
+    onprogress: null | ((e: { lengthComputable: boolean; loaded: number; total: number }) => void);
+  } = {
+    onprogress: null,
+  };
+  onload: null | (() => void) = null;
+  onerror: null | (() => void) = null;
+  status = 200;
+  open() {}
+  send() {
+    this.upload.onprogress?.({ lengthComputable: true, loaded: 1, total: 1 });
+    this.onload?.();
+  }
+}
+
 beforeEach(() => {
   // streamThumbnailUrl (used by the manage grid) reads this at render time.
   process.env.NEXT_PUBLIC_CLOUDFLARE_STREAM_SUBDOMAIN = 'customer-test';
-  // direct-upload -> uploadURL+uid ; PUT/POST upload -> ok ; status -> ready
-  const fetchMock = vi.fn((url: string, init?: RequestInit) => {
+  vi.stubGlobal('XMLHttpRequest', MockXHR);
+  // direct-upload -> uploadURL+uid ; status -> ready (the file upload goes via XHR)
+  const fetchMock = vi.fn((url: string) => {
     if (url.endsWith('/api/stream/direct-upload')) {
       return Promise.resolve({
         ok: true,
         json: async () => ({ uploadURL: 'https://up.cf/x', uid: 'vid-1' }),
       });
-    }
-    if (url === 'https://up.cf/x') {
-      return Promise.resolve({ ok: true, json: async () => ({}) });
     }
     if (url.includes('/api/stream/status/')) {
       return Promise.resolve({
