@@ -38,6 +38,7 @@ export function PhotoGalleryHero({ media, businessName, onOpen }: PhotoGalleryHe
               <img
                 src={streamThumbnailUrl(item.uid)}
                 alt=""
+                loading="lazy"
                 className="ease-[cubic-bezier(.22,1,.36,1)] h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03] motion-reduce:group-hover:scale-100"
               />
               <span aria-hidden className="absolute inset-0 grid place-items-center bg-ink/15">

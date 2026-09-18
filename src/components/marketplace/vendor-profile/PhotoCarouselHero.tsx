@@ -53,6 +53,7 @@ export function PhotoCarouselHero({ media, businessName, onOpen }: PhotoCarousel
                 <img
                   src={streamThumbnailUrl(item.uid)}
                   alt=""
+                  loading="lazy"
                   className="h-full w-full object-cover"
                 />
                 <span aria-hidden className="absolute inset-0 grid place-items-center bg-ink/15">
