@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { z } from 'zod';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
 import { validSubcategorySlugs } from '@/lib/vendor-subcategories';
-import { VENDOR_CATEGORIES } from '@/lib/utils';
 import { invalidateEmbeddingOnContentChange } from '@/lib/ai/embeddings';
+import { vendorProfileUpdateSchema } from './schema';
 
 // Historical note: this route previously refused is_active=true when the vendor
 // had zero active packages (409 NO_ACTIVE_PACKAGES). Removed because the custom-
@@ -12,31 +11,9 @@ import { invalidateEmbeddingOnContentChange } from '@/lib/ai/embeddings';
 // send quote requests to zero-package vendors — the gate was blocking legit
 // quote-only vendors (caterers, venues, planners) from resuming after a pause.
 
-const patchVendorProfileSchema = z.object({
-  business_name: z.string().min(2).max(100).optional(),
-  category: z.enum(VENDOR_CATEGORIES).optional(),
-  bio: z.string().max(2000).optional().nullable(),
-  service_area: z.array(z.string()).optional(),
-  instagram_handle: z.string().max(50).optional().nullable(),
-  website_url: z.string().url().optional().nullable().or(z.literal('')),
-  response_sla_hours: z.number().int().positive().optional(),
-  years_in_business: z.number().int().min(0).max(100).optional().nullable(),
-  portfolio_images: z.array(z.string().url()).optional(),
-  // base_address fields
-  base_address_line_1: z.string().max(200).optional().nullable(),
-  base_city: z.string().max(80).optional().nullable(),
-  base_state: z.string().max(80).optional().nullable(),
-  base_postal_code: z.string().max(20).optional().nullable(),
-  base_google_place_id: z.string().optional().nullable(),
-  base_address_public: z.boolean().optional(),
-  // pause toggle
-  is_active: z.boolean().optional(),
-  subcategories: z.array(z.string()).optional(),
-});
-
 export const PATCH = withErrorBoundary(async (request: NextRequest) => {
   const { user, supabase } = await requireUser();
-  const parsed = patchVendorProfileSchema.parse(await request.json());
+  const parsed = vendorProfileUpdateSchema.parse(await request.json());
 
   // Find vendor profile by user_id
   const { data: existing } = await supabase
@@ -46,7 +23,7 @@ export const PATCH = withErrorBoundary(async (request: NextRequest) => {
     .single();
   if (!existing) throw new HttpError(403, 'No vendor profile for this user');
 
-  if (parsed.subcategories !== undefined) {
+  if (parsed.subcategories != null) {
     // Validate subcategories against the category this request will end up with:
     // the new category if it's being changed in the same PATCH, else the stored
     // one (re-loaded so we don't trust client input for the fallback).

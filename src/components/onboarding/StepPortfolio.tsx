@@ -5,10 +5,11 @@ import { useFormErrors } from '@/hooks/useFormErrors';
 import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Button } from '@/components/ui/button';
 import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
+import { StreamVideoUploader } from '@/components/ui/StreamVideoUploader';
 import { portfolioSchema } from '@/lib/onboarding/validation';
 
 interface Props {
-  initial: { portfolioImages: string[] };
+  initial: { portfolioImages: string[]; portfolioVideos: string[] };
   profileId: string;
   mode: 'first' | 'next';
 }
@@ -16,14 +17,18 @@ interface Props {
 export function StepPortfolio({ initial, profileId, mode }: Props) {
   const router = useRouter();
   const [images, setImages] = useState<string[]>(initial.portfolioImages);
+  const [videos, setVideos] = useState<string[]>(initial.portfolioVideos);
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  useUnsavedChangesGuard(JSON.stringify(images) !== JSON.stringify(initial.portfolioImages));
+  useUnsavedChangesGuard(
+    JSON.stringify(images) !== JSON.stringify(initial.portfolioImages) ||
+      JSON.stringify(videos) !== JSON.stringify(initial.portfolioVideos)
+  );
 
   async function onNext() {
-    const parsed = portfolioSchema.safeParse({ portfolioImages: images });
+    const parsed = portfolioSchema.safeParse({ portfolioImages: images, portfolioVideos: videos });
     if (!parsed.success) {
       applyZodErrors(parsed.error);
       return;
@@ -87,6 +92,11 @@ export function StepPortfolio({ initial, profileId, mode }: Props) {
         showPrimarySelector
         triggerLabel={{ empty: 'Upload portfolio photos', manage: 'Manage photos' }}
       />
+
+      <div className="mt-6">
+        <p className="mb-2 text-sm font-medium text-ink">Portfolio videos (optional)</p>
+        <StreamVideoUploader value={videos} onChange={setVideos} maxClips={3} />
+      </div>
 
       {serverError && (
         <p className="text-sm text-destructive" role="alert" aria-live="assertive">

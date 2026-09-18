@@ -289,6 +289,7 @@ export interface Database {
           first_confirmed_booking_at: string | null;
           subcategories: string[] | null;
           services: string[] | null;
+          portfolio_videos: string[];
         };
         Insert: {
           id?: string;
@@ -314,6 +315,7 @@ export interface Database {
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
+          portfolio_videos?: string[];
           instagram_handle?: string | null;
           website_url?: string | null;
           verified?: boolean;
@@ -373,6 +375,7 @@ export interface Database {
           bio?: string | null;
           service_area?: string[];
           portfolio_images?: string[];
+          portfolio_videos?: string[];
           instagram_handle?: string | null;
           website_url?: string | null;
           verified?: boolean;

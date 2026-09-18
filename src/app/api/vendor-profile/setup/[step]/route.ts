@@ -192,6 +192,7 @@ export const PATCH = withErrorBoundary(
         .from('vendor_profiles')
         .update({
           portfolio_images: data.portfolioImages,
+          portfolio_videos: data.portfolioVideos ?? [],
         })
         .eq('id', profileId);
 
