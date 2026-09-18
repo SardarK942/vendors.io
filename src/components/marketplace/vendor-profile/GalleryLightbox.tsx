@@ -4,9 +4,11 @@ import * as React from 'react';
 import Image from 'next/image';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { StreamClip } from './StreamClip';
+import type { MediaItem } from '@/lib/portfolio-media';
 
 interface GalleryLightboxProps {
-  images: string[];
+  media: MediaItem[];
   businessName: string;
   /** Index to open at, or null when closed. */
   index: number | null;
@@ -22,7 +24,7 @@ const EASE = [0.22, 1, 0.36, 1] as const;
  * z-[100] so it sits above the mobile BookingBottomBar (z-50).
  */
 export function GalleryLightbox({
-  images,
+  media,
   businessName,
   index,
   onClose,
@@ -32,7 +34,7 @@ export function GalleryLightbox({
   const [dir, setDir] = React.useState(0);
   const open = index !== null;
   const closeRef = React.useRef<HTMLButtonElement>(null);
-  const count = images.length;
+  const count = media.length;
 
   const paginate = React.useCallback(
     (delta: number) => {
@@ -60,6 +62,8 @@ export function GalleryLightbox({
       document.body.style.overflow = prevOverflow;
     };
   }, [open, onClose, paginate]);
+
+  const activeItem = media[index ?? 0];
 
   const slide = reduced
     ? { enter: { opacity: 0 }, center: { opacity: 1 }, exit: { opacity: 0 } }
@@ -151,15 +155,28 @@ export function GalleryLightbox({
               className="absolute inset-0 flex touch-pan-y items-center justify-center p-4 sm:p-12"
             >
               <div className="relative h-full w-full">
-                <Image
-                  src={images[index ?? 0]}
-                  alt={`${businessName} photo ${(index ?? 0) + 1} of ${count}`}
-                  fill
-                  sizes="100vw"
-                  className="select-none object-contain"
-                  draggable={false}
-                  priority
-                />
+                {activeItem.type === 'video' ? (
+                  <div
+                    className="relative h-full w-full"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <StreamClip
+                      uid={activeItem.uid}
+                      title={`${businessName} clip ${(index ?? 0) + 1} of ${count}`}
+                    />
+                  </div>
+                ) : (
+                  <Image
+                    src={activeItem.url}
+                    alt={`${businessName} photo ${(index ?? 0) + 1} of ${count}`}
+                    fill
+                    sizes="100vw"
+                    className="select-none object-contain"
+                    draggable={false}
+                    priority
+                  />
+                )}
               </div>
             </motion.div>
           </AnimatePresence>

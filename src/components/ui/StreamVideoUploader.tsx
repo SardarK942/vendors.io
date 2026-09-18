@@ -84,7 +84,7 @@ export function StreamVideoUploader({ value, onChange, maxClips }: Props) {
         type="button"
         onClick={() => inputRef.current?.click()}
         disabled={busy || value.length >= maxClips}
-        className="inline-flex items-center gap-1.5 rounded-md border border-ink bg-cream px-3 py-2 text-sm font-medium text-ink transition-colors hover:bg-ink/5 disabled:opacity-50"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-md border border-ink bg-cream px-4 py-2.5 text-sm font-medium text-ink transition-colors hover:bg-ink/5 disabled:opacity-50"
       >
         Upload video ({value.length}/{maxClips})
       </button>
@@ -160,7 +160,7 @@ export function StreamVideoUploader({ value, onChange, maxClips }: Props) {
                 type="button"
                 aria-label="Remove clip"
                 onClick={() => onChange(value.filter((u) => u !== uid))}
-                className="absolute right-1 top-1 z-10 flex size-5 items-center justify-center rounded-full bg-ink/70 text-xs text-cream transition-colors hover:bg-ink"
+                className="absolute right-1.5 top-1.5 z-10 flex size-7 items-center justify-center rounded-full bg-ink/70 text-base leading-none text-cream transition-colors hover:bg-ink"
               >
                 ×
               </button>
