@@ -4,31 +4,35 @@ import * as React from 'react';
 import { PhotoGalleryHero } from './PhotoGalleryHero';
 import { PhotoCarouselHero } from './PhotoCarouselHero';
 import { GalleryLightbox } from './GalleryLightbox';
+import type { MediaItem } from '@/lib/portfolio-media';
 
 interface VendorGalleryProps {
-  images: string[];
+  media: MediaItem[];
   businessName: string;
 }
 
 /**
  * The vendor portfolio gallery: responsive display surfaces (mobile swipe
  * carousel + desktop mosaic) that both open a shared full-screen lightbox at the
- * tapped photo. Matches the DESIGN.md three-surface gallery composition.
+ * tapped photo or clip. Matches the DESIGN.md three-surface gallery composition.
+ * `media` is one ordered list (photos first, clips after — see
+ * mergePortfolioMedia); every surface indexes into it so grid→lightbox stays
+ * consistent.
  */
-export function VendorGallery({ images, businessName }: VendorGalleryProps) {
+export function VendorGallery({ media, businessName }: VendorGalleryProps) {
   const [index, setIndex] = React.useState<number | null>(null);
-  if (images.length === 0) return null;
+  if (media.length === 0) return null;
 
   return (
     <>
       <div className="md:hidden">
-        <PhotoCarouselHero images={images} businessName={businessName} onOpen={setIndex} />
+        <PhotoCarouselHero media={media} businessName={businessName} onOpen={setIndex} />
       </div>
       <div className="hidden md:block">
-        <PhotoGalleryHero images={images} businessName={businessName} onOpen={setIndex} />
+        <PhotoGalleryHero media={media} businessName={businessName} onOpen={setIndex} />
       </div>
       <GalleryLightbox
-        images={images}
+        media={media}
         businessName={businessName}
         index={index}
         onClose={() => setIndex(null)}

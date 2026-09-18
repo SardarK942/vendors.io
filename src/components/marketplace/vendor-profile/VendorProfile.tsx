@@ -27,6 +27,7 @@ import { getFeaturedPackage, proceedToBooking } from './helpers';
 import { fmtDate } from '@/lib/intl';
 import { track } from '@/lib/analytics/track';
 import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
+import { mergePortfolioMedia } from '@/lib/portfolio-media';
 
 type VendorRow = Database['public']['Tables']['vendor_profiles']['Row'];
 
@@ -93,10 +94,12 @@ export function VendorProfile({
   }
 
   const images = vendor.portfolio_images ?? [];
+  const videos = vendor.portfolio_videos ?? [];
+  const media = mergePortfolioMedia(images, videos);
   const hasReviews = vendor.review_count > 0 && vendor.average_rating != null;
-  // A single image is shown on the hero plate; only render a portfolio gallery
-  // when there is genuinely more than one photo to show.
-  const hasGallery = images.length >= 2;
+  // A single item is shown on the hero plate; only render a portfolio gallery
+  // when there is genuinely more than one photo/clip to show.
+  const hasGallery = media.length >= 2;
 
   const packagesSection =
     packages.length > 0 ? (
@@ -181,7 +184,7 @@ export function VendorProfile({
           {/* Portfolio gallery — clickable, opens a full-screen lightbox */}
           {hasGallery && (
             <div className="mt-4">
-              <VendorGallery images={images} businessName={vendor.business_name ?? 'Vendor'} />
+              <VendorGallery media={media} businessName={vendor.business_name ?? 'Vendor'} />
             </div>
           )}
 
