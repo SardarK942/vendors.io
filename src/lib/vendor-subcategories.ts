@@ -50,6 +50,17 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'rentals', label: 'Value-adds' },
     { slug: 'full_decor', label: 'Full decor' },
   ],
+  mehndi: [
+    { slug: 'bridal', label: 'Bridal henna' },
+    { slug: 'party', label: 'Party / guest henna' },
+    { slug: 'event', label: 'Event (hourly)' },
+  ],
+  gifts: [
+    { slug: 'favors', label: 'Guest favors' },
+    { slug: 'hampers', label: 'Hampers' },
+    { slug: 'mithai_boxes', label: 'Mithai boxes' },
+    { slug: 'welcome_bags', label: 'Welcome bags' },
+  ],
 };
 
 /**
@@ -69,6 +80,8 @@ export const SUBCATEGORY_SECTION_LABEL: Record<string, string> = {
   catering: 'Catering type',
   hair_makeup: 'Services offered',
   decor: 'Decor type',
+  mehndi: 'Henna type',
+  gifts: 'Gift type',
 };
 
 export function getSubcategoriesForCategory(
