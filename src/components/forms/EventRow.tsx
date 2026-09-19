@@ -2,6 +2,7 @@
 
 import { useId } from 'react';
 import { Button } from '@/components/ui/button';
+import { TimeInput } from '@/components/ui/TimeInput';
 import { EventTypeAutocomplete } from './EventTypeAutocomplete';
 import { GooglePlacesAutocomplete } from './GooglePlacesAutocomplete';
 import type { PlaceData } from './GooglePlacesAutocomplete';
@@ -144,13 +145,12 @@ export function EventRow({
           <label htmlFor={startTimeId} className="mb-1 block text-xs text-muted-foreground">
             Start Time
           </label>
-          <input
+          <TimeInput
             id={startTimeId}
-            type="time"
             className="w-full rounded-md border p-2 text-sm"
             value={data.event_start_time.slice(11, 16)}
-            onChange={(e) => {
-              const [h, m] = e.target.value.split(':');
+            onChange={(v) => {
+              const [h, m] = v.split(':');
               const base = data.event_date || new Date().toISOString().slice(0, 10);
               // No trailing `Z` — keep the time as the user typed it, in local TZ.
               onChange(index, { event_start_time: `${base}T${h}:${m}:00` });
@@ -162,13 +162,12 @@ export function EventRow({
           <label htmlFor={endTimeId} className="mb-1 block text-xs text-muted-foreground">
             End Time
           </label>
-          <input
+          <TimeInput
             id={endTimeId}
-            type="time"
             className="w-full rounded-md border p-2 text-sm"
             value={data.event_end_time.slice(11, 16)}
-            onChange={(e) => {
-              const [h, m] = e.target.value.split(':');
+            onChange={(v) => {
+              const [h, m] = v.split(':');
               const base = data.event_date || new Date().toISOString().slice(0, 10);
               // No trailing `Z` — keep the time as the user typed it, in local TZ.
               onChange(index, { event_end_time: `${base}T${h}:${m}:00` });

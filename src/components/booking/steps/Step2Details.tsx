@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { DatePicker } from '@/components/ui/date-picker';
 import { EventTypePicker } from '@/components/ui/EventTypePicker';
+import { TimeInput } from '@/components/ui/TimeInput';
 import { BUDGET_RANGES, type BudgetRange } from '@/lib/booking/custom-request-validation';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 import type { RequestedDetailField } from '@/lib/booking/requested-details';
@@ -239,11 +240,10 @@ export function Step2Details({
                     >
                       Start time
                     </label>
-                    <input
+                    <TimeInput
                       id={`time-${event.id}`}
-                      type="time"
                       value={event.startTime}
-                      onChange={(e) => updateEvent(idx, { startTime: e.target.value })}
+                      onChange={(v) => updateEvent(idx, { startTime: v })}
                       className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
                     />
                   </div>

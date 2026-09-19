@@ -2,10 +2,16 @@
 import { useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
 import { Input } from '@/components/ui/input';
+import { TimeInput } from '@/components/ui/TimeInput';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { useRouter } from 'next/navigation';
+
+// Mirrors the shadcn <Input> default styling so the TimeInputs (a bare native
+// input under the hood) keep visual parity with the sibling date <Input>.
+const SHADCN_INPUT_CLASS =
+  'flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm';
 
 export function BlockDateForm() {
   const router = useRouter();
@@ -64,21 +70,21 @@ export function BlockDateForm() {
         <div className="flex gap-3">
           <div>
             <Label htmlFor="start">Start</Label>
-            <Input
+            <TimeInput
               id="start"
-              type="time"
               value={startTime}
-              onChange={(e) => setStartTime(e.target.value)}
+              onChange={setStartTime}
+              className={SHADCN_INPUT_CLASS}
               required
             />
           </div>
           <div>
             <Label htmlFor="end">End</Label>
-            <Input
+            <TimeInput
               id="end"
-              type="time"
               value={endTime}
-              onChange={(e) => setEndTime(e.target.value)}
+              onChange={setEndTime}
+              className={SHADCN_INPUT_CLASS}
               required
             />
           </div>
