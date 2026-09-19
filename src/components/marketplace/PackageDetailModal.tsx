@@ -12,6 +12,7 @@ import { PackagePhotoFallback } from './PackagePhotoFallback';
 import { fmtUSD } from '@/lib/intl';
 import { formatPackageMeta } from '@/types';
 import { pricingUnitSuffix } from '@/lib/packages/archetypes';
+import { getPackageAttributes } from '@/lib/packages/attributes';
 
 // Humanize a snake_case attribute key when no category-labelled field list is
 // in scope (the package row carries no category). e.g. "edited_photos" →
@@ -22,13 +23,20 @@ function humanizeKey(key: string): string {
 }
 
 // Turn the stored attributes bag into display rows. bool → label only when true;
-// number/text → "Label: value". Empty/false values are dropped.
-function attributeChips(attributes: Record<string, unknown> | null | undefined): string[] {
+// number/text → "Label: value". Empty/false values are dropped. When a vendor
+// category is known, prefer its labelled field names (getPackageAttributes) for
+// nicer labels (e.g. "# of photographers"); otherwise fall back to humanizing
+// the snake_case key.
+function attributeChips(
+  attributes: Record<string, unknown> | null | undefined,
+  category?: string
+): string[] {
   if (!attributes) return [];
+  const labelByKey = new Map(getPackageAttributes(category ?? '').map((f) => [f.key, f.label]));
   const rows: string[] = [];
   for (const [key, value] of Object.entries(attributes)) {
     if (value == null || value === false || value === '') continue;
-    const label = humanizeKey(key);
+    const label = labelByKey.get(key) ?? humanizeKey(key);
     rows.push(value === true ? label : `${label}: ${String(value)}`);
   }
   return rows;
@@ -37,6 +45,9 @@ function attributeChips(attributes: Record<string, unknown> | null | undefined):
 interface Props {
   pkg: PackageWithAddons;
   vendorSlug: string;
+  /** Vendor category — used to label attribute chips with category-specific
+   * field names; empty/unknown falls back to humanized keys. */
+  category?: string;
   onClose: () => void;
   interactive?: boolean;
 }
@@ -49,7 +60,13 @@ interface Props {
  * - vendor_notes_template preview
  * - "Continue to Booking" CTA → writes signed cookie + navigates to /book
  */
-export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = true }: Props) {
+export function PackageDetailModal({
+  pkg,
+  vendorSlug,
+  category,
+  onClose,
+  interactive = true,
+}: Props) {
   const router = useRouter();
   const [toggled, setToggled] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -61,7 +78,7 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
 
   // Display-only pricing basis (e.g. " /guest"). Pre-migration rows → 'flat' → ''.
   const priceSuffix = pricingUnitSuffix(pkg.pricing_unit ?? 'flat');
-  const detailChips = attributeChips(pkg.attributes);
+  const detailChips = attributeChips(pkg.attributes, category);
 
   function toggleAddon(id: string) {
     setToggled((prev) => {

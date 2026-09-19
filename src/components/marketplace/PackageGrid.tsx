@@ -48,6 +48,9 @@ type PackageItem = PackageWithAddons | CustomRequestPackage;
 interface Props {
   packages: PackageItem[];
   vendorSlug: string;
+  /** Vendor category — threaded to the detail modal so attribute chips can use
+   * category-labelled field names; empty falls back to humanized keys. */
+  vendorCategory?: string;
   interactive?: boolean;
   featuredPackageId?: string;
   onRequestCustomQuote?: () => void;
@@ -67,6 +70,7 @@ function isCustom(p: PackageItem): p is CustomRequestPackage {
 export function PackageGrid({
   packages,
   vendorSlug,
+  vendorCategory = '',
   interactive = true,
   featuredPackageId,
   onRequestCustomQuote,
@@ -223,6 +227,7 @@ export function PackageGrid({
         <PackageDetailModal
           pkg={selected}
           vendorSlug={vendorSlug}
+          category={vendorCategory}
           onClose={() => setSelected(null)}
           interactive={interactive}
         />
