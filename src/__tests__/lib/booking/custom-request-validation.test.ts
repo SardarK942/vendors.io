@@ -27,6 +27,23 @@ describe('customRequestSchemaV2 — v2 extensions', () => {
     expect(parsed.success).toBe(true);
   });
 
+  it('accepts the new event_address + event_google_place_id fields', () => {
+    const parsed = customRequestSchemaV2.safeParse({
+      ...validBase,
+      event_address: '1600 W Loop S, Houston, TX 77027',
+      event_google_place_id: 'ChIJ_abc123',
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects an over-long event_address', () => {
+    const parsed = customRequestSchemaV2.safeParse({
+      ...validBase,
+      event_address: 'x'.repeat(301),
+    });
+    expect(parsed.success).toBe(false);
+  });
+
   it('rejects an unknown budget_range', () => {
     const parsed = customRequestSchemaV2.safeParse({ ...validBase, budget_range: 'huge_amount' });
     expect(parsed.success).toBe(false);

@@ -6,6 +6,11 @@ import { EventTypePicker } from '@/components/ui/EventTypePicker';
 import { BUDGET_RANGES, type BudgetRange } from '@/lib/booking/custom-request-validation';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 import type { RequestedDetailField } from '@/lib/booking/requested-details';
+import { getRequestGuidance } from '@/lib/booking/request-guidance';
+import {
+  GooglePlacesAutocomplete,
+  type PlaceData,
+} from '@/components/forms/GooglePlacesAutocomplete';
 import type { CustomEvent } from '../CustomRequestFlow';
 
 export interface Step2DetailsProps {
@@ -16,6 +21,12 @@ export interface Step2DetailsProps {
   onEventCityChange: (v: string) => void;
   venueName: string;
   onVenueNameChange: (v: string) => void;
+  eventAddress: string;
+  onEventAddressChange: (v: string) => void;
+  eventGooglePlaceId: string;
+  onEventGooglePlaceIdChange: (v: string) => void;
+  // Vendor category drives the free-text guidance (placeholder + faint bullets).
+  vendorCategory: string;
   budgetRange: BudgetRange | null;
   onBudgetRangeChange: (v: BudgetRange | null) => void;
   description: string;
@@ -92,6 +103,11 @@ export function Step2Details({
   onEventCityChange,
   venueName,
   onVenueNameChange,
+  eventAddress,
+  onEventAddressChange,
+  eventGooglePlaceId,
+  onEventGooglePlaceIdChange,
+  vendorCategory,
   budgetRange,
   onBudgetRangeChange,
   description,
@@ -128,6 +144,27 @@ export function Step2Details({
     }
     onEventsChange(next);
   }
+
+  // Map a Google Places selection onto the flow's location state. `location_name`
+  // is only present for establishments/venues (mode="all"); street addresses omit
+  // it. `event_city` drives the "can continue" gate, so it's always set from the
+  // selection (in the no-key fallback the component routes free text into `city`).
+  function handlePlaceSelect(place: PlaceData) {
+    if (place.location_name) onVenueNameChange(place.location_name);
+    onEventCityChange(place.city);
+    const composed = [
+      place.address_line_1,
+      place.city,
+      `${place.state} ${place.postal_code}`.trim(),
+    ]
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .join(', ');
+    onEventAddressChange(composed);
+    onEventGooglePlaceIdChange(place.google_place_id);
+  }
+
+  const guidance = getRequestGuidance(vendorCategory);
 
   const canContinue =
     events.every((e) => e.date && e.eventTypeId && e.guestCount.trim()) &&
@@ -238,40 +275,29 @@ export function Step2Details({
         })}
       </div>
 
-      <div className="grid gap-4 border-t border-hairline pt-6 md:grid-cols-2">
-        <div>
-          <label
-            htmlFor="event-city"
-            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
-          >
-            Event city
-          </label>
-          <input
-            id="event-city"
-            type="text"
-            required
-            value={eventCity}
-            onChange={(e) => onEventCityChange(e.target.value)}
-            placeholder="Houston, TX"
-            className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="venue-name"
-            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
-          >
-            Venue name <span className="text-ink-soft">— optional</span>
-          </label>
-          <input
-            id="venue-name"
-            type="text"
-            value={venueName}
-            onChange={(e) => onVenueNameChange(e.target.value)}
-            placeholder="The Post Oak Hotel, or leave blank if not booked"
-            className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
-          />
-        </div>
+      <div className="border-t border-hairline pt-6">
+        <label
+          htmlFor="event-location"
+          className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+        >
+          Where&apos;s the event?
+        </label>
+        <GooglePlacesAutocomplete
+          id="event-location"
+          mode="all"
+          value={{
+            location_name: venueName || undefined,
+            address_line_1: eventAddress || undefined,
+            city: eventCity || undefined,
+            google_place_id: eventGooglePlaceId || undefined,
+          }}
+          onChange={handlePlaceSelect}
+          placeholder="Search a venue or address"
+          className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-ink-soft">
+          Search a venue, or enter the home/property address
+        </p>
       </div>
 
       <EventFunctionSelect
@@ -373,9 +399,19 @@ export function Step2Details({
           maxLength={1000}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Tell the vendor what makes your event special — coverage hours, dietary needs, color palette, cultural specifics, anything outside their standard offering…"
+          placeholder={guidance.placeholder}
           className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
         />
+        {guidance.bullets.length > 0 && (
+          <div className="mt-2 text-xs text-ink-soft">
+            <p className="mb-1">You might mention:</p>
+            <ul className="list-disc space-y-0.5 pl-4">
+              {guidance.bullets.map((bullet) => (
+                <li key={bullet}>{bullet}</li>
+              ))}
+            </ul>
+          </div>
+        )}
         <p className="mt-1 text-xs tabular-nums text-ink-soft">
           {description.length} / 1000 · minimum 50 characters
         </p>

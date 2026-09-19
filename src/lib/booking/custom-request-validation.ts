@@ -51,6 +51,8 @@ export const customRequestSchemaV2 = z.object({
   is_multi_day: z.boolean().optional().default(false),
   event_city: z.string().min(1).max(120).nullish(),
   venue_name: z.string().max(120).nullish(),
+  event_address: z.string().max(300).nullish(),
+  event_google_place_id: z.string().max(300).nullish(),
   budget_range: z.enum(BUDGET_RANGES).nullish(),
   event_function_id: z.string().uuid().nullish(),
 });

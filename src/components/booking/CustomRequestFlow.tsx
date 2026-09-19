@@ -67,6 +67,8 @@ export function CustomRequestFlow({
   const [events, setEvents] = React.useState<CustomEvent[]>([makeBlankEvent()]);
   const [eventCity, setEventCity] = React.useState('');
   const [venueName, setVenueName] = React.useState('');
+  const [eventAddress, setEventAddress] = React.useState('');
+  const [eventGooglePlaceId, setEventGooglePlaceId] = React.useState('');
   const [budgetRange, setBudgetRange] = React.useState<BudgetRange | null>(null);
   const [description, setDescription] = React.useState('');
   const [requestedDetails, setRequestedDetails] = React.useState<RequestedDetailValues>({});
@@ -103,6 +105,8 @@ export function CustomRequestFlow({
           })),
           event_city: eventCity.trim() || null,
           venue_name: venueName.trim() || null,
+          event_address: eventAddress.trim() || null,
+          event_google_place_id: eventGooglePlaceId.trim() || null,
           budget_range: budgetRange,
           description: composedDescription,
           event_function_id: eventFunctionId ?? undefined,
@@ -162,6 +166,11 @@ export function CustomRequestFlow({
           onEventCityChange={setEventCity}
           venueName={venueName}
           onVenueNameChange={setVenueName}
+          eventAddress={eventAddress}
+          onEventAddressChange={setEventAddress}
+          eventGooglePlaceId={eventGooglePlaceId}
+          onEventGooglePlaceIdChange={setEventGooglePlaceId}
+          vendorCategory={vendorCategory}
           budgetRange={budgetRange}
           onBudgetRangeChange={setBudgetRange}
           description={description}
@@ -182,6 +191,7 @@ export function CustomRequestFlow({
           events={events}
           eventCity={eventCity}
           venueName={venueName}
+          eventAddress={eventAddress}
           budgetRange={budgetRange}
           description={description}
           requestedDetailFields={requestedDetailFields}

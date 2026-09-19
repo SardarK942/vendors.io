@@ -683,6 +683,8 @@ export interface Database {
           is_multi_day: boolean;
           event_city: string | null;
           venue_name: string | null;
+          event_address: string | null;
+          event_google_place_id: string | null;
           budget_range: string | null;
           event_function_id: string | null;
           created_at: string;
@@ -728,6 +730,8 @@ export interface Database {
           is_multi_day?: boolean;
           event_city?: string | null;
           venue_name?: string | null;
+          event_address?: string | null;
+          event_google_place_id?: string | null;
           budget_range?: string | null;
           event_function_id?: string | null;
           created_at?: string;
@@ -772,6 +776,8 @@ export interface Database {
           is_multi_day?: boolean;
           event_city?: string | null;
           venue_name?: string | null;
+          event_address?: string | null;
+          event_google_place_id?: string | null;
           budget_range?: string | null;
           event_function_id?: string | null;
           updated_at?: string;

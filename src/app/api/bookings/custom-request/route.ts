@@ -60,6 +60,8 @@ export async function POST(req: NextRequest) {
   let is_multi_day: boolean = false;
   let event_city: string | null = null;
   let venue_name: string | null = null;
+  let event_address: string | null = null;
+  let event_google_place_id: string | null = null;
   let budget_range: string | null = null;
   let event_function_id: string | null = null;
 
@@ -71,6 +73,8 @@ export async function POST(req: NextRequest) {
       is_multi_day: imd,
       event_city: ec,
       venue_name: vn,
+      event_address: ea,
+      event_google_place_id: egp,
       budget_range: br,
       event_function_id: efi,
     } = parsedV2.data;
@@ -83,6 +87,8 @@ export async function POST(req: NextRequest) {
     is_multi_day = imd;
     event_city = ec ?? null;
     venue_name = vn ?? null;
+    event_address = ea ?? null;
+    event_google_place_id = egp ?? null;
     budget_range = br ?? null;
     event_function_id = efi ?? null;
     if (events.length > 1) {
@@ -131,6 +137,8 @@ export async function POST(req: NextRequest) {
       is_multi_day,
       event_city,
       venue_name,
+      event_address,
+      event_google_place_id,
       budget_range,
     })
     .select('id')
@@ -186,7 +194,7 @@ export async function POST(req: NextRequest) {
             eventType: event_type,
             eventDate: event_date,
             headcount: guest_count,
-            location: venue_name ?? event_city ?? 'TBD',
+            location: event_address ?? venue_name ?? event_city ?? 'TBD',
             description,
             bookingId: inserted.id,
             notificationId: notifyResult.id,

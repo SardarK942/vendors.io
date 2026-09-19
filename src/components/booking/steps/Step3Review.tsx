@@ -23,6 +23,7 @@ export interface Step3ReviewProps {
   events: CustomEvent[];
   eventCity: string;
   venueName: string;
+  eventAddress: string;
   budgetRange: BudgetRange | null;
   description: string;
   requestedDetailFields?: RequestedDetailField[];
@@ -41,6 +42,7 @@ export function Step3Review(props: Step3ReviewProps) {
     events,
     eventCity,
     venueName,
+    eventAddress,
     budgetRange,
     description,
     requestedDetailFields = [],
@@ -108,7 +110,7 @@ export function Step3Review(props: Step3ReviewProps) {
             Location
           </p>
           <p className="text-sm text-ink">
-            {eventCity}
+            {eventAddress || eventCity}
             {venueName && ` · ${venueName}`}
           </p>
         </div>
