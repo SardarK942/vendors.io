@@ -19,6 +19,19 @@ import { PackageAddonsEditor, type AddonDraft } from '@/components/forms/Package
 import { PackageLivePreview } from '@/components/forms/PackageLivePreview';
 import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 import { PACKAGE_CAPACITY_UNITS, type PackageCapacityUnitInput } from '@/types';
+import { getPackageFieldConfig, type PricingUnit } from '@/lib/packages/archetypes';
+
+// Human-readable labels for the pricing-unit selector. Kept here (UI layer)
+// rather than in the archetype lib, which stays presentation-free.
+const PRICING_UNIT_LABELS: Record<PricingUnit, string> = {
+  flat: 'Flat rate',
+  per_guest: 'Per guest',
+  per_person: 'Per person',
+  per_serving: 'Per serving',
+  per_item: 'Per item',
+  per_hour: 'Per hour',
+  per_day: 'Per day',
+};
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -27,9 +40,14 @@ export interface PackageInitial {
   name: string;
   description: string;
   base_price_cents: number;
-  max_guests: number;
+  // max_guests / duration_hours are archetype-gated and nullable as of
+  // migration 00079 — categories that hide the field store NULL.
+  max_guests: number | null;
   capacity_unit: PackageCapacityUnitInput;
-  duration_hours: number;
+  duration_hours: number | null;
+  // Optional: pre-migration rows have no pricing_unit; the form falls back to
+  // the category default when absent.
+  pricing_unit?: PricingUnit;
   events_count: number;
   featured_image_url: string | null;
   gallery_image_urls: string[];
@@ -44,11 +62,11 @@ interface Props {
   mode: 'create' | 'edit';
   initial?: PackageInitial;
   /**
-   * Whether to show the guests-vs-servings capacity-unit selector. Only cart
-   * vendors price by servings; every other vendor stays on 'guests', so the
-   * selector is hidden and the field reads simply "Max guests".
+   * The vendor's primary category. Drives field visibility, labels, and the
+   * allowed pricing units via getPackageFieldConfig — including whether the
+   * guests-vs-servings capacity-unit selector shows (cart vendors only).
    */
-  capacityUnitEditable?: boolean;
+  category: string;
 }
 
 // ─── Section shell ──────────────────────────────────────────────────────────────
@@ -75,20 +93,31 @@ function Section({
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
-export function PackageEditorForm({ mode, initial, capacityUnitEditable = false }: Props) {
+export function PackageEditorForm({ mode, initial, category }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+
+  // Single source of truth for how this category's package fields behave.
+  const cfg = getPackageFieldConfig(category);
+  const capacityUnitEditable = cfg.capacityUnitEditable;
 
   // Controlled state — every field that feeds the live preview is controlled so
   // the customer-facing card mirror updates as the vendor types.
   const [name, setName] = useState(initial?.name ?? '');
   const [description, setDescription] = useState(initial?.description ?? '');
   const [basePrice, setBasePrice] = useState(initial ? String(initial.base_price_cents / 100) : '');
-  const [maxGuests, setMaxGuests] = useState(initial ? String(initial.max_guests) : '');
+  const [maxGuests, setMaxGuests] = useState(
+    initial?.max_guests != null ? String(initial.max_guests) : ''
+  );
   const [capacityUnit, setCapacityUnit] = useState<PackageCapacityUnitInput>(
     initial?.capacity_unit ?? 'guests'
   );
-  const [durationHours, setDurationHours] = useState(initial ? String(initial.duration_hours) : '');
+  const [durationHours, setDurationHours] = useState(
+    initial?.duration_hours != null ? String(initial.duration_hours) : ''
+  );
+  const [pricingUnit, setPricingUnit] = useState<PricingUnit>(
+    initial?.pricing_unit ?? cfg.defaultPricingUnit
+  );
   const [eventsCount, setEventsCount] = useState(initial ? String(initial.events_count) : '1');
   const [featuredImageUrl, setFeaturedImageUrl] = useState(initial?.featured_image_url ?? '');
   const [locationMode, setLocationMode] = useState<'couple_provides' | 'at_vendor'>(
@@ -123,11 +152,20 @@ export function PackageEditorForm({ mode, initial, capacityUnitEditable = false 
       name: name.trim(),
       description: description.trim(),
       base_price_cents: Math.round(parseFloat(basePrice) * 100),
-      max_guests: parseInt(maxGuests, 10),
+      // Archetype-gated: hidden fields submit null (never 0/1); a visible-but-
+      // empty optional field also submits null.
+      max_guests:
+        cfg.maxGuests === 'hidden' || maxGuests.trim() === '' ? null : parseInt(maxGuests, 10),
       // Non-cart vendors never see the unit selector; pin them to 'guests'.
       // is_featured is intentionally omitted — it's owned by the list toggle.
       capacity_unit: capacityUnitEditable ? capacityUnit : ('guests' as const),
-      duration_hours: parseFloat(durationHours),
+      duration_hours:
+        cfg.durationHours === 'hidden' || durationHours.trim() === ''
+          ? null
+          : parseFloat(durationHours),
+      // Phase 1: stored/display only — no pricing-math change. When the category
+      // allows a single unit there's no control, so this stays the default.
+      pricing_unit: pricingUnit,
       events_count: parseInt(eventsCount || '1', 10),
       featured_image_url: featuredImageUrl || null,
       gallery_image_urls: [] as string[],
@@ -253,67 +291,96 @@ export function PackageEditorForm({ mode, initial, capacityUnitEditable = false 
                   Not final — you can send an adjusted quote per booking.
                 </p>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="max_guests">
-                  {capacityUnitEditable ? 'Capacity *' : 'Max guests *'}
-                </Label>
-                <div className="flex gap-2">
+              {cfg.maxGuests !== 'hidden' && (
+                <div className="space-y-2">
+                  <Label htmlFor="max_guests">
+                    {cfg.maxGuestsLabel}
+                    {cfg.maxGuests === 'required' ? ' *' : ''}
+                  </Label>
+                  <div className="flex gap-2">
+                    <Input
+                      id="max_guests"
+                      type="number"
+                      min={1}
+                      required={cfg.maxGuests === 'required'}
+                      value={maxGuests}
+                      onChange={(e) => setMaxGuests(e.target.value)}
+                      placeholder="200"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      className="tabular-nums"
+                    />
+                    {capacityUnitEditable && (
+                      <Select
+                        value={capacityUnit}
+                        onValueChange={(v) => setCapacityUnit(v as PackageCapacityUnitInput)}
+                      >
+                        <SelectTrigger className="w-[130px] shrink-0" aria-label="Capacity unit">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {PACKAGE_CAPACITY_UNITS.map((u) => (
+                            <SelectItem key={u.value} value={u.value}>
+                              {u.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  {capacityUnitEditable && (
+                    <p className="text-pretty text-xs text-ink-soft">
+                      Shows as “{maxGuests ? `up to ${maxGuests}` : 'up to 200'} {capacityUnit}”.
+                      Choose servings if you price by the pour.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {cfg.pricingUnits.length > 1 && (
+              <div className="space-y-2 sm:max-w-[calc(50%-0.5rem)]">
+                <Label htmlFor="pricing_unit">How you price</Label>
+                <Select value={pricingUnit} onValueChange={(v) => setPricingUnit(v as PricingUnit)}>
+                  <SelectTrigger id="pricing_unit" aria-label="Pricing unit">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cfg.pricingUnits.map((u) => (
+                      <SelectItem key={u} value={u}>
+                        {PRICING_UNIT_LABELS[u]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-pretty text-xs text-ink-soft">
+                  How your base price is measured — shown to couples for context.
+                </p>
+              </div>
+            )}
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {cfg.durationHours !== 'hidden' && (
+                <div className="space-y-2">
+                  <Label htmlFor="duration_hours">
+                    {cfg.durationHoursLabel}
+                    {cfg.durationHours === 'required' ? ' *' : ''}
+                  </Label>
                   <Input
-                    id="max_guests"
+                    id="duration_hours"
                     type="number"
-                    min={1}
-                    required
-                    value={maxGuests}
-                    onChange={(e) => setMaxGuests(e.target.value)}
-                    placeholder="200"
-                    inputMode="numeric"
+                    min={0.5}
+                    step={0.5}
+                    required={cfg.durationHours === 'required'}
+                    value={durationHours}
+                    onChange={(e) => setDurationHours(e.target.value)}
+                    placeholder="8"
+                    inputMode="decimal"
                     autoComplete="off"
                     className="tabular-nums"
                   />
-                  {capacityUnitEditable && (
-                    <Select
-                      value={capacityUnit}
-                      onValueChange={(v) => setCapacityUnit(v as PackageCapacityUnitInput)}
-                    >
-                      <SelectTrigger className="w-[130px] shrink-0" aria-label="Capacity unit">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {PACKAGE_CAPACITY_UNITS.map((u) => (
-                          <SelectItem key={u.value} value={u.value}>
-                            {u.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
                 </div>
-                {capacityUnitEditable && (
-                  <p className="text-pretty text-xs text-ink-soft">
-                    Shows as “{maxGuests ? `up to ${maxGuests}` : 'up to 200'} {capacityUnit}”.
-                    Choose servings if you price by the pour.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="duration_hours">Duration (hours) *</Label>
-                <Input
-                  id="duration_hours"
-                  type="number"
-                  min={0.5}
-                  step={0.5}
-                  required
-                  value={durationHours}
-                  onChange={(e) => setDurationHours(e.target.value)}
-                  placeholder="8"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  className="tabular-nums"
-                />
-              </div>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="events_count">Number of events (1–5)</Label>
                 <Input

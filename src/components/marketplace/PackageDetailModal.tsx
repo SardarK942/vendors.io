@@ -10,7 +10,7 @@ import { Separator } from '@/components/ui/separator';
 import type { PackageWithAddons } from './PackageGrid';
 import { PackagePhotoFallback } from './PackagePhotoFallback';
 import { fmtUSD } from '@/lib/intl';
-import { formatCapacity } from '@/types';
+import { formatPackageMeta } from '@/types';
 
 interface Props {
   pkg: PackageWithAddons;
@@ -95,11 +95,17 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           </div>
 
           {/* Summary line */}
-          <p className="text-sm tabular-nums text-muted-foreground">
-            {pkg.duration_hours}
-            {' '}h · {formatCapacity(pkg.max_guests, pkg.capacity_unit)}
-            {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
-          </p>
+          {(() => {
+            const metaLine = formatPackageMeta({
+              durationHours: pkg.duration_hours,
+              maxGuests: pkg.max_guests,
+              capacityUnit: pkg.capacity_unit,
+              eventsCount: pkg.events_count,
+            });
+            return metaLine ? (
+              <p className="text-sm tabular-nums text-muted-foreground">{metaLine}</p>
+            ) : null;
+          })()}
 
           {/* Description */}
           <p className="text-sm">{pkg.description}</p>

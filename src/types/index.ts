@@ -194,11 +194,39 @@ export const PACKAGE_CAPACITY_UNITS = [
 export const packageCapacityUnitSchema = z.enum(['guests', 'servings']);
 export type PackageCapacityUnitInput = z.infer<typeof packageCapacityUnitSchema>;
 
-/** "up to 300 servings" / "up to 1 guest" — pluralization-aware capacity line. */
-export function formatCapacity(value: number, unit: PackageCapacityUnitInput): string {
+/**
+ * "up to 300 servings" / "up to 1 guest" — pluralization-aware capacity line.
+ * Returns '' for a null/undefined value so archetype-hidden capacities (NULL as
+ * of migration 00079) render nothing instead of a coerced number.
+ */
+export function formatCapacity(
+  value: number | null | undefined,
+  unit: PackageCapacityUnitInput
+): string {
+  if (value == null) return '';
   const meta = PACKAGE_CAPACITY_UNITS.find((u) => u.value === unit);
   const word = value === 1 ? (meta?.singular ?? unit) : (meta?.value ?? unit);
   return `up to ${value} ${word}`;
+}
+
+/**
+ * Build the "8 h · up to 200 guests · 3 events" package meta line, skipping any
+ * segment whose value is null. duration_hours / max_guests are archetype-gated
+ * and write NULL for categories that hide them (migration 00079), so each
+ * segment is omitted rather than coerced. Returns '' when nothing to show, so
+ * callers can drop the line entirely.
+ */
+export function formatPackageMeta(opts: {
+  durationHours?: number | null;
+  maxGuests?: number | null;
+  capacityUnit: PackageCapacityUnitInput;
+  eventsCount?: number | null;
+}): string {
+  const parts: string[] = [];
+  if (opts.durationHours != null) parts.push(`${opts.durationHours} h`);
+  if (opts.maxGuests != null) parts.push(formatCapacity(opts.maxGuests, opts.capacityUnit));
+  if (opts.eventsCount != null && opts.eventsCount > 1) parts.push(`${opts.eventsCount} events`);
+  return parts.join(' · ');
 }
 
 export const createPackageSchema = z.object({

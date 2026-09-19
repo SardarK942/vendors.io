@@ -11,15 +11,16 @@ import { PackagePhotoFallback } from './PackagePhotoFallback';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
 import type { PackageCapacityUnit } from '@/types/database.types';
 import { fmtUSD } from '@/lib/intl';
-import { formatCapacity } from '@/types';
+import { formatPackageMeta } from '@/types';
 
 export interface PackageWithAddons {
   id: string;
   name: string;
   description: string;
   base_price_cents: number;
-  duration_hours: number;
-  max_guests: number;
+  // Nullable as of migration 00079 — archetype-hidden categories store NULL.
+  duration_hours: number | null;
+  max_guests: number | null;
   capacity_unit: PackageCapacityUnit;
   events_count: number;
   featured_image_url: string | null;
@@ -181,11 +182,17 @@ export function PackageGrid({
                   <h3 className="text-base font-semibold leading-tight" translate="no">
                     {p.name}
                   </h3>
-                  <p className="text-sm tabular-nums text-muted-foreground">
-                    {p.duration_hours}
-                    {' '}h · {formatCapacity(p.max_guests, p.capacity_unit)}
-                    {p.events_count > 1 && ` · ${p.events_count} events`}
-                  </p>
+                  {(() => {
+                    const metaLine = formatPackageMeta({
+                      durationHours: p.duration_hours,
+                      maxGuests: p.max_guests,
+                      capacityUnit: p.capacity_unit,
+                      eventsCount: p.events_count,
+                    });
+                    return metaLine ? (
+                      <p className="text-sm tabular-nums text-muted-foreground">{metaLine}</p>
+                    ) : null;
+                  })()}
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-lg font-bold tabular-nums">
                       {fmtUSD(p.base_price_cents)}
