@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PACKAGE_PRICING_UNITS } from '@/lib/packages/archetypes';
 
 // ─── Vendor Schemas ─────────────────────────────────────────────
 
@@ -193,11 +194,39 @@ export const PACKAGE_CAPACITY_UNITS = [
 export const packageCapacityUnitSchema = z.enum(['guests', 'servings']);
 export type PackageCapacityUnitInput = z.infer<typeof packageCapacityUnitSchema>;
 
-/** "up to 300 servings" / "up to 1 guest" — pluralization-aware capacity line. */
-export function formatCapacity(value: number, unit: PackageCapacityUnitInput): string {
+/**
+ * "up to 300 servings" / "up to 1 guest" — pluralization-aware capacity line.
+ * Returns '' for a null/undefined value so archetype-hidden capacities (NULL as
+ * of migration 00079) render nothing instead of a coerced number.
+ */
+export function formatCapacity(
+  value: number | null | undefined,
+  unit: PackageCapacityUnitInput
+): string {
+  if (value == null) return '';
   const meta = PACKAGE_CAPACITY_UNITS.find((u) => u.value === unit);
   const word = value === 1 ? (meta?.singular ?? unit) : (meta?.value ?? unit);
   return `up to ${value} ${word}`;
+}
+
+/**
+ * Build the "8 h · up to 200 guests · 3 events" package meta line, skipping any
+ * segment whose value is null. duration_hours / max_guests are archetype-gated
+ * and write NULL for categories that hide them (migration 00079), so each
+ * segment is omitted rather than coerced. Returns '' when nothing to show, so
+ * callers can drop the line entirely.
+ */
+export function formatPackageMeta(opts: {
+  durationHours?: number | null;
+  maxGuests?: number | null;
+  capacityUnit: PackageCapacityUnitInput;
+  eventsCount?: number | null;
+}): string {
+  const parts: string[] = [];
+  if (opts.durationHours != null) parts.push(`${opts.durationHours} h`);
+  if (opts.maxGuests != null) parts.push(formatCapacity(opts.maxGuests, opts.capacityUnit));
+  if (opts.eventsCount != null && opts.eventsCount > 1) parts.push(`${opts.eventsCount} events`);
+  return parts.join(' · ');
 }
 
 export const createPackageSchema = z.object({
@@ -205,9 +234,15 @@ export const createPackageSchema = z.object({
   description: z.string().min(1).max(2000),
   base_price_cents: z.number().int().positive(),
   included_items: z.array(z.string().max(200)).max(20).default([]),
-  max_guests: z.number().int().positive(),
+  // max_guests / duration_hours are archetype-gated (nullable in the DB as of
+  // migration 00079): time-based and goods categories hide them. Kept optional
+  // + nullable here so existing editor submits (which still send them) stay
+  // valid while archetype-hidden categories can omit them.
+  max_guests: z.number().int().positive().nullable().optional(),
   capacity_unit: packageCapacityUnitSchema.default('guests'),
-  duration_hours: z.number().positive(),
+  duration_hours: z.number().positive().nullable().optional(),
+  pricing_unit: z.enum(PACKAGE_PRICING_UNITS).default('flat'),
+  attributes: z.record(z.string(), z.unknown()).optional().default({}),
   events_count: z.number().int().min(1).max(5).default(1),
   featured_image_url: z.string().url().nullable().optional(),
   gallery_image_urls: z.array(z.string().url()).max(2).default([]),

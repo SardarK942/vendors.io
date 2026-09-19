@@ -50,3 +50,68 @@ describe('Step2Details — guest count fix', () => {
     expect(last).toBe('600');
   });
 });
+
+describe('Step2Details — category wishlist section', () => {
+  it('renders optional category fields and reports changes', async () => {
+    const user = userEvent.setup();
+    const onRequestedDetailChange = vi.fn();
+    render(
+      <Step2Details
+        isMultiDay={false}
+        events={[mkEvent()]}
+        onEventsChange={vi.fn()}
+        eventCity=""
+        venueName=""
+        budgetRange={null}
+        description=""
+        onEventCityChange={vi.fn()}
+        onVenueNameChange={vi.fn()}
+        onBudgetRangeChange={vi.fn()}
+        onDescriptionChange={vi.fn()}
+        requestedDetailFields={[
+          { key: 'menu', label: 'Menu', type: 'text' },
+          { key: 'staff_included', label: 'Staff included', type: 'bool' },
+        ]}
+        requestedDetails={{}}
+        onRequestedDetailChange={onRequestedDetailChange}
+        eventOptions={[]}
+        eventFunctionId={null}
+        onEventFunctionIdChange={vi.fn()}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+      />
+    );
+
+    expect(screen.getByText(/what you're looking for/i)).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Menu'), 'x');
+    expect(onRequestedDetailChange).toHaveBeenCalledWith('menu', 'x');
+
+    await user.click(screen.getByLabelText('Staff included'));
+    expect(onRequestedDetailChange).toHaveBeenCalledWith('staff_included', 'yes');
+  });
+
+  it('hides the section when there are no category fields', () => {
+    render(
+      <Step2Details
+        isMultiDay={false}
+        events={[mkEvent()]}
+        onEventsChange={vi.fn()}
+        eventCity=""
+        venueName=""
+        budgetRange={null}
+        description=""
+        onEventCityChange={vi.fn()}
+        onVenueNameChange={vi.fn()}
+        onBudgetRangeChange={vi.fn()}
+        onDescriptionChange={vi.fn()}
+        eventOptions={[]}
+        eventFunctionId={null}
+        onEventFunctionIdChange={vi.fn()}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+      />
+    );
+    expect(screen.queryByText(/what you're looking for/i)).not.toBeInTheDocument();
+  });
+});

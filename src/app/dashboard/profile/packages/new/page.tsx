@@ -4,7 +4,6 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PackageEditorForm } from '@/components/forms/PackageEditorForm';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
-import { isCartVendor } from '@/lib/vendor/is-cart';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,10 +29,7 @@ export default async function NewPackagePage() {
         Back to packages
       </Link>
       <h1 className="mb-6 text-pretty text-2xl font-bold">Add Package</h1>
-      <PackageEditorForm
-        mode="create"
-        capacityUnitEditable={isCartVendor(vendorProfile.category, vendorProfile.services)}
-      />
+      <PackageEditorForm mode="create" category={vendorProfile.category ?? ''} />
     </div>
   );
 }

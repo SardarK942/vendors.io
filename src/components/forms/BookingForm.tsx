@@ -10,7 +10,7 @@ import Image from 'next/image';
 import { fmtUSD } from '@/lib/intl';
 import { formatBookingValidationError } from '@/lib/booking/validation-message';
 import { formatUsPhoneInput, US_PHONE_PATTERN } from '@/lib/phone';
-import { formatCapacity, type PackageCapacityUnitInput } from '@/types';
+import { formatPackageMeta, type PackageCapacityUnitInput } from '@/types';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
 
 interface Addon {
@@ -25,9 +25,9 @@ interface PackageProps {
   description: string;
   base_price_cents: number;
   events_count: number;
-  max_guests: number;
+  max_guests: number | null;
   capacity_unit: PackageCapacityUnitInput;
-  duration_hours: number;
+  duration_hours: number | null;
   featured_image_url: string | null;
   vendor_notes_template?: string | null;
   location_mode: 'couple_provides' | 'at_vendor';
@@ -222,11 +222,17 @@ export function BookingForm({ vendor, pkg, selectedAddons, eventOptions }: Props
                 <p className="font-semibold" translate="no">
                   {pkg.name}
                 </p>
-                <p className="text-sm text-muted-foreground">
-                  {pkg.duration_hours}
-                  {' '}h · {formatCapacity(pkg.max_guests, pkg.capacity_unit)}
-                  {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
-                </p>
+                {(() => {
+                  const metaLine = formatPackageMeta({
+                    durationHours: pkg.duration_hours,
+                    maxGuests: pkg.max_guests,
+                    capacityUnit: pkg.capacity_unit,
+                    eventsCount: pkg.events_count,
+                  });
+                  return metaLine ? (
+                    <p className="text-sm text-muted-foreground">{metaLine}</p>
+                  ) : null;
+                })()}
               </div>
             </div>
             <div className="space-y-1 text-sm tabular-nums">

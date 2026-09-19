@@ -112,6 +112,7 @@ export function VendorProfile({
           <PackageGrid
             packages={packages}
             vendorSlug={vendor.slug ?? ''}
+            vendorCategory={vendor.category ?? ''}
             interactive={interactive}
             featuredPackageId={featured?.id}
             onRequestCustomQuote={() => setCustomRequestOpen(true)}
@@ -285,6 +286,7 @@ export function VendorProfile({
         onOpenChange={setCustomRequestOpen}
         vendorSlug={vendor.slug ?? ''}
         vendorBusinessName={vendor.business_name}
+        vendorCategory={vendor.category ?? ''}
         vendorResponseSlaHours={vendor.response_sla_hours ?? null}
         eventOptions={eventOptions}
       />

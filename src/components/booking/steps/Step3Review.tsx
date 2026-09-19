@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { EVENT_TYPES } from '@/types';
 import { type BudgetRange } from '@/lib/booking/custom-request-validation';
+import type { RequestedDetailField } from '@/lib/booking/requested-details';
 import type { CustomEvent } from '../CustomRequestFlow';
 
 const BUDGET_LABEL: Record<BudgetRange, string> = {
@@ -24,6 +25,8 @@ export interface Step3ReviewProps {
   venueName: string;
   budgetRange: BudgetRange | null;
   description: string;
+  requestedDetailFields?: RequestedDetailField[];
+  requestedDetails?: Record<string, string>;
   vendorBusinessName: string;
   vendorResponseSlaHours: number | null;
   onBack: () => void;
@@ -40,12 +43,27 @@ export function Step3Review(props: Step3ReviewProps) {
     venueName,
     budgetRange,
     description,
+    requestedDetailFields = [],
+    requestedDetails = {},
     vendorBusinessName,
     onBack,
     onSubmit,
     submitting,
     submitError,
   } = props;
+
+  // Only surface the wishlist rows the couple actually filled (bool → shown as
+  // "Yes" when checked). Mirrors composeRequestedDetailsText's inclusion rules.
+  const filledDetails = requestedDetailFields
+    .map((field) => {
+      const raw = (requestedDetails[field.key] ?? '').trim();
+      if (!raw) return null;
+      if (field.type === 'bool') {
+        return raw === 'yes' ? { label: field.label, value: 'Yes' } : null;
+      }
+      return { label: field.label, value: raw };
+    })
+    .filter((row): row is { label: string; value: string } => row !== null);
 
   return (
     <div className="space-y-6">
@@ -104,6 +122,20 @@ export function Step3Review(props: Step3ReviewProps) {
             <p className="text-sm text-ink">{BUDGET_LABEL[budgetRange]}</p>
           </div>
         )}
+        {filledDetails.length > 0 && (
+          <div className="border-t border-hairline pt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+              What you&apos;re looking for
+            </p>
+            <div className="mt-1 space-y-1">
+              {filledDetails.map((row) => (
+                <p key={row.label} className="text-sm text-ink">
+                  <span className="text-ink-muted">{row.label}:</span> {row.value}
+                </p>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="border-t border-hairline pt-4">
           <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">Notes</p>
           <p className="whitespace-pre-wrap text-pretty text-sm text-ink">{description}</p>
@@ -124,7 +156,7 @@ export function Step3Review(props: Step3ReviewProps) {
           onClick={onSubmit}
           disabled={submitting}
           aria-busy={submitting}
-          className="inline-flex items-center gap-2 rounded-md bg-ink px-6 py-3 text-sm font-semibold text-cream transition-[background-color,transform] hover:bg-hot-pink active:scale-[0.96] motion-reduce:active:scale-100 disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-md bg-ink px-6 py-3 text-sm font-semibold text-cream transition-[background-color,transform] hover:bg-hot-pink active:scale-[0.96] disabled:opacity-60 motion-reduce:active:scale-100"
         >
           {submitting ? 'Sending request…' : 'Send request'}
         </button>

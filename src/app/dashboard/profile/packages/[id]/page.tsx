@@ -4,7 +4,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { notFound, redirect } from 'next/navigation';
 import { PackageEditorForm, type PackageInitial } from '@/components/forms/PackageEditorForm';
 import type { AddonDraft } from '@/components/forms/PackageAddonsEditor';
-import { isCartVendor } from '@/lib/vendor/is-cart';
+import type { PricingUnit } from '@/lib/packages/archetypes';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,15 +44,20 @@ export default async function EditPackagePage({ params }: { params: { id: string
       <h1 className="mb-6 text-pretty text-2xl font-bold">Edit Package</h1>
       <PackageEditorForm
         mode="edit"
-        capacityUnitEditable={isCartVendor(vp.category, vp.services)}
+        category={vp.category ?? ''}
         initial={{
           id: pkg.id,
           name: pkg.name,
           description: pkg.description,
           base_price_cents: pkg.base_price_cents,
+          // max_guests / duration_hours are nullable (migration 00079); the
+          // editor and every display consumer handle null, so pass through.
           max_guests: pkg.max_guests,
           capacity_unit: (pkg.capacity_unit as PackageInitial['capacity_unit']) ?? 'guests',
           duration_hours: pkg.duration_hours,
+          pricing_unit: (pkg.pricing_unit as PricingUnit | null) ?? undefined,
+          // Pre-migration rows have no attributes column → undefined at runtime.
+          attributes: (pkg.attributes as Record<string, unknown> | null) ?? null,
           events_count: pkg.events_count,
           featured_image_url: pkg.featured_image_url,
           gallery_image_urls: (pkg.gallery_image_urls as string[]) ?? [],

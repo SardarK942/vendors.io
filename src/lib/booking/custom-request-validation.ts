@@ -44,7 +44,10 @@ export type BudgetRange = (typeof BUDGET_RANGES)[number];
 export const customRequestSchemaV2 = z.object({
   vendor_slug: z.string().min(1).max(120),
   events: z.array(customEventEntrySchema).min(1),
-  description: z.string().min(50).max(1000),
+  // Couple's free-text message. The client appends an optional, human-readable
+  // "Requested details —" block (category wishlist) to this same field, so the
+  // ceiling is above the textarea's own 1000-char cap to leave room for it.
+  description: z.string().min(50).max(3000),
   is_multi_day: z.boolean().optional().default(false),
   event_city: z.string().min(1).max(120).nullish(),
   venue_name: z.string().max(120).nullish(),

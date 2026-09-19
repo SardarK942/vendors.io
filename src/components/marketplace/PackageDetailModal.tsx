@@ -10,11 +10,44 @@ import { Separator } from '@/components/ui/separator';
 import type { PackageWithAddons } from './PackageGrid';
 import { PackagePhotoFallback } from './PackagePhotoFallback';
 import { fmtUSD } from '@/lib/intl';
-import { formatCapacity } from '@/types';
+import { formatPackageMeta } from '@/types';
+import { pricingUnitSuffix } from '@/lib/packages/archetypes';
+import { getPackageAttributes } from '@/lib/packages/attributes';
+
+// Humanize a snake_case attribute key when no category-labelled field list is
+// in scope (the package row carries no category). e.g. "edited_photos" →
+// "Edited photos". A best-effort fallback, not a lookup.
+function humanizeKey(key: string): string {
+  const spaced = key.replace(/_/g, ' ').trim();
+  return spaced ? spaced.charAt(0).toUpperCase() + spaced.slice(1) : key;
+}
+
+// Turn the stored attributes bag into display rows. bool → label only when true;
+// number/text → "Label: value". Empty/false values are dropped. When a vendor
+// category is known, prefer its labelled field names (getPackageAttributes) for
+// nicer labels (e.g. "# of photographers"); otherwise fall back to humanizing
+// the snake_case key.
+function attributeChips(
+  attributes: Record<string, unknown> | null | undefined,
+  category?: string
+): string[] {
+  if (!attributes) return [];
+  const labelByKey = new Map(getPackageAttributes(category ?? '').map((f) => [f.key, f.label]));
+  const rows: string[] = [];
+  for (const [key, value] of Object.entries(attributes)) {
+    if (value == null || value === false || value === '') continue;
+    const label = labelByKey.get(key) ?? humanizeKey(key);
+    rows.push(value === true ? label : `${label}: ${String(value)}`);
+  }
+  return rows;
+}
 
 interface Props {
   pkg: PackageWithAddons;
   vendorSlug: string;
+  /** Vendor category — used to label attribute chips with category-specific
+   * field names; empty/unknown falls back to humanized keys. */
+  category?: string;
   onClose: () => void;
   interactive?: boolean;
 }
@@ -27,7 +60,13 @@ interface Props {
  * - vendor_notes_template preview
  * - "Continue to Booking" CTA → writes signed cookie + navigates to /book
  */
-export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = true }: Props) {
+export function PackageDetailModal({
+  pkg,
+  vendorSlug,
+  category,
+  onClose,
+  interactive = true,
+}: Props) {
   const router = useRouter();
   const [toggled, setToggled] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(false);
@@ -36,6 +75,10 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
     .filter((a) => toggled.has(a.id))
     .reduce((sum, a) => sum + a.price_delta_cents, 0);
   const total = pkg.base_price_cents + addonsTotal;
+
+  // Display-only pricing basis (e.g. " /guest"). Pre-migration rows → 'flat' → ''.
+  const priceSuffix = pricingUnitSuffix(pkg.pricing_unit ?? 'flat');
+  const detailChips = attributeChips(pkg.attributes, category);
 
   function toggleAddon(id: string) {
     setToggled((prev) => {
@@ -95,11 +138,17 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           </div>
 
           {/* Summary line */}
-          <p className="text-sm tabular-nums text-muted-foreground">
-            {pkg.duration_hours}
-            {' '}h · {formatCapacity(pkg.max_guests, pkg.capacity_unit)}
-            {pkg.events_count > 1 && ` · ${pkg.events_count} events`}
-          </p>
+          {(() => {
+            const metaLine = formatPackageMeta({
+              durationHours: pkg.duration_hours,
+              maxGuests: pkg.max_guests,
+              capacityUnit: pkg.capacity_unit,
+              eventsCount: pkg.events_count,
+            });
+            return metaLine ? (
+              <p className="text-sm tabular-nums text-muted-foreground">{metaLine}</p>
+            ) : null;
+          })()}
 
           {/* Description */}
           <p className="text-sm">{pkg.description}</p>
@@ -111,6 +160,23 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
               <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
                 {pkg.included_items.map((item, idx) => (
                   <li key={idx}>{item}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Details — populated attributes (category-specific inclusions) */}
+          {detailChips.length > 0 && (
+            <div>
+              <h4 className="mb-2 text-sm font-semibold">Details</h4>
+              <ul className="flex flex-wrap gap-2">
+                {detailChips.map((chip, idx) => (
+                  <li
+                    key={idx}
+                    className="rounded-full border border-hairline bg-cream-soft px-2.5 py-1 text-xs text-ink"
+                  >
+                    {chip}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -183,7 +249,10 @@ export function PackageDetailModal({ pkg, vendorSlug, onClose, interactive = tru
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Total</p>
-              <p className="text-xl font-bold tabular-nums">{fmtUSD(total)}</p>
+              <p className="text-xl font-bold tabular-nums">
+                {fmtUSD(total)}
+                <span className="text-sm font-normal text-muted-foreground">{priceSuffix}</span>
+              </p>
             </div>
             <Button onClick={handleContinue} disabled={loading} size="lg">
               {loading ? 'Please wait…' : 'Continue to Booking'}

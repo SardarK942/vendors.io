@@ -144,6 +144,8 @@ function minimalPackageInput() {
     max_guests: 50,
     capacity_unit: 'guests' as const,
     duration_hours: 2,
+    pricing_unit: 'flat' as const,
+    attributes: {},
     events_count: 1,
     featured_image_url: 'https://example.com/photo.jpg',
     gallery_image_urls: [],

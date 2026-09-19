@@ -1,5 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database.types';
+import type { Database, Json } from '@/types/database.types';
 import type { CreatePackageInput, UpdatePackageInput } from '@/types';
 
 const ACTIVE_BOOKING_STATUSES = [
@@ -57,7 +57,14 @@ export async function createPackage(
 
   const { data: pkg, error: pkgError } = await supabase
     .from('packages')
-    .insert({ ...packageData, vendor_profile_id: vendorProfileId, display_order: count ?? 0 })
+    .insert({
+      ...packageData,
+      // attributes is a free-form JSONB bag (Record<string, unknown> from Zod);
+      // cast to the DB Json type at the write boundary.
+      attributes: packageData.attributes as Json,
+      vendor_profile_id: vendorProfileId,
+      display_order: count ?? 0,
+    })
     .select('*')
     .single();
 
@@ -111,7 +118,11 @@ export async function updatePackage(
 
   const { data: pkg, error } = await supabase
     .from('packages')
-    .update({ ...packageData, updated_at: new Date().toISOString() })
+    .update({
+      ...packageData,
+      attributes: packageData.attributes as Json | undefined,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', packageId)
     .select('*')
     .single();

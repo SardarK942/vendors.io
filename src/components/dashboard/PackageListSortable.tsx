@@ -31,7 +31,7 @@ import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButto
 import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
 import { fmtUSD } from '@/lib/intl';
-import { formatCapacity } from '@/types';
+import { formatPackageMeta } from '@/types';
 
 export type SortablePackage = PackageWithAddons & { is_active: boolean };
 
@@ -91,9 +91,14 @@ function SortableCard({ pkg, vendorSlug }: { pkg: SortablePackage; vendorSlug: s
           <p className="text-sm tabular-nums text-muted-foreground">
             {fmtUSD(pkg.base_price_cents)}
           </p>
-          <p className="text-xs text-muted-foreground">
-            {pkg.duration_hours} h &middot; {formatCapacity(pkg.max_guests, pkg.capacity_unit)}
-          </p>
+          {(() => {
+            const metaLine = formatPackageMeta({
+              durationHours: pkg.duration_hours,
+              maxGuests: pkg.max_guests,
+              capacityUnit: pkg.capacity_unit,
+            });
+            return metaLine ? <p className="text-xs text-muted-foreground">{metaLine}</p> : null;
+          })()}
           <div className="pt-2">
             <PackageFeaturedToggle packageId={pkg.id} isFeatured={pkg.is_featured} />
           </div>

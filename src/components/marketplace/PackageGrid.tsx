@@ -11,16 +11,24 @@ import { PackagePhotoFallback } from './PackagePhotoFallback';
 import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-request';
 import type { PackageCapacityUnit } from '@/types/database.types';
 import { fmtUSD } from '@/lib/intl';
-import { formatCapacity } from '@/types';
+import { formatPackageMeta } from '@/types';
+import { pricingUnitSuffix, type PricingUnit } from '@/lib/packages/archetypes';
 
 export interface PackageWithAddons {
   id: string;
   name: string;
   description: string;
   base_price_cents: number;
-  duration_hours: number;
-  max_guests: number;
+  // Nullable as of migration 00079 — archetype-hidden categories store NULL.
+  duration_hours: number | null;
+  max_guests: number | null;
   capacity_unit: PackageCapacityUnit;
+  // Display-only pricing basis (migration 00079). Optional: pre-migration rows
+  // and un-plumbed selects have none → rendered as flat (no suffix).
+  pricing_unit?: PricingUnit;
+  // Loose per-category "what's included" bag (migration 00079). Optional/nullable
+  // pre-migration → chips render nothing when absent.
+  attributes?: Record<string, unknown> | null;
   events_count: number;
   featured_image_url: string | null;
   gallery_image_urls: string[];
@@ -40,6 +48,9 @@ type PackageItem = PackageWithAddons | CustomRequestPackage;
 interface Props {
   packages: PackageItem[];
   vendorSlug: string;
+  /** Vendor category — threaded to the detail modal so attribute chips can use
+   * category-labelled field names; empty falls back to humanized keys. */
+  vendorCategory?: string;
   interactive?: boolean;
   featuredPackageId?: string;
   onRequestCustomQuote?: () => void;
@@ -59,6 +70,7 @@ function isCustom(p: PackageItem): p is CustomRequestPackage {
 export function PackageGrid({
   packages,
   vendorSlug,
+  vendorCategory = '',
   interactive = true,
   featuredPackageId,
   onRequestCustomQuote,
@@ -181,14 +193,23 @@ export function PackageGrid({
                   <h3 className="text-base font-semibold leading-tight" translate="no">
                     {p.name}
                   </h3>
-                  <p className="text-sm tabular-nums text-muted-foreground">
-                    {p.duration_hours}
-                    {' '}h · {formatCapacity(p.max_guests, p.capacity_unit)}
-                    {p.events_count > 1 && ` · ${p.events_count} events`}
-                  </p>
+                  {(() => {
+                    const metaLine = formatPackageMeta({
+                      durationHours: p.duration_hours,
+                      maxGuests: p.max_guests,
+                      capacityUnit: p.capacity_unit,
+                      eventsCount: p.events_count,
+                    });
+                    return metaLine ? (
+                      <p className="text-sm tabular-nums text-muted-foreground">{metaLine}</p>
+                    ) : null;
+                  })()}
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-lg font-bold tabular-nums">
                       {fmtUSD(p.base_price_cents)}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {pricingUnitSuffix(p.pricing_unit ?? 'flat')}
+                      </span>
                     </span>
                     <span className="inline-flex items-center gap-1 text-sm text-primary group-hover:underline">
                       Book
@@ -206,6 +227,7 @@ export function PackageGrid({
         <PackageDetailModal
           pkg={selected}
           vendorSlug={vendorSlug}
+          category={vendorCategory}
           onClose={() => setSelected(null)}
           interactive={interactive}
         />

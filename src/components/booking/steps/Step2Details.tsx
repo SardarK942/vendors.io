@@ -5,6 +5,7 @@ import { DatePicker } from '@/components/ui/date-picker';
 import { EventTypePicker } from '@/components/ui/EventTypePicker';
 import { BUDGET_RANGES, type BudgetRange } from '@/lib/booking/custom-request-validation';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
+import type { RequestedDetailField } from '@/lib/booking/requested-details';
 import type { CustomEvent } from '../CustomRequestFlow';
 
 export interface Step2DetailsProps {
@@ -19,6 +20,11 @@ export interface Step2DetailsProps {
   onBudgetRangeChange: (v: BudgetRange | null) => void;
   description: string;
   onDescriptionChange: (v: string) => void;
+  // Category-aware optional wishlist ("What you're looking for"). Defaults to an
+  // empty list so callers without a category simply render no extra section.
+  requestedDetailFields?: RequestedDetailField[];
+  requestedDetails?: Record<string, string>;
+  onRequestedDetailChange?: (key: string, value: string) => void;
   eventOptions: EventOption[];
   eventFunctionId: string | null;
   onEventFunctionIdChange: (v: string | null) => void;
@@ -90,6 +96,9 @@ export function Step2Details({
   onBudgetRangeChange,
   description,
   onDescriptionChange,
+  requestedDetailFields = [],
+  requestedDetails = {},
+  onRequestedDetailChange,
   eventOptions,
   eventFunctionId,
   onEventFunctionIdChange,
@@ -297,6 +306,65 @@ export function Step2Details({
           ))}
         </div>
       </div>
+
+      {requestedDetailFields.length > 0 && (
+        <div className="border-t border-hairline pt-6">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+            What you&apos;re looking for{' '}
+            <span className="font-normal normal-case tracking-normal text-ink-soft">
+              — all optional, a wishlist they&apos;ll quote against
+            </span>
+          </p>
+          <p className="mb-3 text-xs text-ink-soft">
+            Share anything that helps — leave the rest blank.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {requestedDetailFields.map((field) => {
+              const inputId = `req-detail-${field.key}`;
+              const value = requestedDetails[field.key] ?? '';
+              if (field.type === 'bool') {
+                return (
+                  <label
+                    key={field.key}
+                    htmlFor={inputId}
+                    className="flex items-center gap-2 self-start text-sm text-ink"
+                  >
+                    <input
+                      id={inputId}
+                      type="checkbox"
+                      checked={value === 'yes'}
+                      onChange={(e) =>
+                        onRequestedDetailChange?.(field.key, e.target.checked ? 'yes' : '')
+                      }
+                      className="h-4 w-4 rounded border-hairline text-ink focus:ring-ink"
+                    />
+                    {field.label}
+                  </label>
+                );
+              }
+              return (
+                <div key={field.key}>
+                  <label
+                    htmlFor={inputId}
+                    className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                  >
+                    {field.label}
+                  </label>
+                  <input
+                    id={inputId}
+                    type={field.type === 'number' ? 'number' : 'text'}
+                    inputMode={field.type === 'number' ? 'numeric' : undefined}
+                    min={field.type === 'number' ? 0 : undefined}
+                    value={value}
+                    onChange={(e) => onRequestedDetailChange?.(field.key, e.target.value)}
+                    className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
