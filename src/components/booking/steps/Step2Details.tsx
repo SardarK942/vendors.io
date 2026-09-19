@@ -51,14 +51,6 @@ const BUDGET_LABEL: Record<BudgetRange, string> = {
   discuss: 'Prefer to discuss',
 };
 
-const HINT_CHIPS = [
-  'Cultural specifics',
-  'Coverage hours',
-  'Must-have shots',
-  'Dietary needs',
-  'Color palette',
-];
-
 // Guest count keeps its own local `string` state instead of being driven purely
 // by the `events` prop. This is the fix for the legacy leading-"1" bug: with a
 // numeric input clamped/derived straight from a coerced number, clearing the
@@ -383,16 +375,18 @@ export function Step2Details({
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
           Tell us what you&apos;re looking for
         </p>
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {HINT_CHIPS.map((chip) => (
-            <span
-              key={chip}
-              className="rounded-full border border-hairline bg-cream px-2.5 py-1 text-[11px] text-ink-muted"
-            >
-              {chip}
-            </span>
-          ))}
-        </div>
+        {guidance.bullets.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {guidance.bullets.map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full border border-hairline bg-cream px-2.5 py-1 text-[11px] text-ink-muted"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        )}
         <textarea
           rows={6}
           minLength={50}
@@ -402,16 +396,6 @@ export function Step2Details({
           placeholder={guidance.placeholder}
           className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
         />
-        {guidance.bullets.length > 0 && (
-          <div className="mt-2 text-xs text-ink-soft">
-            <p className="mb-1">You might mention:</p>
-            <ul className="list-disc space-y-0.5 pl-4">
-              {guidance.bullets.map((bullet) => (
-                <li key={bullet}>{bullet}</li>
-              ))}
-            </ul>
-          </div>
-        )}
         <p className="mt-1 text-xs tabular-nums text-ink-soft">
           {description.length} / 1000 · minimum 50 characters
         </p>

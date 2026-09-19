@@ -46,7 +46,12 @@ const BULLETS_BY_CATEGORY: Record<string, string[]> = {
   live_music: ['Type (dhol / qawwali / band)', 'Songs you want', 'When during the event'],
   catering: ['Cuisine', 'Dietary needs (halal/veg/allergies)', 'Service style', 'Courses'],
   hair_makeup: ['Bridal or party', 'How many people', 'Number of looks', 'Trial', 'Any allergies'],
-  carts: ['Type of treats', 'Flavors', 'Dietary needs', 'Roughly how many servings'],
+  carts: [
+    'Flavors',
+    'Dietary needs (halal / nut-free / vegan)',
+    'Service timing',
+    'Custom touches',
+  ],
   venue: ['Indoor or outdoor', 'Date flexibility', 'Catering rules', 'Parking'],
   decor: ['Color palette', 'Theme', 'Key areas (stage/mandap/entrance)', 'Florals'],
   invitations: ['Quantity', 'Style', 'Languages / scripts', 'Timeline', 'Print or digital'],
