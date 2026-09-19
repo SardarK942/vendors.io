@@ -9,6 +9,11 @@ import { Step3Review } from './steps/Step3Review';
 import type { EventOption } from '@/components/events/EventFunctionSelect';
 import { track } from '@/lib/analytics/track';
 import { ANALYTICS_EVENTS } from '@/lib/analytics/events';
+import {
+  getRequestedDetailFields,
+  composeRequestedDetailsText,
+  type RequestedDetailValues,
+} from '@/lib/booking/requested-details';
 
 export type CustomEvent = {
   id: string;
@@ -21,6 +26,9 @@ export type CustomEvent = {
 export interface CustomRequestFlowProps {
   vendorSlug: string;
   vendorBusinessName: string;
+  // The vendor's category drives the optional, category-aware wishlist fields
+  // ("What you're looking for"). Empty string = unknown category → no section.
+  vendorCategory: string;
   vendorResponseSlaHours: number | null;
   // Optional: defaults to [] so any caller that can't supply event options
   // (e.g. a future non-server entry point) falls back to the empty-state
@@ -42,10 +50,17 @@ function makeBlankEvent(): CustomEvent {
 export function CustomRequestFlow({
   vendorSlug,
   vendorBusinessName,
+  vendorCategory,
   vendorResponseSlaHours,
   eventOptions = [],
   onClose,
 }: CustomRequestFlowProps) {
+  // Category-aware optional wishlist ("What you're looking for"). Derived once
+  // from the vendor's category; empty for unknown categories → section hidden.
+  const requestedDetailFields = React.useMemo(
+    () => getRequestedDetailFields(vendorCategory),
+    [vendorCategory]
+  );
   const [stepIndex, setStepIndex] = React.useState<0 | 1 | 2>(0);
   const [isMultiDay, setIsMultiDay] = React.useState(false);
   const [dayCount, setDayCount] = React.useState(3);
@@ -54,15 +69,26 @@ export function CustomRequestFlow({
   const [venueName, setVenueName] = React.useState('');
   const [budgetRange, setBudgetRange] = React.useState<BudgetRange | null>(null);
   const [description, setDescription] = React.useState('');
+  const [requestedDetails, setRequestedDetails] = React.useState<RequestedDetailValues>({});
   const [eventFunctionId, setEventFunctionId] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [submitError, setSubmitError] = React.useState<string | null>(null);
   const [successBookingId, setSuccessBookingId] = React.useState<string | null>(null);
 
+  function updateRequestedDetail(key: string, value: string) {
+    setRequestedDetails((prev) => ({ ...prev, [key]: value }));
+  }
+
   async function handleSubmit() {
     setSubmitError(null);
     setSubmitting(true);
     try {
+      // Phase 1 persistence: serialize the couple's optional category answers
+      // into the existing free-text message (no new DB column / route param).
+      // Only filled fields are included; empty wishlist → description unchanged.
+      const detailsBlock = composeRequestedDetailsText(vendorCategory, requestedDetails);
+      const composedDescription = detailsBlock ? `${description}\n\n${detailsBlock}` : description;
+
       const res = await fetch('/api/bookings/custom-request', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
@@ -78,7 +104,7 @@ export function CustomRequestFlow({
           event_city: eventCity.trim() || null,
           venue_name: venueName.trim() || null,
           budget_range: budgetRange,
-          description,
+          description: composedDescription,
           event_function_id: eventFunctionId ?? undefined,
         }),
       });
@@ -140,6 +166,9 @@ export function CustomRequestFlow({
           onBudgetRangeChange={setBudgetRange}
           description={description}
           onDescriptionChange={setDescription}
+          requestedDetailFields={requestedDetailFields}
+          requestedDetails={requestedDetails}
+          onRequestedDetailChange={updateRequestedDetail}
           eventOptions={eventOptions}
           eventFunctionId={eventFunctionId}
           onEventFunctionIdChange={setEventFunctionId}
@@ -155,6 +184,8 @@ export function CustomRequestFlow({
           venueName={venueName}
           budgetRange={budgetRange}
           description={description}
+          requestedDetailFields={requestedDetailFields}
+          requestedDetails={requestedDetails}
           vendorBusinessName={vendorBusinessName}
           vendorResponseSlaHours={vendorResponseSlaHours}
           onBack={() => setStepIndex(1)}

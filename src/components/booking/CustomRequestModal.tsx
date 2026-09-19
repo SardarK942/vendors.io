@@ -12,6 +12,7 @@ export interface CustomRequestModalProps {
   onOpenChange: (open: boolean) => void;
   vendorSlug: string;
   vendorBusinessName: string;
+  vendorCategory: string;
   vendorResponseSlaHours: number | null;
   eventOptions?: EventOption[];
 }
@@ -21,6 +22,7 @@ export function CustomRequestModal({
   onOpenChange,
   vendorSlug,
   vendorBusinessName,
+  vendorCategory,
   vendorResponseSlaHours,
   eventOptions,
 }: CustomRequestModalProps) {
@@ -45,6 +47,7 @@ export function CustomRequestModal({
           <CustomRequestFlow
             vendorSlug={vendorSlug}
             vendorBusinessName={vendorBusinessName}
+            vendorCategory={vendorCategory}
             vendorResponseSlaHours={vendorResponseSlaHours}
             eventOptions={eventOptions}
             onClose={() => onOpenChange(false)}

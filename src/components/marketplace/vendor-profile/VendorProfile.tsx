@@ -285,6 +285,7 @@ export function VendorProfile({
         onOpenChange={setCustomRequestOpen}
         vendorSlug={vendor.slug ?? ''}
         vendorBusinessName={vendor.business_name}
+        vendorCategory={vendor.category ?? ''}
         vendorResponseSlaHours={vendor.response_sla_hours ?? null}
         eventOptions={eventOptions}
       />

@@ -24,7 +24,7 @@ export default async function CustomRequestPage({ params }: RequestPageProps) {
 
   const { data: vendor } = await supabase
     .from('vendor_profiles')
-    .select('business_name, response_sla_hours')
+    .select('business_name, response_sla_hours, category')
     .eq('slug', slug)
     .eq('is_active', true)
     .maybeSingle();
@@ -45,6 +45,7 @@ export default async function CustomRequestPage({ params }: RequestPageProps) {
       <CustomRequestFlow
         vendorSlug={slug}
         vendorBusinessName={vendor.business_name}
+        vendorCategory={vendor.category ?? ''}
         vendorResponseSlaHours={vendor.response_sla_hours ?? null}
         eventOptions={eventOptions}
       />
