@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PACKAGE_PRICING_UNITS } from '@/lib/packages/archetypes';
 
 // ─── Vendor Schemas ─────────────────────────────────────────────
 
@@ -205,9 +206,15 @@ export const createPackageSchema = z.object({
   description: z.string().min(1).max(2000),
   base_price_cents: z.number().int().positive(),
   included_items: z.array(z.string().max(200)).max(20).default([]),
-  max_guests: z.number().int().positive(),
+  // max_guests / duration_hours are archetype-gated (nullable in the DB as of
+  // migration 00079): time-based and goods categories hide them. Kept optional
+  // + nullable here so existing editor submits (which still send them) stay
+  // valid while archetype-hidden categories can omit them.
+  max_guests: z.number().int().positive().nullable().optional(),
   capacity_unit: packageCapacityUnitSchema.default('guests'),
-  duration_hours: z.number().positive(),
+  duration_hours: z.number().positive().nullable().optional(),
+  pricing_unit: z.enum(PACKAGE_PRICING_UNITS).default('flat'),
+  attributes: z.record(z.string(), z.unknown()).optional().default({}),
   events_count: z.number().int().min(1).max(5).default(1),
   featured_image_url: z.string().url().nullable().optional(),
   gallery_image_urls: z.array(z.string().url()).max(2).default([]),

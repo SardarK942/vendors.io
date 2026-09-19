@@ -50,9 +50,12 @@ export default async function EditPackagePage({ params }: { params: { id: string
           name: pkg.name,
           description: pkg.description,
           base_price_cents: pkg.base_price_cents,
-          max_guests: pkg.max_guests,
+          // max_guests / duration_hours became nullable in migration 00079, but
+          // every existing row is still populated (the editor keeps them
+          // required); narrow to number for the editor's initial values.
+          max_guests: pkg.max_guests as number,
           capacity_unit: (pkg.capacity_unit as PackageInitial['capacity_unit']) ?? 'guests',
-          duration_hours: pkg.duration_hours,
+          duration_hours: pkg.duration_hours as number,
           events_count: pkg.events_count,
           featured_image_url: pkg.featured_image_url,
           gallery_image_urls: (pkg.gallery_image_urls as string[]) ?? [],

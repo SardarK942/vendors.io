@@ -90,6 +90,10 @@ export default async function BookPage({ params }: BookPageProps) {
         vendor={vendor as Parameters<typeof BookingForm>[0]['vendor']}
         pkg={{
           ...pkg,
+          // max_guests / duration_hours became nullable in migration 00079;
+          // real rows are always populated, narrow to number for BookingForm.
+          max_guests: pkg.max_guests as number,
+          duration_hours: pkg.duration_hours as number,
           addons: (pkg.addons ?? []) as { id: string; name: string; price_delta_cents: number }[],
         }}
         selectedAddons={selection.selected_addons}
