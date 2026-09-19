@@ -3,6 +3,7 @@ import {
   PACKAGE_PRICING_UNITS,
   getPackageArchetype,
   getPackageFieldConfig,
+  pricingUnitSuffix,
 } from '@/lib/packages/archetypes';
 
 describe('PACKAGE_PRICING_UNITS', () => {
@@ -16,6 +17,29 @@ describe('PACKAGE_PRICING_UNITS', () => {
       'per_item',
       'per_day',
     ]);
+  });
+});
+
+describe('pricingUnitSuffix', () => {
+  it('returns an empty string for flat pricing', () => {
+    expect(pricingUnitSuffix('flat')).toBe('');
+  });
+
+  it('maps each non-flat unit to its display suffix', () => {
+    expect(pricingUnitSuffix('per_guest')).toBe(' /guest');
+    expect(pricingUnitSuffix('per_person')).toBe(' /person');
+    expect(pricingUnitSuffix('per_serving')).toBe(' /serving');
+    expect(pricingUnitSuffix('per_item')).toBe(' /item');
+    expect(pricingUnitSuffix('per_hour')).toBe(' /hour');
+    expect(pricingUnitSuffix('per_day')).toBe(' /day');
+  });
+
+  it('covers every supported pricing unit', () => {
+    for (const unit of PACKAGE_PRICING_UNITS) {
+      const suffix = pricingUnitSuffix(unit);
+      // flat yields '', every other unit yields a non-empty ' /…' label.
+      expect(unit === 'flat' ? suffix === '' : suffix.startsWith(' /')).toBe(true);
+    }
   });
 });
 

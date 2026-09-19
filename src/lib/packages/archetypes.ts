@@ -207,6 +207,32 @@ const CATEGORY_CONFIG: Record<string, CategoryConfig> = {
   },
 };
 
+/**
+ * Display-only price suffix for a pricing unit (Phase 1, Slice 4). Appended to a
+ * rendered "$X" figure for customer-facing context — never used in price math.
+ * 'flat' (and, by extension, any pre-migration package that has no pricing_unit
+ * and is treated as 'flat') yields '' so the price renders unchanged.
+ */
+export function pricingUnitSuffix(unit: PricingUnit): string {
+  switch (unit) {
+    case 'per_guest':
+      return ' /guest';
+    case 'per_person':
+      return ' /person';
+    case 'per_serving':
+      return ' /serving';
+    case 'per_item':
+      return ' /item';
+    case 'per_hour':
+      return ' /hour';
+    case 'per_day':
+      return ' /day';
+    case 'flat':
+    default:
+      return '';
+  }
+}
+
 function resolveConfig(category: string): CategoryConfig {
   return CATEGORY_CONFIG[category] ?? DEFAULT_CONFIG;
 }

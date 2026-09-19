@@ -20,6 +20,7 @@ import { PackageLivePreview } from '@/components/forms/PackageLivePreview';
 import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 import { PACKAGE_CAPACITY_UNITS, type PackageCapacityUnitInput } from '@/types';
 import { getPackageFieldConfig, type PricingUnit } from '@/lib/packages/archetypes';
+import { getPackageAttributes } from '@/lib/packages/attributes';
 
 // Human-readable labels for the pricing-unit selector. Kept here (UI layer)
 // rather than in the archetype lib, which stays presentation-free.
@@ -48,6 +49,9 @@ export interface PackageInitial {
   // Optional: pre-migration rows have no pricing_unit; the form falls back to
   // the category default when absent.
   pricing_unit?: PricingUnit;
+  // Loose per-category "what's included" bag (migration 00079). Pre-migration
+  // rows have none — the editor guards undefined → {}.
+  attributes?: Record<string, unknown> | null;
   events_count: number;
   featured_image_url: string | null;
   gallery_image_urls: string[];
@@ -101,6 +105,9 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
   const cfg = getPackageFieldConfig(category);
   const capacityUnitEditable = cfg.capacityUnitEditable;
 
+  // Loose, category-specific "Details" fields (stored in the attributes JSON).
+  const attributeFields = getPackageAttributes(category);
+
   // Controlled state — every field that feeds the live preview is controlled so
   // the customer-facing card mirror updates as the vendor types.
   const [name, setName] = useState(initial?.name ?? '');
@@ -131,6 +138,43 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
   );
   const [notesTemplate, setNotesTemplate] = useState(initial?.vendor_notes_template ?? '');
   const [addons, setAddons] = useState<AddonDraft[]>(initial?.addons ?? []);
+
+  // Attribute values, keyed by field key. bool → boolean; number/text → string
+  // (kept as strings so an empty input round-trips cleanly and is omitted on
+  // submit). Pre-filled from initial.attributes; guard undefined → {}.
+  const [attributeValues, setAttributeValues] = useState<Record<string, string | boolean>>(() => {
+    const stored = (initial?.attributes ?? {}) as Record<string, unknown>;
+    const seed: Record<string, string | boolean> = {};
+    for (const field of attributeFields) {
+      const value = stored[field.key];
+      if (value == null) continue;
+      seed[field.key] = field.type === 'bool' ? Boolean(value) : String(value);
+    }
+    return seed;
+  });
+
+  function setAttribute(key: string, value: string | boolean) {
+    setAttributeValues((prev) => ({ ...prev, [key]: value }));
+  }
+
+  // Only populated fields survive: bool omitted unless true; number/text omitted
+  // when blank — keeps the stored attributes JSON clean.
+  function buildCleanAttributes(): Record<string, unknown> {
+    const out: Record<string, unknown> = {};
+    for (const field of attributeFields) {
+      const value = attributeValues[field.key];
+      if (field.type === 'bool') {
+        if (value === true) out[field.key] = true;
+      } else if (field.type === 'number') {
+        const str = typeof value === 'string' ? value.trim() : '';
+        if (str !== '') out[field.key] = Number(str);
+      } else {
+        const str = typeof value === 'string' ? value.trim() : '';
+        if (str !== '') out[field.key] = str;
+      }
+    }
+    return out;
+  }
 
   const cleanIncluded = includedItems.map((s) => s.trim()).filter(Boolean);
 
@@ -166,6 +210,8 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
       // Phase 1: stored/display only — no pricing-math change. When the category
       // allows a single unit there's no control, so this stays the default.
       pricing_unit: pricingUnit,
+      // Loose per-category details bag — empty inputs are omitted upstream.
+      attributes: buildCleanAttributes(),
       events_count: parseInt(eventsCount || '1', 10),
       featured_image_url: featuredImageUrl || null,
       gallery_image_urls: [] as string[],
@@ -439,6 +485,51 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
               )}
             </div>
           </Section>
+
+          {/* Details — loose, category-specific "what's included" fields */}
+          {attributeFields.length > 0 && (
+            <Section
+              title="Details"
+              description="Optional specifics for your category — couples see these on the package."
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                {attributeFields.map((field) => {
+                  const value = attributeValues[field.key];
+                  if (field.type === 'bool') {
+                    return (
+                      <label
+                        key={field.key}
+                        className="flex min-h-10 cursor-pointer items-center gap-2.5 self-end"
+                      >
+                        <input
+                          type="checkbox"
+                          className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                          checked={value === true}
+                          onChange={(e) => setAttribute(field.key, e.target.checked)}
+                        />
+                        <span className="text-sm">{field.label}</span>
+                      </label>
+                    );
+                  }
+                  return (
+                    <div key={field.key} className="space-y-2">
+                      <Label htmlFor={`attr_${field.key}`}>{field.label}</Label>
+                      <Input
+                        id={`attr_${field.key}`}
+                        type={field.type === 'number' ? 'number' : 'text'}
+                        min={field.type === 'number' ? 0 : undefined}
+                        inputMode={field.type === 'number' ? 'numeric' : undefined}
+                        value={typeof value === 'string' ? value : ''}
+                        onChange={(e) => setAttribute(field.key, e.target.value)}
+                        autoComplete="off"
+                        className={field.type === 'number' ? 'tabular-nums' : undefined}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </Section>
+          )}
 
           {/* Add-ons */}
           <Section

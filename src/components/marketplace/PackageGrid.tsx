@@ -12,6 +12,7 @@ import type { CustomRequestPackage } from '@/lib/vendor-packages/with-custom-req
 import type { PackageCapacityUnit } from '@/types/database.types';
 import { fmtUSD } from '@/lib/intl';
 import { formatPackageMeta } from '@/types';
+import { pricingUnitSuffix, type PricingUnit } from '@/lib/packages/archetypes';
 
 export interface PackageWithAddons {
   id: string;
@@ -22,6 +23,12 @@ export interface PackageWithAddons {
   duration_hours: number | null;
   max_guests: number | null;
   capacity_unit: PackageCapacityUnit;
+  // Display-only pricing basis (migration 00079). Optional: pre-migration rows
+  // and un-plumbed selects have none → rendered as flat (no suffix).
+  pricing_unit?: PricingUnit;
+  // Loose per-category "what's included" bag (migration 00079). Optional/nullable
+  // pre-migration → chips render nothing when absent.
+  attributes?: Record<string, unknown> | null;
   events_count: number;
   featured_image_url: string | null;
   gallery_image_urls: string[];
@@ -196,6 +203,9 @@ export function PackageGrid({
                   <div className="flex items-center justify-between pt-1">
                     <span className="text-lg font-bold tabular-nums">
                       {fmtUSD(p.base_price_cents)}
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {pricingUnitSuffix(p.pricing_unit ?? 'flat')}
+                      </span>
                     </span>
                     <span className="inline-flex items-center gap-1 text-sm text-primary group-hover:underline">
                       Book

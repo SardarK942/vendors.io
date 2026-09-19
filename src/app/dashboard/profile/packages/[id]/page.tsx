@@ -56,6 +56,8 @@ export default async function EditPackagePage({ params }: { params: { id: string
           capacity_unit: (pkg.capacity_unit as PackageInitial['capacity_unit']) ?? 'guests',
           duration_hours: pkg.duration_hours,
           pricing_unit: (pkg.pricing_unit as PricingUnit | null) ?? undefined,
+          // Pre-migration rows have no attributes column → undefined at runtime.
+          attributes: (pkg.attributes as Record<string, unknown> | null) ?? null,
           events_count: pkg.events_count,
           featured_image_url: pkg.featured_image_url,
           gallery_image_urls: (pkg.gallery_image_urls as string[]) ?? [],
