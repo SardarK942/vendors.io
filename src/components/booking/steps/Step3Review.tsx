@@ -52,15 +52,13 @@ export function Step3Review(props: Step3ReviewProps) {
     submitError,
   } = props;
 
-  // Only surface the wishlist rows the couple actually filled (bool → shown as
-  // "Yes" when checked). Mirrors composeRequestedDetailsText's inclusion rules.
+  // Only surface the quantity rows the couple actually filled, using the same
+  // friendly labels shown in the form. Mirrors composeRequestedDetailsText's
+  // inclusion rules (empty/whitespace values are skipped).
   const filledDetails = requestedDetailFields
     .map((field) => {
       const raw = (requestedDetails[field.key] ?? '').trim();
       if (!raw) return null;
-      if (field.type === 'bool') {
-        return raw === 'yes' ? { label: field.label, value: 'Yes' } : null;
-      }
       return { label: field.label, value: raw };
     })
     .filter((row): row is { label: string; value: string } => row !== null);
@@ -125,7 +123,7 @@ export function Step3Review(props: Step3ReviewProps) {
         {filledDetails.length > 0 && (
           <div className="border-t border-hairline pt-4">
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-              What you&apos;re looking for
+              A few quick details
             </p>
             <div className="mt-1 space-y-1">
               {filledDetails.map((row) => (

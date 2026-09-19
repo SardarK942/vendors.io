@@ -310,38 +310,19 @@ export function Step2Details({
       {requestedDetailFields.length > 0 && (
         <div className="border-t border-hairline pt-6">
           <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-            What you&apos;re looking for{' '}
+            A few quick details{' '}
             <span className="font-normal normal-case tracking-normal text-ink-soft">
-              — all optional, a wishlist they&apos;ll quote against
+              — all optional, helps them quote
             </span>
           </p>
           <p className="mb-3 text-xs text-ink-soft">
-            Share anything that helps — leave the rest blank.
+            Rough numbers are fine — leave anything blank if you&apos;re not sure.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
             {requestedDetailFields.map((field) => {
               const inputId = `req-detail-${field.key}`;
+              const helpId = `req-detail-help-${field.key}`;
               const value = requestedDetails[field.key] ?? '';
-              if (field.type === 'bool') {
-                return (
-                  <label
-                    key={field.key}
-                    htmlFor={inputId}
-                    className="flex items-center gap-2 self-start text-sm text-ink"
-                  >
-                    <input
-                      id={inputId}
-                      type="checkbox"
-                      checked={value === 'yes'}
-                      onChange={(e) =>
-                        onRequestedDetailChange?.(field.key, e.target.checked ? 'yes' : '')
-                      }
-                      className="h-4 w-4 rounded border-hairline text-ink focus:ring-ink"
-                    />
-                    {field.label}
-                  </label>
-                );
-              }
               return (
                 <div key={field.key}>
                   <label
@@ -356,9 +337,15 @@ export function Step2Details({
                     inputMode={field.type === 'number' ? 'numeric' : undefined}
                     min={field.type === 'number' ? 0 : undefined}
                     value={value}
+                    aria-describedby={field.helperText ? helpId : undefined}
                     onChange={(e) => onRequestedDetailChange?.(field.key, e.target.value)}
                     className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
                   />
+                  {field.helperText && (
+                    <p id={helpId} className="mt-1 text-xs text-ink-soft">
+                      {field.helperText}
+                    </p>
+                  )}
                 </div>
               );
             })}
@@ -368,7 +355,7 @@ export function Step2Details({
 
       <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-          Tell them more
+          Tell us what you&apos;re looking for
         </p>
         <div className="mb-2 flex flex-wrap gap-1.5">
           {HINT_CHIPS.map((chip) => (

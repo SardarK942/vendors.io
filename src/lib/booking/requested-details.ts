@@ -3,10 +3,13 @@
  * quote request (Phase 1, Slice 3).
  *
  * A pure, side-effect-free bridge between the package-model foundations and the
- * custom-request form. It mirrors the per-category fields a VENDOR fills when
- * creating a package (`getPackageFieldConfig` + `getPackageAttributes`) but
- * surfaces them to the COUPLE as an all-optional wishlist. The vendor then
- * quotes against whatever the couple chose to share.
+ * custom-request form. It surfaces ONLY the couple-answerable quantity fields
+ * (how many guests / how long) derived from the shared package field config
+ * (`getPackageFieldConfig`) — never the VENDOR's "what's included" attribute
+ * wishlist (Menu, Staff included, Raw files, …), which a couple can't answer.
+ * Each field carries a friendly, couple-facing label + helper text rather than
+ * the vendor-facing label. The vendor then quotes against whatever the couple
+ * chose to share.
  *
  * Phase 1 = NO schema change and NO pricing math: the couple's answers are
  * serialized into a human-readable text block that is appended to the existing
@@ -14,37 +17,58 @@
  */
 
 import { getPackageFieldConfig } from '@/lib/packages/archetypes';
-import { getPackageAttributes } from '@/lib/packages/attributes';
 import type { AttributeFieldType } from '@/lib/packages/attributes';
 
-/** A single optional wishlist input rendered in the custom-request form. */
+/** A single optional quantity input rendered in the custom-request form. */
 export interface RequestedDetailField {
   /** Stable key used in the couple's answer map. */
   key: string;
-  /** Display label (reused from the package-model config so it stays in sync). */
+  /** Friendly, couple-facing display label (not the vendor label). */
   label: string;
-  /** Input type: yes/no boolean, numeric count, or free text. */
+  /** Muted helper copy shown under the input to guide the couple. */
+  helperText: string;
+  /** Input type. Couple-facing quantity fields are always numeric. */
   type: AttributeFieldType;
 }
 
 /**
- * The optional, category-specific fields to show a couple. Composed from the
- * non-hidden capacity/duration fields plus the category's attribute wishlist.
- * Unknown categories (and bridal_wear) yield an empty list, so the form's
- * "What you're looking for" section is simply hidden.
+ * Categories whose capacity is genuinely a head-count of attending guests.
+ * Everything else with a non-hidden capacity field (e.g. gifts, priced by the
+ * piece) is framed to the couple as a plain "Quantity needed". Note: carts
+ * capacity is 'servings' in the vendor editor, but for the couple it's still
+ * "how many guests will you be feeding", so it lives here.
+ */
+const GUEST_CAPACITY_CATEGORIES = new Set(['catering', 'carts', 'venue']);
+
+/**
+ * The optional, couple-answerable quantity fields to show a couple: the
+ * non-hidden capacity field (framed as guest count vs quantity by category) and
+ * the non-hidden duration field. Categories where both are hidden (and unknown
+ * categories via the default config) yield the guest/quantity-free set, so the
+ * form's "What you're looking for" section is simply hidden.
  */
 export function getRequestedDetailFields(category: string): RequestedDetailField[] {
   const cfg = getPackageFieldConfig(category);
   const fields: RequestedDetailField[] = [];
 
   if (cfg.maxGuests !== 'hidden') {
-    fields.push({ key: 'maxGuests', label: cfg.maxGuestsLabel, type: 'number' });
+    const isGuests = GUEST_CAPACITY_CATEGORIES.has(category);
+    fields.push({
+      key: 'maxGuests',
+      label: isGuests ? 'Guest count' : 'Quantity needed',
+      helperText: isGuests
+        ? 'Roughly how many guests will be attending?'
+        : 'Roughly how many do you need?',
+      type: 'number',
+    });
   }
   if (cfg.durationHours !== 'hidden') {
-    fields.push({ key: 'durationHours', label: cfg.durationHoursLabel, type: 'number' });
-  }
-  for (const attr of getPackageAttributes(category)) {
-    fields.push({ key: attr.key, label: attr.label, type: attr.type });
+    fields.push({
+      key: 'durationHours',
+      label: 'Hours needed',
+      helperText: 'Roughly how long do you need them for?',
+      type: 'number',
+    });
   }
 
   return fields;

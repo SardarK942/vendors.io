@@ -51,8 +51,8 @@ describe('Step2Details — guest count fix', () => {
   });
 });
 
-describe('Step2Details — category wishlist section', () => {
-  it('renders optional category fields and reports changes', async () => {
+describe('Step2Details — couple quantity section', () => {
+  it('renders friendly quantity fields with helper text and reports changes', async () => {
     const user = userEvent.setup();
     const onRequestedDetailChange = vi.fn();
     render(
@@ -69,8 +69,18 @@ describe('Step2Details — category wishlist section', () => {
         onBudgetRangeChange={vi.fn()}
         onDescriptionChange={vi.fn()}
         requestedDetailFields={[
-          { key: 'menu', label: 'Menu', type: 'text' },
-          { key: 'staff_included', label: 'Staff included', type: 'bool' },
+          {
+            key: 'maxGuests',
+            label: 'Guest count',
+            helperText: 'Roughly how many guests will be attending?',
+            type: 'number',
+          },
+          {
+            key: 'durationHours',
+            label: 'Hours needed',
+            helperText: 'Roughly how long do you need them for?',
+            type: 'number',
+          },
         ]}
         requestedDetails={{}}
         onRequestedDetailChange={onRequestedDetailChange}
@@ -82,13 +92,13 @@ describe('Step2Details — category wishlist section', () => {
       />
     );
 
-    expect(screen.getByText(/what you're looking for/i)).toBeInTheDocument();
+    // Friendly labels + helper copy are both shown.
+    expect(screen.getByLabelText('Guest count')).toBeInTheDocument();
+    expect(screen.getByText('Roughly how many guests will be attending?')).toBeInTheDocument();
+    expect(screen.getByText('Roughly how long do you need them for?')).toBeInTheDocument();
 
-    await user.type(screen.getByLabelText('Menu'), 'x');
-    expect(onRequestedDetailChange).toHaveBeenCalledWith('menu', 'x');
-
-    await user.click(screen.getByLabelText('Staff included'));
-    expect(onRequestedDetailChange).toHaveBeenCalledWith('staff_included', 'yes');
+    await user.type(screen.getByLabelText('Guest count'), '2');
+    expect(onRequestedDetailChange).toHaveBeenCalledWith('maxGuests', '2');
   });
 
   it('hides the section when there are no category fields', () => {
@@ -112,6 +122,6 @@ describe('Step2Details — category wishlist section', () => {
         onContinue={vi.fn()}
       />
     );
-    expect(screen.queryByText(/what you're looking for/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/a few quick details/i)).not.toBeInTheDocument();
   });
 });
