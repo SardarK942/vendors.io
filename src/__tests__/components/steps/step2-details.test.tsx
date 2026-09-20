@@ -33,6 +33,11 @@ describe('Step2Details — guest count fix', () => {
         description=""
         onEventCityChange={vi.fn()}
         onVenueNameChange={vi.fn()}
+        eventAddress=""
+        onEventAddressChange={vi.fn()}
+        eventGooglePlaceId=""
+        onEventGooglePlaceIdChange={vi.fn()}
+        vendorCategory=""
         onBudgetRangeChange={vi.fn()}
         onDescriptionChange={vi.fn()}
         eventOptions={[]}
@@ -48,5 +53,90 @@ describe('Step2Details — guest count fix', () => {
     // Final call to onEventsChange should carry guestCount '600' (string), not clamp to '1'.
     const last = onEventsChange.mock.calls.at(-1)?.[0][0].guestCount;
     expect(last).toBe('600');
+  });
+});
+
+describe('Step2Details — couple quantity section', () => {
+  it('renders friendly quantity fields with helper text and reports changes', async () => {
+    const user = userEvent.setup();
+    const onRequestedDetailChange = vi.fn();
+    render(
+      <Step2Details
+        isMultiDay={false}
+        events={[mkEvent()]}
+        onEventsChange={vi.fn()}
+        eventCity=""
+        venueName=""
+        budgetRange={null}
+        description=""
+        onEventCityChange={vi.fn()}
+        onVenueNameChange={vi.fn()}
+        eventAddress=""
+        onEventAddressChange={vi.fn()}
+        eventGooglePlaceId=""
+        onEventGooglePlaceIdChange={vi.fn()}
+        vendorCategory="catering"
+        onBudgetRangeChange={vi.fn()}
+        onDescriptionChange={vi.fn()}
+        requestedDetailFields={[
+          {
+            key: 'maxGuests',
+            label: 'Guest count',
+            helperText: 'Roughly how many guests will be attending?',
+            type: 'number',
+          },
+          {
+            key: 'durationHours',
+            label: 'Hours needed',
+            helperText: 'Roughly how long do you need them for?',
+            type: 'number',
+          },
+        ]}
+        requestedDetails={{}}
+        onRequestedDetailChange={onRequestedDetailChange}
+        eventOptions={[]}
+        eventFunctionId={null}
+        onEventFunctionIdChange={vi.fn()}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+      />
+    );
+
+    // Friendly labels + helper copy are both shown.
+    expect(screen.getByLabelText('Guest count')).toBeInTheDocument();
+    expect(screen.getByText('Roughly how many guests will be attending?')).toBeInTheDocument();
+    expect(screen.getByText('Roughly how long do you need them for?')).toBeInTheDocument();
+
+    await user.type(screen.getByLabelText('Guest count'), '2');
+    expect(onRequestedDetailChange).toHaveBeenCalledWith('maxGuests', '2');
+  });
+
+  it('hides the section when there are no category fields', () => {
+    render(
+      <Step2Details
+        isMultiDay={false}
+        events={[mkEvent()]}
+        onEventsChange={vi.fn()}
+        eventCity=""
+        venueName=""
+        budgetRange={null}
+        description=""
+        onEventCityChange={vi.fn()}
+        onVenueNameChange={vi.fn()}
+        eventAddress=""
+        onEventAddressChange={vi.fn()}
+        eventGooglePlaceId=""
+        onEventGooglePlaceIdChange={vi.fn()}
+        vendorCategory=""
+        onBudgetRangeChange={vi.fn()}
+        onDescriptionChange={vi.fn()}
+        eventOptions={[]}
+        eventFunctionId={null}
+        onEventFunctionIdChange={vi.fn()}
+        onBack={vi.fn()}
+        onContinue={vi.fn()}
+      />
+    );
+    expect(screen.queryByText(/a few quick details/i)).not.toBeInTheDocument();
   });
 });

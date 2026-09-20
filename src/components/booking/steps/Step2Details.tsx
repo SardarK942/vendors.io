@@ -3,8 +3,15 @@
 import * as React from 'react';
 import { DatePicker } from '@/components/ui/date-picker';
 import { EventTypePicker } from '@/components/ui/EventTypePicker';
+import { TimeInput } from '@/components/ui/TimeInput';
 import { BUDGET_RANGES, type BudgetRange } from '@/lib/booking/custom-request-validation';
 import { EventFunctionSelect, type EventOption } from '@/components/events/EventFunctionSelect';
+import type { RequestedDetailField } from '@/lib/booking/requested-details';
+import { getRequestGuidance } from '@/lib/booking/request-guidance';
+import {
+  GooglePlacesAutocomplete,
+  type PlaceData,
+} from '@/components/forms/GooglePlacesAutocomplete';
 import type { CustomEvent } from '../CustomRequestFlow';
 
 export interface Step2DetailsProps {
@@ -15,10 +22,21 @@ export interface Step2DetailsProps {
   onEventCityChange: (v: string) => void;
   venueName: string;
   onVenueNameChange: (v: string) => void;
+  eventAddress: string;
+  onEventAddressChange: (v: string) => void;
+  eventGooglePlaceId: string;
+  onEventGooglePlaceIdChange: (v: string) => void;
+  // Vendor category drives the free-text guidance (placeholder + faint bullets).
+  vendorCategory: string;
   budgetRange: BudgetRange | null;
   onBudgetRangeChange: (v: BudgetRange | null) => void;
   description: string;
   onDescriptionChange: (v: string) => void;
+  // Category-aware optional wishlist ("What you're looking for"). Defaults to an
+  // empty list so callers without a category simply render no extra section.
+  requestedDetailFields?: RequestedDetailField[];
+  requestedDetails?: Record<string, string>;
+  onRequestedDetailChange?: (key: string, value: string) => void;
   eventOptions: EventOption[];
   eventFunctionId: string | null;
   onEventFunctionIdChange: (v: string | null) => void;
@@ -33,14 +51,6 @@ const BUDGET_LABEL: Record<BudgetRange, string> = {
   gt_30k: '$30k+',
   discuss: 'Prefer to discuss',
 };
-
-const HINT_CHIPS = [
-  'Cultural specifics',
-  'Coverage hours',
-  'Must-have shots',
-  'Dietary needs',
-  'Color palette',
-];
 
 // Guest count keeps its own local `string` state instead of being driven purely
 // by the `events` prop. This is the fix for the legacy leading-"1" bug: with a
@@ -86,10 +96,18 @@ export function Step2Details({
   onEventCityChange,
   venueName,
   onVenueNameChange,
+  eventAddress,
+  onEventAddressChange,
+  eventGooglePlaceId,
+  onEventGooglePlaceIdChange,
+  vendorCategory,
   budgetRange,
   onBudgetRangeChange,
   description,
   onDescriptionChange,
+  requestedDetailFields = [],
+  requestedDetails = {},
+  onRequestedDetailChange,
   eventOptions,
   eventFunctionId,
   onEventFunctionIdChange,
@@ -119,6 +137,27 @@ export function Step2Details({
     }
     onEventsChange(next);
   }
+
+  // Map a Google Places selection onto the flow's location state. `location_name`
+  // is only present for establishments/venues (mode="all"); street addresses omit
+  // it. `event_city` drives the "can continue" gate, so it's always set from the
+  // selection (in the no-key fallback the component routes free text into `city`).
+  function handlePlaceSelect(place: PlaceData) {
+    if (place.location_name) onVenueNameChange(place.location_name);
+    onEventCityChange(place.city);
+    const composed = [
+      place.address_line_1,
+      place.city,
+      `${place.state} ${place.postal_code}`.trim(),
+    ]
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+      .join(', ');
+    onEventAddressChange(composed);
+    onEventGooglePlaceIdChange(place.google_place_id);
+  }
+
+  const guidance = getRequestGuidance(vendorCategory);
 
   const canContinue =
     events.every((e) => e.date && e.eventTypeId && e.guestCount.trim()) &&
@@ -201,11 +240,10 @@ export function Step2Details({
                     >
                       Start time
                     </label>
-                    <input
+                    <TimeInput
                       id={`time-${event.id}`}
-                      type="time"
                       value={event.startTime}
-                      onChange={(e) => updateEvent(idx, { startTime: e.target.value })}
+                      onChange={(v) => updateEvent(idx, { startTime: v })}
                       className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
                     />
                   </div>
@@ -229,40 +267,29 @@ export function Step2Details({
         })}
       </div>
 
-      <div className="grid gap-4 border-t border-hairline pt-6 md:grid-cols-2">
-        <div>
-          <label
-            htmlFor="event-city"
-            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
-          >
-            Event city
-          </label>
-          <input
-            id="event-city"
-            type="text"
-            required
-            value={eventCity}
-            onChange={(e) => onEventCityChange(e.target.value)}
-            placeholder="Houston, TX"
-            className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
-          />
-        </div>
-        <div>
-          <label
-            htmlFor="venue-name"
-            className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
-          >
-            Venue name <span className="text-ink-soft">— optional</span>
-          </label>
-          <input
-            id="venue-name"
-            type="text"
-            value={venueName}
-            onChange={(e) => onVenueNameChange(e.target.value)}
-            placeholder="The Post Oak Hotel, or leave blank if not booked"
-            className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
-          />
-        </div>
+      <div className="border-t border-hairline pt-6">
+        <label
+          htmlFor="event-location"
+          className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+        >
+          Where&apos;s the event?
+        </label>
+        <GooglePlacesAutocomplete
+          id="event-location"
+          mode="all"
+          value={{
+            location_name: venueName || undefined,
+            address_line_1: eventAddress || undefined,
+            city: eventCity || undefined,
+            google_place_id: eventGooglePlaceId || undefined,
+          }}
+          onChange={handlePlaceSelect}
+          placeholder="Search a venue or address"
+          className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+        />
+        <p className="mt-1 text-xs text-ink-soft">
+          Search a venue, or enter the home/property address
+        </p>
       </div>
 
       <EventFunctionSelect
@@ -298,27 +325,75 @@ export function Step2Details({
         </div>
       </div>
 
+      {requestedDetailFields.length > 0 && (
+        <div className="border-t border-hairline pt-6">
+          <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+            A few quick details{' '}
+            <span className="font-normal normal-case tracking-normal text-ink-soft">
+              — all optional, helps them quote
+            </span>
+          </p>
+          <p className="mb-3 text-xs text-ink-soft">
+            Rough numbers are fine — leave anything blank if you&apos;re not sure.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            {requestedDetailFields.map((field) => {
+              const inputId = `req-detail-${field.key}`;
+              const helpId = `req-detail-help-${field.key}`;
+              const value = requestedDetails[field.key] ?? '';
+              return (
+                <div key={field.key}>
+                  <label
+                    htmlFor={inputId}
+                    className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo"
+                  >
+                    {field.label}
+                  </label>
+                  <input
+                    id={inputId}
+                    type={field.type === 'number' ? 'number' : 'text'}
+                    inputMode={field.type === 'number' ? 'numeric' : undefined}
+                    min={field.type === 'number' ? 0 : undefined}
+                    value={value}
+                    aria-describedby={field.helperText ? helpId : undefined}
+                    onChange={(e) => onRequestedDetailChange?.(field.key, e.target.value)}
+                    className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
+                  />
+                  {field.helperText && (
+                    <p id={helpId} className="mt-1 text-xs text-ink-soft">
+                      {field.helperText}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-          Tell them more
+          Tell us what you&apos;re looking for
         </p>
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {HINT_CHIPS.map((chip) => (
-            <span
-              key={chip}
-              className="rounded-full border border-hairline bg-cream px-2.5 py-1 text-[11px] text-ink-muted"
-            >
-              {chip}
-            </span>
-          ))}
-        </div>
+        {guidance.bullets.length > 0 && (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {guidance.bullets.map((chip) => (
+              <span
+                key={chip}
+                className="rounded-full border border-hairline bg-cream px-2.5 py-1 text-[11px] text-ink-muted"
+              >
+                {chip}
+              </span>
+            ))}
+          </div>
+        )}
         <textarea
           rows={6}
           minLength={50}
           maxLength={1000}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          placeholder="Tell the vendor what makes your event special — coverage hours, dietary needs, color palette, cultural specifics, anything outside their standard offering…"
+          placeholder={guidance.placeholder}
           className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
         />
         <p className="mt-1 text-xs tabular-nums text-ink-soft">

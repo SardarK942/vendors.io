@@ -143,11 +143,13 @@ test.describe('Custom-request flow — UI-driven', () => {
     await card.locator('button[role="combobox"]').click();
     await page.getByRole('option', { name: 'Wedding / Shaadi' }).click();
 
-    await page.getByLabel(/event city/i).fill('Houston, TX');
-    await page.getByLabel(/venue name/i).fill('The Post Oak Hotel');
+    // Single location field (GooglePlacesAutocomplete, mode="all"). Typing
+    // free text without clicking a Google prediction now emits it as the
+    // location (city → event_city), which drives the "can continue" gate.
+    await page.getByLabel(/where's the event/i).fill('The Post Oak Hotel, Houston, TX');
     await page.getByRole('radio', { name: /15k.30k/i }).click();
     await page
-      .getByPlaceholder(/tell the vendor/i)
+      .getByPlaceholder(/what you.re envisioning/i)
       .fill(
         'Traditional South Asian wedding, ceremony at 5, reception dinner + dance floor. Would love drone shots.'
       );
@@ -194,9 +196,9 @@ test.describe('Custom-request flow — UI-driven', () => {
     // Event type + guest count keep their seeded defaults ('wedding' / '50'),
     // which already satisfy Step2's canContinue check — only city + a long
     // enough description are required beyond the three dates.
-    await page.getByLabel(/event city/i).fill('Chicago, IL');
+    await page.getByLabel(/where's the event/i).fill('Chicago, IL');
     await page
-      .getByPlaceholder(/tell the vendor/i)
+      .getByPlaceholder(/what you.re envisioning/i)
       .fill(
         'Three-day wedding weekend: mehndi Friday, wedding Saturday, walima Sunday. Please quote the whole weekend as a bundle.'
       );

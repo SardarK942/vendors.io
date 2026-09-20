@@ -90,6 +90,8 @@ export default async function BookPage({ params }: BookPageProps) {
         vendor={vendor as Parameters<typeof BookingForm>[0]['vendor']}
         pkg={{
           ...pkg,
+          // max_guests / duration_hours are nullable (migration 00079);
+          // BookingForm handles null (skips the meta line), so pass through.
           addons: (pkg.addons ?? []) as { id: string; name: string; price_delta_cents: number }[],
         }}
         selectedAddons={selection.selected_addons}

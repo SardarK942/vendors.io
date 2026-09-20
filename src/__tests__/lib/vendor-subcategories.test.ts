@@ -115,3 +115,33 @@ describe('decor subtypes', () => {
     expect(valid.has('flowers')).toBe(false);
   });
 });
+
+describe('mehndi subtypes', () => {
+  it('exposes bridal, party, event under "Henna type"', () => {
+    const slugs = getSubcategoriesForCategory('mehndi').map((s) => s.slug);
+    expect(slugs).toEqual(['bridal', 'party', 'event']);
+    expect(SUBCATEGORY_SECTION_LABEL.mehndi).toBe('Henna type');
+  });
+
+  it('validates mehndi slugs', () => {
+    const valid = validSubcategorySlugs('mehndi');
+    expect(valid.has('bridal')).toBe(true);
+    expect(valid.has('event')).toBe(true);
+    expect(valid.has('glitter')).toBe(false);
+  });
+});
+
+describe('gifts subtypes', () => {
+  it('exposes favors, hampers, mithai_boxes, welcome_bags under "Gift type"', () => {
+    const slugs = getSubcategoriesForCategory('gifts').map((s) => s.slug);
+    expect(slugs).toEqual(['favors', 'hampers', 'mithai_boxes', 'welcome_bags']);
+    expect(SUBCATEGORY_SECTION_LABEL.gifts).toBe('Gift type');
+  });
+
+  it('validates gifts slugs', () => {
+    const valid = validSubcategorySlugs('gifts');
+    expect(valid.has('mithai_boxes')).toBe(true);
+    expect(valid.has('welcome_bags')).toBe(true);
+    expect(valid.has('cash')).toBe(false);
+  });
+});

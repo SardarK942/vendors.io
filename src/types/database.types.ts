@@ -467,9 +467,11 @@ export interface Database {
           description: string;
           base_price_cents: number;
           included_items: string[];
-          max_guests: number;
+          max_guests: number | null;
           capacity_unit: PackageCapacityUnit;
-          duration_hours: number;
+          duration_hours: number | null;
+          pricing_unit: string;
+          attributes: Json;
           events_count: number;
           featured_image_url: string | null;
           gallery_image_urls: string[];
@@ -488,9 +490,11 @@ export interface Database {
           description: string;
           base_price_cents: number;
           included_items?: string[];
-          max_guests: number;
+          max_guests?: number | null;
           capacity_unit?: PackageCapacityUnit;
-          duration_hours: number;
+          duration_hours?: number | null;
+          pricing_unit?: string;
+          attributes?: Json;
           events_count?: number;
           featured_image_url?: string | null;
           gallery_image_urls?: string[];
@@ -508,9 +512,11 @@ export interface Database {
           description?: string;
           base_price_cents?: number;
           included_items?: string[];
-          max_guests?: number;
+          max_guests?: number | null;
           capacity_unit?: PackageCapacityUnit;
-          duration_hours?: number;
+          duration_hours?: number | null;
+          pricing_unit?: string;
+          attributes?: Json;
           events_count?: number;
           featured_image_url?: string | null;
           gallery_image_urls?: string[];
@@ -677,6 +683,8 @@ export interface Database {
           is_multi_day: boolean;
           event_city: string | null;
           venue_name: string | null;
+          event_address: string | null;
+          event_google_place_id: string | null;
           budget_range: string | null;
           event_function_id: string | null;
           created_at: string;
@@ -722,6 +730,8 @@ export interface Database {
           is_multi_day?: boolean;
           event_city?: string | null;
           venue_name?: string | null;
+          event_address?: string | null;
+          event_google_place_id?: string | null;
           budget_range?: string | null;
           event_function_id?: string | null;
           created_at?: string;
@@ -766,6 +776,8 @@ export interface Database {
           is_multi_day?: boolean;
           event_city?: string | null;
           venue_name?: string | null;
+          event_address?: string | null;
+          event_google_place_id?: string | null;
           budget_range?: string | null;
           event_function_id?: string | null;
           updated_at?: string;

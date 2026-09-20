@@ -4,7 +4,7 @@ import Image from 'next/image';
 import { ArrowRight } from 'lucide-react';
 import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
 import { fmtUSD } from '@/lib/intl';
-import { formatCapacity, type PackageCapacityUnitInput } from '@/types';
+import { formatPackageMeta, type PackageCapacityUnitInput } from '@/types';
 
 export interface PackagePreviewData {
   name: string;
@@ -65,11 +65,17 @@ export function PackageLivePreview({ data }: { data: PackagePreviewData }) {
             <h3 className="text-base font-semibold leading-tight" translate="no">
               {name}
             </h3>
-            <p className="text-sm tabular-nums text-muted-foreground">
-              {data.durationHours ? `${data.durationHours} h · ` : ''}
-              {data.maxGuests ? formatCapacity(data.maxGuests, data.capacityUnit) : 'capacity —'}
-              {data.eventsCount > 1 ? ` · ${data.eventsCount} events` : ''}
-            </p>
+            {(() => {
+              const metaLine = formatPackageMeta({
+                durationHours: data.durationHours,
+                maxGuests: data.maxGuests,
+                capacityUnit: data.capacityUnit,
+                eventsCount: data.eventsCount,
+              });
+              return metaLine ? (
+                <p className="text-sm tabular-nums text-muted-foreground">{metaLine}</p>
+              ) : null;
+            })()}
             <div className="flex items-center justify-between pt-1">
               <span className="text-lg font-bold tabular-nums">
                 {hasPrice ? fmtUSD(data.basePriceCents!) : '$—'}

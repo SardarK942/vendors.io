@@ -416,7 +416,8 @@ export async function BookingDetail({
                 </div>
               </>
             )}
-            {(bookingAsAny.event_city as string | null) && (
+            {((bookingAsAny.event_address as string | null) ||
+              (bookingAsAny.event_city as string | null)) && (
               <>
                 <Separator />
                 <div>
@@ -424,10 +425,31 @@ export async function BookingDetail({
                     Location
                   </p>
                   <p className="text-sm text-ink" data-ph-mask="">
-                    {bookingAsAny.event_city as string}
+                    {(bookingAsAny.event_address as string | null) ||
+                      (bookingAsAny.event_city as string)}
                     {(bookingAsAny.venue_name as string | null) &&
                       ` · ${bookingAsAny.venue_name as string}`}
                   </p>
+                  {((bookingAsAny.event_address as string | null) ||
+                    (bookingAsAny.event_city as string | null)) && (
+                    <a
+                      href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                        (bookingAsAny.event_address as string | null) ||
+                          (bookingAsAny.event_city as string)
+                      )}${
+                        (bookingAsAny.event_google_place_id as string | null)
+                          ? `&query_place_id=${encodeURIComponent(
+                              bookingAsAny.event_google_place_id as string
+                            )}`
+                          : ''
+                      }`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-1 inline-block text-xs font-medium text-indigo underline underline-offset-2 hover:text-ink"
+                    >
+                      View on map
+                    </a>
+                  )}
                 </div>
               </>
             )}
