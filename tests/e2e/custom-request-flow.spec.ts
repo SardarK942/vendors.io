@@ -134,13 +134,20 @@ test.describe('Custom-request flow — UI-driven', () => {
     const card = page.getByTestId('event-card-0');
     await pickCalendarDate(page.getByTestId('date-picker-0'), 1, 10);
 
-    await page.getByLabel(/start time/i).fill('16:00');
+    // TimeInput is now a Radix Popover listbox (no native <input type="time">),
+    // so open the picker via its trigger button (the label's htmlFor points at
+    // it) and click the 15-min slot rather than typing into it.
+    await page.getByLabel(/start time/i).click();
+    await page.getByRole('option', { name: '4:00 PM' }).click();
     // `.fill()` rather than click+Control+A+type: simulating the select-all
     // keystroke raced with React's controlled re-render often enough in CI
     // to leave stray digits from the seeded '50' behind (e.g. "25050").
     await page.getByLabel(/guests/i).fill('250');
 
-    await card.locator('button[role="combobox"]').click();
+    // The new TimeInput trigger is also role="combobox", so scope to the first
+    // combobox in the card — the EventTypePicker, which renders before the
+    // start-time picker.
+    await card.locator('button[role="combobox"]').first().click();
     await page.getByRole('option', { name: 'Wedding / Shaadi' }).click();
 
     // Single location field (GooglePlacesAutocomplete, mode="all"). Typing
