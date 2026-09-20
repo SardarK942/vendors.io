@@ -45,6 +45,11 @@ export function GooglePlacesAutocomplete({
   mode = 'address',
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
+  // Set true the instant a Google prediction is selected, so the single trailing
+  // programmatic `input` event Google fires when it fills the field is swallowed
+  // by the free-text onChange below instead of clobbering the structured
+  // PlaceData (place_id, city, state…) with a free-text emit.
+  const selectedRef = useRef(false);
 
   useEffect(() => {
     const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
@@ -72,6 +77,9 @@ export function GooglePlacesAutocomplete({
           (place.address_components as any[]).find((c: any) => c.types.includes(type))?.long_name ??
           '';
 
+        // Mark selection BEFORE emitting so the trailing input event Google
+        // fires (as it writes the formatted address into the field) is swallowed.
+        selectedRef.current = true;
         onChange({
           location_name: place.name ?? undefined,
           address_line_1: `${get('street_number')} ${get('route')}`.trim(),
@@ -97,13 +105,23 @@ export function GooglePlacesAutocomplete({
   // once the predictions arrive. We set the static ARIA baseline here so the
   // input is announced as a combobox even before the script loads (or if it
   // fails to load entirely).
-  // When no API key is configured the Google widget never loads and no
-  // `place_changed` listener fires, so a plain-text onChange is the only way the
-  // couple's input reaches the parent. We route that free text into `city` so
-  // callers mapping city → event_city keep a working "can continue" gate. When
-  // the key IS present we leave onChange off so Google drives the value and we
-  // don't emit half-built PlaceData on every keystroke.
+  // Free-text capture: emit typed text so a value always reaches the parent as
+  // the user types, routed into `city` so callers mapping city → event_city keep
+  // a working "can continue" gate even when the user never clicks a prediction.
+  //
+  // Enabled for 'all' mode (the custom-request location field, where a typed but
+  // unselected "123 Main St, Houston" must not be silently dropped) and whenever
+  // no API key is configured (the Google widget never loads, so onChange is the
+  // only path to the parent). 'address' mode WITH a key keeps onChange undefined
+  // — onboarding StepLocation / EventRow rely on Google-only structured input.
+  //
+  // On a real prediction-select, place_changed already emitted structured
+  // PlaceData and set selectedRef; the one trailing input event Google fires as
+  // it writes the formatted address is swallowed here (return without emitting)
+  // so the place_id + structured fields survive. Later manual keystrokes emit
+  // free text normally.
   const hasApiKey = !!process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+  const emitFreeText = mode === 'all' || !hasApiKey;
 
   return (
     <input
@@ -120,16 +138,23 @@ export function GooglePlacesAutocomplete({
       disabled={disabled}
       autoComplete="street-address"
       onChange={
-        hasApiKey
-          ? undefined
-          : (e) =>
+        emitFreeText
+          ? (e) => {
+              // Swallow the single trailing input event Google fires right after
+              // a prediction-select so structured PlaceData is not clobbered.
+              if (selectedRef.current) {
+                selectedRef.current = false;
+                return;
+              }
               onChange({
                 address_line_1: '',
                 city: e.target.value,
                 state: '',
                 postal_code: '',
                 google_place_id: '',
-              })
+              });
+            }
+          : undefined
       }
     />
   );
