@@ -54,9 +54,11 @@ test.describe('Bucket B — all 20 event types in every picker', () => {
     // Step 2 — the EventTypePicker is a Radix Select — its trigger renders as
     // role="combobox". The "Event type" label renders above the picker via a
     // <label> element with no htmlFor, so it isn't reachable via getByLabel.
-    // Using the last combobox since the date picker (if present) is rendered differently.
+    // Step2Details now has multiple comboboxes (event-type, the TimeInput start
+    // time, and the Places location field), so scope to the event card and take
+    // the FIRST combobox — the EventTypePicker renders before the others.
     await expect(page.getByRole('heading', { name: /tell us the details/i })).toBeVisible();
-    const picker = page.locator('button[role="combobox"]').last();
+    const picker = page.getByTestId('event-card-0').locator('button[role="combobox"]').first();
     await picker.click();
 
     // Cultural entries — rendered as SelectItem → role="option" in the Radix portal
