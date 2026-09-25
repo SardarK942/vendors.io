@@ -1,6 +1,7 @@
 import type { EventFunctionRow, EventRow } from '@/types/database.types';
 import { formatPrice } from '@/lib/utils';
 import { dateRangeLabel } from '@/lib/events/format';
+import { DeleteEventButton } from '@/components/events/DeleteEventButton';
 
 interface JournalHeroProps {
   event: EventRow;
@@ -28,9 +29,12 @@ export function JournalHero({
 
   return (
     <div className="rounded-2xl bg-ink px-6 py-7 text-cream sm:px-8 sm:py-9">
-      <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-haldi">
-        Your celebration
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-haldi">
+          Your celebration
+        </p>
+        <DeleteEventButton eventId={event.id} />
+      </div>
       <h1 className="mt-2 font-display text-3xl text-cream sm:text-4xl">{event.name}</h1>
       {metaLine && <p className="mt-1.5 text-sm text-cream/70">{metaLine}</p>}
 
