@@ -12,6 +12,7 @@ import { FunctionTimeline } from '@/components/events/FunctionTimeline';
 import { VendorBoard, type UnlinkedBooking } from '@/components/events/VendorBoard';
 import { BudgetPanel } from '@/components/events/BudgetPanel';
 import { TasksPanel } from '@/components/events/TasksPanel';
+import { DeleteEventButton } from '@/components/events/DeleteEventButton';
 
 interface EventJournalPageProps {
   params: Promise<{ id: string }>;
@@ -93,6 +94,11 @@ export default async function EventJournalPage({ params }: EventJournalPageProps
             todayIso={todayIso}
           />
         </div>
+      </div>
+
+      {/* Quiet danger zone at the very bottom, out of the primary flow. */}
+      <div className="mt-6 flex justify-center border-t border-hairline pt-6">
+        <DeleteEventButton eventId={graph.event.id} />
       </div>
     </div>
   );

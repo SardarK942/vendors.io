@@ -37,7 +37,7 @@ export function DeleteEventButton({ eventId }: DeleteEventButtonProps) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="shrink-0 font-mono text-[10px] font-bold uppercase tracking-widest text-cream/50 underline decoration-cream/20 underline-offset-4 transition-colors hover:text-cream hover:decoration-cream/50"
+        className="font-mono text-[10px] font-bold uppercase tracking-widest text-ink-soft underline decoration-ink-soft/30 underline-offset-4 transition-colors hover:text-error hover:decoration-error/50"
       >
         Delete event
       </button>
