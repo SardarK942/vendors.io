@@ -78,6 +78,7 @@ export default async function DashboardLayout({
             userMenu={<SidebarUserMenu user={{ email, initial }} />}
             bookingsCount={bookingsCount}
             hasUnreadNotifications={unreadCount > 0}
+            isBridalWear={activeProfile?.category === 'bridal_wear'}
           />
           <SidebarInset>
             <div className="mx-auto flex w-full max-w-7xl gap-4 px-4 pb-8 pt-24 sm:px-6 lg:px-8">
