@@ -61,6 +61,18 @@ export const SUBCATEGORIES_BY_CATEGORY: Record<string, readonly Subcategory[]> =
     { slug: 'mithai_boxes', label: 'Mithai boxes' },
     { slug: 'welcome_bags', label: 'Welcome bags' },
   ],
+  // Shop prototype (Slice 1): slugs mirror the products.garment_type taxonomy
+  // (migration 00082) so a browse chip maps 1:1 to a garment_type filter.
+  bridal_wear: [
+    { slug: 'saree', label: 'Sarees' },
+    { slug: 'lehenga', label: 'Lehengas' },
+    { slug: 'bridal_gown', label: 'Bridal gowns' },
+    { slug: 'sherwani', label: 'Sherwanis' },
+    { slug: 'groom_suit', label: 'Groom suits' },
+    { slug: 'kurta', label: 'Kurtas' },
+    { slug: 'anarkali', label: 'Anarkalis' },
+    { slug: 'accessories', label: 'Accessories' },
+  ],
 };
 
 /**

@@ -256,6 +256,55 @@ export type CreatePackageInput = z.infer<typeof createPackageSchema>;
 export const updatePackageSchema = createPackageSchema.partial();
 export type UpdatePackageInput = z.infer<typeof updatePackageSchema>;
 
+// ─── Shop prototype (Slice 1): Products + Variants ──────────────
+
+/** Garment taxonomy for the bridal/groom wear Shop. Kept in sync with the
+ *  products.garment_type CHECK (migration 00082) and GarmentType in
+ *  database.types.ts. */
+export const productGarmentTypeSchema = z.enum([
+  'saree',
+  'lehenga',
+  'bridal_gown',
+  'sherwani',
+  'groom_suit',
+  'kurta',
+  'anarkali',
+  'accessories',
+  'other',
+]);
+export type ProductGarmentTypeInput = z.infer<typeof productGarmentTypeSchema>;
+
+export const productStatusSchema = z.enum(['draft', 'active', 'out_of_stock', 'archived']);
+export type ProductStatusInput = z.infer<typeof productStatusSchema>;
+
+export const productVariantInputSchema = z.object({
+  size_label: z.string().min(1).max(40),
+  sku: z.string().max(60).nullable().optional(),
+  price_delta_cents: z.number().int().min(0).default(0),
+  stock_quantity: z.number().int().min(0).default(0),
+});
+export type ProductVariantInput = z.infer<typeof productVariantInputSchema>;
+
+export const createProductSchema = z.object({
+  title: z.string().min(1).max(160),
+  description: z.string().min(1).max(4000),
+  garment_type: productGarmentTypeSchema,
+  base_price_cents: z.number().int().positive(),
+  currency: z.string().default('usd'),
+  images: z.array(z.string().url()).max(12).default([]),
+  video_uids: z.array(z.string()).max(4).default([]),
+  attributes: z.record(z.string(), z.unknown()).default({}),
+  ships_internationally: z.boolean().default(false),
+  tailoring_available: z.boolean().default(false),
+  lead_time_days: z.number().int().positive().nullable().optional(),
+  status: productStatusSchema.default('draft'),
+  variants: z.array(productVariantInputSchema).max(20).default([]),
+});
+export type CreateProductInput = z.infer<typeof createProductSchema>;
+
+export const updateProductSchema = createProductSchema.partial();
+export type UpdateProductInput = z.infer<typeof updateProductSchema>;
+
 export const setPackageActiveSchema = z.object({
   is_active: z.boolean(),
 });
