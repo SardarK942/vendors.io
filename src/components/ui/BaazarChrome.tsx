@@ -114,6 +114,7 @@ export function BaazarChrome() {
     const base: MenuItem[] = [
       { label: 'Home', ariaLabel: 'Go to home', link: '/' },
       { label: 'Browse Vendors', ariaLabel: 'Browse vendors', link: '/vendors' },
+      { label: 'Shop', ariaLabel: 'Shop bridal and groom wear', link: '/shop' },
     ];
     if (!user) {
       return [
