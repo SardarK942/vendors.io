@@ -12,6 +12,7 @@ import {
   Home,
   Package,
   PartyPopper,
+  Ruler,
   Settings as SettingsIcon,
   ShoppingBag,
   User,
@@ -59,6 +60,7 @@ function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
   ];
   if (role === 'couple') {
     links.splice(1, 0, { href: '/dashboard/events', label: 'My Event', icon: PartyPopper });
+    links.push({ href: '/dashboard/measurements', label: 'Measurements', icon: Ruler });
     links.push({ href: '/dashboard/saved', label: 'Saved', icon: Heart });
   }
   links.push({
