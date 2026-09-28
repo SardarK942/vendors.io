@@ -47,7 +47,12 @@ export function MeasurementsClient({ profiles }: { profiles: MeasurementProfileV
           <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
             Add the bride&apos;s or groom&apos;s measurements to reuse at checkout.
           </p>
-          <Button variant="primary" className="mt-5" iconLeading={Plus} onClick={openAdd}>
+          <Button
+            variant="primary"
+            className="mt-5"
+            iconLeading={<Plus className="size-4" aria-hidden="true" />}
+            onClick={openAdd}
+          >
             Add measurements
           </Button>
         </div>
@@ -73,7 +78,7 @@ export function MeasurementsClient({ profiles }: { profiles: MeasurementProfileV
                     variant="secondary"
                     size="sm"
                     className="mt-4"
-                    iconLeading={Pencil}
+                    iconLeading={<Pencil className="size-4" aria-hidden="true" />}
                     onClick={() => openEdit(profile)}
                   >
                     Edit
@@ -83,7 +88,11 @@ export function MeasurementsClient({ profiles }: { profiles: MeasurementProfileV
             })}
           </div>
 
-          <Button variant="tertiary" iconLeading={Plus} onClick={openAdd}>
+          <Button
+            variant="tertiary"
+            iconLeading={<Plus className="size-4" aria-hidden="true" />}
+            onClick={openAdd}
+          >
             Add measurements
           </Button>
         </>
