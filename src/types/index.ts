@@ -305,6 +305,26 @@ export type CreateProductInput = z.infer<typeof createProductSchema>;
 export const updateProductSchema = createProductSchema.partial();
 export type UpdateProductInput = z.infer<typeof updateProductSchema>;
 
+// ─── Made-to-measure: reusable measurement profiles ─────────────
+
+/**
+ * A reusable per-buyer body-measurement profile ("Bride"/"Groom"). `garment`
+ * is CHECK-constrained in migration 00083; `measurements` is a machine-key →
+ * inches bag (body measurements only — the field taxonomy + validation live in
+ * src/lib/products/measurement-{schemas,validation}.ts). `unit` is a display
+ * preference only; stored values are always inches.
+ */
+export const measurementProfileSchema = z.object({
+  label: z.string().min(1).max(40),
+  garment: z.enum(['lehenga', 'sherwani']),
+  measurements: z.record(z.string(), z.number()),
+  unit: z.enum(['in', 'cm']).default('in'),
+});
+export type MeasurementProfileInput = z.infer<typeof measurementProfileSchema>;
+
+export const updateMeasurementProfileSchema = measurementProfileSchema.partial();
+export type UpdateMeasurementProfileInput = z.infer<typeof updateMeasurementProfileSchema>;
+
 export const setPackageActiveSchema = z.object({
   is_active: z.boolean(),
 });

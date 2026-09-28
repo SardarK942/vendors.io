@@ -38,6 +38,7 @@
  *
  *   - 00070 is_multi_day, event_city, venue_name, budget_range on bookings (custom-quote flow v2)
  *   - 00082 products + product_variants tables (Shop prototype — Slice 1, catalog + inventory)
+ *   - 00083 user_measurement_profiles table (made-to-measure reusable body-measurement profiles)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -104,6 +105,13 @@ export type GarmentType =
   | 'anarkali'
   | 'accessories'
   | 'other';
+
+// Made-to-measure measurement profiles (migration 00083). `MeasurementGarment`
+// is the CHECK-constrained garment column; `MeasurementUnit` is a display
+// preference only — stored measurement values are always inches.
+export type MeasurementGarment = 'lehenga' | 'sherwani';
+
+export type MeasurementUnit = 'in' | 'cm';
 
 export interface SelectedAddonSnapshot {
   addon_id: string;
@@ -683,6 +691,44 @@ export interface Database {
             columns: ['product_id'];
             isOneToOne: false;
             referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      user_measurement_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          label: string;
+          garment: MeasurementGarment;
+          measurements: Json;
+          unit: MeasurementUnit;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          label: string;
+          garment: MeasurementGarment;
+          measurements?: Json;
+          unit?: MeasurementUnit;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          label?: string;
+          garment?: MeasurementGarment;
+          measurements?: Json;
+          unit?: MeasurementUnit;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_measurement_profiles_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
