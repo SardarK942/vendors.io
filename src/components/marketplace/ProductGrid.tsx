@@ -1,9 +1,9 @@
 import { ProductCard } from './ProductCard';
 import { Skeleton } from '@/components/ui/skeleton';
-import type { ProductWithVariants } from '@/services/products.service';
+import type { ProductWithVendor } from '@/services/products.service';
 
 interface ProductGridProps {
-  products: ProductWithVariants[];
+  products: ProductWithVendor[];
 }
 
 export function ProductGrid({ products }: ProductGridProps) {

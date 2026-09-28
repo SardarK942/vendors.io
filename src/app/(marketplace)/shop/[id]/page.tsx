@@ -48,7 +48,10 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
         {/* Gallery */}
         <div>
           {media.length > 0 ? (
-            <VendorGallery media={media} businessName={product.title} />
+            <VendorGallery
+              media={media}
+              businessName={product.vendor?.business_name ?? product.title}
+            />
           ) : (
             <div
               className="flex aspect-[4/5] w-full items-center justify-center rounded-2xl border border-hairline bg-cream-soft"
@@ -73,6 +76,22 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
           >
             {product.title}
           </h1>
+
+          {product.vendor?.business_name && (
+            <p className="mt-2 text-[14px] text-ink-muted" translate="no">
+              By{' '}
+              {product.vendor.slug ? (
+                <Link
+                  href={`/vendors/${product.vendor.slug}`}
+                  className="font-semibold text-ink hover:text-hot-pink hover:underline"
+                >
+                  {product.vendor.business_name}
+                </Link>
+              ) : (
+                <span className="font-semibold text-ink">{product.vendor.business_name}</span>
+              )}
+            </p>
+          )}
 
           {price && (
             <p className="mt-4 text-2xl font-semibold tabular-nums text-ink">

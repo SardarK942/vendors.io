@@ -18,6 +18,36 @@ export interface ProductWithVariants extends ProductRow {
   variants: ProductVariantRow[];
 }
 
+/** Minimal selling-vendor reference embedded on buyer-facing product reads. */
+export interface ProductVendorRef {
+  business_name: string;
+  slug: string;
+  verified: boolean;
+}
+
+/** Product + variants + the (nullable) selling vendor, for buyer catalog/detail. */
+export interface ProductWithVendor extends ProductWithVariants {
+  vendor: ProductVendorRef | null;
+}
+
+// The to-one `vendor_profiles` embed comes back as an object (or, under some
+// inference paths, a single-element array). Coerce it to a lone ref | null.
+function normalizeVendorRef(raw: unknown): ProductVendorRef | null {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (!value || typeof value !== 'object') return null;
+  const { business_name, slug, verified } = value as Record<string, unknown>;
+  if (typeof business_name !== 'string' || typeof slug !== 'string') return null;
+  return { business_name, slug, verified: verified === true };
+}
+
+const PRODUCT_WITH_VENDOR_SELECT =
+  '*, variants:product_variants(*), vendor:vendor_profiles(business_name, slug, verified)';
+
+function withVendor(row: Record<string, unknown>): ProductWithVendor {
+  const { vendor, ...rest } = row;
+  return { ...(rest as unknown as ProductWithVariants), vendor: normalizeVendorRef(vendor) };
+}
+
 interface GetActiveProductsOpts {
   garmentType?: GarmentType;
   limit?: number;
@@ -28,11 +58,8 @@ interface GetActiveProductsOpts {
 export async function getActiveProducts(
   supabase: SupabaseClient<Database>,
   opts: GetActiveProductsOpts = {}
-): Promise<ServiceResult<ProductWithVariants[]>> {
-  let query = supabase
-    .from('products')
-    .select('*, variants:product_variants(*)')
-    .eq('status', 'active');
+): Promise<ServiceResult<ProductWithVendor[]>> {
+  let query = supabase.from('products').select(PRODUCT_WITH_VENDOR_SELECT).eq('status', 'active');
 
   if (opts.garmentType) query = query.eq('garment_type', opts.garmentType);
 
@@ -42,7 +69,10 @@ export async function getActiveProducts(
 
   const { data, error } = await query;
   if (error) return { error: error.message, status: 500 };
-  return { data: (data ?? []) as ProductWithVariants[], status: 200 };
+  return {
+    data: (data ?? []).map((row) => withVendor(row as Record<string, unknown>)),
+    status: 200,
+  };
 }
 
 // ─── Read: single product (active OR owner — RLS enforces visibility) ────────
@@ -50,16 +80,16 @@ export async function getActiveProducts(
 export async function getProductById(
   supabase: SupabaseClient<Database>,
   productId: string
-): Promise<ServiceResult<ProductWithVariants>> {
+): Promise<ServiceResult<ProductWithVendor>> {
   const { data, error } = await supabase
     .from('products')
-    .select('*, variants:product_variants(*)')
+    .select(PRODUCT_WITH_VENDOR_SELECT)
     .eq('id', productId)
     .maybeSingle();
 
   if (error) return { error: error.message, status: 500 };
   if (!data) return { error: 'Product not found', status: 404 };
-  return { data: data as ProductWithVariants, status: 200 };
+  return { data: withVendor(data as Record<string, unknown>), status: 200 };
 }
 
 // ─── Read: a vendor's full catalog (all statuses — owner view) ───────────────

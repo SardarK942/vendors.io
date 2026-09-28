@@ -1,14 +1,14 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { Shirt } from 'lucide-react';
+import { Shirt, BadgeCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatPriceFromCents } from './vendor-card-helpers';
 import { GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
 import { offersMadeToMeasure } from '@/lib/products/customization';
-import type { ProductWithVariants } from '@/services/products.service';
+import type { ProductWithVendor } from '@/services/products.service';
 
 export interface ProductCardProps {
-  product: ProductWithVariants;
+  product: ProductWithVendor;
 }
 
 /**
@@ -76,6 +76,21 @@ export function ProductCard({ product }: ProductCardProps) {
 
       {/* Body */}
       <div className="px-[18px] py-4 pb-5">
+        {product.vendor?.business_name && (
+          <p
+            className="mb-1 flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-indigo"
+            translate="no"
+          >
+            <span className="truncate">{product.vendor.business_name}</span>
+            {product.vendor.verified && (
+              <BadgeCheck
+                className="size-3.5 shrink-0 text-indigo"
+                strokeWidth={2}
+                aria-label="Verified vendor"
+              />
+            )}
+          </p>
+        )}
         <h3
           className="mb-2 font-display text-[21px] font-bold leading-[1.18] tracking-[-0.014em] text-ink"
           translate="no"
