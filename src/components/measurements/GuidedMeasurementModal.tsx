@@ -259,6 +259,7 @@ export function GuidedMeasurementModal({
                         )}
                         <button
                           type="button"
+                          data-testid="measurement-step"
                           aria-current={idx === stepIndex}
                           onClick={() => {
                             setStepIndex(idx);
@@ -339,6 +340,7 @@ export function GuidedMeasurementModal({
                           inputMode="decimal"
                           step={unit === 'cm' ? '0.5' : '0.25'}
                           placeholder="0"
+                          data-testid="measurement-input"
                           aria-label={`${field.name} value in ${unit}`}
                           value={inputValueFor(field)}
                           onChange={(e) => {
@@ -436,6 +438,7 @@ export function GuidedMeasurementModal({
                 </Button>
                 <Button
                   type="button"
+                  data-testid="measurement-next"
                   onClick={() => {
                     if (stepIndex === total - 1) setReview(true);
                     else setStepIndex((i) => Math.min(total - 1, i + 1));

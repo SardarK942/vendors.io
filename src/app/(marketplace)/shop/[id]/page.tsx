@@ -155,6 +155,7 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   return (
                     <li
                       key={variant.id}
+                      data-testid={`variant-${variant.size_label}`}
                       className={cn(
                         'inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-[13px] font-semibold',
                         outOfStock
