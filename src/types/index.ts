@@ -296,6 +296,14 @@ export const createProductSchema = z.object({
   attributes: z.record(z.string(), z.unknown()).default({}),
   ships_internationally: z.boolean().default(false),
   tailoring_available: z.boolean().default(false),
+  // Stitching-level offerings — values validated here (no DB CHECK), mirrored in
+  // src/lib/products/customization.ts + migration 00084.
+  customization_types: z
+    .array(
+      z.enum(['unstitched', 'semi_stitched', 'standard_size', 'made_to_measure', 'pre_stitched'])
+    )
+    .default([]),
+  mtm_surcharge_cents: z.number().int().min(0).nullable().optional(),
   lead_time_days: z.number().int().positive().nullable().optional(),
   status: productStatusSchema.default('draft'),
   variants: z.array(productVariantInputSchema).max(20).default([]),

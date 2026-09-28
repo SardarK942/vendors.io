@@ -39,6 +39,7 @@
  *   - 00070 is_multi_day, event_city, venue_name, budget_range on bookings (custom-quote flow v2)
  *   - 00082 products + product_variants tables (Shop prototype — Slice 1, catalog + inventory)
  *   - 00083 user_measurement_profiles table (made-to-measure reusable body-measurement profiles)
+ *   - 00084 products.customization_types (text[]) + products.mtm_surcharge_cents (stitching-level discriminator)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -105,6 +106,15 @@ export type GarmentType =
   | 'anarkali'
   | 'accessories'
   | 'other';
+
+// Stitching-level discriminator for Shop products (migration 00084). Stored as
+// products.customization_types text[]; values validated in the app layer.
+export type CustomizationType =
+  | 'unstitched'
+  | 'semi_stitched'
+  | 'standard_size'
+  | 'made_to_measure'
+  | 'pre_stitched';
 
 // Made-to-measure measurement profiles (migration 00083). `MeasurementGarment`
 // is the CHECK-constrained garment column; `MeasurementUnit` is a display
@@ -605,6 +615,8 @@ export interface Database {
           attributes: Json;
           ships_internationally: boolean;
           tailoring_available: boolean;
+          customization_types: string[];
+          mtm_surcharge_cents: number | null;
           lead_time_days: number | null;
           status: ProductStatus;
           display_order: number;
@@ -624,6 +636,8 @@ export interface Database {
           attributes?: Json;
           ships_internationally?: boolean;
           tailoring_available?: boolean;
+          customization_types?: string[];
+          mtm_surcharge_cents?: number | null;
           lead_time_days?: number | null;
           status?: ProductStatus;
           display_order?: number;
@@ -642,6 +656,8 @@ export interface Database {
           attributes?: Json;
           ships_internationally?: boolean;
           tailoring_available?: boolean;
+          customization_types?: string[];
+          mtm_surcharge_cents?: number | null;
           lead_time_days?: number | null;
           status?: ProductStatus;
           display_order?: number;

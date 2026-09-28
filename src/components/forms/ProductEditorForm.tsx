@@ -164,6 +164,8 @@ export function ProductEditorForm({ mode, initial }: Props) {
       attributes: buildCleanAttributes(),
       ships_internationally: shipsInternationally,
       tailoring_available: tailoringAvailable,
+      // Stitching-level offerings — no editor UI yet (later slice); default to none.
+      customization_types: [],
       lead_time_days: leadTimeDays.trim() === '' ? null : parseInt(leadTimeDays, 10),
       status,
       variants: cleanVariants,
