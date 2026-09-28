@@ -1,11 +1,18 @@
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { Globe, Scissors, Clock, Shirt } from 'lucide-react';
+import { Globe, Scissors, Clock, Shirt, Ruler, ArrowRight } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { getProductById } from '@/services/products.service';
 import { VendorGallery } from '@/components/marketplace/vendor-profile/VendorGallery';
 import { mergePortfolioMedia } from '@/lib/portfolio-media';
 import { formatPriceFromCents } from '@/components/marketplace/vendor-card-helpers';
 import { GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
+import {
+  CUSTOMIZATION_TYPE_LABELS,
+  garmentToMeasurementGarment,
+  offersMadeToMeasure,
+  type CustomizationType,
+} from '@/lib/products/customization';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -29,6 +36,11 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
   const price = formatPriceFromCents(product.base_price_cents);
   const hasUpsell = (product.variants ?? []).some((v) => (v.price_delta_cents ?? 0) > 0);
   const variants = [...(product.variants ?? [])].sort((a, b) => a.display_order - b.display_order);
+  const customizationTypes = (product.customization_types ?? []) as CustomizationType[];
+  const showMtmCallout =
+    offersMadeToMeasure(customizationTypes) &&
+    garmentToMeasurementGarment(product.garment_type) !== null;
+  const mtmSurcharge = formatPriceFromCents(product.mtm_surcharge_cents);
 
   return (
     <div className="py-8">
@@ -67,6 +79,20 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
               {hasUpsell && <span className="text-base font-normal text-ink-muted">From </span>}
               {price}
             </p>
+          )}
+
+          {/* Customization-type badges — stitching level offered */}
+          {customizationTypes.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {customizationTypes.map((type) => (
+                <span
+                  key={type}
+                  className="inline-flex items-center rounded-full border border-indigo/20 bg-indigo/[0.06] px-2.5 py-1 text-[12px] font-semibold text-indigo"
+                >
+                  {CUSTOMIZATION_TYPE_LABELS[type]}
+                </span>
+              ))}
+            </div>
           )}
 
           {/* Attribute badges */}
@@ -137,6 +163,36 @@ export default async function ProductDetailPage({ params }: ProductDetailPagePro
                   );
                 })}
               </ul>
+            </div>
+          )}
+
+          {/* Made-to-measure callout — only when offered and a measurement schema exists. */}
+          {showMtmCallout && (
+            <div className="mt-6 rounded-2xl border border-hairline bg-cream-soft p-5">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 inline-flex size-9 shrink-0 items-center justify-center rounded-full border border-indigo/20 bg-cream">
+                  <Ruler className="size-4 text-indigo" strokeWidth={2} aria-hidden="true" />
+                </span>
+                <div>
+                  <h2 className="font-display text-lg font-bold text-ink">Made to measure</h2>
+                  <p className="mt-1 text-[14px] leading-relaxed text-ink-muted">
+                    This piece is stitched to the wearer&rsquo;s exact measurements.
+                    {mtmSurcharge && (
+                      <span className="font-semibold text-ink">
+                        {' '}
+                        {`+${mtmSurcharge} made to measure`}
+                      </span>
+                    )}
+                  </p>
+                  <Link
+                    href="/dashboard/measurements"
+                    className="mt-3 inline-flex items-center gap-1.5 text-[14px] font-semibold text-indigo hover:underline"
+                  >
+                    Set up your measurements
+                    <ArrowRight className="size-4" strokeWidth={2} aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
             </div>
           )}
 

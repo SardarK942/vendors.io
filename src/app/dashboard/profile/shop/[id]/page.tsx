@@ -5,6 +5,7 @@ import { notFound, redirect } from 'next/navigation';
 import { ProductEditorForm, type ProductInitial } from '@/components/forms/ProductEditorForm';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { getProductById } from '@/services/products.service';
+import type { CustomizationType } from '@/lib/products/customization';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,6 +39,8 @@ export default async function EditProductPage({ params }: { params: { id: string
     attributes: (product.attributes as Record<string, unknown> | null) ?? null,
     ships_internationally: product.ships_internationally,
     tailoring_available: product.tailoring_available,
+    customization_types: (product.customization_types ?? []) as CustomizationType[],
+    mtm_surcharge_cents: product.mtm_surcharge_cents,
     lead_time_days: product.lead_time_days,
     status: product.status,
     variants: product.variants

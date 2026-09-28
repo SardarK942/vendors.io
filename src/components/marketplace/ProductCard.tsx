@@ -4,6 +4,7 @@ import { Shirt } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatPriceFromCents } from './vendor-card-helpers';
 import { GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
+import { offersMadeToMeasure } from '@/lib/products/customization';
 import type { ProductWithVariants } from '@/services/products.service';
 
 export interface ProductCardProps {
@@ -22,6 +23,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const price = formatPriceFromCents(product.base_price_cents);
   // "From" when any variant carries a positive price delta over the base.
   const hasUpsell = (product.variants ?? []).some((v) => (v.price_delta_cents ?? 0) > 0);
+  const madeToMeasure = offersMadeToMeasure(product.customization_types ?? []);
 
   return (
     <Link
@@ -84,6 +86,11 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="mt-3 text-[14px] font-semibold tabular-nums text-ink">
             {hasUpsell && <span className="text-[12px] font-normal text-ink-muted">From </span>}
             {price}
+          </p>
+        )}
+        {madeToMeasure && (
+          <p className="mt-1.5 text-[11px] font-semibold uppercase tracking-[0.06em] text-indigo">
+            Made to measure
           </p>
         )}
       </div>

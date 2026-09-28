@@ -19,6 +19,14 @@ import { PhotoUploaderDrawer } from '@/components/ui/PhotoUploaderDrawer';
 import { StreamVideoUploader } from '@/components/ui/StreamVideoUploader';
 import { ProductVariantsEditor, type VariantDraft } from '@/components/forms/ProductVariantsEditor';
 import { GARMENT_TYPES, GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
+import {
+  CUSTOMIZATION_TYPES,
+  CUSTOMIZATION_TYPE_LABELS,
+  CUSTOMIZATION_TYPE_BLURB,
+  offersMadeToMeasure,
+  type CustomizationType,
+} from '@/lib/products/customization';
+import { cn } from '@/lib/utils';
 import type { GarmentType, ProductStatus } from '@/types/database.types';
 import type { CreateProductInput } from '@/types';
 
@@ -38,6 +46,8 @@ export interface ProductInitial {
   attributes: Record<string, unknown> | null;
   ships_internationally: boolean;
   tailoring_available: boolean;
+  customization_types: CustomizationType[];
+  mtm_surcharge_cents: number | null;
   lead_time_days: number | null;
   status: ProductStatus;
   variants: VariantDraft[];
@@ -107,6 +117,13 @@ export function ProductEditorForm({ mode, initial }: Props) {
   const [tailoringAvailable, setTailoringAvailable] = useState(
     initial?.tailoring_available ?? false
   );
+  const [customizationTypes, setCustomizationTypes] = useState<CustomizationType[]>(
+    initial?.customization_types ?? []
+  );
+  // Surcharge held as dollars in the UI; converted to cents on submit.
+  const [mtmSurcharge, setMtmSurcharge] = useState(
+    initial?.mtm_surcharge_cents != null ? String(initial.mtm_surcharge_cents / 100) : ''
+  );
   const [leadTimeDays, setLeadTimeDays] = useState(
     initial?.lead_time_days != null ? String(initial.lead_time_days) : ''
   );
@@ -126,6 +143,15 @@ export function ProductEditorForm({ mode, initial }: Props) {
   function setAttribute(key: string, value: string) {
     setAttributeValues((prev) => ({ ...prev, [key]: value }));
   }
+
+  // Toggle a stitching-level offering in / out; order preserved as clicked.
+  function toggleCustomizationType(type: CustomizationType) {
+    setCustomizationTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type]
+    );
+  }
+
+  const offersMtm = offersMadeToMeasure(customizationTypes);
 
   // Only non-empty descriptors survive into the stored JSONB bag.
   function buildCleanAttributes(): Record<string, unknown> {
@@ -164,8 +190,10 @@ export function ProductEditorForm({ mode, initial }: Props) {
       attributes: buildCleanAttributes(),
       ships_internationally: shipsInternationally,
       tailoring_available: tailoringAvailable,
-      // Stitching-level offerings — no editor UI yet (later slice); default to none.
-      customization_types: [],
+      customization_types: customizationTypes,
+      // Surcharge only meaningful when made-to-measure is offered; else null.
+      mtm_surcharge_cents:
+        offersMtm && mtmSurcharge.trim() !== '' ? Math.round(parseFloat(mtmSurcharge) * 100) : null,
       lead_time_days: leadTimeDays.trim() === '' ? null : parseInt(leadTimeDays, 10),
       status,
       variants: cleanVariants,
@@ -370,6 +398,80 @@ export function ProductEditorForm({ mode, initial }: Props) {
               </div>
             ))}
           </div>
+        </Section>
+
+        {/* Stitching & fit */}
+        <Section
+          title="Stitching & fit"
+          description="How this piece is finished. Select every option you offer."
+        >
+          <div role="group" aria-label="Customization types" className="grid gap-2 sm:grid-cols-2">
+            {CUSTOMIZATION_TYPES.map((type) => {
+              const isOn = customizationTypes.includes(type);
+              return (
+                <button
+                  type="button"
+                  key={type}
+                  aria-pressed={isOn}
+                  onClick={() => toggleCustomizationType(type)}
+                  className={cn(
+                    'rounded-xl border p-3 text-left transition-colors',
+                    isOn ? 'border-ink bg-ink/[0.04]' : 'border-hairline bg-cream hover:border-ink'
+                  )}
+                >
+                  <span className="flex items-center gap-2 text-sm font-semibold text-ink">
+                    <span
+                      aria-hidden="true"
+                      className={cn(
+                        'inline-flex size-4 shrink-0 items-center justify-center rounded border',
+                        isOn ? 'border-ink bg-ink text-cream' : 'border-ink/30 bg-transparent'
+                      )}
+                    >
+                      {isOn && (
+                        <svg
+                          viewBox="0 0 12 12"
+                          className="size-3"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth={2}
+                        >
+                          <path
+                            d="M2.5 6.5l2.5 2.5 4.5-5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                        </svg>
+                      )}
+                    </span>
+                    {CUSTOMIZATION_TYPE_LABELS[type]}
+                  </span>
+                  <span className="mt-1 block pl-6 text-xs text-ink-soft">
+                    {CUSTOMIZATION_TYPE_BLURB[type]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+          {offersMtm && (
+            <div className="space-y-2 sm:max-w-[calc(50%-0.5rem)]">
+              <Label htmlFor="mtm_surcharge">Made-to-measure surcharge (added at checkout)</Label>
+              <Input
+                id="mtm_surcharge"
+                type="number"
+                min={0}
+                step={0.01}
+                value={mtmSurcharge}
+                onChange={(e) => setMtmSurcharge(e.target.value)}
+                placeholder="40"
+                inputMode="decimal"
+                autoComplete="off"
+                className="tabular-nums"
+              />
+              <p className="text-pretty text-xs text-ink-soft">
+                Optional. Leave blank to include measured stitching in the base price.
+              </p>
+            </div>
+          )}
         </Section>
 
         {/* Fulfilment */}
