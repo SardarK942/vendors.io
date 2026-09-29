@@ -377,8 +377,9 @@ export function ProductEditorForm({ mode, initial }: Props) {
             />
           </fieldset>
           <fieldset className="space-y-2">
-            <legend className="text-sm font-medium">Video clips (optional)</legend>
-            <StreamVideoUploader value={videoUids} onChange={setVideoUids} maxClips={4} />
+            <legend className="text-sm font-medium">Video clip (optional)</legend>
+            <p className="text-xs text-ink-soft">One short clip per outfit.</p>
+            <StreamVideoUploader value={videoUids} onChange={setVideoUids} maxClips={1} />
           </fieldset>
         </Section>
 
