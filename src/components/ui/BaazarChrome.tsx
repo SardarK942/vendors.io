@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { SHOP_ENABLED } from '@/lib/flags';
 import { useEffect, useMemo, useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import type { User as SupabaseUser } from '@supabase/supabase-js';
@@ -114,6 +115,11 @@ export function BaazarChrome() {
     const base: MenuItem[] = [
       { label: 'Home', ariaLabel: 'Go to home', link: '/' },
       { label: 'Browse Vendors', ariaLabel: 'Browse vendors', link: '/vendors' },
+      ...(SHOP_ENABLED
+        ? ([
+            { label: 'Shop', ariaLabel: 'Shop bridal and groom wear', link: '/shop' },
+          ] as MenuItem[])
+        : []),
     ];
     if (!user) {
       return [

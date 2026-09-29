@@ -12,7 +12,9 @@ import {
   Home,
   Package,
   PartyPopper,
+  Ruler,
   Settings as SettingsIcon,
+  ShoppingBag,
   User,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -29,6 +31,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { SHOP_ENABLED } from '@/lib/flags';
 
 type Role = 'couple' | 'vendor';
 
@@ -39,6 +42,8 @@ interface Props {
   userMenu: React.ReactNode;
   bookingsCount: number;
   hasUnreadNotifications: boolean;
+  /** Bridal-wear vendors get the product Shop entry (prototype gate). */
+  isBridalWear?: boolean;
 }
 
 interface LinkDef {
@@ -49,13 +54,16 @@ interface LinkDef {
   showUnreadDot?: boolean;
 }
 
-function workspaceLinks(role: Role): LinkDef[] {
+function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
   const links: LinkDef[] = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/dashboard/bookings', label: 'Bookings', icon: BookOpen, showBookingsCounter: true },
   ];
   if (role === 'couple') {
     links.splice(1, 0, { href: '/dashboard/events', label: 'My Event', icon: PartyPopper });
+    if (SHOP_ENABLED) {
+      links.push({ href: '/dashboard/measurements', label: 'Measurements', icon: Ruler });
+    }
     links.push({ href: '/dashboard/saved', label: 'Saved', icon: Heart });
   }
   links.push({
@@ -71,6 +79,14 @@ function workspaceLinks(role: Role): LinkDef[] {
       { href: '/dashboard/money', label: 'Business Analytics', icon: BarChart3 },
       { href: '/dashboard/profile', label: 'Profile', icon: User }
     );
+    // Prototype: the product Shop is bridal-wear only, and gated behind the flag.
+    if (SHOP_ENABLED && isBridalWear) {
+      links.splice(links.length - 1, 0, {
+        href: '/dashboard/profile/shop',
+        label: 'Shop',
+        icon: ShoppingBag,
+      });
+    }
   }
   return links;
 }
@@ -82,6 +98,7 @@ export function SidebarNav({
   userMenu,
   bookingsCount,
   hasUnreadNotifications,
+  isBridalWear = false,
 }: Props) {
   const pathname = usePathname();
 
@@ -110,7 +127,7 @@ export function SidebarNav({
             Workspace
           </SidebarGroupLabel>
           <SidebarMenu>
-            {workspaceLinks(role).map((link) => {
+            {workspaceLinks(role, isBridalWear).map((link) => {
               const Icon = link.icon;
               const active = isActive(link.href);
               return (

@@ -102,7 +102,7 @@ export async function seedCouple(options: SeedCoupleOptions = {}): Promise<TestU
 }
 
 export async function seedVendor(
-  options: { chargesEnabled?: boolean; publish?: boolean } = {}
+  options: { chargesEnabled?: boolean; publish?: boolean; category?: string } = {}
 ): Promise<TestVendor> {
   const supabase = getServiceClient();
   const email = testEmail('vendor');
@@ -122,7 +122,9 @@ export async function seedVendor(
       user_id: data.user.id,
       business_name: 'E2E Test Vendor',
       slug,
-      category: 'photography',
+      // Defaults to photography so existing callers are unchanged; the Shop
+      // tests pass 'bridal_wear' (the createProduct gate requires it).
+      category: options.category ?? 'photography',
       bio: 'Seeded vendor for E2E tests.',
       service_area: ['Chicago'],
       // publish: true sets is_active + onboarding_complete so the public /vendors/[slug]
@@ -477,6 +479,60 @@ export async function seedPendingBooking(
   if (evtErr || !evt) throw new Error(`seedPendingBooking event: ${evtErr?.message}`);
 
   return { bookingId: booking.id, bookingEventId: evt.id };
+}
+
+// ─── Shop products ────────────────────────────────────────────────────────────
+
+export interface SeedActiveProductOptions {
+  title?: string;
+  garmentType?: string;
+  basePriceCents?: number;
+  customizationTypes?: string[];
+  mtmSurchargeCents?: number | null;
+  status?: string;
+}
+
+export interface SeededProduct {
+  id: string;
+  title: string;
+}
+
+/**
+ * Service-role-inserts a Shop product (bypasses the bridal_wear createProduct
+ * gate and RLS) plus two variants: an in-stock M and an out-of-stock L.
+ * The owning vendor's vendor_profiles.category must be 'bridal_wear' for the
+ * buyer/editor flows to behave, but this insert itself doesn't check that.
+ */
+export async function seedActiveProduct(
+  vendorProfileId: string,
+  opts: SeedActiveProductOptions = {}
+): Promise<SeededProduct> {
+  const supabase = getServiceClient();
+  const title = opts.title ?? `E2E Shop Lehenga ${Date.now().toString(36)}`;
+
+  const { data: product, error: productError } = await supabase
+    .from('products')
+    .insert({
+      vendor_profile_id: vendorProfileId,
+      title,
+      description: 'Seeded bridal-wear product for E2E shop tests.',
+      garment_type: opts.garmentType ?? 'lehenga',
+      base_price_cents: opts.basePriceCents ?? 145_000,
+      status: opts.status ?? 'active',
+      customization_types: opts.customizationTypes ?? ['standard_size', 'made_to_measure'],
+      mtm_surcharge_cents: opts.mtmSurchargeCents === undefined ? 4_000 : opts.mtmSurchargeCents,
+    })
+    .select('id')
+    .single();
+  if (productError || !product) throw new Error(`seedActiveProduct: ${productError?.message}`);
+
+  const { error: variantError } = await supabase.from('product_variants').insert([
+    { product_id: product.id, size_label: 'M', stock_quantity: 5, display_order: 0 },
+    { product_id: product.id, size_label: 'L', stock_quantity: 0, display_order: 1 },
+  ]);
+  if (variantError) throw new Error(`seedActiveProduct variants: ${variantError.message}`);
+
+  return { id: product.id, title };
 }
 
 /** Delete a seeded user. ON DELETE CASCADE cleans up vendor_profiles, bookings, etc. */

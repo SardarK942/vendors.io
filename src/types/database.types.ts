@@ -37,6 +37,9 @@
  *           on users + vendor_profiles; published_at + served_event_types on vendor_profiles (Bucket J)
  *
  *   - 00070 is_multi_day, event_city, venue_name, budget_range on bookings (custom-quote flow v2)
+ *   - 00082 products + product_variants tables (Shop prototype — Slice 1, catalog + inventory)
+ *   - 00083 user_measurement_profiles table (made-to-measure reusable body-measurement profiles)
+ *   - 00084 products.customization_types (text[]) + products.mtm_surcharge_cents (stitching-level discriminator)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -90,6 +93,35 @@ export type AdjustmentReason =
 export type PackageLocationMode = 'couple_provides' | 'at_vendor';
 
 export type PackageCapacityUnit = 'guests' | 'servings';
+
+export type ProductStatus = 'draft' | 'active' | 'out_of_stock' | 'archived';
+
+export type GarmentType =
+  | 'saree'
+  | 'lehenga'
+  | 'bridal_gown'
+  | 'sherwani'
+  | 'groom_suit'
+  | 'kurta'
+  | 'anarkali'
+  | 'accessories'
+  | 'other';
+
+// Stitching-level discriminator for Shop products (migration 00084). Stored as
+// products.customization_types text[]; values validated in the app layer.
+export type CustomizationType =
+  | 'unstitched'
+  | 'semi_stitched'
+  | 'standard_size'
+  | 'made_to_measure'
+  | 'pre_stitched';
+
+// Made-to-measure measurement profiles (migration 00083). `MeasurementGarment`
+// is the CHECK-constrained garment column; `MeasurementUnit` is a display
+// preference only — stored measurement values are always inches.
+export type MeasurementGarment = 'lehenga' | 'sherwani';
+
+export type MeasurementUnit = 'in' | 'cm';
 
 export interface SelectedAddonSnapshot {
   addon_id: string;
@@ -565,6 +597,154 @@ export interface Database {
             columns: ['package_id'];
             isOneToOne: false;
             referencedRelation: 'packages';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      products: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          title: string;
+          description: string;
+          garment_type: GarmentType;
+          base_price_cents: number;
+          currency: string;
+          images: string[];
+          video_uids: string[];
+          attributes: Json;
+          ships_internationally: boolean;
+          tailoring_available: boolean;
+          customization_types: string[];
+          mtm_surcharge_cents: number | null;
+          lead_time_days: number | null;
+          status: ProductStatus;
+          display_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          title: string;
+          description: string;
+          garment_type: GarmentType;
+          base_price_cents: number;
+          currency?: string;
+          images?: string[];
+          video_uids?: string[];
+          attributes?: Json;
+          ships_internationally?: boolean;
+          tailoring_available?: boolean;
+          customization_types?: string[];
+          mtm_surcharge_cents?: number | null;
+          lead_time_days?: number | null;
+          status?: ProductStatus;
+          display_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          vendor_profile_id?: string;
+          title?: string;
+          description?: string;
+          garment_type?: GarmentType;
+          base_price_cents?: number;
+          currency?: string;
+          images?: string[];
+          video_uids?: string[];
+          attributes?: Json;
+          ships_internationally?: boolean;
+          tailoring_available?: boolean;
+          customization_types?: string[];
+          mtm_surcharge_cents?: number | null;
+          lead_time_days?: number | null;
+          status?: ProductStatus;
+          display_order?: number;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'products_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      product_variants: {
+        Row: {
+          id: string;
+          product_id: string;
+          size_label: string;
+          sku: string | null;
+          price_delta_cents: number;
+          stock_quantity: number;
+          display_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          product_id: string;
+          size_label: string;
+          sku?: string | null;
+          price_delta_cents?: number;
+          stock_quantity?: number;
+          display_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          size_label?: string;
+          sku?: string | null;
+          price_delta_cents?: number;
+          stock_quantity?: number;
+          display_order?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'product_variants_product_id_fkey';
+            columns: ['product_id'];
+            isOneToOne: false;
+            referencedRelation: 'products';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      user_measurement_profiles: {
+        Row: {
+          id: string;
+          user_id: string;
+          label: string;
+          garment: MeasurementGarment;
+          measurements: Json;
+          unit: MeasurementUnit;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          label: string;
+          garment: MeasurementGarment;
+          measurements?: Json;
+          unit?: MeasurementUnit;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          label?: string;
+          garment?: MeasurementGarment;
+          measurements?: Json;
+          unit?: MeasurementUnit;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'user_measurement_profiles_user_id_fkey';
+            columns: ['user_id'];
+            isOneToOne: false;
+            referencedRelation: 'users';
             referencedColumns: ['id'];
           },
         ];
