@@ -31,6 +31,7 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { SHOP_ENABLED } from '@/lib/flags';
 
 type Role = 'couple' | 'vendor';
 
@@ -60,7 +61,9 @@ function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
   ];
   if (role === 'couple') {
     links.splice(1, 0, { href: '/dashboard/events', label: 'My Event', icon: PartyPopper });
-    links.push({ href: '/dashboard/measurements', label: 'Measurements', icon: Ruler });
+    if (SHOP_ENABLED) {
+      links.push({ href: '/dashboard/measurements', label: 'Measurements', icon: Ruler });
+    }
     links.push({ href: '/dashboard/saved', label: 'Saved', icon: Heart });
   }
   links.push({
@@ -76,8 +79,8 @@ function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
       { href: '/dashboard/money', label: 'Business Analytics', icon: BarChart3 },
       { href: '/dashboard/profile', label: 'Profile', icon: User }
     );
-    // Prototype: the product Shop is bridal-wear only.
-    if (isBridalWear) {
+    // Prototype: the product Shop is bridal-wear only, and gated behind the flag.
+    if (SHOP_ENABLED && isBridalWear) {
       links.splice(links.length - 1, 0, {
         href: '/dashboard/profile/shop',
         label: 'Shop',
