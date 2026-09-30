@@ -79,8 +79,10 @@ function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
       { href: '/dashboard/money', label: 'Business Analytics', icon: BarChart3 },
       { href: '/dashboard/profile', label: 'Profile', icon: User }
     );
-    // Prototype: the product Shop is bridal-wear only, and gated behind the flag.
-    if (SHOP_ENABLED && isBridalWear) {
+    // Prototype: the product Shop is bridal-wear only. Bridal vendors onboard
+    // into the shop, so their Shop link is shown regardless of SHOP_ENABLED
+    // (the buyer-side Shop nav + couple Measurements stay flag-gated).
+    if (isBridalWear) {
       links.splice(links.length - 1, 0, {
         href: '/dashboard/profile/shop',
         label: 'Shop',

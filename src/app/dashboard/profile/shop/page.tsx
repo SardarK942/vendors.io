@@ -8,6 +8,7 @@ import { PageTitle } from '@/components/dashboard/PageTitle';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { getProductsByVendor } from '@/services/products.service';
 import { GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
+import { PublishConfetti } from '@/components/celebration/PublishConfetti';
 import type { ProductStatus } from '@/types/database.types';
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,14 @@ function formatPrice(cents: number, currency: string): string {
   }
 }
 
-export default async function ShopPage() {
+interface ShopPageProps {
+  searchParams: Promise<{ just_onboarded?: string }>;
+}
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const { just_onboarded } = await searchParams;
+  const justOnboarded = just_onboarded === '1';
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -78,6 +86,23 @@ export default async function ShopPage() {
 
   return (
     <div className="space-y-6">
+      {justOnboarded ? (
+        <>
+          <PublishConfetti />
+          <div className="rounded-md border border-hot-pink/25 bg-hot-pink/5 p-6">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-hot-pink">
+              You&rsquo;re live
+            </p>
+            <h2 className="mt-1.5 font-display text-2xl font-semibold text-ink">
+              Your profile is published. Add your first outfit.
+            </h2>
+            <p className="mt-1 text-pretty text-sm text-ink-soft">
+              Couples can now find you in the marketplace. Build out your shop with garments —
+              photos, sizes, and inventory — and set them active when they&rsquo;re ready.
+            </p>
+          </div>
+        </>
+      ) : null}
       <div className="flex items-center justify-between">
         <div>
           <PageTitle>Your Shop</PageTitle>

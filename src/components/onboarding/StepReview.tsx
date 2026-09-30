@@ -57,7 +57,13 @@ export function StepReview({ profile, profileId, mode }: Props) {
       if (typeof window !== 'undefined') {
         sessionStorage.removeItem(`wizard:stripe_mode:${profileId}`);
       }
-      router.push('/dashboard/profile/packages?just_onboarded=1');
+      // Bridal-wear vendors sell products, not service packages — send them to
+      // the Shop to add their first outfit. Everyone else lands on Packages.
+      const destination =
+        profile.category === 'bridal_wear'
+          ? '/dashboard/profile/shop?just_onboarded=1'
+          : '/dashboard/profile/packages?just_onboarded=1';
+      router.push(destination);
       return;
     }
     const json = await res.json().catch(() => ({ error: 'Publish failed' }));
