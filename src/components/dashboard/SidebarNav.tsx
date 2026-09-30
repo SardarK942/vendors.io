@@ -73,9 +73,12 @@ function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
     showUnreadDot: true,
   });
   if (role === 'vendor') {
+    links.push({ href: '/dashboard/profile/calendar', label: 'Calendar', icon: Calendar });
+    // Bridal-wear vendors sell products through the Shop, not service packages.
+    if (!isBridalWear) {
+      links.push({ href: '/dashboard/profile/packages', label: 'Packages', icon: Package });
+    }
     links.push(
-      { href: '/dashboard/profile/calendar', label: 'Calendar', icon: Calendar },
-      { href: '/dashboard/profile/packages', label: 'Packages', icon: Package },
       { href: '/dashboard/money', label: 'Business Analytics', icon: BarChart3 },
       { href: '/dashboard/profile', label: 'Profile', icon: User }
     );
