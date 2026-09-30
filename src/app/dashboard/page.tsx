@@ -250,17 +250,17 @@ export default async function DashboardPage() {
           outfit instead of service packages. */}
       {isBridalShopVendor && productCount === 0 && (
         <Card className="border-yellow-200 bg-yellow-50 p-6">
-          <h2 className="font-semibold text-yellow-900">List your first outfit</h2>
+          <h2 className="font-semibold text-yellow-900">Start your catalog</h2>
           <p className="mt-1 text-sm text-yellow-800">
-            You&rsquo;re live. Add your bridal and groom wear to the shop so couples can browse your
-            pieces, sizes, and made-to-measure options.
+            You&rsquo;re live. Add your bridal and groom wear to your catalog so couples can browse
+            your pieces, sizes, and made-to-measure options.
           </p>
           <Button
             asChild
             size="lg"
             className="mt-4 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
           >
-            <Link href="/dashboard/profile/shop/new">+ Add an outfit</Link>
+            <Link href="/dashboard/profile/shop/new">+ Add to catalog</Link>
           </Button>
         </Card>
       )}
