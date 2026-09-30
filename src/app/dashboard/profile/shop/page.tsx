@@ -94,11 +94,11 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
               You&rsquo;re live
             </p>
             <h2 className="mt-1.5 font-display text-2xl font-semibold text-ink">
-              Your profile is published. Add your first outfit.
+              Your profile is published. Start your catalog.
             </h2>
             <p className="mt-1 text-pretty text-sm text-ink-soft">
-              Couples can now find you in the marketplace. Build out your shop with garments —
-              photos, sizes, and inventory — and set them active when they&rsquo;re ready.
+              Couples can now find you in the marketplace. Add garments to your catalog — photos,
+              sizes, and inventory — and set them active when they&rsquo;re ready.
             </p>
           </div>
         </>
