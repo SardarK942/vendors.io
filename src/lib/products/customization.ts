@@ -30,10 +30,19 @@ export const CUSTOMIZATION_TYPES: CustomizationType[] = [
   'pre_stitched',
 ];
 
+/**
+ * The two options vendors actually choose from in the editor. Local bridal
+ * vendors sell either ready-made (a standard size, as shown) or made to measure
+ * (stitched to the wearer); the three export-market tiers (unstitched,
+ * semi_stitched, pre_stitched) stay valid in the data model but aren't surfaced
+ * in the UI to keep listing an outfit simple.
+ */
+export const VENDOR_CUSTOMIZATION_TYPES: CustomizationType[] = ['standard_size', 'made_to_measure'];
+
 export const CUSTOMIZATION_TYPE_LABELS: Record<CustomizationType, string> = {
   unstitched: 'Unstitched',
   semi_stitched: 'Semi-stitched',
-  standard_size: 'Standard size',
+  standard_size: 'Ready-made',
   made_to_measure: 'Made to measure',
   pre_stitched: 'Pre-stitched',
 };
@@ -41,7 +50,7 @@ export const CUSTOMIZATION_TYPE_LABELS: Record<CustomizationType, string> = {
 export const CUSTOMIZATION_TYPE_BLURB: Record<CustomizationType, string> = {
   unstitched: 'Fabric only, stitched by your own tailor.',
   semi_stitched: 'Ships part-finished for a local tailor to complete.',
-  standard_size: 'Finished to a standard size chart.',
+  standard_size: 'Buy as shown, in a standard size.',
   made_to_measure: 'Stitched to the wearer’s exact measurements.',
   pre_stitched: 'Pre-draped and ready to wear.',
 };
