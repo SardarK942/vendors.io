@@ -23,6 +23,14 @@ import type { ScrapedVendorMatch } from '@/lib/scraped-vendor/match';
 import { SubcategoryMultiSelect } from './SubcategoryMultiSelect';
 import { ServicesMultiSelect } from './ServicesMultiSelect';
 import { getSubcategoriesForCategory, SUBCATEGORY_SECTION_LABEL } from '@/lib/vendor-subcategories';
+import {
+  VENDOR_COUNTRIES,
+  VENDOR_CURRENCIES,
+  VENDOR_CURRENCY_LABELS,
+  VENDOR_ORIGIN_LABELS,
+  INTERNATIONAL_COMING_SOON_NOTICE,
+} from '@/lib/onboarding/vendor-origin';
+import type { VendorOrigin } from '@/types/database.types';
 
 interface Props {
   initial: {
@@ -31,6 +39,9 @@ interface Props {
     bio: string;
     subcategories: string[];
     services: string[];
+    vendor_origin: VendorOrigin;
+    vendor_country: string | null;
+    vendor_currency: string;
   };
   profileId: string;
   mode: 'first' | 'next';
@@ -206,6 +217,106 @@ export function StepBasics({ initial, profileId, mode }: Props) {
             selected={data.subcategories}
             onChange={(next) => setData({ ...data, subcategories: next })}
           />
+        </div>
+      )}
+
+      {data.category === 'bridal_wear' && (
+        <div className="space-y-3 rounded-md border border-hairline bg-cream/40 p-4">
+          <div className="space-y-1">
+            <Label>Where do you operate?</Label>
+            <p className="text-xs text-ink/60">
+              Local vendors list and sell in USD. International vendors save their catalog now —
+              overseas selling is on the way.
+            </p>
+          </div>
+          <div
+            role="radiogroup"
+            aria-label="Where do you operate?"
+            className="grid grid-cols-2 gap-2"
+          >
+            {(['local', 'international'] as const).map((origin) => {
+              const selected = data.vendor_origin === origin;
+              return (
+                <button
+                  key={origin}
+                  type="button"
+                  role="radio"
+                  aria-checked={selected}
+                  onClick={() =>
+                    setData({
+                      ...data,
+                      vendor_origin: origin,
+                      // Switching back to local clears the international-only fields.
+                      vendor_country: origin === 'local' ? null : data.vendor_country,
+                      vendor_currency: origin === 'local' ? 'usd' : data.vendor_currency,
+                    })
+                  }
+                  className={`rounded-sm border px-4 py-3 text-left text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream ${
+                    selected
+                      ? 'border-ink bg-ink text-cream'
+                      : 'border-hairline bg-cream text-ink hover:border-ink/40'
+                  }`}
+                >
+                  {VENDOR_ORIGIN_LABELS[origin]}
+                </button>
+              );
+            })}
+          </div>
+
+          {data.vendor_origin === 'international' && (
+            <div className="space-y-4 pt-1">
+              <div className="space-y-2">
+                <Label htmlFor="vendor_country">Country</Label>
+                <Select
+                  value={data.vendor_country ?? ''}
+                  onValueChange={(v) => setData({ ...data, vendor_country: v })}
+                >
+                  <SelectTrigger id="vendor_country">
+                    <SelectValue placeholder="Choose a country">
+                      {data.vendor_country || null}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VENDOR_COUNTRIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="vendor_currency">Currency</Label>
+                <Select
+                  value={data.vendor_currency}
+                  onValueChange={(v) => setData({ ...data, vendor_currency: v })}
+                >
+                  <SelectTrigger id="vendor_currency">
+                    <SelectValue placeholder="Choose a currency">
+                      {VENDOR_CURRENCY_LABELS[
+                        data.vendor_currency as keyof typeof VENDOR_CURRENCY_LABELS
+                      ] ?? null}
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VENDOR_CURRENCIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {VENDOR_CURRENCY_LABELS[c]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <p
+                className="rounded-sm border border-indigo/25 bg-indigo/5 px-3 py-2 text-xs text-ink"
+                role="status"
+              >
+                {INTERNATIONAL_COMING_SOON_NOTICE}
+              </p>
+            </div>
+          )}
         </div>
       )}
 

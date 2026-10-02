@@ -27,6 +27,11 @@ export const basicsSchema = z
     bio: z.string().min(1, 'Bio is required').max(500, 'Bio must be 500 characters or fewer'),
     subcategories: z.array(z.string()).optional().default([]),
     services: z.array(z.string()).optional().default([]),
+    // Vendor-origin fork (migration 00085). Only surfaced for bridal_wear in the
+    // UI, but validated generically — non-bridal vendors send the defaults.
+    vendor_origin: z.enum(['local', 'international']).optional().default('local'),
+    vendor_country: z.string().optional().nullable(),
+    vendor_currency: z.string().optional().default('usd'),
   })
   .refine(
     (d) => {

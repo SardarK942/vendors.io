@@ -105,6 +105,13 @@ export const PATCH = withErrorBoundary(
         subcategories:
           validSubcategorySlugs(data.category).size > 0 ? (data.subcategories ?? []) : null,
         slug: existingSlug ?? slugWithSuffix(data.businessName),
+        // Vendor-origin fork (migration 00085). Local vendors always reset to
+        // USD / no country so a later switch back from International doesn't
+        // leave stale values behind.
+        vendor_origin: data.vendor_origin,
+        vendor_country:
+          data.vendor_origin === 'international' ? (data.vendor_country ?? null) : null,
+        vendor_currency: data.vendor_origin === 'international' ? data.vendor_currency : 'usd',
       };
 
       const { error } = profileId

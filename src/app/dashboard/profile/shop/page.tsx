@@ -81,6 +81,32 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
     );
   }
 
+  // INTERNATIONAL GATE — overseas bridal vendors save their catalog details but
+  // can't sell yet (the landed-price engine is Phase 2). Show a "coming soon"
+  // state instead of the product editor. Local bridal vendors get the real Shop.
+  if (vendorProfile.vendor_origin === 'international') {
+    return (
+      <div className="space-y-6">
+        <PageTitle>Your Shop</PageTitle>
+        <Card className="p-12 text-center">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-hot-pink">
+            Coming soon
+          </p>
+          <h2 className="mt-1.5 text-lg font-semibold">International selling is coming soon</h2>
+          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
+            We&rsquo;ve saved your shop details
+            {vendorProfile.vendor_country ? ` (${vendorProfile.vendor_country})` : ''}. We&rsquo;re
+            building the pricing and shipping flow for overseas vendors and will reach out the
+            moment it&rsquo;s ready.
+          </p>
+          <Button asChild variant="outline" className="mt-6">
+            <Link href="/dashboard/profile">Back to profile</Link>
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   const { data: productsData } = await getProductsByVendor(supabase, vendorProfile.id);
   const products = productsData ?? [];
 

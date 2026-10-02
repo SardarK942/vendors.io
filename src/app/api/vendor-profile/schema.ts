@@ -25,4 +25,9 @@ export const vendorProfileUpdateSchema = z.object({
   // subcategory taxonomy. Without this, those vendors got "Validation failed"
   // on every profile save (pre-existing bug surfaced during video testing).
   subcategories: z.array(z.string()).optional().nullable(),
+  // Vendor-origin fork (migration 00085). Generic validation; UI only surfaces
+  // it for bridal_wear.
+  vendor_origin: z.enum(['local', 'international']).optional(),
+  vendor_country: z.string().optional().nullable(),
+  vendor_currency: z.string().optional(),
 });

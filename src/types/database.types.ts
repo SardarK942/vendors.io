@@ -40,6 +40,7 @@
  *   - 00082 products + product_variants tables (Shop prototype — Slice 1, catalog + inventory)
  *   - 00083 user_measurement_profiles table (made-to-measure reusable body-measurement profiles)
  *   - 00084 products.customization_types (text[]) + products.mtm_surcharge_cents (stitching-level discriminator)
+ *   - 00085 vendor_profiles.vendor_origin + vendor_country + vendor_currency (local vs international fork)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -95,6 +96,10 @@ export type PackageLocationMode = 'couple_provides' | 'at_vendor';
 export type PackageCapacityUnit = 'guests' | 'servings';
 
 export type ProductStatus = 'draft' | 'active' | 'out_of_stock' | 'archived';
+
+// Local vs international vendor-origin fork (migration 00085). Drives the bridal
+// onboarding split and the Shop "coming soon" gate for overseas vendors.
+export type VendorOrigin = 'local' | 'international';
 
 export type GarmentType =
   | 'saree'
@@ -322,6 +327,9 @@ export interface Database {
           subcategories: string[] | null;
           services: string[] | null;
           portfolio_videos: string[];
+          vendor_origin: VendorOrigin;
+          vendor_country: string | null;
+          vendor_currency: string;
         };
         Insert: {
           id?: string;
@@ -383,6 +391,9 @@ export interface Database {
           first_confirmed_booking_at?: string | null;
           subcategories?: string[] | null;
           services?: string[] | null;
+          vendor_origin?: VendorOrigin;
+          vendor_country?: string | null;
+          vendor_currency?: string;
         };
         Update: {
           user_id?: string;
@@ -442,6 +453,9 @@ export interface Database {
           first_confirmed_booking_at?: string | null;
           subcategories?: string[] | null;
           services?: string[] | null;
+          vendor_origin?: VendorOrigin;
+          vendor_country?: string | null;
+          vendor_currency?: string;
         };
         Relationships: [
           {

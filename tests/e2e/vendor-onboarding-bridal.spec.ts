@@ -119,9 +119,9 @@ test.describe('bridal-wear vendor onboarding', () => {
         });
       }).toPass({ timeout: 45_000 });
       // The just_onboarded welcome state renders.
-      await expect(page.getByText('Your profile is published. Add your first outfit.')).toBeVisible(
-        { timeout: 10_000 }
-      );
+      await expect(page.getByText('Your profile is published. Start your catalog.')).toBeVisible({
+        timeout: 10_000,
+      });
       await expect(page.getByRole('heading', { name: 'Your Shop' })).toBeVisible();
     } finally {
       await cleanup(vendor);
