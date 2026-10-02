@@ -8,6 +8,7 @@ import { PageTitle } from '@/components/dashboard/PageTitle';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { getProductsByVendor } from '@/services/products.service';
 import { GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
+import { PublishConfetti } from '@/components/celebration/PublishConfetti';
 import type { ProductStatus } from '@/types/database.types';
 
 export const dynamic = 'force-dynamic';
@@ -39,7 +40,14 @@ function formatPrice(cents: number, currency: string): string {
   }
 }
 
-export default async function ShopPage() {
+interface ShopPageProps {
+  searchParams: Promise<{ just_onboarded?: string }>;
+}
+
+export default async function ShopPage({ searchParams }: ShopPageProps) {
+  const { just_onboarded } = await searchParams;
+  const justOnboarded = just_onboarded === '1';
+
   const supabase = await createServerSupabaseClient();
   const {
     data: { user },
@@ -73,11 +81,54 @@ export default async function ShopPage() {
     );
   }
 
+  // INTERNATIONAL GATE — overseas bridal vendors save their catalog details but
+  // can't sell yet (the landed-price engine is Phase 2). Show a "coming soon"
+  // state instead of the product editor. Local bridal vendors get the real Shop.
+  if (vendorProfile.vendor_origin === 'international') {
+    return (
+      <div className="space-y-6">
+        <PageTitle>Your Shop</PageTitle>
+        <Card className="p-12 text-center">
+          <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-hot-pink">
+            Coming soon
+          </p>
+          <h2 className="mt-1.5 text-lg font-semibold">International selling is coming soon</h2>
+          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
+            We&rsquo;ve saved your shop details
+            {vendorProfile.vendor_country ? ` (${vendorProfile.vendor_country})` : ''}. We&rsquo;re
+            building the pricing and shipping flow for overseas vendors and will reach out the
+            moment it&rsquo;s ready.
+          </p>
+          <Button asChild variant="outline" className="mt-6">
+            <Link href="/dashboard/profile">Back to profile</Link>
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   const { data: productsData } = await getProductsByVendor(supabase, vendorProfile.id);
   const products = productsData ?? [];
 
   return (
     <div className="space-y-6">
+      {justOnboarded ? (
+        <>
+          <PublishConfetti />
+          <div className="rounded-md border border-hot-pink/25 bg-hot-pink/5 p-6">
+            <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-hot-pink">
+              You&rsquo;re live
+            </p>
+            <h2 className="mt-1.5 font-display text-2xl font-semibold text-ink">
+              Your profile is published. Start your catalog.
+            </h2>
+            <p className="mt-1 text-pretty text-sm text-ink-soft">
+              Couples can now find you in the marketplace. Add garments to your catalog — photos,
+              sizes, and inventory — and set them active when they&rsquo;re ready.
+            </p>
+          </div>
+        </>
+      ) : null}
       <div className="flex items-center justify-between">
         <div>
           <PageTitle>Your Shop</PageTitle>

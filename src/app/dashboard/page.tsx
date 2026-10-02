@@ -225,6 +225,17 @@ export default async function DashboardPage() {
     .eq('is_active', true);
   const activePackageCount = pkgCount ?? 0;
 
+  // Bridal-wear vendors sell products through the Shop, not service packages.
+  const isBridalShopVendor = vendorProfile.category === 'bridal_wear';
+  let productCount = 0;
+  if (isBridalShopVendor) {
+    const { count: prodCount } = await supabase
+      .from('products')
+      .select('id', { count: 'exact', head: true })
+      .eq('vendor_profile_id', vendorProfile.id);
+    productCount = prodCount ?? 0;
+  }
+
   return (
     <div className="space-y-6">
       <DashboardCalendarNudge feedStatus={feedStatus} nudgeDismissed={nudgeDismissed} />
@@ -235,9 +246,29 @@ export default async function DashboardPage() {
         <p className="text-muted-foreground">Welcome back, {profile?.full_name || user.email}</p>
       </div>
 
-      {/* Custom-request flow makes packages optional — this nudge only helps vendors
-          who *do* sell fixed pricing tiers, without gating anyone else. */}
-      {activePackageCount === 0 && (
+      {/* Bridal-wear vendors sell products via the Shop — nudge them to list an
+          outfit instead of service packages. */}
+      {isBridalShopVendor && productCount === 0 && (
+        <Card className="border-yellow-200 bg-yellow-50 p-6">
+          <h2 className="font-semibold text-yellow-900">Start your catalog</h2>
+          <p className="mt-1 text-sm text-yellow-800">
+            You&rsquo;re live. Add your bridal and groom wear to your catalog so couples can browse
+            your pieces, sizes, and made-to-measure options.
+          </p>
+          <Button
+            asChild
+            size="lg"
+            className="mt-4 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
+          >
+            <Link href="/dashboard/profile/shop/new">+ Add to catalog</Link>
+          </Button>
+        </Card>
+      )}
+
+      {/* Custom-request flow makes packages optional — this nudge only helps
+          service vendors who *do* sell fixed pricing tiers. Not for bridal-wear
+          vendors (they use the Shop). */}
+      {!isBridalShopVendor && activePackageCount === 0 && (
         <Card className="border-yellow-200 bg-yellow-50 p-6">
           <h2 className="font-semibold text-yellow-900">Sell fixed pricing tiers?</h2>
           <p className="mt-1 text-sm text-yellow-800">

@@ -94,6 +94,7 @@ export const SUBCATEGORY_SECTION_LABEL: Record<string, string> = {
   decor: 'Decor type',
   mehndi: 'Henna type',
   gifts: 'Gift type',
+  bridal_wear: 'Garment types',
 };
 
 export function getSubcategoriesForCategory(

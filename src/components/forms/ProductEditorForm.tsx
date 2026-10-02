@@ -20,7 +20,7 @@ import { StreamVideoUploader } from '@/components/ui/StreamVideoUploader';
 import { ProductVariantsEditor, type VariantDraft } from '@/components/forms/ProductVariantsEditor';
 import { GARMENT_TYPES, GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
 import {
-  CUSTOMIZATION_TYPES,
+  VENDOR_CUSTOMIZATION_TYPES,
   CUSTOMIZATION_TYPE_LABELS,
   CUSTOMIZATION_TYPE_BLURB,
   offersMadeToMeasure,
@@ -402,12 +402,9 @@ export function ProductEditorForm({ mode, initial }: Props) {
         </Section>
 
         {/* Stitching & fit */}
-        <Section
-          title="Stitching & fit"
-          description="How this piece is finished. Select every option you offer."
-        >
+        <Section title="How it's sold" description="Offer it ready-made, made to measure, or both.">
           <div role="group" aria-label="Customization types" className="grid gap-2 sm:grid-cols-2">
-            {CUSTOMIZATION_TYPES.map((type) => {
+            {VENDOR_CUSTOMIZATION_TYPES.map((type) => {
               const isOn = customizationTypes.includes(type);
               return (
                 <button
