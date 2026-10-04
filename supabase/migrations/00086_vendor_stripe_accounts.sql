@@ -26,4 +26,4 @@ CREATE POLICY "Vendors view own stripe account" ON vendor_stripe_accounts
 -- Server owns writes (onboarding route + webhook use the service-role client,
 -- which bypasses RLS; this permissive policy mirrors the historical 00004 shape).
 CREATE POLICY "Service role manages stripe accounts" ON vendor_stripe_accounts
-  FOR ALL USING (true) WITH CHECK (true);
+  FOR ALL TO service_role USING (true) WITH CHECK (true);
