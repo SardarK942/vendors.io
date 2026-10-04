@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { PageTitle } from '@/components/dashboard/PageTitle';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { getProductsByVendor } from '@/services/products.service';
+import { getConnectStatus } from '@/services/connect.service';
 import { GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
 import { PublishConfetti } from '@/components/celebration/PublishConfetti';
 import type { ProductStatus } from '@/types/database.types';
@@ -110,6 +111,12 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const { data: productsData } = await getProductsByVendor(supabase, vendorProfile.id);
   const products = productsData ?? [];
 
+  const connect = await getConnectStatus(supabase, vendorProfile.id);
+  const showPayoutNudge =
+    products.length > 0 &&
+    vendorProfile.vendor_origin === 'local' &&
+    !connect.data!.charges_enabled;
+
   return (
     <div className="space-y-6">
       {justOnboarded ? (
@@ -161,36 +168,46 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           </Button>
         </Card>
       ) : (
-        <div className="divide-y divide-hairline overflow-hidden rounded-lg border border-hairline">
-          {products.map((product) => {
-            const totalStock = product.variants.reduce(
-              (sum, v) => sum + (v.stock_quantity ?? 0),
-              0
-            );
-            return (
-              <Link
-                key={product.id}
-                href={`/dashboard/profile/shop/${product.id}`}
-                className="flex items-center gap-4 bg-cream px-4 py-3 transition-colors hover:bg-ink/[.03]"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="truncate font-medium text-ink">{product.title}</p>
-                  <p className="text-xs text-ink-soft">
-                    {GARMENT_TYPE_LABELS[product.garment_type]}
-                    {product.variants.length > 0
-                      ? ` · ${product.variants.length} size${product.variants.length === 1 ? '' : 's'} · ${totalStock} in stock`
-                      : ' · made to order'}
-                  </p>
-                </div>
-                <span className="shrink-0 text-sm tabular-nums text-ink">
-                  {formatPrice(product.base_price_cents, product.currency)}
-                </span>
-                <Badge variant={STATUS_VARIANT[product.status]} className="shrink-0">
-                  {STATUS_LABELS[product.status]}
-                </Badge>
-              </Link>
-            );
-          })}
+        <div>
+          {showPayoutNudge ? (
+            <div className="mb-4 rounded-lg border border-haldi/45 bg-haldi/15 px-4 py-3 text-sm text-ink">
+              Set up payouts so customers can buy your pieces.{' '}
+              <a href="/dashboard/profile/payments" className="font-semibold underline">
+                Set up payouts
+              </a>
+            </div>
+          ) : null}
+          <div className="divide-y divide-hairline overflow-hidden rounded-lg border border-hairline">
+            {products.map((product) => {
+              const totalStock = product.variants.reduce(
+                (sum, v) => sum + (v.stock_quantity ?? 0),
+                0
+              );
+              return (
+                <Link
+                  key={product.id}
+                  href={`/dashboard/profile/shop/${product.id}`}
+                  className="flex items-center gap-4 bg-cream px-4 py-3 transition-colors hover:bg-ink/[.03]"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-ink">{product.title}</p>
+                    <p className="text-xs text-ink-soft">
+                      {GARMENT_TYPE_LABELS[product.garment_type]}
+                      {product.variants.length > 0
+                        ? ` · ${product.variants.length} size${product.variants.length === 1 ? '' : 's'} · ${totalStock} in stock`
+                        : ' · made to order'}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-sm tabular-nums text-ink">
+                    {formatPrice(product.base_price_cents, product.currency)}
+                  </span>
+                  <Badge variant={STATUS_VARIANT[product.status]} className="shrink-0">
+                    {STATUS_LABELS[product.status]}
+                  </Badge>
+                </Link>
+              );
+            })}
+          </div>
         </div>
       )}
     </div>

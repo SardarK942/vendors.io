@@ -11,7 +11,7 @@
 //   await cleanup(couple);
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '../../../src/types/database.types';
+import type { Database, VendorOrigin } from '../../../src/types/database.types';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -102,7 +102,12 @@ export async function seedCouple(options: SeedCoupleOptions = {}): Promise<TestU
 }
 
 export async function seedVendor(
-  options: { chargesEnabled?: boolean; publish?: boolean; category?: string } = {}
+  options: {
+    chargesEnabled?: boolean;
+    publish?: boolean;
+    category?: string;
+    vendorOrigin?: VendorOrigin;
+  } = {}
 ): Promise<TestVendor> {
   const supabase = getServiceClient();
   const email = testEmail('vendor');
@@ -125,6 +130,7 @@ export async function seedVendor(
       // Defaults to photography so existing callers are unchanged; the Shop
       // tests pass 'bridal_wear' (the createProduct gate requires it).
       category: options.category ?? 'photography',
+      vendor_origin: options.vendorOrigin ?? 'local',
       bio: 'Seeded vendor for E2E tests.',
       service_area: ['Chicago'],
       // publish: true sets is_active + onboarding_complete so the public /vendors/[slug]
@@ -165,6 +171,25 @@ export async function seedVendor(
     vendorProfileId: vp.id,
     vendorSlug: slug,
   };
+}
+
+/**
+ * Inserts a vendor_stripe_accounts row (Shop Connect onboarding state) for a
+ * seeded vendor. Flags default to false. Requires migration 00086.
+ */
+export async function seedStripeAccount(
+  admin: SupabaseClient<Database>,
+  vendorProfileId: string,
+  flags: { charges_enabled?: boolean; payouts_enabled?: boolean; details_submitted?: boolean } = {}
+): Promise<void> {
+  const { error } = await admin.from('vendor_stripe_accounts').insert({
+    vendor_profile_id: vendorProfileId,
+    stripe_account_id: `acct_test_${vendorProfileId.slice(0, 8)}`,
+    charges_enabled: flags.charges_enabled ?? false,
+    payouts_enabled: flags.payouts_enabled ?? false,
+    details_submitted: flags.details_submitted ?? false,
+  });
+  if (error) throw new Error(`seedStripeAccount: ${error.message}`);
 }
 
 /**
