@@ -7,6 +7,8 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/dashboard',
 }));
 
+vi.mock('@/lib/flags', () => ({ SHOP_ENABLED: true }));
+
 // jsdom has no matchMedia; SidebarProvider's useIsMobile hook needs it.
 window.matchMedia =
   window.matchMedia ||
@@ -79,5 +81,15 @@ describe('SidebarNav', () => {
   it('shows the unread dot when hasUnreadNotifications is true', () => {
     renderNav({ hasUnreadNotifications: true });
     expect(screen.getByLabelText('Unread notifications')).toBeInTheDocument();
+  });
+
+  it('shows Payouts for a local bridal vendor when the shop flag is on', () => {
+    renderNav({ role: 'vendor', hasBusiness: true, isBridalWear: true, isLocalBridalVendor: true });
+    expect(screen.getByRole('link', { name: /payouts/i })).toBeInTheDocument();
+  });
+
+  it('hides Payouts for a non-bridal vendor', () => {
+    renderNav({ role: 'vendor', hasBusiness: true });
+    expect(screen.queryByRole('link', { name: /payouts/i })).not.toBeInTheDocument();
   });
 });

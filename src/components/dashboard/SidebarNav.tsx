@@ -8,6 +8,7 @@ import {
   Bell,
   BookOpen,
   Calendar,
+  CreditCard,
   Heart,
   Home,
   Package,
@@ -44,6 +45,8 @@ interface Props {
   hasUnreadNotifications: boolean;
   /** Bridal-wear vendors get the product Shop entry (prototype gate). */
   isBridalWear?: boolean;
+  /** Local bridal-wear vendors get the Payouts (Stripe Connect) entry. */
+  isLocalBridalVendor?: boolean;
 }
 
 interface LinkDef {
@@ -54,7 +57,11 @@ interface LinkDef {
   showUnreadDot?: boolean;
 }
 
-function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
+function workspaceLinks(
+  role: Role,
+  isBridalWear: boolean,
+  isLocalBridalVendor: boolean
+): LinkDef[] {
   const links: LinkDef[] = [
     { href: '/dashboard', label: 'Home', icon: Home },
     { href: '/dashboard/bookings', label: 'Bookings', icon: BookOpen, showBookingsCounter: true },
@@ -92,6 +99,13 @@ function workspaceLinks(role: Role, isBridalWear: boolean): LinkDef[] {
         icon: ShoppingBag,
       });
     }
+    if (isLocalBridalVendor && SHOP_ENABLED) {
+      links.splice(links.length - 1, 0, {
+        href: '/dashboard/profile/payments',
+        label: 'Payouts',
+        icon: CreditCard,
+      });
+    }
   }
   return links;
 }
@@ -104,6 +118,7 @@ export function SidebarNav({
   bookingsCount,
   hasUnreadNotifications,
   isBridalWear = false,
+  isLocalBridalVendor = false,
 }: Props) {
   const pathname = usePathname();
 
@@ -132,7 +147,7 @@ export function SidebarNav({
             Workspace
           </SidebarGroupLabel>
           <SidebarMenu>
-            {workspaceLinks(role, isBridalWear).map((link) => {
+            {workspaceLinks(role, isBridalWear, isLocalBridalVendor).map((link) => {
               const Icon = link.icon;
               const active = isActive(link.href);
               return (

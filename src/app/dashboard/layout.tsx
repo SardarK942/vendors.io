@@ -79,6 +79,9 @@ export default async function DashboardLayout({
             bookingsCount={bookingsCount}
             hasUnreadNotifications={unreadCount > 0}
             isBridalWear={activeProfile?.category === 'bridal_wear'}
+            isLocalBridalVendor={
+              activeProfile?.category === 'bridal_wear' && activeProfile?.vendor_origin === 'local'
+            }
           />
           <SidebarInset>
             <div className="mx-auto flex w-full max-w-7xl gap-4 px-4 pb-8 pt-24 sm:px-6 lg:px-8">
