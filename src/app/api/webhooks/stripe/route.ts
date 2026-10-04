@@ -8,6 +8,7 @@ import {
   handleChargeRefunded,
   handlePayoutEvent,
 } from '@/services/payment.service';
+import { refreshAccountStatus } from '@/services/connect.service';
 import { withErrorBoundary } from '@/lib/api/error-boundary';
 
 export const POST = withErrorBoundary(async (request: NextRequest) => {
@@ -97,6 +98,13 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
       case 'payout.failed':
       case 'payout.canceled': {
         await handlePayoutEvent(supabase, event);
+        break;
+      }
+
+      case 'account.updated': {
+        // Connect Standard account readiness changed (onboarding progress).
+        // event.account is the connected account id. No-ops if untracked.
+        if (event.account) await refreshAccountStatus(supabase, event.account);
         break;
       }
 
