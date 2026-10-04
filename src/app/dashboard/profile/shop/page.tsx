@@ -112,7 +112,10 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
   const products = productsData ?? [];
 
   const connect = await getConnectStatus(supabase, vendorProfile.id);
-  const showPayoutNudge = products.length > 0 && !connect.data!.charges_enabled;
+  const showPayoutNudge =
+    products.length > 0 &&
+    vendorProfile.vendor_origin === 'local' &&
+    !connect.data!.charges_enabled;
 
   return (
     <div className="space-y-6">

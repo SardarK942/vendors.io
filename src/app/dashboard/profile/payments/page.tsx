@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation';
 import { requireUser } from '@/lib/api/auth';
-import { getActiveVendorProfileId } from '@/lib/vendor/active';
+import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getConnectStatus, refreshAccountStatus } from '@/services/connect.service';
 import { PaymentsClient } from './PaymentsClient';
@@ -11,8 +11,11 @@ export default async function PaymentsPage({
   searchParams: Promise<{ return?: string }>;
 }) {
   const { user, supabase } = await requireUser();
-  const vendorProfileId = await getActiveVendorProfileId(supabase, user.id);
-  if (!vendorProfileId) redirect('/dashboard');
+  const { profile } = await getActiveVendorProfile(supabase, user.id);
+  if (!profile || profile.category !== 'bridal_wear' || profile.vendor_origin !== 'local') {
+    redirect('/dashboard');
+  }
+  const vendorProfileId = profile.id;
 
   const sp = await searchParams;
 
@@ -25,7 +28,14 @@ export default async function PaymentsPage({
       .select('stripe_account_id')
       .eq('vendor_profile_id', vendorProfileId)
       .maybeSingle();
-    if (row) await refreshAccountStatus(service, row.stripe_account_id);
+    if (row) {
+      try {
+        await refreshAccountStatus(service, row.stripe_account_id);
+      } catch (err) {
+        // Transient Stripe error: fall through to the DB-backed status.
+        console.error('payments: refreshAccountStatus failed', err);
+      }
+    }
   }
 
   const status = await getConnectStatus(supabase, vendorProfileId);
