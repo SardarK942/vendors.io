@@ -35,7 +35,19 @@ export function getPublishBlockers(profile: VendorRow): PublishBlocker[] {
   if (!profile.bio?.trim()) {
     blockers.push({ field: 'bio', label: 'Write a short bio', step: 'basics' });
   }
-  if (!profile.instagram_handle || !INSTAGRAM_RE.test(profile.instagram_handle.replace(/^@/, ''))) {
+  // Instagram is optional for venues (many don't have one). For everyone else
+  // it's required. A venue that DID provide a handle must still be well-formed.
+  const igHandle = profile.instagram_handle?.replace(/^@/, '') ?? '';
+  const igValid = INSTAGRAM_RE.test(igHandle);
+  if (profile.category === 'venue') {
+    if (igHandle && !igValid) {
+      blockers.push({
+        field: 'instagram_handle',
+        label: 'Fix your Instagram handle',
+        step: 'online',
+      });
+    }
+  } else if (!igHandle || !igValid) {
     blockers.push({
       field: 'instagram_handle',
       label: 'Add your Instagram handle',

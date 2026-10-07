@@ -26,11 +26,15 @@ interface Props {
   initial: Initial;
   profileId: string;
   mode: 'first' | 'next';
+  category?: string | null;
 }
 
-export function StepLocation({ initial, profileId, mode }: Props) {
+export function StepLocation({ initial, profileId, mode, category }: Props) {
   const router = useRouter();
   const baseAddressId = useId();
+  // A venue IS a fixed location: its address is required and always public, so
+  // the "I travel to clients" skip and the privacy toggle don't apply.
+  const isVenue = category === 'venue';
   const [place, setPlace] = useState<Partial<PlaceData>>({
     address_line_1: initial.baseAddressLine1,
     city: initial.baseCity,
@@ -38,8 +42,9 @@ export function StepLocation({ initial, profileId, mode }: Props) {
     postal_code: initial.basePostalCode,
     google_place_id: initial.baseGooglePlaceId,
   });
-  const [addressPublic, setAddressPublic] = useState(initial.baseAddressPublic);
-  const [skipAddress, setSkipAddress] = useState(initial.baseAddressSkipped);
+  const [addressPublic, setAddressPublic] = useState(isVenue ? true : initial.baseAddressPublic);
+  const [skipAddress, setSkipAddress] = useState(isVenue ? false : initial.baseAddressSkipped);
+  const [addressError, setAddressError] = useState<string | null>(null);
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -66,6 +71,10 @@ export function StepLocation({ initial, profileId, mode }: Props) {
   );
 
   async function onNext() {
+    if (isVenue && !(place.address_line_1 ?? '').trim()) {
+      setAddressError('Your venue address is required so couples can find you.');
+      return;
+    }
     const parsed = locationSchema.safeParse({
       baseAddressLine1: place.address_line_1 ?? '',
       baseCity: place.city ?? '',
@@ -98,7 +107,9 @@ export function StepLocation({ initial, profileId, mode }: Props) {
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h1 className="text-balance text-2xl font-bold">Where are you based?</h1>
+        <h1 className="text-balance text-2xl font-bold">
+          {isVenue ? 'Where is your venue?' : 'Where are you based?'}
+        </h1>
         <p className="text-sm text-muted-foreground">Step 2 of 6</p>
       </div>
 
@@ -109,12 +120,13 @@ export function StepLocation({ initial, profileId, mode }: Props) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor={baseAddressId}>Base address</Label>
+        <Label htmlFor={baseAddressId}>{isVenue ? 'Venue address' : 'Base address'}</Label>
         <GooglePlacesAutocomplete
           id={baseAddressId}
           value={place}
           onChange={(p) => {
             setPlace(p);
+            setAddressError(null);
             clearField('baseAddressLine1');
             clearField('baseCity');
             clearField('baseState');
@@ -133,50 +145,66 @@ export function StepLocation({ initial, profileId, mode }: Props) {
         {getError('baseAddressLine1') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('baseAddressLine1')}</p>
         )}
-        <label className="mt-2 flex items-center gap-2 text-sm text-ink/80">
-          <input
-            type="checkbox"
-            checked={skipAddress}
-            className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-            onChange={(e) => {
-              setSkipAddress(e.target.checked);
-              if (e.target.checked) {
-                setPlace({
-                  address_line_1: '',
-                  city: '',
-                  state: '',
-                  postal_code: '',
-                  google_place_id: '',
-                });
-                clearField('baseAddressLine1');
-                clearField('baseCity');
-                clearField('baseState');
-                clearField('basePostalCode');
-                clearField('baseGooglePlaceId');
-              }
-            }}
-          />
-          I don’t have a fixed address (I travel to clients)
-        </label>
-        {!skipAddress && !place.address_line_1 && (
+        {addressError && <p className="mt-1 text-xs text-hot-pink">{addressError}</p>}
+        {!isVenue && (
+          <label className="mt-2 flex items-center gap-2 text-sm text-ink/80">
+            <input
+              type="checkbox"
+              checked={skipAddress}
+              className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+              onChange={(e) => {
+                setSkipAddress(e.target.checked);
+                if (e.target.checked) {
+                  setPlace({
+                    address_line_1: '',
+                    city: '',
+                    state: '',
+                    postal_code: '',
+                    google_place_id: '',
+                  });
+                  clearField('baseAddressLine1');
+                  clearField('baseCity');
+                  clearField('baseState');
+                  clearField('basePostalCode');
+                  clearField('baseGooglePlaceId');
+                }
+              }}
+            />
+            I don’t have a fixed address (I travel to clients)
+          </label>
+        )}
+        {isVenue ? (
           <p className="mt-1 text-pretty text-xs text-ink/60">
-            Adding an address helps customers find you in local searches.
+            Couples search venues by location — this is how they&rsquo;ll find yours.
           </p>
+        ) : (
+          !skipAddress &&
+          !place.address_line_1 && (
+            <p className="mt-1 text-pretty text-xs text-ink/60">
+              Adding an address helps customers find you in local searches.
+            </p>
+          )
         )}
       </div>
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          <Switch id="addressPublic" checked={addressPublic} onCheckedChange={setAddressPublic} />
-          <Label htmlFor="addressPublic" className="cursor-pointer">
-            Make my full address publicly visible
-          </Label>
-        </div>
-        <p className="text-pretty pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
-          Customers see your city + state always. Full address shown only after they pay the
-          deposit, unless you make it public here.
+      {isVenue ? (
+        <p className="text-pretty text-xs text-muted-foreground">
+          Your venue&rsquo;s full address is shown publicly so couples can find it.
         </p>
-      </div>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-center gap-3">
+            <Switch id="addressPublic" checked={addressPublic} onCheckedChange={setAddressPublic} />
+            <Label htmlFor="addressPublic" className="cursor-pointer">
+              Make my full address publicly visible
+            </Label>
+          </div>
+          <p className="text-pretty pl-[calc(2.25rem+0.75rem)] text-xs text-muted-foreground">
+            Customers see your city + state always. Full address shown only after they pay the
+            deposit, unless you make it public here.
+          </p>
+        </div>
+      )}
 
       {serverError && (
         <p className="text-sm text-destructive" role="alert" aria-live="assertive">

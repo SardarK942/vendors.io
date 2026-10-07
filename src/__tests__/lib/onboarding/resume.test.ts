@@ -1,5 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
-import { nextIncompleteStep, getOrCreateWizardProfile } from '@/lib/onboarding/resume';
+import {
+  nextIncompleteStep,
+  getOrCreateWizardProfile,
+  stepStatuses,
+  type ProfileRowShape,
+} from '@/lib/onboarding/resume';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 
@@ -114,6 +119,43 @@ describe('nextIncompleteStep', () => {
     // When address is present (filled), skip flag is irrelevant — no location bounce either way.
     expect(nextIncompleteStep({ ...baseProfile, base_address_skipped: true })).toBe('review');
     expect(nextIncompleteStep({ ...baseProfile, base_address_skipped: false })).toBe('review');
+  });
+});
+
+describe('stepStatuses (independent per-step completion)', () => {
+  const complete = (key: string, p: ProfileRowShape = baseProfile) =>
+    stepStatuses(p).find((s) => s.key === key)?.complete;
+
+  it('marks every step complete for a fully-filled profile', () => {
+    expect(stepStatuses(baseProfile).every((s) => s.complete)).toBe(true);
+  });
+
+  it('judges a later step done even when an earlier one is not (non-sequential)', () => {
+    const noLocation = { ...baseProfile, base_address_line_1: null };
+    expect(complete('location', noLocation)).toBe(false);
+    // details is still independently complete despite the location gap
+    expect(complete('details', noLocation)).toBe(true);
+  });
+
+  it('treats online as optional and complete when instagram or website is present', () => {
+    const online = stepStatuses(baseProfile).find((s) => s.key === 'online');
+    expect(online?.optional).toBe(true);
+    expect(online?.complete).toBe(true);
+    expect(complete('online', { ...baseProfile, instagram_handle: null, website_url: null })).toBe(
+      false
+    );
+    expect(
+      complete('online', { ...baseProfile, instagram_handle: null, website_url: 'https://x.com' })
+    ).toBe(true);
+  });
+
+  it('marks review complete only when all required steps are complete', () => {
+    expect(complete('review')).toBe(true);
+    expect(complete('review', { ...baseProfile, portfolio_images: [] })).toBe(false);
+  });
+
+  it('returns all-incomplete for a null profile', () => {
+    expect(stepStatuses(null).every((s) => !s.complete)).toBe(true);
   });
 });
 

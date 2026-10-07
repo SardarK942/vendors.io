@@ -3,8 +3,10 @@ import {
   basicsSchema,
   locationSchema,
   onlineSchema,
+  onlineSchemaFor,
   portfolioSchema,
   publishGateSchema,
+  publishGateSchemaFor,
 } from '@/lib/onboarding/validation';
 
 describe('basicsSchema', () => {
@@ -131,5 +133,56 @@ describe('publishGateSchema (server-side guard)', () => {
   it('accepts a complete profile', () => {
     const r = publishGateSchema.safeParse(completeProfile);
     expect(r.success).toBe(true);
+  });
+
+  describe('venue variant (Instagram optional)', () => {
+    const venueProfile = { ...completeProfile, category: 'venue' };
+
+    it('venue publish gate accepts a null instagram handle', () => {
+      const r = publishGateSchemaFor('venue').safeParse({
+        ...venueProfile,
+        instagram_handle: null,
+      });
+      expect(r.success).toBe(true);
+    });
+    it('venue publish gate accepts an empty instagram handle', () => {
+      const r = publishGateSchemaFor('venue').safeParse({
+        ...venueProfile,
+        instagram_handle: '',
+      });
+      expect(r.success).toBe(true);
+    });
+    it('venue publish gate still rejects a malformed instagram handle', () => {
+      const r = publishGateSchemaFor('venue').safeParse({
+        ...venueProfile,
+        instagram_handle: 'has spaces!',
+      });
+      expect(r.success).toBe(false);
+    });
+    it('non-venue category still requires instagram', () => {
+      const r = publishGateSchemaFor('catering').safeParse({
+        ...completeProfile,
+        instagram_handle: null,
+      });
+      expect(r.success).toBe(false);
+    });
+  });
+});
+
+describe('onlineSchemaFor (venue step)', () => {
+  it('venue online step accepts an empty instagram handle', () => {
+    expect(
+      onlineSchemaFor('venue').safeParse({ instagramHandle: '', websiteUrl: '' }).success
+    ).toBe(true);
+  });
+  it('venue online step still rejects a malformed handle', () => {
+    expect(
+      onlineSchemaFor('venue').safeParse({ instagramHandle: 'bad handle', websiteUrl: '' }).success
+    ).toBe(false);
+  });
+  it('non-venue online step still requires instagram', () => {
+    expect(
+      onlineSchemaFor('photography').safeParse({ instagramHandle: '', websiteUrl: '' }).success
+    ).toBe(false);
   });
 });

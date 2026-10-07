@@ -6,16 +6,18 @@ import { useUnsavedChangesGuard } from '@/hooks/use-unsaved-changes-guard';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { onlineSchema } from '@/lib/onboarding/validation';
+import { onlineSchemaFor } from '@/lib/onboarding/validation';
 
 interface Props {
   initial: { instagramHandle: string; websiteUrl: string };
   profileId: string;
   mode: 'first' | 'next';
+  category?: string | null;
 }
 
-export function StepOnline({ initial, profileId, mode }: Props) {
+export function StepOnline({ initial, profileId, mode, category }: Props) {
   const router = useRouter();
+  const isVenue = category === 'venue';
   const [data, setData] = useState(initial);
   const { applyZodErrors, clearField, getError, total } = useFormErrors();
   const [serverError, setServerError] = useState<string | null>(null);
@@ -29,7 +31,7 @@ export function StepOnline({ initial, profileId, mode }: Props) {
   }
 
   async function onNext() {
-    const parsed = onlineSchema.safeParse(data);
+    const parsed = onlineSchemaFor(category).safeParse(data);
     if (!parsed.success) {
       applyZodErrors(parsed.error);
       return;
@@ -64,7 +66,9 @@ export function StepOnline({ initial, profileId, mode }: Props) {
       )}
 
       <div className="space-y-2">
-        <Label htmlFor="instagramHandle">Instagram handle</Label>
+        <Label htmlFor="instagramHandle">
+          Instagram handle{isVenue && <span className="text-muted-foreground"> (optional)</span>}
+        </Label>
         <div className="flex items-center gap-1">
           <span className="text-sm text-muted-foreground">@</span>
           <Input
@@ -84,8 +88,9 @@ export function StepOnline({ initial, profileId, mode }: Props) {
           />
         </div>
         <p className="text-xs text-muted-foreground">
-          Instagram is how customers discover culturally-focused vendors — it&apos;s required to
-          publish your profile.
+          {isVenue
+            ? 'Instagram is optional for venues — add it if you have one.'
+            : "Instagram is how customers discover culturally-focused vendors — it's required to publish your profile."}
         </p>
         {getError('instagramHandle') && (
           <p className="mt-1 text-xs text-hot-pink">{getError('instagramHandle')}</p>
