@@ -19,34 +19,37 @@ test.describe('Bucket F — wizard is 6 steps', () => {
     const page = await ctx.newPage();
     await loginAs(page, vendor);
 
+    // Scope to <main>: the rail now also shows a "Step N of 6" progress counter,
+    // so match the step-page pill inside the content area, not the nav rail.
+
     // Step 1
     await page.goto('/dashboard/profile/setup/basics');
     await expect(
-      page.getByText('Step 1 of 6', { exact: true }).filter({ visible: true })
+      page.locator('main').getByText('Step 1 of 6', { exact: true }).filter({ visible: true })
     ).toBeVisible();
 
     // Step 2
     await page.goto('/dashboard/profile/setup/location');
     await expect(
-      page.getByText('Step 2 of 6', { exact: true }).filter({ visible: true })
+      page.locator('main').getByText('Step 2 of 6', { exact: true }).filter({ visible: true })
     ).toBeVisible();
 
     // Step 3
     await page.goto('/dashboard/profile/setup/online');
     await expect(
-      page.getByText('Step 3 of 6', { exact: true }).filter({ visible: true })
+      page.locator('main').getByText('Step 3 of 6', { exact: true }).filter({ visible: true })
     ).toBeVisible();
 
     // Step 4
     await page.goto('/dashboard/profile/setup/details');
     await expect(
-      page.getByText('Step 4 of 6', { exact: true }).filter({ visible: true })
+      page.locator('main').getByText('Step 4 of 6', { exact: true }).filter({ visible: true })
     ).toBeVisible();
 
     // Step 5
     await page.goto('/dashboard/profile/setup/portfolio');
     await expect(
-      page.getByText('Step 5 of 6', { exact: true }).filter({ visible: true })
+      page.locator('main').getByText('Step 5 of 6', { exact: true }).filter({ visible: true })
     ).toBeVisible();
 
     // Step 6 (review page is the heaviest — give it extra time to SSR)

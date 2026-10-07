@@ -23,7 +23,7 @@ export default async function LocationPage({ searchParams }: PageProps) {
   const { data: profile } = await supabase
     .from('vendor_profiles')
     .select(
-      'base_address_line_1, base_city, base_state, base_postal_code, base_google_place_id, base_address_public, base_address_skipped'
+      'category, base_address_line_1, base_city, base_state, base_postal_code, base_google_place_id, base_address_public, base_address_skipped'
     )
     .eq('id', profileId)
     .maybeSingle();
@@ -31,6 +31,7 @@ export default async function LocationPage({ searchParams }: PageProps) {
     <StepLocation
       profileId={profileId}
       mode={mode}
+      category={profile?.category ?? null}
       initial={{
         baseAddressLine1: profile?.base_address_line_1 ?? '',
         baseCity: profile?.base_city ?? '',

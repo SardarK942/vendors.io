@@ -23,7 +23,8 @@ export function WizardMobileBar({ profile }: { profile: VendorRow }) {
     STEPS.findIndex((s) => s.key === current)
   );
   const prev = currentIdx > 0 ? STEPS[currentIdx - 1] : null;
-  const pct = Math.round(((currentIdx + 1) / STEPS.length) * 100);
+  const stepNumber = currentIdx + 1;
+  const pct = Math.round((stepNumber / STEPS.length) * 100);
   const [showPreview, setShowPreview] = useState(false);
 
   return (
@@ -62,16 +63,24 @@ export function WizardMobileBar({ profile }: { profile: VendorRow }) {
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* Step progress bar — mirrors the desktop rail */}
       <div className="mt-2">
-        {prev && (
-          <p className="mb-1 text-xs text-ink/60">
-            Step {currentIdx + 1} of {STEPS.length}
-          </p>
-        )}
-        <div className="h-1 w-full overflow-hidden rounded-full bg-ink/10">
+        <div className="mb-1 flex items-baseline justify-between text-xs">
+          <span className="font-medium text-ink">
+            Step {stepNumber} of {STEPS.length}
+          </span>
+          <span className="tabular-nums text-ink/60">{pct}%</span>
+        </div>
+        <div
+          className="h-1.5 w-full overflow-hidden rounded-full bg-ink/10"
+          role="progressbar"
+          aria-valuenow={stepNumber}
+          aria-valuemin={1}
+          aria-valuemax={STEPS.length}
+          aria-label="Onboarding progress"
+        >
           <div
-            className="h-full rounded-full bg-indigo transition-[width] duration-300"
+            className="h-full rounded-full bg-indigo transition-[width] duration-500 ease-out motion-reduce:transition-none"
             style={{ width: `${pct}%` }}
           />
         </div>

@@ -5,7 +5,7 @@ import { requireUser } from '@/lib/api/auth';
 import {
   basicsSchema,
   locationSchema,
-  onlineSchema,
+  onlineSchemaFor,
   portfolioSchema,
   detailsSchema,
 } from '@/lib/onboarding/validation';
@@ -143,6 +143,18 @@ export const PATCH = withErrorBoundary(
         throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');
       }
 
+      // Venues are fixed locations: address is required and always public.
+      // Enforce server-side so the client can't skip or privatize it.
+      const { data: profileRow } = await supabase
+        .from('vendor_profiles')
+        .select('category')
+        .eq('id', profileId)
+        .maybeSingle();
+      const isVenue = profileRow?.category === 'venue';
+      if (isVenue && !(data.baseAddressLine1 ?? '').trim()) {
+        throw new HttpError(400, 'Your venue address is required so couples can find you.');
+      }
+
       // base_city feeds the embedding, so this write invalidates the vector.
       const { error } = await supabase
         .from('vendor_profiles')
@@ -153,8 +165,8 @@ export const PATCH = withErrorBoundary(
             base_state: data.baseState,
             base_postal_code: data.basePostalCode,
             base_google_place_id: data.baseGooglePlaceId,
-            base_address_public: data.baseAddressPublic,
-            base_address_skipped: data.baseAddressSkipped ?? false,
+            base_address_public: isVenue ? true : data.baseAddressPublic,
+            base_address_skipped: isVenue ? false : (data.baseAddressSkipped ?? false),
           })
         )
         .eq('id', profileId);
@@ -165,9 +177,14 @@ export const PATCH = withErrorBoundary(
     }
 
     if (step === 'online') {
+      const { data: onlineProfile } = await supabase
+        .from('vendor_profiles')
+        .select('category')
+        .eq('id', profileId)
+        .maybeSingle();
       let data;
       try {
-        data = onlineSchema.parse(body);
+        data = onlineSchemaFor(onlineProfile?.category).parse(body);
       } catch (err: unknown) {
         const zodErr = err as { issues?: { message: string }[] };
         throw new HttpError(400, zodErr.issues?.[0]?.message ?? 'Validation failed');

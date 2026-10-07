@@ -2,9 +2,11 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { headers } from 'next/headers';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { WizardStepper } from '@/components/onboarding/WizardStepper';
 import { WizardMobileBar } from '@/components/onboarding/WizardMobileBar';
 import { WizardBackLink } from '@/components/onboarding/WizardBackLink';
+import { ClaimResumeBanner } from '@/components/onboarding/ClaimResumeBanner';
 import { OnboardingPreview } from '@/components/onboarding/OnboardingPreview';
 import { PreviewRefresher } from '@/components/onboarding/PreviewRefresher';
 import { getOrCreateWizardProfile, type WizardMode } from '@/lib/onboarding/resume';
@@ -69,6 +71,9 @@ export default async function SetupLayout({ children }: SetupLayoutProps) {
       {/* Center — the step form */}
       <main className="min-w-0 flex-1 pb-16 pt-4 md:py-10">
         {profile && <WizardMobileBar profile={profile} />}
+        <Suspense fallback={null}>
+          <ClaimResumeBanner />
+        </Suspense>
         <WizardBackLink />
         {mode === 'next' && (
           <div className="mb-6 rounded-lg border bg-muted/30 px-4 py-3 text-sm text-muted-foreground">

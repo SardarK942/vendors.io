@@ -22,13 +22,14 @@ export default async function OnlinePage({ searchParams }: PageProps) {
 
   const { data: profile } = await supabase
     .from('vendor_profiles')
-    .select('instagram_handle, website_url')
+    .select('category, instagram_handle, website_url')
     .eq('id', profileId)
     .maybeSingle();
   return (
     <StepOnline
       profileId={profileId}
       mode={mode}
+      category={profile?.category ?? null}
       initial={{
         instagramHandle: profile?.instagram_handle ?? '',
         websiteUrl: profile?.website_url ?? '',

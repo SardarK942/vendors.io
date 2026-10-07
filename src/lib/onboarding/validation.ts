@@ -20,6 +20,22 @@ const instagramHandle = z
       .regex(/^[A-Za-z0-9._]{1,30}$/, 'Invalid Instagram handle')
   );
 
+// Venue variant: Instagram is optional (many venues don't have one). Empty is
+// allowed; a provided handle must still be well-formed.
+const instagramHandleOptional = z
+  .string()
+  .optional()
+  .default('')
+  .transform((s) => s.replace(/^@/, '').trim())
+  .pipe(
+    z.union([z.literal(''), z.string().regex(/^[A-Za-z0-9._]{1,30}$/, 'Invalid Instagram handle')])
+  );
+
+const websiteUrl = z
+  .union([z.string().url(), z.literal('')])
+  .optional()
+  .transform((v) => v || '');
+
 export const basicsSchema = z
   .object({
     businessName: z.string().min(1).max(120),
@@ -63,11 +79,19 @@ export const locationSchema = z.object({
 
 export const onlineSchema = z.object({
   instagramHandle: instagramHandle,
-  websiteUrl: z
-    .union([z.string().url(), z.literal('')])
-    .optional()
-    .transform((v) => v || ''),
+  websiteUrl,
 });
+
+// Venues: Instagram optional. Website still optional as for everyone.
+export const venueOnlineSchema = z.object({
+  instagramHandle: instagramHandleOptional,
+  websiteUrl,
+});
+
+/** Pick the online-step schema for a category (venues get optional Instagram). */
+export function onlineSchemaFor(category?: string | null) {
+  return category === 'venue' ? venueOnlineSchema : onlineSchema;
+}
 
 export const portfolioSchema = z.object({
   portfolioImages: z.array(z.string().url()).min(1, 'At least 1 portfolio image is required'),
@@ -102,6 +126,20 @@ export const publishGateSchema = z.object({
   years_in_business: z.number().int().min(0).max(99),
   response_sla_hours: z.number().refine((n) => [1, 4, 24, 48, 72].includes(n)),
 });
+
+// Venues publish without an Instagram handle. Null/empty are accepted; a
+// provided handle must still be well-formed.
+export const venuePublishGateSchema = publishGateSchema.extend({
+  instagram_handle: z
+    .union([z.string().regex(/^[A-Za-z0-9._]{1,30}$/), z.literal('')])
+    .nullable()
+    .optional(),
+});
+
+/** Pick the publish gate for a category (venues get optional Instagram). */
+export function publishGateSchemaFor(category?: string | null) {
+  return category === 'venue' ? venuePublishGateSchema : publishGateSchema;
+}
 
 export type BasicsInput = z.infer<typeof basicsSchema>;
 export type LocationInput = z.infer<typeof locationSchema>;

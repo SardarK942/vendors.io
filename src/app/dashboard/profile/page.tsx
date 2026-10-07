@@ -1,8 +1,10 @@
+import { Suspense } from 'react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { PageTitle } from '@/components/dashboard/PageTitle';
 import { VendorProfileForm } from '@/components/forms/VendorProfileForm';
 import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
+import { ClaimResumeBanner } from '@/components/onboarding/ClaimResumeBanner';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 
 export const dynamic = 'force-dynamic';
@@ -25,6 +27,9 @@ export default async function VendorProfilePage() {
   const isActive = (vendorProfile as Record<string, unknown>).is_active !== false;
   return (
     <div className="space-y-6">
+      <Suspense fallback={null}>
+        <ClaimResumeBanner />
+      </Suspense>
       <div className="flex items-center justify-between">
         <div>
           <PageTitle>Edit Profile</PageTitle>

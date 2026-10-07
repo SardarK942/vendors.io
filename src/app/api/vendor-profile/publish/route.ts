@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { withErrorBoundary, HttpError } from '@/lib/api/error-boundary';
 import { requireUser } from '@/lib/api/auth';
-import { publishGateSchema } from '@/lib/onboarding/validation';
+import { publishGateSchemaFor } from '@/lib/onboarding/validation';
 import { sendVendorWelcomeEmail } from '@/lib/email/resend';
 
 export const POST = withErrorBoundary(async (req: Request) => {
@@ -50,7 +50,8 @@ export const POST = withErrorBoundary(async (req: Request) => {
     profileRow = profile;
   }
 
-  const parsed = publishGateSchema.safeParse(profileRow);
+  const category = (profileRow as { category?: string | null }).category ?? null;
+  const parsed = publishGateSchemaFor(category).safeParse(profileRow);
   if (!parsed.success) {
     const issue = parsed.error.issues[0];
     return NextResponse.json(

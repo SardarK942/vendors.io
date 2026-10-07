@@ -17,6 +17,7 @@ export interface ProfileRowShape {
   /** Set to true when vendor checked "I don't have a fixed address". Persisted since migration 00061. */
   base_address_skipped?: boolean | null;
   instagram_handle: string | null;
+  website_url?: string | null;
   languages?: string[] | null;
   years_in_business?: number | null;
   response_sla_hours?: number | null;
@@ -159,4 +160,64 @@ export function nextIncompleteStep(profile: ProfileRowShape | null): WizardStep 
   }
   if (!profile.portfolio_images || profile.portfolio_images.length < 1) return 'portfolio';
   return 'review';
+}
+
+// --- Per-step completion -----------------------------------------------------
+// `nextIncompleteStep` is sequential (first gap wins), which can't express
+// "details done but location not". These predicates judge each step on its own
+// so the wizard rail can signify completion independently per step.
+
+export interface StepStatus {
+  key: WizardStep;
+  complete: boolean;
+  /** Optional steps don't count toward the publish-readiness progress bar. */
+  optional: boolean;
+}
+
+function isBasicsComplete(p: ProfileRowShape): boolean {
+  return !!p.business_name && !!p.category && !!p.bio && p.bio.length >= 50;
+}
+function isLocationComplete(p: ProfileRowShape): boolean {
+  if (p.base_address_skipped) return true;
+  return !!(
+    p.base_address_line_1 &&
+    p.base_city &&
+    p.base_state &&
+    p.base_postal_code &&
+    p.base_google_place_id
+  );
+}
+function isOnlineComplete(p: ProfileRowShape): boolean {
+  return !!p.instagram_handle || !!p.website_url;
+}
+function isDetailsComplete(p: ProfileRowShape): boolean {
+  return (
+    !!p.languages &&
+    p.languages.length > 0 &&
+    p.years_in_business !== null &&
+    p.years_in_business !== undefined &&
+    p.response_sla_hours !== null &&
+    p.response_sla_hours !== undefined
+  );
+}
+function isPortfolioComplete(p: ProfileRowShape): boolean {
+  return !!p.portfolio_images && p.portfolio_images.length >= 1;
+}
+
+/** Independent completion state for every wizard step. */
+export function stepStatuses(profile: ProfileRowShape | null): StepStatus[] {
+  const done = (fn: (p: ProfileRowShape) => boolean): boolean => (profile ? fn(profile) : false);
+  const basics = done(isBasicsComplete);
+  const location = done(isLocationComplete);
+  const details = done(isDetailsComplete);
+  const portfolio = done(isPortfolioComplete);
+  const allRequired = basics && location && details && portfolio;
+  return [
+    { key: 'basics', complete: basics, optional: false },
+    { key: 'location', complete: location, optional: false },
+    { key: 'online', complete: done(isOnlineComplete), optional: true },
+    { key: 'details', complete: details, optional: false },
+    { key: 'portfolio', complete: portfolio, optional: false },
+    { key: 'review', complete: allRequired, optional: false },
+  ];
 }
