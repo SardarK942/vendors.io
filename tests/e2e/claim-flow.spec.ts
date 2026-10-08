@@ -149,4 +149,56 @@ test.describe('claim flow', () => {
       await cleanup(stranger);
     }
   });
+
+  test('venue claim pre-fills address, place id, website, and sets address public', async ({
+    page,
+  }) => {
+    const supabase = await createServiceRoleClient();
+    const { data: sv } = await supabase
+      .from('scraped_vendors')
+      .insert({
+        source: 'hand_curated',
+        business_name: 'E2E Venue Prefill',
+        slug: `e2e-venue-prefill-${Date.now()}`,
+        category: 'venue',
+        tags: ['__e2e_claim__'],
+        city: 'Skokie',
+        state: 'IL',
+        postal_code: '60077',
+        website: 'https://example-venue.test',
+        photos: [],
+        raw: { address_line_1: '5300 W Touhy Ave', google_place_id: 'ChIJ-e2e-prefill' },
+      })
+      .select('id')
+      .single();
+    scrapedVendorId = sv!.id;
+    user = await seedCouple();
+    const token = mintTokenString(scrapedVendorId);
+    await supabase.from('claim_tokens').insert({
+      scraped_vendor_id: scrapedVendorId,
+      token_hash: hashTokenString(token),
+      expires_at: new Date(Date.now() + 86400_000).toISOString(),
+    });
+    await loginAs(page, user);
+    await page.goto(`/claim/${token}`);
+    await expect(page).toHaveURL(/\/dashboard\/profile\/setup/);
+
+    const { data: claimed } = await supabase
+      .from('scraped_vendors')
+      .select('claimed_vendor_profile_id')
+      .eq('id', scrapedVendorId)
+      .single();
+    const { data: prof } = await supabase
+      .from('vendor_profiles')
+      .select(
+        'base_address_line_1, base_postal_code, base_google_place_id, website_url, base_address_public'
+      )
+      .eq('id', claimed!.claimed_vendor_profile_id!)
+      .single();
+    expect(prof?.base_address_line_1).toBe('5300 W Touhy Ave');
+    expect(prof?.base_postal_code).toBe('60077');
+    expect(prof?.base_google_place_id).toBe('ChIJ-e2e-prefill');
+    expect(prof?.website_url).toBe('https://example-venue.test');
+    expect(prof?.base_address_public).toBe(true);
+  });
 });
