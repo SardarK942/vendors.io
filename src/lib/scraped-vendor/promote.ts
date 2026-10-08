@@ -32,6 +32,16 @@ export async function promoteScrapedVendor(
   const slugSuffix = crypto.randomBytes(3).toString('hex'); // 6-char hex
   const slug = `${generateSlug(sv.business_name)}-${slugSuffix}`;
 
+  // Street line + Google place id captured during curation live in `raw` (there
+  // are no dedicated columns for them on scraped_vendors). Pre-fill them so a
+  // claimed profile arrives with its address ready to confirm. Venues show the
+  // full address publicly by default (they're a fixed destination).
+  const raw = (sv.raw ?? {}) as {
+    address_line_1?: string | null;
+    google_place_id?: string | null;
+  };
+  const isVenue = sv.category === 'venue';
+
   const { data: profile, error: profErr } = await supabase
     .from('vendor_profiles')
     .insert({
@@ -42,9 +52,13 @@ export async function promoteScrapedVendor(
       bio: sv.bio,
       instagram_handle: sv.instagram_handle,
       portfolio_images: sv.photos,
+      base_address_line_1: raw.address_line_1 ?? null,
       base_city: sv.city,
       base_state: sv.state,
       base_postal_code: sv.postal_code,
+      base_google_place_id: raw.google_place_id ?? null,
+      base_address_public: isVenue,
+      website_url: sv.website ?? null,
       is_active: false,
       onboarding_complete: false,
     })
