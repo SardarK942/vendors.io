@@ -493,11 +493,12 @@ export async function finalizeOrderCanceled(
 /**
  * Delete checkout_snapshots older than `olderThanMs`. A completed checkout
  * deletes its own snapshot, so leftovers are orphans from abandoned or
- * out-of-stock-voided checkouts.
+ * out-of-stock-voided checkouts. Default 26h exceeds Stripe's 24h Checkout
+ * session lifetime (+2h margin) so a late-authorizing buyer keeps their snapshot.
  */
 export async function sweepStaleCheckoutSnapshots(
   db: Client,
-  olderThanMs: number = 60 * 60 * 1000
+  olderThanMs: number = 26 * 60 * 60 * 1000
 ): Promise<ServiceResult<{ swept: number }>> {
   const cutoff = new Date(Date.now() - olderThanMs).toISOString();
   const { data, error } = await db
