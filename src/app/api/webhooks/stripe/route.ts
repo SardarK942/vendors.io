@@ -8,8 +8,18 @@ import {
   handleChargeRefunded,
   handlePayoutEvent,
 } from '@/services/payment.service';
+import {
+  createOrderFromSession,
+  finalizeOrderPaid,
+  finalizeOrderCanceled,
+} from '@/services/orders.service';
 import { refreshAccountStatus } from '@/services/connect.service';
 import { withErrorBoundary } from '@/lib/api/error-boundary';
+
+/** Service helpers return {error,status} instead of throwing; surface as a handler failure so Stripe retries. */
+function throwIfError(result: { error?: string }): void {
+  if (result.error) throw new Error(result.error);
+}
 
 export const POST = withErrorBoundary(async (request: NextRequest) => {
   const body = await request.text();
@@ -72,6 +82,10 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.kind === 'shop') {
+          throwIfError(await finalizeOrderPaid(supabase, pi.id));
+          break;
+        }
         const bookingId = pi.metadata?.booking_id;
         // Valid predecessor statuses: 'accepted' (new flow) or 'quoted' (legacy).
         // handlePaymentSuccess transitions to deposit_paid unconditionally.
@@ -83,6 +97,40 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
         const pi = event.data.object as Stripe.PaymentIntent;
         const bookingId = pi.metadata?.booking_id;
         if (bookingId) await handlePaymentFailure(supabase, pi.id, bookingId);
+        break;
+      }
+
+      case 'payment_intent.canceled': {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.kind === 'shop') {
+          throwIfError(await finalizeOrderCanceled(supabase, pi.id));
+        }
+        break;
+      }
+
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.kind !== 'shop') break;
+        const piId =
+          typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : (session.payment_intent?.id ?? null);
+        if (!piId) throw new Error('Shop checkout session has no payment_intent');
+        const result = await createOrderFromSession(supabase, {
+          sessionId: session.id,
+          paymentIntentId: piId,
+          chargeMode: event.account ? 'direct' : 'escrow',
+          account: event.account ?? null,
+          taxCents: session.total_details?.amount_tax ?? 0,
+          totalCents: session.amount_total ?? 0,
+        });
+        throwIfError(result);
+        if (result.data && 'voided' in result.data) {
+          await stripe.paymentIntents.cancel(
+            piId,
+            event.account ? { stripeAccount: event.account } : undefined
+          );
+        }
         break;
       }
 

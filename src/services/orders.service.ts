@@ -236,6 +236,68 @@ async function stripeRequestOptions(
 }
 
 /**
+ * Insert the escrow vendor_ledger row for an order (no-op for direct charges).
+ * order_id is unique: a duplicate (23505) means a prior attempt already wrote it.
+ * Returns an error message, or null on success.
+ */
+async function ensureEscrowLedger(db: Client, order: PendingOrder): Promise<string | null> {
+  if (order.charge_mode !== 'escrow') return null;
+  const { error } = await db.from('vendor_ledger').insert({
+    vendor_profile_id: order.vendor_profile_id,
+    order_id: order.id,
+    gross_cents: order.item_subtotal_cents + order.shipping_cents,
+    commission_cents: order.commission_cents,
+    stripe_fee_cents: 0,
+    net_vendor_cents: computeEscrowNetCents({
+      subtotalCents: order.item_subtotal_cents,
+      shippingCents: order.shipping_cents,
+      commissionCents: order.commission_cents,
+      stripeFeeCents: 0,
+    }),
+    status: 'held',
+  });
+  if (error && (error as { code?: string }).code !== '23505') return error.message;
+  return null;
+}
+
+/** Restore stock for an order's non-made-to-measure items and re-activate sold-out products. */
+async function restoreOrderStock(db: Client, orderId: string): Promise<void> {
+  const { data: items } = await db
+    .from('order_items')
+    .select('variant_id, product_id, quantity, customization_type, measurement_snapshot')
+    .eq('order_id', orderId);
+
+  const restored = new Set<string>();
+  for (const it of items ?? []) {
+    if (it.customization_type === 'made_to_measure' || it.measurement_snapshot != null) {
+      continue;
+    }
+    const ok = await adjustStock(db, it.variant_id, it.quantity);
+    if (!ok) {
+      console.error(
+        `[orders] stock restore failed for variant ${it.variant_id} (order ${orderId})`
+      );
+      continue;
+    }
+    restored.add(it.product_id);
+  }
+
+  for (const productId of Array.from(restored)) {
+    const { data: variants } = await db
+      .from('product_variants')
+      .select('stock_quantity')
+      .eq('product_id', productId);
+    if (variants?.some((v) => (v.stock_quantity as number) > 0)) {
+      await db
+        .from('products')
+        .update({ status: 'active' })
+        .eq('id', productId)
+        .eq('status', 'out_of_stock');
+    }
+  }
+}
+
+/**
  * Vendor confirms: capture the authorized PI, then mark confirmed. If the
  * capture throws the order is left pending_confirmation (the payment_intent.
  * succeeded webhook still finalizes if Stripe actually captured).
@@ -264,27 +326,8 @@ export async function confirmOrder(
     return { error: `Payment capture failed: ${message}`, status: 502 };
   }
 
-  if (order.charge_mode === 'escrow') {
-    const { error: ledgerErr } = await db.from('vendor_ledger').insert({
-      vendor_profile_id: order.vendor_profile_id,
-      order_id: orderId,
-      gross_cents: order.item_subtotal_cents + order.shipping_cents,
-      commission_cents: order.commission_cents,
-      stripe_fee_cents: 0,
-      net_vendor_cents: computeEscrowNetCents({
-        subtotalCents: order.item_subtotal_cents,
-        shippingCents: order.shipping_cents,
-        commissionCents: order.commission_cents,
-        stripeFeeCents: 0,
-      }),
-      status: 'held',
-    });
-    // Written BEFORE confirming so a confirmed escrow order always has a ledger row.
-    // order_id is unique: a duplicate (23505) means a prior attempt already wrote it.
-    if (ledgerErr && (ledgerErr as { code?: string }).code !== '23505') {
-      return { error: ledgerErr.message, status: 502 };
-    }
-  }
+  const ledgerErr = await ensureEscrowLedger(db, order);
+  if (ledgerErr) return { error: ledgerErr, status: 502 };
 
   const { error: updErr } = await db
     .from('orders')
@@ -354,39 +397,7 @@ export async function declineOrder(
     return { error: 'Order is not awaiting confirmation', status: 409 };
   }
 
-  const { data: items } = await db
-    .from('order_items')
-    .select('variant_id, product_id, quantity, customization_type, measurement_snapshot')
-    .eq('order_id', orderId);
-
-  const restored = new Set<string>();
-  for (const it of items ?? []) {
-    if (it.customization_type === 'made_to_measure' || it.measurement_snapshot != null) {
-      continue;
-    }
-    const ok = await adjustStock(db, it.variant_id, it.quantity);
-    if (!ok) {
-      console.error(
-        `[orders] stock restore failed for variant ${it.variant_id} (order ${orderId})`
-      );
-      continue;
-    }
-    restored.add(it.product_id);
-  }
-
-  for (const productId of Array.from(restored)) {
-    const { data: variants } = await db
-      .from('product_variants')
-      .select('stock_quantity')
-      .eq('product_id', productId);
-    if (variants?.some((v) => (v.stock_quantity as number) > 0)) {
-      await db
-        .from('products')
-        .update({ status: 'active' })
-        .eq('id', productId)
-        .eq('status', 'out_of_stock');
-    }
-  }
+  await restoreOrderStock(db, orderId);
 
   return { data: { status: 'cancelled' }, status: 200 };
 }
@@ -406,4 +417,73 @@ export async function autoVoidExpired(db: Client): Promise<ServiceResult<{ voide
     if (!r.error) voided++;
   }
   return { data: { voided }, status: 200 };
+}
+
+// ---------------------------------------------------------------------------
+// Webhook finalizers (idempotent; no Stripe calls — Stripe already acted)
+// ---------------------------------------------------------------------------
+
+async function loadOrderByPaymentIntent(
+  db: Client,
+  paymentIntentId: string
+): Promise<PendingOrder | null> {
+  const { data } = await db
+    .from('orders')
+    .select('*')
+    .eq('stripe_payment_intent_id', paymentIntentId)
+    .maybeSingle();
+  return (data as unknown as PendingOrder | null) ?? null;
+}
+
+/**
+ * payment_intent.succeeded for a shop order: ensure it is confirmed (+ escrow
+ * ledger). Safety net for when confirmOrder captured but its DB write failed.
+ */
+export async function finalizeOrderPaid(
+  db: Client,
+  paymentIntentId: string
+): Promise<ServiceResult<{ status: string }>> {
+  const order = await loadOrderByPaymentIntent(db, paymentIntentId);
+  if (!order) return { error: 'Order not found', status: 404 };
+  if (order.status !== 'pending_confirmation') {
+    return { data: { status: order.status }, status: 200 };
+  }
+
+  const ledgerErr = await ensureEscrowLedger(db, order);
+  if (ledgerErr) return { error: ledgerErr, status: 502 };
+
+  const { error } = await db
+    .from('orders')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('id', order.id)
+    .eq('status', 'pending_confirmation');
+  if (error) return { error: error.message, status: 500 };
+  return { data: { status: 'confirmed' }, status: 200 };
+}
+
+/**
+ * payment_intent.canceled for a shop order: ensure it is cancelled and stock is
+ * restored exactly once (the conditional claim guards against double restore).
+ */
+export async function finalizeOrderCanceled(
+  db: Client,
+  paymentIntentId: string
+): Promise<ServiceResult<{ status: string }>> {
+  const order = await loadOrderByPaymentIntent(db, paymentIntentId);
+  if (!order) return { error: 'Order not found', status: 404 };
+  if (order.status !== 'pending_confirmation') {
+    return { data: { status: order.status }, status: 200 };
+  }
+
+  const { data: claimed, error } = await db
+    .from('orders')
+    .update({ status: 'cancelled', cancelled_at: new Date().toISOString() })
+    .eq('id', order.id)
+    .eq('status', 'pending_confirmation')
+    .select('id');
+  if (error) return { error: error.message, status: 500 };
+  if (!claimed || claimed.length === 0) return { data: { status: 'cancelled' }, status: 200 };
+
+  await restoreOrderStock(db, order.id);
+  return { data: { status: 'cancelled' }, status: 200 };
 }
