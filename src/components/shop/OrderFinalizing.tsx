@@ -32,7 +32,7 @@ export function OrderFinalizing() {
       </h1>
       <p role="status" className="max-w-[60ch] text-[16.5px] leading-[1.58] text-ink-muted">
         {timedOut
-          ? 'This is taking longer than usual. Your card hold is safe and you will get an email as soon as the order is recorded.'
+          ? 'This is taking longer than usual. If your order does not appear, an item may have just sold out. You have not been charged, and we have emailed you.'
           : 'Your payment hold went through. We are recording your order now, this only takes a moment.'}
       </p>
       <div className="mt-6 flex items-center gap-3">

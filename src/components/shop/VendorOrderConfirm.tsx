@@ -66,7 +66,7 @@ export function VendorOrderConfirm({ order, chargesEnabled, now }: VendorOrderCo
 
   const pending = order.status === 'pending_confirmation';
   const pickup = order.fulfillmentType === 'pickup';
-  const commission = computeCommissionCents(order.itemSubtotalCents);
+  const commission = order.commissionCents ?? computeCommissionCents(order.itemSubtotalCents);
   const payout = order.itemSubtotalCents - commission + order.shippingCents;
   const hours = hoursLeft(order.confirmDeadlineAt, nowMs);
 
@@ -214,6 +214,32 @@ export function VendorOrderConfirm({ order, chargesEnabled, now }: VendorOrderCo
               {pickup ? 'Pickup at your boutique' : 'Ship to the buyer'}
             </b>
           </p>
+          {!pickup && order.shippingAddress && (
+            <address
+              data-testid="vendor-ship-address"
+              className="mt-2 text-[13.5px] not-italic leading-snug text-ink"
+            >
+              {order.shippingAddress.name && <div>{order.shippingAddress.name}</div>}
+              {order.shippingAddress.address.line1 && (
+                <div>{order.shippingAddress.address.line1}</div>
+              )}
+              {order.shippingAddress.address.line2 && (
+                <div>{order.shippingAddress.address.line2}</div>
+              )}
+              <div>
+                {[
+                  order.shippingAddress.address.city,
+                  order.shippingAddress.address.state,
+                  order.shippingAddress.address.postal_code,
+                ]
+                  .filter(Boolean)
+                  .join(', ')}
+              </div>
+              {order.shippingAddress.address.country && (
+                <div>{order.shippingAddress.address.country}</div>
+              )}
+            </address>
+          )}
         </div>
 
         <div className="bg-cream p-5">

@@ -20,6 +20,16 @@ function one(v: unknown): Rec | null {
   return x && typeof x === 'object' ? (x as Rec) : null;
 }
 
+function readShippingAddress(v: unknown): OrderConfirmationOrder['shippingAddress'] {
+  if (!v || typeof v !== 'object') return null;
+  const rec = v as Rec;
+  const addr = rec.address && typeof rec.address === 'object' ? (rec.address as Rec) : null;
+  if (!addr) return null;
+  const out: Record<string, string | null> = {};
+  for (const [k, val] of Object.entries(addr)) out[k] = typeof val === 'string' ? val : null;
+  return { name: typeof rec.name === 'string' ? rec.name : null, address: out };
+}
+
 export async function getOrderForView(
   supabase: SupabaseClient<Database>,
   lookup: OrderLookup
@@ -52,6 +62,8 @@ export async function getOrderForView(
     taxCents: Number(row.tax_cents),
     totalCents: Number(row.total_cents),
     confirmDeadlineAt: String(row.confirm_deadline_at),
+    commissionCents: Number(row.commission_cents),
+    shippingAddress: readShippingAddress(row.shipping_address),
     items: rawItems.map((it) => {
       const images = one(it.product)?.images;
       return {

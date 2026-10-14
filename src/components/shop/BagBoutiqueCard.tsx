@@ -36,7 +36,9 @@ export function BagBoutiqueCard({ cart, profiles }: BagBoutiqueCardProps) {
   const pieces = cart.lines.reduce((n, l) => n + l.quantity, 0);
 
   async function patchQuantity(line: CartLineView, quantity: number) {
-    if (quantity < 1 || quantity > line.stockQuantity) return;
+    if (quantity < 1) return;
+    // Made-to-measure lines are made to order: stock does not cap them.
+    if (!line.isMadeToMeasure && quantity > line.stockQuantity) return;
     const res = await fetch(`/api/cart/items/${line.cartItemId}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -136,7 +138,7 @@ export function BagBoutiqueCard({ cart, profiles }: BagBoutiqueCardProps) {
                       +
                     </button>
                   </div>
-                  {line.stockQuantity > 0 && line.stockQuantity <= 2 && (
+                  {!line.isMadeToMeasure && line.stockQuantity > 0 && line.stockQuantity <= 2 && (
                     <span className="text-xs font-medium text-ink-muted">
                       Only {line.stockQuantity} left
                     </span>

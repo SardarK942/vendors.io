@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BagBoutiqueCard } from '@/components/shop/BagBoutiqueCard';
 import type { BoutiqueCart } from '@/services/cart.service';
 
@@ -58,5 +58,25 @@ describe('BagBoutiqueCard', () => {
     rerender(<BagBoutiqueCard cart={{ ...makeCart(true), offersPickup: false }} profiles={[]} />);
     expect(screen.queryByRole('button', { name: /pickup/i })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /ship/i })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('ignores stock for made-to-measure quantity but caps ready-made lines', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true });
+    vi.stubGlobal('fetch', fetchMock);
+    const base = makeCart(true);
+    const mtm = { ...base, lines: [{ ...base.lines[0], stockQuantity: 0, quantity: 1 }] };
+    const { unmount } = render(<BagBoutiqueCard cart={mtm} profiles={[]} />);
+    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+    unmount();
+
+    fetchMock.mockClear();
+    const ready = {
+      ...base,
+      lines: [{ ...base.lines[0], isMadeToMeasure: false, stockQuantity: 1, quantity: 1 }],
+    };
+    render(<BagBoutiqueCard cart={ready} profiles={[]} />);
+    fireEvent.click(screen.getByRole('button', { name: /increase quantity/i }));
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

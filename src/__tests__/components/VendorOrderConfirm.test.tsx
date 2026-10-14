@@ -75,4 +75,39 @@ describe('VendorOrderConfirm', () => {
       expect(fetchMock).toHaveBeenCalledWith('/api/orders/o1/confirm', { method: 'POST' })
     );
   });
+
+  it('renders the stored shipping address for ship orders', () => {
+    const order = {
+      ...makeOrder(),
+      fulfillmentType: 'ship' as const,
+      shippingAddress: {
+        name: 'Asha Rao',
+        address: {
+          line1: '1 Main St',
+          line2: null,
+          city: 'Chicago',
+          state: 'IL',
+          postal_code: '60601',
+          country: 'US',
+        },
+      },
+    };
+    render(<VendorOrderConfirm order={order} chargesEnabled now={NOW} />);
+    const addr = screen.getByTestId('vendor-ship-address');
+    expect(addr.textContent).toContain('Asha Rao');
+    expect(addr.textContent).toContain('1 Main St');
+    expect(addr.textContent).toContain('Chicago, IL, 60601');
+  });
+
+  it('uses the stored commission for the payout breakdown', () => {
+    render(
+      <VendorOrderConfirm
+        order={{ ...makeOrder(), commissionCents: 10000 }}
+        chargesEnabled
+        now={NOW}
+      />
+    );
+    expect(screen.getByText('-$100.00')).toBeTruthy();
+    expect(screen.getByText('$2,620.00')).toBeTruthy();
+  });
 });

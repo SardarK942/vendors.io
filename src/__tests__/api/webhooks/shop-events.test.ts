@@ -3,11 +3,15 @@ import { NextRequest } from 'next/server';
 
 const state: { event: unknown } = { event: null };
 const cancelPi = vi.fn();
+const retrievePi = vi.fn();
 
 vi.mock('@/lib/stripe/client', () => ({
   stripe: {
     webhooks: { constructEvent: vi.fn(() => state.event) },
-    paymentIntents: { cancel: (...a: unknown[]) => cancelPi(...a) },
+    paymentIntents: {
+      cancel: (...a: unknown[]) => cancelPi(...a),
+      retrieve: (...a: unknown[]) => retrievePi(...a),
+    },
   },
 }));
 
@@ -87,6 +91,7 @@ describe('Stripe webhook — shop events', () => {
       account: null,
       taxCents: 500,
       totalCents: 11000,
+      shippingAddress: null,
     });
   });
 
@@ -105,6 +110,58 @@ describe('Stripe webhook — shop events', () => {
     const res = await post();
     expect(res.status).toBe(200);
     expect(cancelPi).toHaveBeenCalledWith('pi_1', { stripeAccount: 'acct_1' });
+  });
+
+  it('treats an already-canceled PI on the void path as success', async () => {
+    createOrderFromSession.mockResolvedValue({ data: { voided: 'out_of_stock' }, status: 200 });
+    cancelPi.mockRejectedValueOnce(new Error('already canceled'));
+    retrievePi.mockResolvedValueOnce({ status: 'canceled' });
+    state.event = session();
+    const res = await post();
+    expect(res.status).toBe(200);
+  });
+
+  it('still 500s when the void cancel fails and the PI is not canceled', async () => {
+    createOrderFromSession.mockResolvedValue({ data: { voided: 'out_of_stock' }, status: 200 });
+    cancelPi.mockRejectedValueOnce(new Error('stripe down'));
+    retrievePi.mockResolvedValueOnce({ status: 'requires_capture' });
+    state.event = session();
+    const res = await post();
+    expect(res.status).toBe(500);
+  });
+
+  it('passes the collected shipping address to createOrderFromSession', async () => {
+    const ev = session();
+    (ev.data.object as Record<string, unknown>).collected_information = {
+      shipping_details: {
+        name: 'Asha Rao',
+        address: {
+          line1: '1 Main St',
+          city: 'Chicago',
+          state: 'IL',
+          postal_code: '60601',
+          country: 'US',
+        },
+      },
+    };
+    state.event = ev;
+    await post();
+    expect(createOrderFromSession).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        shippingAddress: {
+          name: 'Asha Rao',
+          address: {
+            line1: '1 Main St',
+            line2: null,
+            city: 'Chicago',
+            state: 'IL',
+            postal_code: '60601',
+            country: 'US',
+          },
+        },
+      })
+    );
   });
 
   it('does not touch non-shop checkout sessions', async () => {

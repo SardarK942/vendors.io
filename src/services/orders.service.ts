@@ -1,6 +1,6 @@
 // src/services/orders.service.ts
 import type { SupabaseClient } from '@supabase/supabase-js';
-import type { Database } from '@/types/database.types';
+import type { Database, Json } from '@/types/database.types';
 import type { ServiceResult } from '@/types';
 import { stripe } from '@/lib/stripe/client';
 import { computeEscrowNetCents } from '@/lib/shop/money';
@@ -9,6 +9,7 @@ import {
   notifyShopOrderPlaced,
   notifyShopOrderConfirmed,
   notifyShopOrderCancelled,
+  notifyShopOutOfStock,
 } from '@/services/shop-notifications.service';
 
 type Client = SupabaseClient<Database>;
@@ -45,6 +46,20 @@ export interface CreateOrderInput {
   taxCents: number;
   /** Authoritative captured total (session.amount_total). */
   totalCents: number;
+  /** Shipping address collected by Checkout ({name, address}); null for pickup. */
+  shippingAddress?: ShippingAddress | null;
+}
+
+export interface ShippingAddress {
+  name: string | null;
+  address: {
+    line1: string | null;
+    line2: string | null;
+    city: string | null;
+    state: string | null;
+    postal_code: string | null;
+    country: string | null;
+  };
 }
 
 export type CreateOrderOutcome =
@@ -115,7 +130,8 @@ export async function createOrderFromSession(
   db: Client,
   input: CreateOrderInput
 ): Promise<ServiceResult<CreateOrderOutcome>> {
-  const { sessionId, paymentIntentId, chargeMode, taxCents, totalCents } = input;
+  const { sessionId, paymentIntentId, taxCents, totalCents } = input;
+  const shippingAddress = input.shippingAddress ?? null;
 
   const { data: snap } = await db
     .from('checkout_snapshots')
@@ -143,6 +159,16 @@ export async function createOrderFromSession(
     const ok = await adjustStock(db, l.variant_id, -l.quantity);
     if (!ok) {
       await rollbackStock(db, done);
+      const soldOutLines = lines.filter((x) => !isMadeToMeasure(x)).map((x) => x.name);
+      try {
+        await notifyShopOutOfStock(db, {
+          buyerUserId: snap.buyer_user_id as string,
+          vendorProfileId: snap.vendor_profile_id as string,
+          soldOutLines: Array.from(new Set(soldOutLines)),
+        });
+      } catch (err) {
+        logger.error('orders: out-of-stock notification failed', err, { sessionId });
+      }
       return { data: { voided: 'out_of_stock' }, status: 200 };
     }
     done.push({ variantId: l.variant_id, qty: l.quantity });
@@ -158,13 +184,15 @@ export async function createOrderFromSession(
       status: 'pending_confirmation',
       stripe_payment_intent_id: paymentIntentId,
       stripe_checkout_session_id: sessionId,
-      charge_mode: chargeMode,
+      charge_mode: snap.charge_mode as 'direct' | 'escrow',
       item_subtotal_cents: subtotal,
       shipping_cents: shipping,
       tax_cents: taxCents,
       commission_cents: snap.commission_cents,
       total_cents: totalCents,
       fulfillment_type: snap.fulfillment_type,
+      shipping_address:
+        snap.fulfillment_type === 'ship' ? (shippingAddress as unknown as Json | null) : null,
       confirm_deadline_at: new Date(Date.now() + CONFIRM_WINDOW_MS).toISOString(),
     })
     .select('id')

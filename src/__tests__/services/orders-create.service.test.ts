@@ -2,8 +2,15 @@
 import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('@/lib/stripe/client', () => ({ stripe: { paymentIntents: {} } }));
+const notifyShopOutOfStock = vi.fn();
+vi.mock('@/services/shop-notifications.service', () => ({
+  notifyShopOrderPlaced: vi.fn(),
+  notifyShopOrderConfirmed: vi.fn(),
+  notifyShopOrderCancelled: vi.fn(),
+  notifyShopOutOfStock: (...a: unknown[]) => notifyShopOutOfStock(...a),
+}));
 
-import { createOrderFromSession } from '@/services/orders.service';
+import { createOrderFromSession, type ShippingAddress } from '@/services/orders.service';
 
 type Row = Record<string, unknown>;
 
@@ -156,8 +163,10 @@ const args = {
   taxCents: 0,
   totalCents: 10500,
 };
-const call = (c: ReturnType<typeof fakeOrderClient>, extra: Partial<typeof args> = {}) =>
-  createOrderFromSession(c as never, { ...args, ...extra });
+const call = (
+  c: ReturnType<typeof fakeOrderClient>,
+  extra: Partial<typeof args> & { shippingAddress?: ShippingAddress | null } = {}
+) => createOrderFromSession(c as never, { ...args, ...extra });
 
 describe('createOrderFromSession', () => {
   it('creates order + items, decrements non-MTM variants, clears snapshot and cart', async () => {
@@ -209,6 +218,56 @@ describe('createOrderFromSession', () => {
     expect(c.stock('v1')).toBe(5);
     expect(c.stock('v2')).toBe(1);
     expect(c.stockWrites.length).toBeGreaterThan(0); // v1 was decremented then restored
+    expect(notifyShopOutOfStock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({ buyerUserId: 'u1', vendorProfileId: 'vp1' })
+    );
+  });
+
+  it('does not throw if the out-of-stock notification fails', async () => {
+    notifyShopOutOfStock.mockRejectedValueOnce(new Error('mail down'));
+    const c = fakeOrderClient({
+      snapshot: snapshot([line('v1', 2)]),
+      variants: { v1: { product_id: 'p1', stock: 1 } },
+    });
+    const r = await call(c);
+    expect(r.data).toEqual({ voided: 'out_of_stock' });
+  });
+
+  it('stores the shipping address for ship orders and null for pickup', async () => {
+    const addr = {
+      name: 'Asha Rao',
+      address: {
+        line1: '1 Main St',
+        line2: null,
+        city: 'Chicago',
+        state: 'IL',
+        postal_code: '60601',
+        country: 'US',
+      },
+    };
+    const c = fakeOrderClient({
+      snapshot: snapshot([line('v1', 1)]),
+      variants: { v1: { product_id: 'p1', stock: 5 } },
+    });
+    await call(c, { shippingAddress: addr });
+    expect(c.inserted('orders')[0].shipping_address).toEqual(addr);
+
+    const c2 = fakeOrderClient({
+      snapshot: { ...snapshot([line('v1', 1)]), fulfillment_type: 'pickup' },
+      variants: { v1: { product_id: 'p1', stock: 5 } },
+    });
+    await call(c2, { shippingAddress: addr });
+    expect(c2.inserted('orders')[0].shipping_address).toBeNull();
+  });
+
+  it('stores charge_mode from the snapshot, not the event-derived mode', async () => {
+    const c = fakeOrderClient({
+      snapshot: { ...snapshot([line('v1', 1)]), charge_mode: 'direct' },
+      variants: { v1: { product_id: 'p1', stock: 5 } },
+    });
+    await call(c, { chargeMode: 'escrow' });
+    expect(c.inserted('orders')[0].charge_mode).toBe('direct');
   });
 
   it('is idempotent when an order already exists for the session', async () => {

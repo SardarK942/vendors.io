@@ -241,3 +241,35 @@ export async function notifyShopOpsAlert(
     await sendOpsEmail(ctx, `[Shop order alert] ${ctx.vendorName} #${shortId(orderId)}`, message);
   });
 }
+
+/**
+ * Buyer-facing notice when a paid checkout is voided because an item sold out
+ * before the order was recorded. The authorization is cancelled, so no charge.
+ */
+export async function notifyShopOutOfStock(
+  db: Client,
+  input: { buyerUserId: string; vendorProfileId: string; soldOutLines: string[] }
+): Promise<void> {
+  await run('notifyShopOutOfStock', input.vendorProfileId, async () => {
+    const { data: buyer } = await db
+      .from('users')
+      .select('email')
+      .eq('id', input.buyerUserId)
+      .maybeSingle();
+    const { data: vendor } = await db
+      .from('vendor_profiles')
+      .select('business_name')
+      .eq('id', input.vendorProfileId)
+      .maybeSingle();
+    const shop = vendor?.business_name ?? 'the boutique';
+    const items = input.soldOutLines.length > 0 ? input.soldOutLines.join(', ') : 'An item';
+    const body = `${items} just sold out at ${shop} before your order completed. You have NOT been charged.`;
+    if (buyer?.email) {
+      await sendShopEmail({
+        to: buyer.email,
+        subject: 'An item sold out before your order completed',
+        html: `<p>${escapeHtml(body)}</p><p>Any card authorization is released. You can browse the shop again anytime.</p>`,
+      });
+    }
+  });
+}

@@ -26,6 +26,13 @@ export interface OrderConfirmationOrder {
   taxCents: number;
   totalCents: number;
   confirmDeadlineAt: string;
+  /** Stored commission (cents); falls back to a recompute when absent. */
+  commissionCents?: number;
+  /** Collected shipping address for ship orders. */
+  shippingAddress?: {
+    name: string | null;
+    address: Record<string, string | null>;
+  } | null;
   items: OrderConfirmationItem[];
 }
 
