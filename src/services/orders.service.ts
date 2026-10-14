@@ -470,12 +470,17 @@ export async function finalizeOrderPaid(
   const ledgerErr = await ensureEscrowLedger(db, order);
   if (ledgerErr) return { error: ledgerErr, status: 502 };
 
-  const { error } = await db
+  const { data: claimed, error } = await db
     .from('orders')
     .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
     .eq('id', order.id)
-    .eq('status', 'pending_confirmation');
+    .eq('status', 'pending_confirmation')
+    .select('id');
   if (error) return { error: error.message, status: 500 };
+  // Notify only when this call performed the transition (no duplicate emails).
+  if (claimed && claimed.length > 0) {
+    await safeNotify('confirmed', order.id, () => notifyShopOrderConfirmed(db, order.id));
+  }
   return { data: { status: 'confirmed' }, status: 200 };
 }
 
