@@ -470,7 +470,9 @@ export async function finalizeOrderCanceled(
   paymentIntentId: string
 ): Promise<ServiceResult<{ status: string }>> {
   const order = await loadOrderByPaymentIntent(db, paymentIntentId);
-  if (!order) return { error: 'Order not found', status: 404 };
+  // No order exists when we voided an out-of-stock session ourselves: nothing to
+  // restore, and erroring here would trigger a Stripe retry storm.
+  if (!order) return { data: { status: 'none' }, status: 200 };
   if (order.status !== 'pending_confirmation') {
     return { data: { status: order.status }, status: 200 };
   }

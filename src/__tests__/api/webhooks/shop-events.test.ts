@@ -153,6 +153,17 @@ describe('Stripe webhook — shop events', () => {
     expect(finalizeOrderCanceled).toHaveBeenCalledWith(expect.anything(), 'pi_1');
   });
 
+  it('returns 200 for a shop payment_intent.canceled with no matching order (out-of-stock void)', async () => {
+    finalizeOrderCanceled.mockResolvedValue({ data: { status: 'none' }, status: 200 });
+    state.event = {
+      id: 'evt_6',
+      type: 'payment_intent.canceled',
+      data: { object: { id: 'pi_void', metadata: { kind: 'shop' } } },
+    };
+    const res = await post();
+    expect(res.status).toBe(200);
+  });
+
   it('returns 500 when a shop handler reports an error so Stripe retries', async () => {
     createOrderFromSession.mockResolvedValue({ error: 'boom', status: 500 });
     state.event = session();
