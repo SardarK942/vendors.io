@@ -26,6 +26,7 @@ export interface CartLineView extends CartLine {
   sizeLabel: string;
   garmentType: string;
   measurementProfileId: string | null;
+  imageUrl: string | null;
 }
 
 export interface BoutiqueCart {
@@ -34,6 +35,9 @@ export interface BoutiqueCart {
   lines: CartLineView[];
   subtotalCents: number;
   ready: boolean;
+  offersPickup: boolean;
+  offersShipping: boolean;
+  shippingFeeCents: number;
 }
 
 type Rec = Record<string, unknown>;
@@ -217,13 +221,14 @@ export async function getCartsForBuyer(
   const { data, error } = await supabase
     .from('carts')
     .select(
-      'id, vendor_profile_id, vendor:vendor_profiles(business_name), items:cart_items(id, variant_id, quantity, measurement_profile_id, product:products(id, title, base_price_cents, garment_type, customization_types, mtm_surcharge_cents), variant:product_variants(id, size_label, price_delta_cents, stock_quantity))'
+      'id, vendor_profile_id, vendor:vendor_profiles(business_name, shop_offers_pickup, shop_offers_shipping, shop_shipping_fee_cents), items:cart_items(id, variant_id, quantity, measurement_profile_id, product:products(id, title, images, base_price_cents, garment_type, customization_types, mtm_surcharge_cents), variant:product_variants(id, size_label, price_delta_cents, stock_quantity))'
     )
     .eq('user_id', userId)
     .order('created_at');
   if (error) return { error: error.message, status: 500 };
 
   const carts: BoutiqueCart[] = ((data ?? []) as unknown as Rec[]).map((cart) => {
+    const vendor = one(cart.vendor);
     const items = Array.isArray(cart.items) ? (cart.items as Rec[]) : [];
     const lines: CartLineView[] = [];
     for (const it of items) {
@@ -245,6 +250,10 @@ export async function getCartsForBuyer(
         sizeLabel: str(variant.size_label),
         garmentType,
         measurementProfileId,
+        imageUrl:
+          Array.isArray(product.images) && typeof product.images[0] === 'string'
+            ? product.images[0]
+            : null,
         variantId: str(it.variant_id),
         unitPriceCents:
           num(product.base_price_cents) +
@@ -263,6 +272,9 @@ export async function getCartsForBuyer(
       lines,
       subtotalCents: summary.subtotalCents,
       ready: lines.length > 0 && isReadyToCheckout(summary),
+      offersPickup: vendor?.shop_offers_pickup !== false,
+      offersShipping: vendor?.shop_offers_shipping === true,
+      shippingFeeCents: num(vendor?.shop_shipping_fee_cents),
     };
   });
 

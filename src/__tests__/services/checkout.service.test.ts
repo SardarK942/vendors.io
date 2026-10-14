@@ -29,6 +29,7 @@ function line(over: Partial<CartLineView> = {}): CartLineView {
     sizeLabel: 'M',
     garmentType: 'lehenga',
     measurementProfileId: null,
+    imageUrl: null,
     variantId: 'v1',
     unitPriceCents: 1360_00,
     quantity: 2,
@@ -46,6 +47,9 @@ function cart(lines: CartLineView[], ready = true): BoutiqueCart {
     lines,
     subtotalCents: lines.reduce((s, l) => s + l.unitPriceCents * l.quantity, 0),
     ready,
+    offersPickup: true,
+    offersShipping: true,
+    shippingFeeCents: 0,
   };
 }
 

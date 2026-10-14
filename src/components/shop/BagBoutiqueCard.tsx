@@ -15,14 +15,23 @@ interface BagBoutiqueCardProps {
   profiles: BagMeasurementProfile[];
 }
 
-const SEGMENTS: { value: Fulfillment; label: string }[] = [
-  { value: 'pickup', label: 'Pickup at boutique' },
-  { value: 'ship', label: 'Ship' },
-];
-
 export function BagBoutiqueCard({ cart, profiles }: BagBoutiqueCardProps) {
   const router = useRouter();
-  const [fulfillment, setFulfillment] = React.useState<Fulfillment>('pickup');
+  const segments: { value: Fulfillment; label: string }[] = [];
+  if (cart.offersPickup) segments.push({ value: 'pickup', label: 'Pickup at boutique' });
+  if (cart.offersShipping) {
+    segments.push({
+      value: 'ship',
+      label:
+        cart.shippingFeeCents === 0
+          ? 'Ship \u00b7 Free'
+          : `Ship \u00b7 +${formatPrice(cart.shippingFeeCents)}`,
+    });
+  }
+  const [chosen, setChosen] = React.useState<Fulfillment | null>(null);
+  // Fall back to the first offered mode if nothing chosen or the choice is no longer offered.
+  const fulfillment: Fulfillment =
+    segments.find((s) => s.value === chosen)?.value ?? segments[0]?.value ?? 'pickup';
   const [busy, setBusy] = React.useState(false);
   const pieces = cart.lines.reduce((n, l) => n + l.quantity, 0);
 
@@ -86,10 +95,19 @@ export function BagBoutiqueCard({ cart, profiles }: BagBoutiqueCardProps) {
               key={line.cartItemId}
               className="flex gap-4 border-b border-hairline-soft py-[18px] last:border-b-0"
             >
-              <div
-                aria-hidden="true"
-                className="h-[75px] w-[60px] flex-none rounded-md bg-cream-soft"
-              />
+              {line.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={line.imageUrl}
+                  alt={line.title}
+                  className="h-[75px] w-[60px] flex-none rounded-lg object-cover"
+                />
+              ) : (
+                <div
+                  aria-hidden="true"
+                  className="h-[75px] w-[60px] flex-none rounded-lg bg-cream-soft"
+                />
+              )}
               <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-semibold text-ink">{line.title}</p>
                 <p className="mt-1 text-[13px] text-ink-muted">
@@ -144,12 +162,12 @@ export function BagBoutiqueCard({ cart, profiles }: BagBoutiqueCardProps) {
             How would you like to receive this?
           </legend>
           <div className="inline-flex overflow-hidden rounded-md border border-hairline">
-            {SEGMENTS.map((seg, i) => (
+            {segments.map((seg, i) => (
               <button
                 key={seg.value}
                 type="button"
                 aria-pressed={fulfillment === seg.value}
-                onClick={() => setFulfillment(seg.value)}
+                onClick={() => setChosen(seg.value)}
                 className={cn(
                   'px-4 py-2.5 text-[13px] font-semibold transition-colors',
                   i > 0 && 'border-l border-hairline',
