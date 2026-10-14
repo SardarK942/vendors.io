@@ -2,6 +2,8 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import type { ServiceResult } from '@/types';
+import { stripe } from '@/lib/stripe/client';
+import { computeEscrowNetCents } from '@/lib/shop/money';
 
 type Client = SupabaseClient<Database>;
 
@@ -195,4 +197,197 @@ export async function createOrderFromSession(
     .eq('vendor_profile_id', snap.vendor_profile_id);
 
   return { data: { orderId: order.id }, status: 201 };
+}
+
+// ---------------------------------------------------------------------------
+// Confirm / decline / auto-void
+// ---------------------------------------------------------------------------
+
+interface PendingOrder {
+  id: string;
+  vendor_profile_id: string;
+  status: string;
+  charge_mode: 'direct' | 'escrow';
+  stripe_payment_intent_id: string | null;
+  item_subtotal_cents: number;
+  shipping_cents: number;
+  commission_cents: number;
+}
+
+async function loadOrder(db: Client, orderId: string): Promise<PendingOrder | null> {
+  const { data } = await db.from('orders').select('*').eq('id', orderId).maybeSingle();
+  return (data as unknown as PendingOrder | null) ?? null;
+}
+
+/** Direct-charge PIs live on the vendor's connected account; escrow PIs on the platform. */
+async function stripeRequestOptions(
+  db: Client,
+  order: PendingOrder,
+  idempotencyKey: string
+): Promise<{ idempotencyKey: string; stripeAccount?: string } | null> {
+  if (order.charge_mode !== 'direct') return { idempotencyKey };
+  const { data } = await db
+    .from('vendor_stripe_accounts')
+    .select('stripe_account_id')
+    .eq('vendor_profile_id', order.vendor_profile_id)
+    .maybeSingle();
+  if (!data?.stripe_account_id) return null;
+  return { idempotencyKey, stripeAccount: data.stripe_account_id };
+}
+
+/**
+ * Vendor confirms: capture the authorized PI, then mark confirmed. If the
+ * capture throws the order is left pending_confirmation (the payment_intent.
+ * succeeded webhook still finalizes if Stripe actually captured).
+ */
+export async function confirmOrder(
+  db: Client,
+  orderId: string
+): Promise<ServiceResult<{ status: 'confirmed' }>> {
+  const order = await loadOrder(db, orderId);
+  if (!order) return { error: 'Order not found', status: 404 };
+  if (order.status !== 'pending_confirmation') {
+    return { error: 'Order is not awaiting confirmation', status: 409 };
+  }
+  if (!order.stripe_payment_intent_id) {
+    return { error: 'Order has no payment intent', status: 500 };
+  }
+
+  const opts = await stripeRequestOptions(db, order, `order:${orderId}:capture`);
+  if (!opts) return { error: 'Vendor Stripe account not found', status: 502 };
+
+  try {
+    await stripe.paymentIntents.capture(order.stripe_payment_intent_id, opts);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Payment capture failed';
+    console.error(`[orders] capture failed for order ${orderId}:`, message);
+    return { error: `Payment capture failed: ${message}`, status: 502 };
+  }
+
+  const { error: updErr } = await db
+    .from('orders')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('id', orderId)
+    .eq('status', 'pending_confirmation');
+  if (updErr) return { error: updErr.message, status: 500 };
+
+  if (order.charge_mode === 'escrow') {
+    const { error: ledgerErr } = await db.from('vendor_ledger').insert({
+      vendor_profile_id: order.vendor_profile_id,
+      order_id: orderId,
+      gross_cents: order.item_subtotal_cents + order.shipping_cents,
+      commission_cents: order.commission_cents,
+      stripe_fee_cents: 0,
+      net_vendor_cents: computeEscrowNetCents({
+        subtotalCents: order.item_subtotal_cents,
+        shippingCents: order.shipping_cents,
+        commissionCents: order.commission_cents,
+        stripeFeeCents: 0,
+      }),
+      status: 'held',
+    });
+    // order_id is unique: a duplicate (23505) means a prior attempt already wrote it.
+    if (ledgerErr && (ledgerErr as { code?: string }).code !== '23505') {
+      return { error: ledgerErr.message, status: 500 };
+    }
+  }
+
+  return { data: { status: 'confirmed' }, status: 200 };
+}
+
+/** Cancel the authorization, restore stock, mark cancelled. */
+export async function declineOrder(
+  db: Client,
+  orderId: string,
+  reason?: string
+): Promise<ServiceResult<{ status: 'cancelled' }>> {
+  const order = await loadOrder(db, orderId);
+  if (!order) return { error: 'Order not found', status: 404 };
+  if (order.status !== 'pending_confirmation') {
+    return { error: 'Order is not awaiting confirmation', status: 409 };
+  }
+  if (!order.stripe_payment_intent_id) {
+    return { error: 'Order has no payment intent', status: 500 };
+  }
+
+  const opts = await stripeRequestOptions(db, order, `order:${orderId}:cancel`);
+  if (!opts) return { error: 'Vendor Stripe account not found', status: 502 };
+
+  try {
+    await stripe.paymentIntents.cancel(order.stripe_payment_intent_id, opts);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Payment cancel failed';
+    console.error(`[orders] cancel failed for order ${orderId}:`, message);
+    return { error: `Payment cancel failed: ${message}`, status: 502 };
+  }
+
+  // Claim the transition first (conditional on still-pending) so stock is
+  // restored exactly once even if declines race or are retried.
+  const { data: claimed, error: updErr } = await db
+    .from('orders')
+    .update({
+      status: 'cancelled',
+      cancelled_at: new Date().toISOString(),
+      cancel_reason: reason ?? null,
+    })
+    .eq('id', orderId)
+    .eq('status', 'pending_confirmation')
+    .select('id');
+  if (updErr) return { error: updErr.message, status: 500 };
+  if (!claimed || claimed.length === 0) {
+    return { error: 'Order is not awaiting confirmation', status: 409 };
+  }
+
+  const { data: items } = await db
+    .from('order_items')
+    .select('variant_id, product_id, quantity, customization_type, measurement_snapshot')
+    .eq('order_id', orderId);
+
+  const restored = new Set<string>();
+  for (const it of items ?? []) {
+    if (it.customization_type === 'made_to_measure' || it.measurement_snapshot != null) {
+      continue;
+    }
+    const ok = await adjustStock(db, it.variant_id, it.quantity);
+    if (!ok) {
+      console.error(
+        `[orders] stock restore failed for variant ${it.variant_id} (order ${orderId})`
+      );
+      continue;
+    }
+    restored.add(it.product_id);
+  }
+
+  for (const productId of Array.from(restored)) {
+    const { data: variants } = await db
+      .from('product_variants')
+      .select('stock_quantity')
+      .eq('product_id', productId);
+    if (variants?.some((v) => (v.stock_quantity as number) > 0)) {
+      await db
+        .from('products')
+        .update({ status: 'active' })
+        .eq('id', productId)
+        .eq('status', 'out_of_stock');
+    }
+  }
+
+  return { data: { status: 'cancelled' }, status: 200 };
+}
+
+/** Void every pending order past its confirm deadline. */
+export async function autoVoidExpired(db: Client): Promise<ServiceResult<{ voided: number }>> {
+  const { data: expired, error } = await db
+    .from('orders')
+    .select('id')
+    .eq('status', 'pending_confirmation')
+    .lt('confirm_deadline_at', new Date().toISOString());
+  if (error) return { error: error.message, status: 500 };
+
+  let voided = 0;
+  for (const o of expired ?? []) {
+    const r = await declineOrder(db, o.id, 'auto_void_timeout');
+    if (!r.error) voided++;
+  }
+  return { data: { voided }, status: 200 };
 }

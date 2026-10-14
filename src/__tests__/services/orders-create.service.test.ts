@@ -1,5 +1,8 @@
 // src/__tests__/services/orders-create.service.test.ts
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('@/lib/stripe/client', () => ({ stripe: { paymentIntents: {} } }));
+
 import { createOrderFromSession } from '@/services/orders.service';
 
 type Row = Record<string, unknown>;
