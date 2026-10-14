@@ -97,6 +97,11 @@ export type PackageCapacityUnit = 'guests' | 'servings';
 
 export type ProductStatus = 'draft' | 'active' | 'out_of_stock' | 'archived';
 
+// Shop checkout (migration 00087).
+export type OrderStatus = 'pending_confirmation' | 'confirmed' | 'cancelled';
+export type ChargeMode = 'direct' | 'escrow';
+export type FulfillmentType = 'pickup' | 'ship';
+
 // Local vs international vendor-origin fork (migration 00085). Drives the bridal
 // onboarding split and the Shop "coming soon" gate for overseas vendors.
 export type VendorOrigin = 'local' | 'international';
@@ -310,6 +315,10 @@ export interface Database {
           is_active: boolean;
           onboarding_complete: boolean;
           concurrent_capacity: number;
+          shop_offers_pickup: boolean;
+          shop_offers_shipping: boolean;
+          shop_shipping_fee_cents: number;
+          shop_pickup_note: string | null;
           created_at: string;
           updated_at: string;
           first_booking_at: string | null;
@@ -375,6 +384,10 @@ export interface Database {
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
+          shop_offers_pickup?: boolean;
+          shop_offers_shipping?: boolean;
+          shop_shipping_fee_cents?: number;
+          shop_pickup_note?: string | null;
           created_at?: string;
           updated_at?: string;
           first_booking_at?: string | null;
@@ -438,6 +451,10 @@ export interface Database {
           is_active?: boolean;
           onboarding_complete?: boolean;
           concurrent_capacity?: number;
+          shop_offers_pickup?: boolean;
+          shop_offers_shipping?: boolean;
+          shop_shipping_fee_cents?: number;
+          shop_pickup_note?: string | null;
           updated_at?: string;
           first_booking_at?: string | null;
           followup_48h_sent_at?: string | null;
@@ -1539,6 +1556,258 @@ export interface Database {
             referencedColumns: ['id'];
           },
         ];
+      };
+      carts: {
+        Row: {
+          id: string;
+          user_id: string;
+          vendor_profile_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          vendor_profile_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          vendor_profile_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      cart_items: {
+        Row: {
+          id: string;
+          cart_id: string;
+          product_id: string;
+          variant_id: string;
+          quantity: number;
+          measurement_profile_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          cart_id: string;
+          product_id: string;
+          variant_id: string;
+          quantity?: number;
+          measurement_profile_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          cart_id?: string;
+          product_id?: string;
+          variant_id?: string;
+          quantity?: number;
+          measurement_profile_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      orders: {
+        Row: {
+          id: string;
+          buyer_user_id: string;
+          vendor_profile_id: string;
+          status: OrderStatus;
+          stripe_payment_intent_id: string | null;
+          stripe_checkout_session_id: string | null;
+          charge_mode: ChargeMode;
+          item_subtotal_cents: number;
+          shipping_cents: number;
+          tax_cents: number;
+          commission_cents: number;
+          total_cents: number;
+          fulfillment_type: FulfillmentType;
+          shipping_address: Json | null;
+          confirm_deadline_at: string;
+          confirmed_at: string | null;
+          cancelled_at: string | null;
+          cancel_reason: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          buyer_user_id: string;
+          vendor_profile_id: string;
+          status?: OrderStatus;
+          stripe_payment_intent_id?: string | null;
+          stripe_checkout_session_id?: string | null;
+          charge_mode: ChargeMode;
+          item_subtotal_cents: number;
+          shipping_cents?: number;
+          tax_cents?: number;
+          commission_cents: number;
+          total_cents: number;
+          fulfillment_type: FulfillmentType;
+          shipping_address?: Json | null;
+          confirm_deadline_at: string;
+          confirmed_at?: string | null;
+          cancelled_at?: string | null;
+          cancel_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          buyer_user_id?: string;
+          vendor_profile_id?: string;
+          status?: OrderStatus;
+          stripe_payment_intent_id?: string | null;
+          stripe_checkout_session_id?: string | null;
+          charge_mode?: ChargeMode;
+          item_subtotal_cents?: number;
+          shipping_cents?: number;
+          tax_cents?: number;
+          commission_cents?: number;
+          total_cents?: number;
+          fulfillment_type?: FulfillmentType;
+          shipping_address?: Json | null;
+          confirm_deadline_at?: string;
+          confirmed_at?: string | null;
+          cancelled_at?: string | null;
+          cancel_reason?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          product_id: string;
+          variant_id: string;
+          product_name_snapshot: string;
+          variant_label_snapshot: string | null;
+          unit_price_cents: number;
+          quantity: number;
+          line_subtotal_cents: number;
+          customization_type: string | null;
+          measurement_snapshot: Json | null;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          product_id: string;
+          variant_id: string;
+          product_name_snapshot: string;
+          variant_label_snapshot?: string | null;
+          unit_price_cents: number;
+          quantity: number;
+          line_subtotal_cents: number;
+          customization_type?: string | null;
+          measurement_snapshot?: Json | null;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          product_id?: string;
+          variant_id?: string;
+          product_name_snapshot?: string;
+          variant_label_snapshot?: string | null;
+          unit_price_cents?: number;
+          quantity?: number;
+          line_subtotal_cents?: number;
+          customization_type?: string | null;
+          measurement_snapshot?: Json | null;
+        };
+        Relationships: [];
+      };
+      vendor_ledger: {
+        Row: {
+          id: string;
+          vendor_profile_id: string;
+          order_id: string;
+          gross_cents: number;
+          commission_cents: number;
+          stripe_fee_cents: number;
+          net_vendor_cents: number;
+          status: 'held' | 'transferred';
+          transferred_at: string | null;
+          stripe_transfer_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          vendor_profile_id: string;
+          order_id: string;
+          gross_cents: number;
+          commission_cents: number;
+          stripe_fee_cents?: number;
+          net_vendor_cents: number;
+          status?: 'held' | 'transferred';
+          transferred_at?: string | null;
+          stripe_transfer_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          vendor_profile_id?: string;
+          order_id?: string;
+          gross_cents?: number;
+          commission_cents?: number;
+          stripe_fee_cents?: number;
+          net_vendor_cents?: number;
+          status?: 'held' | 'transferred';
+          transferred_at?: string | null;
+          stripe_transfer_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
+      checkout_snapshots: {
+        Row: {
+          id: string;
+          stripe_checkout_session_id: string;
+          buyer_user_id: string;
+          vendor_profile_id: string;
+          charge_mode: ChargeMode;
+          fulfillment_type: FulfillmentType;
+          lines: Json;
+          subtotal_cents: number;
+          shipping_cents: number;
+          commission_cents: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          stripe_checkout_session_id: string;
+          buyer_user_id: string;
+          vendor_profile_id: string;
+          charge_mode: ChargeMode;
+          fulfillment_type: FulfillmentType;
+          lines: Json;
+          subtotal_cents: number;
+          shipping_cents: number;
+          commission_cents: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          stripe_checkout_session_id?: string;
+          buyer_user_id?: string;
+          vendor_profile_id?: string;
+          charge_mode?: ChargeMode;
+          fulfillment_type?: FulfillmentType;
+          lines?: Json;
+          subtotal_cents?: number;
+          shipping_cents?: number;
+          commission_cents?: number;
+          created_at?: string;
+        };
+        Relationships: [];
       };
       vendor_stripe_accounts: {
         Row: {
