@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const piCapture = vi.hoisted(() => vi.fn());
 const piCancel = vi.hoisted(() => vi.fn());
+const piRetrieve = vi.hoisted(() => vi.fn());
 
 vi.mock('@/lib/stripe/client', () => ({
-  stripe: { paymentIntents: { capture: piCapture, cancel: piCancel } },
+  stripe: { paymentIntents: { capture: piCapture, cancel: piCancel, retrieve: piRetrieve } },
 }));
 
 import { confirmOrder, declineOrder, autoVoidExpired } from '@/services/orders.service';
@@ -17,6 +18,7 @@ function fakeOrderClient(seed: {
   items?: Row[];
   variants?: Record<string, { product_id: string; stock: number }>;
   productStatus?: string;
+  ledgerError?: { code?: string; message: string };
 }) {
   const tables: Record<string, Row[]> = {
     orders: (seed.orders ?? []).map((o) => ({ ...o })),
@@ -42,6 +44,8 @@ function fakeOrderClient(seed: {
     const run = () => {
       const rows = tables[table] ?? (tables[table] = []);
       if (mode === 'insert') {
+        if (table === 'vendor_ledger' && seed.ledgerError)
+          return { data: null, error: seed.ledgerError };
         rows.push(...insertRows);
         return { data: insertRows, error: null };
       }
@@ -59,8 +63,8 @@ function fakeOrderClient(seed: {
       in: (c: string, v: unknown[]) => (filters.push((r) => v.includes(r[c])), b),
       update: (p: Row) => ((mode = 'update'), (patch = p), b),
       insert: (v: Row | Row[]) => ((mode = 'insert'), (insertRows = Array.isArray(v) ? v : [v]), b),
-      maybeSingle: async () => ({ data: run().data[0] ?? null, error: null }),
-      single: async () => ({ data: run().data[0] ?? null, error: null }),
+      maybeSingle: async () => ({ data: (run().data ?? [])[0] ?? null, error: null }),
+      single: async () => ({ data: (run().data ?? [])[0] ?? null, error: null }),
       then: (resolve: (v: unknown) => unknown) => Promise.resolve(run()).then(resolve),
     };
     return b;
@@ -87,6 +91,7 @@ const order = (over: Row = {}): Row => ({
 beforeEach(() => {
   piCapture.mockReset().mockResolvedValue({});
   piCancel.mockReset().mockResolvedValue({});
+  piRetrieve.mockReset().mockResolvedValue({ status: 'requires_capture' });
 });
 
 describe('confirmOrder', () => {
@@ -144,6 +149,29 @@ describe('confirmOrder', () => {
   });
 });
 
+describe('confirmOrder ledger ordering', () => {
+  it('tolerates duplicate ledger insert (23505) and still confirms', async () => {
+    const c = fakeOrderClient({
+      orders: [order()],
+      ledgerError: { code: '23505', message: 'dup' },
+    });
+    const r = await confirmOrder(c as never, 'o1');
+    expect(r.data).toEqual({ status: 'confirmed' });
+    expect(c.tables.orders[0].status).toBe('confirmed');
+  });
+
+  it('ledger failure leaves order pending and returns an error', async () => {
+    const c = fakeOrderClient({
+      orders: [order()],
+      ledgerError: { code: 'XX000', message: 'db down' },
+    });
+    const r = await confirmOrder(c as never, 'o1');
+    expect(r.error).toBeTruthy();
+    expect(r.data).toBeUndefined();
+    expect(c.tables.orders[0].status).toBe('pending_confirmation');
+  });
+});
+
 describe('declineOrder', () => {
   const seed = () =>
     fakeOrderClient({
@@ -198,6 +226,16 @@ describe('declineOrder', () => {
     expect(r.status).toBe(502);
     expect(c.tables.orders[0].status).toBe('pending_confirmation');
     expect(c.tables.product_variants.find((v) => v.id === 'v1')?.stock_quantity).toBe(0);
+  });
+
+  it('already-canceled PI is treated as success', async () => {
+    piCancel.mockRejectedValue(new Error('payment_intent_unexpected_state'));
+    piRetrieve.mockResolvedValue({ status: 'canceled' });
+    const c = seed();
+    const r = await declineOrder(c as never, 'o1');
+    expect(r.status).toBe(200);
+    expect(c.tables.orders[0].status).toBe('cancelled');
+    expect(c.tables.product_variants.find((v) => v.id === 'v1')?.stock_quantity).toBe(2);
   });
 
   it('direct mode cancels on connected account', async () => {

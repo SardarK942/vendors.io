@@ -264,13 +264,6 @@ export async function confirmOrder(
     return { error: `Payment capture failed: ${message}`, status: 502 };
   }
 
-  const { error: updErr } = await db
-    .from('orders')
-    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
-    .eq('id', orderId)
-    .eq('status', 'pending_confirmation');
-  if (updErr) return { error: updErr.message, status: 500 };
-
   if (order.charge_mode === 'escrow') {
     const { error: ledgerErr } = await db.from('vendor_ledger').insert({
       vendor_profile_id: order.vendor_profile_id,
@@ -286,11 +279,19 @@ export async function confirmOrder(
       }),
       status: 'held',
     });
+    // Written BEFORE confirming so a confirmed escrow order always has a ledger row.
     // order_id is unique: a duplicate (23505) means a prior attempt already wrote it.
     if (ledgerErr && (ledgerErr as { code?: string }).code !== '23505') {
-      return { error: ledgerErr.message, status: 500 };
+      return { error: ledgerErr.message, status: 502 };
     }
   }
+
+  const { error: updErr } = await db
+    .from('orders')
+    .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
+    .eq('id', orderId)
+    .eq('status', 'pending_confirmation');
+  if (updErr) return { error: updErr.message, status: 500 };
 
   return { data: { status: 'confirmed' }, status: 200 };
 }
@@ -316,9 +317,24 @@ export async function declineOrder(
   try {
     await stripe.paymentIntents.cancel(order.stripe_payment_intent_id, opts);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Payment cancel failed';
-    console.error(`[orders] cancel failed for order ${orderId}:`, message);
-    return { error: `Payment cancel failed: ${message}`, status: 502 };
+    // A prior cancel may have succeeded while the DB claim failed; treat an
+    // already-canceled PI as success so retries (after the idempotency window) don't wedge.
+    let alreadyCanceled = false;
+    try {
+      const pi = await stripe.paymentIntents.retrieve(
+        order.stripe_payment_intent_id,
+        {},
+        opts.stripeAccount ? { stripeAccount: opts.stripeAccount } : undefined
+      );
+      alreadyCanceled = pi.status === 'canceled';
+    } catch {
+      alreadyCanceled = false;
+    }
+    if (!alreadyCanceled) {
+      const message = err instanceof Error ? err.message : 'Payment cancel failed';
+      console.error(`[orders] cancel failed for order ${orderId}:`, message);
+      return { error: `Payment cancel failed: ${message}`, status: 502 };
+    }
   }
 
   // Claim the transition first (conditional on still-pending) so stock is
