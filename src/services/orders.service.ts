@@ -489,3 +489,22 @@ export async function finalizeOrderCanceled(
   await restoreOrderStock(db, order.id);
   return { data: { status: 'cancelled' }, status: 200 };
 }
+
+/**
+ * Delete checkout_snapshots older than `olderThanMs`. A completed checkout
+ * deletes its own snapshot, so leftovers are orphans from abandoned or
+ * out-of-stock-voided checkouts.
+ */
+export async function sweepStaleCheckoutSnapshots(
+  db: Client,
+  olderThanMs: number = 60 * 60 * 1000
+): Promise<ServiceResult<{ swept: number }>> {
+  const cutoff = new Date(Date.now() - olderThanMs).toISOString();
+  const { data, error } = await db
+    .from('checkout_snapshots')
+    .delete()
+    .lt('created_at', cutoff)
+    .select('id');
+  if (error) return { error: error.message, status: 500 };
+  return { data: { swept: data?.length ?? 0 }, status: 200 };
+}
