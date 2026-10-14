@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { autoVoidExpired, sweepStaleCheckoutSnapshots } from '@/services/orders.service';
 import { selectReminderOrders } from '@/lib/shop/reminders';
+import { notifyShopConfirmReminder } from '@/services/shop-notifications.service';
 import { logger } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
@@ -30,8 +31,11 @@ export async function POST(request: NextRequest) {
     logger.error('shop-auto-void: reminder query failed', { error: pendingErr.message });
   } else {
     for (const order of selectReminderOrders(pending ?? [], now)) {
-      // TODO(Task 14): notifyShopConfirmReminder(order)
-      void order;
+      try {
+        await notifyShopConfirmReminder(db, order.id);
+      } catch (err) {
+        logger.error('shop-auto-void: reminder notification failed', err, { orderId: order.id });
+      }
       reminded++;
     }
   }

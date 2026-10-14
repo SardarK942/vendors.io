@@ -63,7 +63,11 @@ export type NotificationType =
   | 'couple_countered'
   | 'event_task_due'
   | 'event_task_overdue'
-  | 'event_countdown';
+  | 'event_countdown'
+  | 'shop_order_placed'
+  | 'shop_order_confirmed'
+  | 'shop_order_cancelled'
+  | 'shop_order_reminder';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 

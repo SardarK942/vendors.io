@@ -4,11 +4,26 @@ import type { Database } from '@/types/database.types';
 import type { ServiceResult } from '@/types';
 import { stripe } from '@/lib/stripe/client';
 import { computeEscrowNetCents } from '@/lib/shop/money';
+import { logger } from '@/lib/logger';
+import {
+  notifyShopOrderPlaced,
+  notifyShopOrderConfirmed,
+  notifyShopOrderCancelled,
+} from '@/services/shop-notifications.service';
 
 type Client = SupabaseClient<Database>;
 
 const CONFIRM_WINDOW_MS = 48 * 60 * 60 * 1000;
 const CAS_ATTEMPTS = 5;
+
+/** Fire a notification after a state transition; a failure is logged, never thrown. */
+async function safeNotify(label: string, orderId: string, fn: () => Promise<void>): Promise<void> {
+  try {
+    await fn();
+  } catch (err) {
+    logger.error(`orders: ${label} notification failed`, err, { orderId });
+  }
+}
 
 interface SnapshotLine {
   variant_id: string;
@@ -196,6 +211,7 @@ export async function createOrderFromSession(
     .eq('user_id', snap.buyer_user_id)
     .eq('vendor_profile_id', snap.vendor_profile_id);
 
+  await safeNotify('placed', order.id, () => notifyShopOrderPlaced(db, order.id));
   return { data: { orderId: order.id }, status: 201 };
 }
 
@@ -336,6 +352,7 @@ export async function confirmOrder(
     .eq('status', 'pending_confirmation');
   if (updErr) return { error: updErr.message, status: 500 };
 
+  await safeNotify('confirmed', orderId, () => notifyShopOrderConfirmed(db, orderId));
   return { data: { status: 'confirmed' }, status: 200 };
 }
 
@@ -399,6 +416,7 @@ export async function declineOrder(
 
   await restoreOrderStock(db, orderId);
 
+  await safeNotify('cancelled', orderId, () => notifyShopOrderCancelled(db, orderId));
   return { data: { status: 'cancelled' }, status: 200 };
 }
 
@@ -487,6 +505,7 @@ export async function finalizeOrderCanceled(
   if (!claimed || claimed.length === 0) return { data: { status: 'cancelled' }, status: 200 };
 
   await restoreOrderStock(db, order.id);
+  await safeNotify('cancelled', order.id, () => notifyShopOrderCancelled(db, order.id));
   return { data: { status: 'cancelled' }, status: 200 };
 }
 

@@ -22,6 +22,18 @@ const FROM_EMAIL = 'Baazar.io <noreply@baazar.io>';
 // alias on baazar.io. Override with OPS_INBOX_EMAIL if it ever needs to differ.
 const CONTACT_EMAIL = process.env.OPS_INBOX_EMAIL || 'hello@baazar.io';
 
+/** Internal ops inbox for shop-order alerts (Baazar calls the vendor to confirm). */
+export const SHOP_OPS_EMAIL = process.env.SHOP_OPS_EMAIL || 'sardar@baazar.io';
+
+/** Generic transactional send used by the shop notification service. */
+export async function sendShopEmail(options: {
+  to: string;
+  subject: string;
+  html: string;
+}): Promise<boolean> {
+  return sendEmail(options);
+}
+
 export function escapeHtml(s: string | null | undefined): string {
   if (s === null || s === undefined) return '';
   return s

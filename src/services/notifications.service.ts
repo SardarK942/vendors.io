@@ -393,3 +393,27 @@ export function notifyEventCountdown(
     metadata: { event_id: ctx.eventId, days_out: ctx.daysOut },
   });
 }
+
+// ─── Shop orders ────────────────────────────────────────────────────
+
+type ShopOrderNotificationType =
+  | 'shop_order_placed'
+  | 'shop_order_confirmed'
+  | 'shop_order_cancelled'
+  | 'shop_order_reminder';
+
+export function notifyShopOrder(
+  sb: Sb,
+  userId: string,
+  type: ShopOrderNotificationType,
+  ctx: { orderId: string; title: string; body: string; link: string }
+): Promise<{ id: string } | null> {
+  return createNotification(sb, {
+    user_id: userId,
+    type,
+    title: ctx.title,
+    body: ctx.body,
+    link: ctx.link,
+    metadata: { order_id: ctx.orderId },
+  });
+}
