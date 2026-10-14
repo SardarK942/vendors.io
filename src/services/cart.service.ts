@@ -217,7 +217,7 @@ export async function getCartsForBuyer(
   const { data, error } = await supabase
     .from('carts')
     .select(
-      'id, vendor_profile_id, vendor:vendor_profiles(business_name), items:cart_items(id, variant_id, quantity, measurement_profile_id, product:products(id, title, base_price_cents, garment_type, customization_types), variant:product_variants(id, size_label, price_delta_cents, stock_quantity))'
+      'id, vendor_profile_id, vendor:vendor_profiles(business_name), items:cart_items(id, variant_id, quantity, measurement_profile_id, product:products(id, title, base_price_cents, garment_type, customization_types, mtm_surcharge_cents), variant:product_variants(id, size_label, price_delta_cents, stock_quantity))'
     )
     .eq('user_id', userId)
     .order('created_at');
@@ -246,7 +246,10 @@ export async function getCartsForBuyer(
         garmentType,
         measurementProfileId,
         variantId: str(it.variant_id),
-        unitPriceCents: num(product.base_price_cents) + num(variant.price_delta_cents),
+        unitPriceCents:
+          num(product.base_price_cents) +
+          num(variant.price_delta_cents) +
+          (isMadeToMeasure ? num(product.mtm_surcharge_cents) : 0),
         quantity: num(it.quantity),
         stockQuantity: num(variant.stock_quantity),
         isMadeToMeasure,

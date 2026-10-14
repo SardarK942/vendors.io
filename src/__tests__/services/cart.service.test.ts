@@ -174,4 +174,39 @@ describe('getCartsForBuyer', () => {
     expect(cart.ready).toBe(false);
     expect(cart.lines[0].measurementResolved).toBe(false);
   });
+
+  it('applies mtm_surcharge_cents only to made-to-measure lines', async () => {
+    const mk = (id: string, types: string[]) => ({
+      id: `ci-${id}`,
+      variant_id: `var-${id}`,
+      quantity: 1,
+      measurement_profile_id: 'mp1',
+      product: {
+        id: `p-${id}`,
+        title: id,
+        base_price_cents: 100000,
+        garment_type: 'lehenga',
+        customization_types: types,
+        mtm_surcharge_cents: 20000,
+      },
+      variant: { id: `var-${id}`, size_label: 'M', price_delta_cents: 0, stock_quantity: 5 },
+    });
+    const c = fakeCartClient({
+      carts: {
+        many: [
+          {
+            id: 'c1',
+            vendor_profile_id: 'v1',
+            vendor: { business_name: 'B' },
+            items: [mk('mtm', ['made_to_measure']), mk('std', ['standard_size'])],
+          },
+        ],
+      },
+    });
+    const r = await getCartsForBuyer(c, 'u1');
+    const cart = r.data![0];
+    expect(cart.lines[0].unitPriceCents).toBe(120000);
+    expect(cart.lines[1].unitPriceCents).toBe(100000);
+    expect(cart.subtotalCents).toBe(220000);
+  });
 });
