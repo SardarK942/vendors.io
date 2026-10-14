@@ -6,6 +6,7 @@ import type { ServiceResult } from '@/types';
 import { stripe } from '@/lib/stripe/client';
 import { computeBoutiqueSummary, isReadyToCheckout } from '@/lib/shop/cart-pricing';
 import { computeCommissionCents, resolveChargeMode } from '@/lib/shop/money';
+import { logger } from '@/lib/logger';
 import { getCartsForBuyer, type CartLineView } from '@/services/cart.service';
 
 // Shop SP2a — authorize-at-checkout. Creates a hosted Stripe Checkout Session with
@@ -90,6 +91,16 @@ export async function createCheckoutSession(
       profileById.set(p.id, { unit: p.unit, measurements: p.measurements });
     }
   }
+  const missingMeasurements = cart.lines.some(
+    (l) =>
+      l.isMadeToMeasure && (!l.measurementProfileId || !profileById.has(l.measurementProfileId))
+  );
+  if (missingMeasurements) {
+    return {
+      error: 'Made-to-measure items need their measurements before checkout',
+      status: 409,
+    };
+  }
   const snapshotLines: SnapshotLine[] = cart.lines.map((l: CartLineView) => ({
     variant_id: l.variantId,
     product_id: l.productId,
@@ -106,6 +117,7 @@ export async function createCheckoutSession(
 
   // 5. Build the Checkout Session.
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) throw new Error('NEXT_PUBLIC_APP_URL is not set');
   const paymentIntentData: Stripe.Checkout.SessionCreateParams.PaymentIntentData = {
     capture_method: 'manual',
     metadata: { kind: 'shop', buyer: userId, vendor: vendorProfileId },
@@ -154,7 +166,8 @@ export async function createCheckoutSession(
     )
     .digest('hex')
     .slice(0, 16);
-  const idempotencyKey = `checkout:${userId}:${vendorProfileId}:${lineHash}`;
+  const modeKey = chargeMode === 'direct' && acct ? `direct-${acct.stripe_account_id}` : 'escrow';
+  const idempotencyKey = `checkout:${userId}:${vendorProfileId}:${modeKey}:${lineHash}`;
 
   let session: Stripe.Checkout.Session;
   try {
@@ -185,7 +198,24 @@ export async function createCheckoutSession(
     shipping_cents: shippingCents,
     commission_cents: commissionCents,
   });
-  if (snapErr) return { error: snapErr.message, status: 500 };
+  if (snapErr) {
+    // Idempotent retry: Stripe returned the same session, so its snapshot already exists.
+    if (snapErr.code === '23505') return { data: { url: session.url }, status: 200 };
+    // Don't leave a live payable session with no snapshot for the webhook to read.
+    try {
+      await stripe.checkout.sessions.expire(
+        session.id,
+        {},
+        chargeMode === 'direct' && acct ? { stripeAccount: acct.stripe_account_id } : undefined
+      );
+    } catch (expireErr) {
+      logger.error('checkout: failed to expire session after snapshot error', {
+        sessionId: session.id,
+        error: expireErr instanceof Error ? expireErr.message : String(expireErr),
+      });
+    }
+    return { error: 'Could not record checkout. Please try again.', status: 502 };
+  }
 
   return { data: { url: session.url }, status: 200 };
 }

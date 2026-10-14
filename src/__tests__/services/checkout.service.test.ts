@@ -2,8 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { BoutiqueCart, CartLineView } from '@/services/cart.service';
 
 const sessionsCreate = vi.fn();
+const sessionsExpire = vi.fn();
 vi.mock('@/lib/stripe/client', () => ({
-  stripe: { checkout: { sessions: { create: (...a: unknown[]) => sessionsCreate(...a) } } },
+  stripe: {
+    checkout: {
+      sessions: {
+        create: (...a: unknown[]) => sessionsCreate(...a),
+        expire: (...a: unknown[]) => sessionsExpire(...a),
+      },
+    },
+  },
 }));
 
 const getCartsForBuyer = vi.fn();
@@ -45,6 +53,8 @@ function fakeClients(opts: {
   chargesEnabled: boolean | null;
   accountId?: string;
   shippingFee?: number;
+  insertError?: { code: string; message: string };
+  noProfiles?: boolean;
 }) {
   const inserts: Array<Record<string, unknown>> = [];
   const rls = {
@@ -64,7 +74,7 @@ function fakeClients(opts: {
       return {
         select: () => ({
           in: async () => ({
-            data: [{ id: 'mp1', unit: 'in', measurements: { bust: 36 } }],
+            data: opts.noProfiles ? [] : [{ id: 'mp1', unit: 'in', measurements: { bust: 36 } }],
             error: null,
           }),
         }),
@@ -93,7 +103,7 @@ function fakeClients(opts: {
       return {
         insert: async (v: Record<string, unknown>) => {
           inserts.push(v);
-          return { error: null };
+          return { error: opts.insertError ?? null };
         },
       };
     },
@@ -110,6 +120,8 @@ const input = { vendor_profile_id: 'vp1', fulfillment_type: 'pickup' as const };
 describe('createCheckoutSession', () => {
   beforeEach(() => {
     sessionsCreate.mockReset();
+    sessionsExpire.mockReset();
+    process.env.NEXT_PUBLIC_APP_URL = 'https://app.test';
     getCartsForBuyer.mockReset();
     sessionsCreate.mockResolvedValue({ id: 'cs_1', url: 'https://stripe/x' });
   });
@@ -164,6 +176,7 @@ describe('createCheckoutSession', () => {
     expect(params.payment_intent_data.application_fee_amount).toBeUndefined();
     expect(params.payment_intent_data.capture_method).toBe('manual');
     expect(c.inserts[0].charge_mode).toBe('escrow');
+    expect(c.inserts[0].commission_cents).toBe(272_00);
   });
 
   it('adds shipping collection + flat rate for ship fulfillment', async () => {
@@ -217,5 +230,62 @@ describe('createCheckoutSession', () => {
       customization_type: 'made_to_measure',
       measurement_snapshot: { unit: 'in', measurements: { bust: 36 } },
     });
+  });
+
+  it('returns 409 for an unresolved made-to-measure cart without calling stripe', async () => {
+    getCartsForBuyer.mockResolvedValue({
+      data: [cart([line({ isMadeToMeasure: true, measurementResolved: false })], false)],
+      status: 200,
+    });
+    const c = fakeClients({ chargesEnabled: true });
+    const r = await createCheckoutSession(c.rls, c.svc, 'u1', input);
+    expect(r.status).toBe(409);
+    expect(sessionsCreate).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 before stripe when an MTM measurement profile cannot be found', async () => {
+    getCartsForBuyer.mockResolvedValue({
+      data: [cart([line({ isMadeToMeasure: true, measurementProfileId: 'mp1' })])],
+      status: 200,
+    });
+    const c = fakeClients({ chargesEnabled: true, noProfiles: true });
+    const r = await createCheckoutSession(c.rls, c.svc, 'u1', input);
+    expect(r.status).toBe(409);
+    expect(sessionsCreate).not.toHaveBeenCalled();
+    expect(c.inserts).toHaveLength(0);
+  });
+
+  it('treats a duplicate snapshot (23505) as an idempotent retry and returns the url', async () => {
+    getCartsForBuyer.mockResolvedValue({ data: [cart([line()])], status: 200 });
+    const c = fakeClients({
+      chargesEnabled: false,
+      insertError: { code: '23505', message: 'duplicate key' },
+    });
+    const r = await createCheckoutSession(c.rls, c.svc, 'u1', input);
+    expect(r.status).toBe(200);
+    expect(r.data).toEqual({ url: 'https://stripe/x' });
+    expect(sessionsExpire).not.toHaveBeenCalled();
+  });
+
+  it('expires the session and returns 502 on a non-duplicate snapshot failure', async () => {
+    getCartsForBuyer.mockResolvedValue({ data: [cart([line()])], status: 200 });
+    sessionsExpire.mockRejectedValue(new Error('already expired'));
+    const c = fakeClients({
+      chargesEnabled: true,
+      accountId: 'acct_1',
+      insertError: { code: 'XX000', message: 'boom' },
+    });
+    const r = await createCheckoutSession(c.rls, c.svc, 'u1', input);
+    expect(r.status).toBe(502);
+    expect(sessionsExpire).toHaveBeenCalledWith('cs_1', {}, { stripeAccount: 'acct_1' });
+  });
+
+  it('includes charge mode and account in the idempotency key', async () => {
+    getCartsForBuyer.mockResolvedValue({ data: [cart([line()])], status: 200 });
+    const c = fakeClients({ chargesEnabled: true, accountId: 'acct_1' });
+    await createCheckoutSession(c.rls, c.svc, 'u1', input);
+    expect(sessionsCreate.mock.calls[0][1].idempotencyKey).toMatch(
+      /^checkout:u1:vp1:direct-acct_1:/
+    );
   });
 });
