@@ -14,7 +14,7 @@ import {
   finalizeOrderCanceled,
   type ShippingAddress,
 } from '@/services/orders.service';
-import { refreshAccountStatus } from '@/services/connect.service';
+import { handleAccountUpdated } from '@/services/account-updated.service';
 import { withErrorBoundary } from '@/lib/api/error-boundary';
 
 /** Service helpers return {error,status} instead of throwing; surface as a handler failure so Stripe retries. */
@@ -221,7 +221,8 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
       case 'account.updated': {
         // Connect Standard account readiness changed (onboarding progress).
         // event.account is the connected account id. No-ops if untracked.
-        if (event.account) await refreshAccountStatus(supabase, event.account);
+        // Also releases held shop escrow once payouts are enabled.
+        if (event.account) await handleAccountUpdated(supabase, event.account);
         break;
       }
 
