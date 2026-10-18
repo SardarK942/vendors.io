@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import { stripe } from '@/lib/stripe/client';
 import { logger } from '@/lib/logger';
+import { notifyFundsTransferred } from '@/services/shop-notifications.service';
 
 type Client = SupabaseClient<Database>;
 
@@ -101,6 +102,13 @@ export async function transferHeldEarnings(
     } catch (err) {
       logger.error('escrow-transfer: transfer failed', err, { ledgerId: row.id, vendorProfileId });
       result.failed++;
+    }
+  }
+  if (result.transferredCount > 0) {
+    try {
+      await notifyFundsTransferred(db, vendorProfileId, result.transferredCents);
+    } catch (err) {
+      logger.error('escrow-transfer: notify failed', err, { vendorProfileId });
     }
   }
   return result;

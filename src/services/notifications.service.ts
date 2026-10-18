@@ -400,7 +400,8 @@ type ShopOrderNotificationType =
   | 'shop_order_placed'
   | 'shop_order_confirmed'
   | 'shop_order_cancelled'
-  | 'shop_order_reminder';
+  | 'shop_order_reminder'
+  | 'shop_funds_transferred';
 
 export function notifyShopOrder(
   sb: Sb,
