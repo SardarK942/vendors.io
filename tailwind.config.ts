@@ -114,12 +114,17 @@ const config: Config = {
         'pink-card': '0 8px 20px rgba(209, 0, 108, 0.15)',
       },
       keyframes: {
+        rise: {
+          from: { opacity: '0', transform: 'translateY(10px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
         'pulse-pink': {
           '0%, 100%': { boxShadow: '0 0 0 0 rgba(209, 0, 108, 0.4)' },
           '50%': { boxShadow: '0 0 0 6px rgba(209, 0, 108, 0.0)' },
         },
       },
       animation: {
+        rise: 'rise 550ms cubic-bezier(0.22, 1, 0.36, 1) both',
         'pulse-pink': 'pulse-pink 1.5s ease-out 1',
       },
     },

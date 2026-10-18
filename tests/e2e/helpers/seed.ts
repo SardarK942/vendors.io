@@ -12,6 +12,7 @@
 
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { Database, VendorOrigin } from '../../../src/types/database.types';
+import Stripe from 'stripe';
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
@@ -520,6 +521,8 @@ export interface SeedActiveProductOptions {
 export interface SeededProduct {
   id: string;
   title: string;
+  /** The in-stock "M" variant (stock 5). */
+  variantId: string;
 }
 
 /**
@@ -551,13 +554,118 @@ export async function seedActiveProduct(
     .single();
   if (productError || !product) throw new Error(`seedActiveProduct: ${productError?.message}`);
 
-  const { error: variantError } = await supabase.from('product_variants').insert([
-    { product_id: product.id, size_label: 'M', stock_quantity: 5, display_order: 0 },
-    { product_id: product.id, size_label: 'L', stock_quantity: 0, display_order: 1 },
-  ]);
+  const { data: variants, error: variantError } = await supabase
+    .from('product_variants')
+    .insert([
+      { product_id: product.id, size_label: 'M', stock_quantity: 5, display_order: 0 },
+      { product_id: product.id, size_label: 'L', stock_quantity: 0, display_order: 1 },
+    ])
+    .select('id, size_label');
   if (variantError) throw new Error(`seedActiveProduct variants: ${variantError.message}`);
+  const inStock = variants?.find((v) => v.size_label === 'M');
+  if (!inStock) throw new Error('seedActiveProduct: in-stock variant missing');
 
-  return { id: product.id, title };
+  return { id: product.id, title, variantId: inStock.id };
+}
+
+// ─── Shop checkout / orders (migration 00087) ────────────────────────────────
+
+/**
+ * Service-role-inserts a saved lehenga measurement profile for a buyer so the
+ * bag's "Add measurements" picker has something to attach.
+ */
+export async function seedMeasurementProfile(
+  userId: string,
+  label = 'E2E Bride'
+): Promise<{ id: string; label: string }> {
+  const supabase = getServiceClient();
+  const { data, error } = await supabase
+    .from('user_measurement_profiles')
+    .insert({
+      user_id: userId,
+      label,
+      garment: 'lehenga',
+      unit: 'in',
+      measurements: { bust: 34, waist: 28, hips: 38 },
+    })
+    .select('id, label')
+    .single();
+  if (error || !data) throw new Error(`seedMeasurementProfile: ${error?.message}`);
+  return data;
+}
+
+export interface SeededShopOrder {
+  orderId: string;
+  paymentIntentId: string;
+}
+
+/**
+ * Seeds a `pending_confirmation` escrow-mode order (+ one order_item) for the
+ * given vendor/buyer. The order's PaymentIntent is a REAL Stripe test-mode,
+ * manual-capture, already-authorized PI (pm_card_visa) so the vendor confirm
+ * route's `paymentIntents.capture` succeeds — Stripe is called server-side by
+ * the app, so it cannot be intercepted by page.route; e2e uses sk_test_ keys.
+ */
+export async function seedPendingShopOrder(
+  vendor: TestVendor,
+  buyer: TestUser,
+  product: SeededProduct,
+  opts: { subtotalCents?: number } = {}
+): Promise<SeededShopOrder> {
+  const supabase = getServiceClient();
+  const subtotalCents = opts.subtotalCents ?? 145_000;
+  const commissionCents = Math.round(subtotalCents * 0.1);
+
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret || !secret.startsWith('sk_test_')) {
+    throw new Error('seedPendingShopOrder needs a Stripe TEST key (STRIPE_SECRET_KEY=sk_test_...)');
+  }
+  const stripe = new Stripe(secret);
+  const pi = await stripe.paymentIntents.create({
+    amount: subtotalCents,
+    currency: 'usd',
+    capture_method: 'manual',
+    payment_method: 'pm_card_visa',
+    confirm: true,
+    automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+    metadata: { kind: 'shop', e2e: 'true' },
+  });
+
+  const { data: order, error } = await supabase
+    .from('orders')
+    .insert({
+      buyer_user_id: buyer.id,
+      vendor_profile_id: vendor.vendorProfileId,
+      status: 'pending_confirmation',
+      stripe_payment_intent_id: pi.id,
+      stripe_checkout_session_id: `cs_test_e2e_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      charge_mode: 'escrow',
+      item_subtotal_cents: subtotalCents,
+      shipping_cents: 0,
+      tax_cents: 0,
+      commission_cents: commissionCents,
+      total_cents: subtotalCents,
+      fulfillment_type: 'pickup',
+      confirm_deadline_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
+    })
+    .select('id')
+    .single();
+  if (error || !order) throw new Error(`seedPendingShopOrder order: ${error?.message}`);
+
+  const { error: itemError } = await supabase.from('order_items').insert({
+    order_id: order.id,
+    product_id: product.id,
+    variant_id: product.variantId,
+    product_name_snapshot: product.title,
+    variant_label_snapshot: 'M',
+    unit_price_cents: subtotalCents,
+    quantity: 1,
+    line_subtotal_cents: subtotalCents,
+    customization_type: 'standard_size',
+  });
+  if (itemError) throw new Error(`seedPendingShopOrder item: ${itemError.message}`);
+
+  return { orderId: order.id, paymentIntentId: pi.id };
 }
 
 /** Delete a seeded user. ON DELETE CASCADE cleans up vendor_profiles, bookings, etc. */

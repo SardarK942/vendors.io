@@ -9,6 +9,7 @@ import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { getProductsByVendor } from '@/services/products.service';
 import { getConnectStatus } from '@/services/connect.service';
 import { GARMENT_TYPE_LABELS } from '@/lib/products/garment-types';
+import { ShopFulfillmentForm } from '@/components/shop/ShopFulfillmentForm';
 import { PublishConfetti } from '@/components/celebration/PublishConfetti';
 import type { ProductStatus } from '@/types/database.types';
 
@@ -151,6 +152,15 @@ export default async function ShopPage({ searchParams }: ShopPageProps) {
           <Link href="/dashboard/profile/shop/new">+ Add product</Link>
         </Button>
       </div>
+
+      <ShopFulfillmentForm
+        initial={{
+          offersPickup: vendorProfile.shop_offers_pickup,
+          offersShipping: vendorProfile.shop_offers_shipping,
+          shippingFeeCents: vendorProfile.shop_shipping_fee_cents,
+          pickupNote: vendorProfile.shop_pickup_note,
+        }}
+      />
 
       {products.length === 0 ? (
         <Card className="p-12 text-center">

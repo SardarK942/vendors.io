@@ -7,6 +7,10 @@
     {
       "path": "/api/cron/embed-vendors",
       "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/shop-auto-void",
+      "schedule": "0 3 * * *"
     }
   ]
 }

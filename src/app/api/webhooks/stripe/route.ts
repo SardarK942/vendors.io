@@ -8,8 +8,89 @@ import {
   handleChargeRefunded,
   handlePayoutEvent,
 } from '@/services/payment.service';
+import {
+  createOrderFromSession,
+  finalizeOrderPaid,
+  finalizeOrderCanceled,
+  type ShippingAddress,
+} from '@/services/orders.service';
 import { refreshAccountStatus } from '@/services/connect.service';
 import { withErrorBoundary } from '@/lib/api/error-boundary';
+
+/** Service helpers return {error,status} instead of throwing; surface as a handler failure so Stripe retries. */
+function throwIfError(result: { error?: string }): void {
+  if (result.error) throw new Error(result.error);
+}
+
+interface ShippingDetailsLike {
+  name?: string | null;
+  address?: {
+    line1?: string | null;
+    line2?: string | null;
+    city?: string | null;
+    state?: string | null;
+    postal_code?: string | null;
+    country?: string | null;
+  } | null;
+}
+
+function toShippingAddress(d: ShippingDetailsLike | null | undefined): ShippingAddress | null {
+  const a = d?.address;
+  if (!a) return null;
+  return {
+    name: d?.name ?? null,
+    address: {
+      line1: a.line1 ?? null,
+      line2: a.line2 ?? null,
+      city: a.city ?? null,
+      state: a.state ?? null,
+      postal_code: a.postal_code ?? null,
+      country: a.country ?? null,
+    },
+  };
+}
+
+/**
+ * Collected shipping address of a hosted Checkout Session. Newer API versions
+ * put it at collected_information.shipping_details; older ones at
+ * shipping_details. Falls back to a retrieve when the event omits both but the
+ * session charged shipping.
+ */
+async function resolveShippingAddress(
+  session: Stripe.Checkout.Session,
+  account: string | undefined
+): Promise<ShippingAddress | null> {
+  const legacy = (session as unknown as { shipping_details?: ShippingDetailsLike | null })
+    .shipping_details;
+  const direct = toShippingAddress(session.collected_information?.shipping_details ?? legacy);
+  if (direct) return direct;
+  if (!session.shipping_cost) return null;
+  const full = await stripe.checkout.sessions.retrieve(
+    session.id,
+    {},
+    account ? { stripeAccount: account } : undefined
+  );
+  const fullLegacy = (full as unknown as { shipping_details?: ShippingDetailsLike | null })
+    .shipping_details;
+  return toShippingAddress(full.collected_information?.shipping_details ?? fullLegacy);
+}
+
+/** Cancel the PI of a voided checkout; an already-canceled PI is success, not a 500 retry loop. */
+async function cancelVoidedPaymentIntent(piId: string, account: string | undefined): Promise<void> {
+  const opts = account ? { stripeAccount: account } : undefined;
+  try {
+    await stripe.paymentIntents.cancel(piId, opts);
+  } catch (err) {
+    let alreadyCanceled = false;
+    try {
+      const pi = await stripe.paymentIntents.retrieve(piId, {}, opts);
+      alreadyCanceled = pi.status === 'canceled';
+    } catch {
+      alreadyCanceled = false;
+    }
+    if (!alreadyCanceled) throw err;
+  }
+}
 
 export const POST = withErrorBoundary(async (request: NextRequest) => {
   const body = await request.text();
@@ -72,6 +153,10 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     switch (event.type) {
       case 'payment_intent.succeeded': {
         const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.kind === 'shop') {
+          throwIfError(await finalizeOrderPaid(supabase, pi.id));
+          break;
+        }
         const bookingId = pi.metadata?.booking_id;
         // Valid predecessor statuses: 'accepted' (new flow) or 'quoted' (legacy).
         // handlePaymentSuccess transitions to deposit_paid unconditionally.
@@ -83,6 +168,38 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
         const pi = event.data.object as Stripe.PaymentIntent;
         const bookingId = pi.metadata?.booking_id;
         if (bookingId) await handlePaymentFailure(supabase, pi.id, bookingId);
+        break;
+      }
+
+      case 'payment_intent.canceled': {
+        const pi = event.data.object as Stripe.PaymentIntent;
+        if (pi.metadata?.kind === 'shop') {
+          throwIfError(await finalizeOrderCanceled(supabase, pi.id));
+        }
+        break;
+      }
+
+      case 'checkout.session.completed': {
+        const session = event.data.object as Stripe.Checkout.Session;
+        if (session.metadata?.kind !== 'shop') break;
+        const piId =
+          typeof session.payment_intent === 'string'
+            ? session.payment_intent
+            : (session.payment_intent?.id ?? null);
+        if (!piId) throw new Error('Shop checkout session has no payment_intent');
+        const result = await createOrderFromSession(supabase, {
+          sessionId: session.id,
+          paymentIntentId: piId,
+          chargeMode: event.account ? 'direct' : 'escrow',
+          account: event.account ?? null,
+          taxCents: session.total_details?.amount_tax ?? 0,
+          totalCents: session.amount_total ?? 0,
+          shippingAddress: await resolveShippingAddress(session, event.account),
+        });
+        throwIfError(result);
+        if (result.data && 'voided' in result.data) {
+          await cancelVoidedPaymentIntent(piId, event.account);
+        }
         break;
       }
 

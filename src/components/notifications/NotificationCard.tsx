@@ -26,6 +26,10 @@ const TYPE_ICON: Record<NotificationType, string> = {
   event_task_due: '⏰',
   event_task_overdue: '⚠️',
   event_countdown: '🎊',
+  shop_order_placed: '🛍️',
+  shop_order_confirmed: '✅',
+  shop_order_cancelled: '🚫',
+  shop_order_reminder: '⏳',
 };
 
 function timeAgo(iso: string): string {

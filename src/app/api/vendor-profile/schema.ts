@@ -30,4 +30,9 @@ export const vendorProfileUpdateSchema = z.object({
   vendor_origin: z.enum(['local', 'international']).optional(),
   vendor_country: z.string().optional().nullable(),
   vendor_currency: z.string().optional(),
+  // Shop fulfillment config (migration 00087).
+  shop_offers_pickup: z.boolean().optional(),
+  shop_offers_shipping: z.boolean().optional(),
+  shop_shipping_fee_cents: z.number().int().min(0).max(100000).optional(),
+  shop_pickup_note: z.string().max(300).optional().nullable(),
 });
