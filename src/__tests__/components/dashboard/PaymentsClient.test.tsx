@@ -2,10 +2,19 @@ import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { PaymentsClient } from '@/app/dashboard/profile/payments/PaymentsClient';
 
+const noEarnings = {
+  heldCents: 0,
+  heldCount: 0,
+  transferredCents: 0,
+  lastTransferredAt: null,
+  payoutsEnabled: false,
+};
+
 describe('PaymentsClient', () => {
   it('shows the connect CTA when not connected', () => {
     render(
       <PaymentsClient
+        earnings={noEarnings}
         status={{
           connected: false,
           charges_enabled: false,
@@ -20,6 +29,7 @@ describe('PaymentsClient', () => {
   it('shows "finish verification" when details submitted but not charge-ready', () => {
     render(
       <PaymentsClient
+        earnings={noEarnings}
         status={{
           connected: true,
           charges_enabled: false,
@@ -34,6 +44,7 @@ describe('PaymentsClient', () => {
   it('shows the ready state when charges are enabled', () => {
     render(
       <PaymentsClient
+        earnings={noEarnings}
         status={{
           connected: true,
           charges_enabled: true,
