@@ -1,9 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
-import { cookies, headers } from 'next/headers';
-import { BaazarChrome } from '@/components/ui/BaazarChrome';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { cookies } from 'next/headers';
 
+import { DashboardShell } from '@/components/dashboard/DashboardShell';
 import { SidebarNav } from '@/components/dashboard/SidebarNav';
 import { VendorBusinessAnchor } from '@/components/dashboard/sidebar/VendorBusinessAnchor';
 import { SidebarUserMenu } from '@/components/dashboard/sidebar/SidebarUserMenu';
@@ -28,18 +27,12 @@ export default async function DashboardLayout({
 
   if (!user) redirect('/login');
 
-  // The vendor onboarding wizard runs in a focused shell (its own rail + live
-  // preview) — drop the global dashboard sidebar and its chrome so the flow
-  // gets the full canvas and a single source of navigation. The setup route's
-  // own layout provides everything the wizard needs.
-  const pathname = headers().get('x-pathname') ?? '';
-  if (pathname.startsWith('/dashboard/profile/setup')) {
-    // No BaazarChrome (bell + dashboard menu) here — the wizard shell provides
-    // its own logo + rail + Save & exit, which is the whole point of a focused
-    // flow. The homepage preloader lives elsewhere, so nothing is lost.
-    return <div className="min-h-screen bg-cream">{children}</div>;
-  }
-
+  // The vendor onboarding wizard (/dashboard/profile/setup/**) runs in a
+  // focused, chrome-less shell. That decision now lives in DashboardShell
+  // (client, keyed on usePathname) — NOT here: this layout is a shared segment
+  // the App Router preserves across client navigation, so a pathname branch
+  // here was sticky and stranded vendors on a sidebar-less dashboard after
+  // "Save & exit". We always build the shell data and let the client decide.
   const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
   const role = (profile?.role as 'couple' | 'vendor') || 'couple';
 
@@ -68,9 +61,10 @@ export default async function DashboardLayout({
 
   return (
     <ActiveBusinessProvider activeBusinessId={activeBusinessId}>
-      <div className="min-h-screen bg-muted/40">
-        <BaazarChrome />
-        <SidebarProvider defaultOpen={sidebarOpen}>
+      <DashboardShell
+        defaultSidebarOpen={sidebarOpen}
+        panel={panel}
+        sidebar={
           <SidebarNav
             role={role}
             hasBusiness={activeProfile != null}
@@ -83,15 +77,10 @@ export default async function DashboardLayout({
               activeProfile?.category === 'bridal_wear' && activeProfile?.vendor_origin === 'local'
             }
           />
-          <SidebarInset>
-            <div className="mx-auto flex w-full max-w-7xl gap-4 px-4 pb-8 pt-24 sm:px-6 lg:px-8">
-              <SidebarTrigger className="absolute right-4 top-20 z-10" />
-              <div className="flex-1">{children}</div>
-            </div>
-          </SidebarInset>
-        </SidebarProvider>
-        {panel}
-      </div>
+        }
+      >
+        {children}
+      </DashboardShell>
     </ActiveBusinessProvider>
   );
 }

@@ -269,4 +269,45 @@ test.describe('vendor onboarding wizard', () => {
       await cleanup(vendor);
     }
   });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  // Test 5: "Save & exit" (client-side nav) restores the dashboard chrome
+  //
+  // Regression for the sticky-layout bug: the dashboard layout is a shared
+  // segment the App Router preserves across client navigation, so branching it
+  // on pathname stranded under-onboarded vendors on a sidebar-less /dashboard
+  // after clicking the wizard's own "Save & exit". The focused-shell decision
+  // now lives in a client component keyed on usePathname, so the sidebar must
+  // reappear. NOTE: this must be a CLIENT-SIDE nav (clicking the Link) — a
+  // page.goto('/dashboard') full load always rendered the chrome and hid the bug.
+  // ──────────────────────────────────────────────────────────────────────────
+  test('"Save & exit" from the wizard lands on a dashboard WITH the sidebar', async ({ page }) => {
+    let vendor: TestUser | null = null;
+
+    try {
+      vendor = await seedVendorOnly();
+      await loginAs(page, vendor);
+
+      // Enter the focused wizard shell — no dashboard sidebar here (by design).
+      await page.goto('/dashboard/profile/setup/basics');
+      await expect(page).toHaveURL(/\/setup\/basics/, { timeout: 10_000 });
+      await expect(page.locator('[data-sidebar="sidebar"]')).toHaveCount(0);
+
+      // Click the wizard's own "Save & exit" (a client-side <Link> to /dashboard).
+      await page
+        .getByRole('link', { name: /save\s*&?\s*exit/i })
+        .first()
+        .click();
+      await page.waitForURL('**/dashboard', { timeout: 10_000 });
+
+      // Regression assertion: the dashboard chrome must be restored, so the
+      // vendor can actually navigate. Before the fix the sidebar was absent.
+      const sidebar = page.locator('[data-sidebar="sidebar"]');
+      await expect(sidebar).toBeVisible({ timeout: 10_000 });
+      await expect(sidebar.getByRole('link', { name: /^Home$/ })).toBeVisible();
+      await expect(sidebar.getByRole('link', { name: /^Profile$/ })).toBeVisible();
+    } finally {
+      await cleanup(vendor);
+    }
+  });
 });
