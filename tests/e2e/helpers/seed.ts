@@ -181,11 +181,16 @@ export async function seedVendor(
 export async function seedStripeAccount(
   admin: SupabaseClient<Database>,
   vendorProfileId: string,
-  flags: { charges_enabled?: boolean; payouts_enabled?: boolean; details_submitted?: boolean } = {}
+  flags: {
+    charges_enabled?: boolean;
+    payouts_enabled?: boolean;
+    details_submitted?: boolean;
+    stripe_account_id?: string;
+  } = {}
 ): Promise<void> {
   const { error } = await admin.from('vendor_stripe_accounts').insert({
     vendor_profile_id: vendorProfileId,
-    stripe_account_id: `acct_test_${vendorProfileId.slice(0, 8)}`,
+    stripe_account_id: flags.stripe_account_id ?? `acct_test_${vendorProfileId.slice(0, 8)}`,
     charges_enabled: flags.charges_enabled ?? false,
     payouts_enabled: flags.payouts_enabled ?? false,
     details_submitted: flags.details_submitted ?? false,
@@ -666,6 +671,85 @@ export async function seedPendingShopOrder(
   if (itemError) throw new Error(`seedPendingShopOrder item: ${itemError.message}`);
 
   return { orderId: order.id, paymentIntentId: pi.id };
+}
+
+export interface SeededHeldLedger {
+  orderId: string;
+  ledgerId: string;
+  chargeId: string;
+  netVendorCents: number;
+}
+
+/**
+ * Seeds a `confirmed` escrow order + a `held` vendor_ledger row backed by a REAL
+ * Stripe test-mode charge (pm_card_bypassPending → funds land in available
+ * balance immediately, so a Transfer can be funded). Requires migration 00089
+ * (source_charge_id) and STRIPE_SECRET_KEY=sk_test_.
+ */
+export async function seedHeldLedgerRow(
+  vendor: TestVendor,
+  buyer: TestUser,
+  opts: { grossCents?: number } = {}
+): Promise<SeededHeldLedger> {
+  const supabase = getServiceClient();
+  const grossCents = opts.grossCents ?? 50_000;
+  const commissionCents = Math.round(grossCents * 0.1);
+  const netVendorCents = grossCents - commissionCents;
+
+  const secret = process.env.STRIPE_SECRET_KEY;
+  if (!secret || !secret.startsWith('sk_test_')) {
+    throw new Error('seedHeldLedgerRow needs a Stripe TEST key (STRIPE_SECRET_KEY=sk_test_...)');
+  }
+  const stripe = new Stripe(secret);
+  const pi = await stripe.paymentIntents.create({
+    amount: grossCents,
+    currency: 'usd',
+    payment_method: 'pm_card_bypassPending',
+    confirm: true,
+    automatic_payment_methods: { enabled: true, allow_redirects: 'never' },
+    metadata: { kind: 'shop', e2e: 'true' },
+  });
+  const chargeId = typeof pi.latest_charge === 'string' ? pi.latest_charge : pi.latest_charge?.id;
+  if (!chargeId) throw new Error('seedHeldLedgerRow: PaymentIntent has no latest_charge');
+
+  const { data: order, error } = await supabase
+    .from('orders')
+    .insert({
+      buyer_user_id: buyer.id,
+      vendor_profile_id: vendor.vendorProfileId,
+      status: 'confirmed',
+      confirmed_at: new Date().toISOString(),
+      stripe_payment_intent_id: pi.id,
+      stripe_checkout_session_id: `cs_test_e2e_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`,
+      charge_mode: 'escrow',
+      item_subtotal_cents: grossCents,
+      shipping_cents: 0,
+      tax_cents: 0,
+      commission_cents: commissionCents,
+      total_cents: grossCents,
+      fulfillment_type: 'pickup',
+    })
+    .select('id')
+    .single();
+  if (error || !order) throw new Error(`seedHeldLedgerRow order: ${error?.message}`);
+
+  const { data: ledger, error: ledgerError } = await supabase
+    .from('vendor_ledger')
+    .insert({
+      vendor_profile_id: vendor.vendorProfileId,
+      order_id: order.id,
+      gross_cents: grossCents,
+      commission_cents: commissionCents,
+      stripe_fee_cents: 0,
+      net_vendor_cents: netVendorCents,
+      status: 'held',
+      source_charge_id: chargeId,
+    })
+    .select('id')
+    .single();
+  if (ledgerError || !ledger) throw new Error(`seedHeldLedgerRow ledger: ${ledgerError?.message}`);
+
+  return { orderId: order.id, ledgerId: ledger.id, chargeId, netVendorCents };
 }
 
 /** Delete a seeded user. ON DELETE CASCADE cleans up vendor_profiles, bookings, etc. */
