@@ -86,7 +86,11 @@ export async function transferHeldEarnings(
         .eq('status', 'held')
         .select('id');
       if (error) {
-        logger.error('escrow-transfer: stamp failed', { ledgerId: row.id, error: error.message });
+        logger.error('escrow-transfer: stamp failed', new Error(error.message), {
+          ledgerId: row.id,
+          transferId: transfer.id,
+          vendorProfileId,
+        });
         result.failed++;
         continue;
       }

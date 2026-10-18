@@ -17,8 +17,13 @@ function makeDb(opts: {
     net_vendor_cents: number;
     source_charge_id: string | null;
   }>;
+  casLost?: boolean;
 }) {
-  const updates: Array<{ id: string; patch: Record<string, unknown> }> = [];
+  const updates: Array<{
+    id: string;
+    patch: Record<string, unknown>;
+    statusGuard: [string, unknown];
+  }> = [];
   const db = {
     from(table: string) {
       if (table === 'vendor_stripe_accounts') {
@@ -31,10 +36,10 @@ function makeDb(opts: {
           select: () => ({ eq: () => ({ eq: async () => ({ data: opts.held }) }) }),
           update: (patch: Record<string, unknown>) => ({
             eq: (_c: string, id: string) => ({
-              eq: () => ({
+              eq: (col: string, val: unknown) => ({
                 select: async () => {
-                  updates.push({ id, patch });
-                  return { data: [{ id }], error: null };
+                  updates.push({ id, patch, statusGuard: [col, val] });
+                  return { data: opts.casLost ? [] : [{ id }], error: null };
                 },
               }),
             }),
@@ -75,7 +80,23 @@ it('transfers each held row with source_transaction + idempotency key, then stam
     { idempotencyKey: 'escrow-transfer:L1' }
   );
   expect(updates[0].patch).toMatchObject({ status: 'transferred', stripe_transfer_id: 'tr_1' });
+  expect(updates[0].statusGuard).toEqual(['status', 'held']);
   expect(res).toMatchObject({ transferredCount: 1, transferredCents: 90000, failed: 0 });
+});
+
+it('lost CAS race (row no longer held) is not counted and not a failure', async () => {
+  (stripe.transfers.create as ReturnType<typeof vi.fn>).mockResolvedValue({ id: 'tr_1' });
+  const { db } = makeDb({
+    account: { stripe_account_id: 'acct_1', payouts_enabled: true },
+    held: [{ id: 'L1', order_id: 'o1', net_vendor_cents: 90000, source_charge_id: 'ch_1' }],
+    casLost: true,
+  });
+  const res = await transferHeldEarnings(db, 'v1');
+  expect(stripe.transfers.create).toHaveBeenCalledTimes(1);
+  expect(stripe.transfers.create).toHaveBeenCalledWith(expect.anything(), {
+    idempotencyKey: 'escrow-transfer:L1',
+  });
+  expect(res).toEqual({ transferredCount: 0, transferredCents: 0, failed: 0 });
 });
 
 it('no-op when not payouts-enabled', async () => {
