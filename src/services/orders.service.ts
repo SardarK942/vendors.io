@@ -2,6 +2,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database, Json } from '@/types/database.types';
 import type { ServiceResult } from '@/types';
+import type Stripe from 'stripe';
 import { stripe } from '@/lib/stripe/client';
 import { computeEscrowNetCents } from '@/lib/shop/money';
 import { logger } from '@/lib/logger';
@@ -247,7 +248,7 @@ export async function createOrderFromSession(
 // Confirm / decline / auto-void
 // ---------------------------------------------------------------------------
 
-interface PendingOrder {
+export interface PendingOrder {
   id: string;
   vendor_profile_id: string;
   status: string;
@@ -284,8 +285,26 @@ async function stripeRequestOptions(
  * order_id is unique: a duplicate (23505) means a prior attempt already wrote it.
  * Returns an error message, or null on success.
  */
-async function ensureEscrowLedger(db: Client, order: PendingOrder): Promise<string | null> {
+function chargeIdOf(pi: { latest_charge?: string | { id?: string } | null }): string | null {
+  const c = pi.latest_charge;
+  return typeof c === 'string' ? c : (c?.id ?? null);
+}
+
+async function ensureEscrowLedger(
+  db: Client,
+  order: PendingOrder,
+  sourceChargeId?: string | null
+): Promise<string | null> {
   if (order.charge_mode !== 'escrow') return null;
+  let chargeId = sourceChargeId ?? null;
+  if (!chargeId && order.stripe_payment_intent_id) {
+    try {
+      const pi = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
+      chargeId = chargeIdOf(pi);
+    } catch {
+      chargeId = null; // non-fatal; transfer path has its own fallback
+    }
+  }
   const { error } = await db.from('vendor_ledger').insert({
     vendor_profile_id: order.vendor_profile_id,
     order_id: order.id,
@@ -299,10 +318,14 @@ async function ensureEscrowLedger(db: Client, order: PendingOrder): Promise<stri
       stripeFeeCents: 0,
     }),
     status: 'held',
+    source_charge_id: chargeId,
   });
   if (error && (error as { code?: string }).code !== '23505') return error.message;
   return null;
 }
+
+// test-only
+export const ensureEscrowLedgerForTest = ensureEscrowLedger;
 
 /** Restore stock for an order's non-made-to-measure items and re-activate sold-out products. */
 async function restoreOrderStock(db: Client, orderId: string): Promise<void> {
@@ -362,15 +385,16 @@ export async function confirmOrder(
   const opts = await stripeRequestOptions(db, order, `order:${orderId}:capture`);
   if (!opts) return { error: 'Vendor Stripe account not found', status: 502 };
 
+  let captured: Stripe.PaymentIntent;
   try {
-    await stripe.paymentIntents.capture(order.stripe_payment_intent_id, opts);
+    captured = await stripe.paymentIntents.capture(order.stripe_payment_intent_id, opts);
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Payment capture failed';
     console.error(`[orders] capture failed for order ${orderId}:`, message);
     return { error: `Payment capture failed: ${message}`, status: 502 };
   }
 
-  const ledgerErr = await ensureEscrowLedger(db, order);
+  const ledgerErr = await ensureEscrowLedger(db, order, chargeIdOf(captured));
   if (ledgerErr) return { error: ledgerErr, status: 502 };
 
   const { error: updErr } = await db
