@@ -106,6 +106,7 @@ async function run(label: string, orderId: string, fn: () => Promise<void>): Pro
 }
 
 const VENDOR_LINK = '/dashboard/orders';
+const VENDOR_PAYMENTS_LINK = '/dashboard/profile/payments';
 
 export async function notifyShopOrderPlaced(db: Client, orderId: string): Promise<void> {
   await run('notifyShopOrderPlaced', orderId, async () => {
@@ -239,6 +240,44 @@ export async function notifyShopOpsAlert(
       return;
     }
     await sendOpsEmail(ctx, `[Shop order alert] ${ctx.vendorName} #${shortId(orderId)}`, message);
+  });
+}
+
+/**
+ * Vendor notice (bell + email) when held escrow earnings are paid out to their
+ * connected account. Best-effort; never throws.
+ */
+export async function notifyFundsTransferred(
+  db: Client,
+  vendorProfileId: string,
+  amountCents: number
+): Promise<void> {
+  await run('notifyFundsTransferred', vendorProfileId, async () => {
+    const { data: vendor } = await db
+      .from('vendor_profiles')
+      .select('user_id')
+      .eq('id', vendorProfileId)
+      .maybeSingle();
+    if (!vendor) return;
+    const { data: vendorUser } = await db
+      .from('users')
+      .select('email')
+      .eq('id', vendor.user_id)
+      .maybeSingle();
+    const title = 'Your earnings were paid out';
+    const body = `Your held earnings of ${fmtUsd(amountCents)} have been paid out to your connected account.`;
+    await notifyShopOrder(db, vendor.user_id, 'shop_funds_transferred', {
+      title,
+      body,
+      link: VENDOR_PAYMENTS_LINK,
+    });
+    if (vendorUser?.email) {
+      await sendShopEmail({
+        to: vendorUser.email,
+        subject: title,
+        html: `<p>${escapeHtml(body)}</p>`,
+      });
+    }
   });
 }
 

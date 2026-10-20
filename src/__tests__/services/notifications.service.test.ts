@@ -14,6 +14,7 @@ import {
   notifyBookingCompleted,
   notifyReviewReceived,
   notifyCoupleCountered,
+  notifyShopOrder,
 } from '@/services/notifications.service';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
@@ -117,6 +118,14 @@ describe('typed helpers compose correctly', () => {
     vi.spyOn(supabaseServer, 'createServiceRoleClient').mockReturnValue(
       srClient as unknown as MockSrClient
     );
+  });
+
+  it('notifyShopOrder carries order_id when given and omits it when absent', async () => {
+    const base = { title: 't', body: 'b', link: '/l' };
+    await notifyShopOrder(dummySb, 'u-1', 'shop_funds_transferred', { ...base, orderId: 'o-1' });
+    expect(srClient._insertSpy.mock.calls[0][0].metadata).toEqual({ order_id: 'o-1' });
+    await notifyShopOrder(dummySb, 'u-1', 'shop_funds_transferred', base);
+    expect(srClient._insertSpy.mock.calls[1][0].metadata).toEqual({});
   });
 
   it('notifyBookingRequestReceived', async () => {

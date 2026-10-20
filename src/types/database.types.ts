@@ -67,7 +67,8 @@ export type NotificationType =
   | 'shop_order_placed'
   | 'shop_order_confirmed'
   | 'shop_order_cancelled'
-  | 'shop_order_reminder';
+  | 'shop_order_reminder'
+  | 'shop_funds_transferred';
 
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[];
 
@@ -1741,6 +1742,7 @@ export interface Database {
           status: 'held' | 'transferred';
           transferred_at: string | null;
           stripe_transfer_id: string | null;
+          source_charge_id: string | null;
           created_at: string;
         };
         Insert: {
@@ -1754,6 +1756,7 @@ export interface Database {
           status?: 'held' | 'transferred';
           transferred_at?: string | null;
           stripe_transfer_id?: string | null;
+          source_charge_id?: string | null;
           created_at?: string;
         };
         Update: {
@@ -1767,6 +1770,7 @@ export interface Database {
           status?: 'held' | 'transferred';
           transferred_at?: string | null;
           stripe_transfer_id?: string | null;
+          source_charge_id?: string | null;
           created_at?: string;
         };
         Relationships: [];

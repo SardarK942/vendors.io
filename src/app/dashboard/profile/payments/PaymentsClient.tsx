@@ -3,8 +3,16 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import type { ConnectStatus } from '@/services/connect.service';
+import type { EarningsSummary } from '@/lib/shop/earnings';
+import { EarningsCard } from './EarningsCard';
 
-export function PaymentsClient({ status }: { status: ConnectStatus }) {
+export function PaymentsClient({
+  status,
+  earnings,
+}: {
+  status: ConnectStatus;
+  earnings: EarningsSummary;
+}) {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -25,6 +33,7 @@ export function PaymentsClient({ status }: { status: ConnectStatus }) {
   if (status.charges_enabled) {
     return (
       <div>
+        <EarningsCard summary={earnings} onSetup={startOnboarding} />
         <h1 className="text-2xl font-semibold">Payouts</h1>
         <p className="mt-2 text-muted-foreground">
           You&rsquo;re set up to get paid. Customer payments for your shop will be sent to your
@@ -38,6 +47,7 @@ export function PaymentsClient({ status }: { status: ConnectStatus }) {
 
   return (
     <div>
+      <EarningsCard summary={earnings} onSetup={startOnboarding} />
       <h1 className="text-2xl font-semibold">Payouts</h1>
       <p className="mt-2 text-muted-foreground">
         {pending

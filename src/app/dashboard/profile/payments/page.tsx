@@ -3,6 +3,7 @@ import { requireUser } from '@/lib/api/auth';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { createServiceRoleClient } from '@/lib/supabase/server';
 import { getConnectStatus, refreshAccountStatus } from '@/services/connect.service';
+import { getVendorEarningsSummary } from '@/services/earnings.service';
 import { PaymentsClient } from './PaymentsClient';
 
 export default async function PaymentsPage({
@@ -39,5 +40,10 @@ export default async function PaymentsPage({
   }
 
   const status = await getConnectStatus(supabase, vendorProfileId);
-  return <PaymentsClient status={status.data!} />;
+  const earnings = await getVendorEarningsSummary(
+    createServiceRoleClient(),
+    vendorProfileId,
+    status.data!.payouts_enabled
+  );
+  return <PaymentsClient status={status.data!} earnings={earnings} />;
 }
