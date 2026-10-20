@@ -201,7 +201,9 @@ export async function recordPoll(args: {
     .eq('id', vendorProfileId)
     .single();
 
-  if (data?.calendar_feed_state === 'pending') {
+  if (data?.calendar_feed_state === 'pending' || data?.calendar_feed_state === 'not_connected') {
+    // Promote on any UA-verified poll, including when the vendor pasted the
+    // feed URL into their calendar app without going through the intent modal.
     await supabase
       .from('vendor_profiles')
       .update({
@@ -210,7 +212,7 @@ export async function recordPoll(args: {
         calendar_feed_connected_via_ua: userAgent,
       })
       .eq('id', vendorProfileId)
-      .eq('calendar_feed_state', 'pending'); // guard against concurrent flips
+      .in('calendar_feed_state', ['pending', 'not_connected']); // guard against concurrent flips
   }
 }
 
