@@ -407,7 +407,7 @@ export function notifyShopOrder(
   sb: Sb,
   userId: string,
   type: ShopOrderNotificationType,
-  ctx: { orderId: string; title: string; body: string; link: string }
+  ctx: { orderId?: string; title: string; body: string; link: string }
 ): Promise<{ id: string } | null> {
   return createNotification(sb, {
     user_id: userId,
@@ -415,6 +415,6 @@ export function notifyShopOrder(
     title: ctx.title,
     body: ctx.body,
     link: ctx.link,
-    metadata: { order_id: ctx.orderId },
+    metadata: ctx.orderId ? { order_id: ctx.orderId } : {},
   });
 }

@@ -106,6 +106,7 @@ async function run(label: string, orderId: string, fn: () => Promise<void>): Pro
 }
 
 const VENDOR_LINK = '/dashboard/orders';
+const VENDOR_PAYMENTS_LINK = '/dashboard/profile/payments';
 
 export async function notifyShopOrderPlaced(db: Client, orderId: string): Promise<void> {
   await run('notifyShopOrderPlaced', orderId, async () => {
@@ -266,10 +267,9 @@ export async function notifyFundsTransferred(
     const title = 'Your earnings were paid out';
     const body = `Your held earnings of ${fmtUsd(amountCents)} have been paid out to your connected account.`;
     await notifyShopOrder(db, vendor.user_id, 'shop_funds_transferred', {
-      orderId: '',
       title,
       body,
-      link: VENDOR_LINK,
+      link: VENDOR_PAYMENTS_LINK,
     });
     if (vendorUser?.email) {
       await sendShopEmail({

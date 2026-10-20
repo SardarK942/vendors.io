@@ -45,6 +45,9 @@ describe('notifyFundsTransferred', () => {
       'shop_funds_transferred',
       expect.objectContaining({ body: expect.stringContaining('$123.45') })
     );
+    const ctx = notifyShopOrder.mock.calls[0][3] as Record<string, unknown>;
+    expect(ctx.link).toBe('/dashboard/profile/payments');
+    expect(ctx).not.toHaveProperty('orderId');
     expect(sendShopEmail).toHaveBeenCalledWith(expect.objectContaining({ to: 'v@x.com' }));
   });
 

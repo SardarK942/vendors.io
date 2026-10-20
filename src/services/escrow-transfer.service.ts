@@ -27,7 +27,12 @@ export async function resolveSourceChargeId(
     const pi = await stripe.paymentIntents.retrieve(order.stripe_payment_intent_id);
     const c = pi.latest_charge;
     return typeof c === 'string' ? c : (c?.id ?? null);
-  } catch {
+  } catch (err) {
+    logger.warn('escrow-transfer: source charge lookup failed; omitting source_transaction', {
+      orderId: row.order_id,
+      paymentIntentId: order.stripe_payment_intent_id,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
