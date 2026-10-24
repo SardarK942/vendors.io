@@ -159,10 +159,12 @@ export function Step2Details({
 
   const guidance = getRequestGuidance(vendorCategory);
 
+  // Description is optional — gate only on the structured essentials (dates,
+  // event type, guest count, and a location). The free-text message helps the
+  // vendor quote but is no longer required to continue.
   const canContinue =
     events.every((e) => e.date && e.eventTypeId && e.guestCount.trim()) &&
-    eventCity.trim().length > 0 &&
-    description.trim().length >= 50;
+    eventCity.trim().length > 0;
 
   return (
     <div className="space-y-6">
@@ -373,7 +375,10 @@ export function Step2Details({
 
       <div>
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
-          Tell us what you&apos;re looking for
+          Tell us what you&apos;re looking for{' '}
+          <span className="font-normal normal-case tracking-normal text-ink-soft">
+            — optional, helps them quote
+          </span>
         </p>
         {guidance.bullets.length > 0 && (
           <div className="mb-2 flex flex-wrap gap-1.5">
@@ -389,16 +394,13 @@ export function Step2Details({
         )}
         <textarea
           rows={6}
-          minLength={50}
           maxLength={1000}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
           placeholder={guidance.placeholder}
           className="w-full rounded-md border border-hairline bg-cream px-3 py-2 text-ink focus:border-ink focus:outline-none"
         />
-        <p className="mt-1 text-xs tabular-nums text-ink-soft">
-          {description.length} / 1000 · minimum 50 characters
-        </p>
+        <p className="mt-1 text-xs tabular-nums text-ink-soft">{description.length} / 1000</p>
       </div>
 
       <div className="flex items-center justify-between border-t border-hairline pt-4">

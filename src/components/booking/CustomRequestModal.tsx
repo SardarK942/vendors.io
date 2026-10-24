@@ -32,9 +32,30 @@ export function CustomRequestModal({
     if (open) track(ANALYTICS_EVENTS.QUOTE_REQUEST_STARTED);
   }, [open]);
 
+  // Google Places renders its predictions dropdown (`.pac-container`) into
+  // document.body — outside the Radix dialog. Without this guard, clicking a
+  // prediction counts as an "interact outside" and Radix dismisses / refocuses
+  // before Google's place_changed fires, so the venue never registers and the
+  // field looks un-clickable. Guard every outside-interaction path so a click
+  // on the dropdown is left alone.
+  const keepOpenForPlaces = (event: {
+    detail: { originalEvent: Event };
+    preventDefault: () => void;
+  }) => {
+    const target = event.detail.originalEvent.target as Element | null;
+    if (target?.closest('.pac-container')) {
+      event.preventDefault();
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl overflow-hidden bg-cream p-0">
+      <DialogContent
+        className="max-w-3xl overflow-hidden bg-cream p-0"
+        onPointerDownOutside={keepOpenForPlaces}
+        onInteractOutside={keepOpenForPlaces}
+        onFocusOutside={keepOpenForPlaces}
+      >
         <div
           className="h-[3px] w-full bg-gradient-to-r from-indigo via-indigo to-hot-pink"
           aria-hidden

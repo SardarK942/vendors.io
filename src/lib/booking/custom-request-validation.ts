@@ -22,7 +22,9 @@ export const customRequestSchema = z.object({
   event_date: z.string().regex(ISO_DATE_RE, 'Expected YYYY-MM-DD'),
   guest_count: z.number().int().min(1).max(2000),
   event_type: z.enum(EVENT_TYPE_IDS),
-  description: z.string().min(50).max(1000),
+  // Optional free-text message. Empty is allowed; the structured fields carry
+  // enough for the vendor to quote.
+  description: z.string().max(1000).optional().default(''),
 });
 
 export type CustomRequestInput = z.infer<typeof customRequestSchema>;
@@ -44,10 +46,11 @@ export type BudgetRange = (typeof BUDGET_RANGES)[number];
 export const customRequestSchemaV2 = z.object({
   vendor_slug: z.string().min(1).max(120),
   events: z.array(customEventEntrySchema).min(1),
-  // Couple's free-text message. The client appends an optional, human-readable
-  // "Requested details —" block (category wishlist) to this same field, so the
-  // ceiling is above the textarea's own 1000-char cap to leave room for it.
-  description: z.string().min(50).max(3000),
+  // Couple's free-text message — optional. The client appends an optional,
+  // human-readable "Requested details —" block (category wishlist) to this same
+  // field, so the ceiling is above the textarea's own 1000-char cap to leave
+  // room for it. Empty is allowed; the structured fields carry enough to quote.
+  description: z.string().max(3000).optional().default(''),
   is_multi_day: z.boolean().optional().default(false),
   event_city: z.string().min(1).max(120).nullish(),
   venue_name: z.string().max(120).nullish(),

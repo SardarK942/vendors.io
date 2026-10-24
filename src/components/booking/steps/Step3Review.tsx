@@ -136,10 +136,14 @@ export function Step3Review(props: Step3ReviewProps) {
             </div>
           </div>
         )}
-        <div className="border-t border-hairline pt-4">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">Notes</p>
-          <p className="whitespace-pre-wrap text-pretty text-sm text-ink">{description}</p>
-        </div>
+        {description.trim().length > 0 && (
+          <div className="border-t border-hairline pt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-indigo">
+              Notes
+            </p>
+            <p className="whitespace-pre-wrap text-pretty text-sm text-ink">{description}</p>
+          </div>
+        )}
       </div>
 
       <div className="flex items-center justify-between border-t border-hairline pt-4">

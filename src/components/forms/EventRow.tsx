@@ -212,14 +212,16 @@ export function EventRow({
             )}
             <GooglePlacesAutocomplete
               id={locationId}
+              mode="all"
               value={{
+                location_name: data.location_name ?? undefined,
                 address_line_1: data.address_line_1,
                 city: data.city,
                 state: data.state,
                 postal_code: data.postal_code,
               }}
               onChange={handlePlaceChange}
-              placeholder="Where will this event take place?"
+              placeholder="Search a venue or address"
             />
             {data.address_line_1 && (
               <p className="text-xs text-muted-foreground">
