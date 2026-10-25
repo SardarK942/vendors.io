@@ -10,15 +10,9 @@
  */
 import { useEffect, useRef } from 'react';
 import { setOptions, importLibrary } from '@googlemaps/js-api-loader';
+import { extractPlaceData, type PlaceData } from '@/lib/forms/place-data';
 
-export interface PlaceData {
-  location_name?: string;
-  address_line_1: string;
-  city: string;
-  state: string;
-  postal_code: string;
-  google_place_id: string;
-}
+export type { PlaceData };
 
 interface Props {
   value?: Partial<PlaceData>;
@@ -72,22 +66,11 @@ export function GooglePlacesAutocomplete({
       const listener = autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
         if (!place.address_components) return;
-        const get = (type: string) =>
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (place.address_components as any[]).find((c: any) => c.types.includes(type))?.long_name ??
-          '';
 
         // Mark selection BEFORE emitting so the trailing input event Google
         // fires (as it writes the formatted address into the field) is swallowed.
         selectedRef.current = true;
-        onChange({
-          location_name: place.name ?? undefined,
-          address_line_1: `${get('street_number')} ${get('route')}`.trim(),
-          city: get('locality'),
-          state: get('administrative_area_level_1'),
-          postal_code: get('postal_code'),
-          google_place_id: place.place_id ?? '',
-        });
+        onChange(extractPlaceData(place.address_components, place.name, place.place_id));
       });
 
       cleanup = () => {
