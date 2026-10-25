@@ -67,9 +67,8 @@ export function extractPlaceData(
     location_name: name || undefined,
     address_line_1: addressLine1,
     city: first(CITY_TYPES),
-    // State kept as the full long_name ("Illinois") to match the format already
-    // stored for vendor base addresses and shown in the UI.
-    state: first(['administrative_area_level_1']),
+    // State stored as the 2-letter abbreviation ("IL") via short_name.
+    state: first(['administrative_area_level_1'], true),
     postal_code: first(['postal_code']),
     google_place_id: placeId ?? '',
   };

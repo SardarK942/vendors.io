@@ -18,7 +18,7 @@ describe('extractPlaceData', () => {
       location_name: 'Some Place',
       address_line_1: '123 Main Street',
       city: 'Chicago',
-      state: 'Illinois',
+      state: 'IL',
       postal_code: '60601',
       google_place_id: 'place-1',
     });
