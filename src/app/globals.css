@@ -157,7 +157,15 @@ body[data-menu-open] .js-booking-bottom-bar {
  * 1000. Radix dialog overlays/content sit at z-50 in Tailwind's scale, but
  * other stacking contexts (sticky bars, menus) can still paint over 1000.
  * Pin the predictions dropdown above everything so it stays visible — and
- * clickable — when the Places input lives inside a modal. */
+ * clickable — when the Places input lives inside a modal.
+ *
+ * `pointer-events: auto` is essential: while a Radix dialog is open it sets
+ * `pointer-events: none` on <body>, which the body-portaled dropdown inherits.
+ * Without this the predictions paint on top but swallow no clicks — the field
+ * only responds to keyboard arrow+Enter (the classic "dropdown not clickable"
+ * bug in the custom-request modal). Restore pointer events on the dropdown
+ * itself so a mouse click selects a prediction. */
 .pac-container {
   z-index: 10000 !important;
+  pointer-events: auto !important;
 }
