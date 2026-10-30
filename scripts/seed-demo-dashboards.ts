@@ -328,6 +328,11 @@ async function main() {
     attrs: Record<string, unknown>;
     order: number;
     image: string;
+    // Optional richer content so the package editor page renders full (the
+    // featured package carries these; the others fall back to sensible defaults).
+    gallery?: string[];
+    notes?: string;
+    items?: string[];
   }> = [
     {
       name: 'Bridal Mehndi',
@@ -340,6 +345,17 @@ async function main() {
         num_artists: 1,
         style: 'Indo-Arabic bridal',
       },
+      gallery: [HENNA[1], HENNA[2], HENNA[0]],
+      items: [
+        'Pre-event design consultation',
+        'Premium organic henna (chemical-free)',
+        'Full hands — front & back, up to the elbow',
+        'Both feet — up to mid-calf',
+        'Personalised motifs (initials / date woven in)',
+        'Aftercare kit + stain-care guide',
+      ],
+      notes:
+        "Hi {couple_name}! So excited to be part of your mehndi. To lock your date I take a 4-hour window — please allow extra time for photos. A few things that help the stain: no waxing/threading 24h before, come with clean dry skin (no lotion), and plan to keep the paste on 6–8 hours. I'll send a prep checklist a week out. Can't wait! — Nadia",
     },
     {
       name: 'Bridal Party (per person)',
@@ -370,7 +386,9 @@ async function main() {
             ? 'The signature bridal experience — a relaxed 3–4 hour session with intricate, long-lasting designs.'
             : 'Flexible coverage for your celebration.',
         base_price_cents: p.price,
-        included_items: ['Consultation', 'Premium organic henna', 'Aftercare kit'],
+        included_items: p.items ?? ['Consultation', 'Premium organic henna', 'Aftercare kit'],
+        gallery_image_urls: p.gallery ?? [],
+        vendor_notes_template: p.notes ?? null,
         max_guests: null,
         duration_hours: 4,
         events_count: 1,
@@ -400,6 +418,18 @@ async function main() {
       name: 'Glitter & gems finish',
       price_delta_cents: 3500,
       display_order: 1,
+    },
+    {
+      package_id: pkgIds[0],
+      name: 'Extended coverage — upper arms',
+      price_delta_cents: 5000,
+      display_order: 2,
+    },
+    {
+      package_id: pkgIds[0],
+      name: 'Second artist (faster finish)',
+      price_delta_cents: 9000,
+      display_order: 3,
     },
   ] as never);
   console.log(`  vendor: Henna Atelier by Nadia (${pkgIds.length} packages)`);
@@ -483,6 +513,57 @@ async function main() {
       },
     }
   );
+
+  // Reusable made-to-measure body-measurement profiles (Bride + Groom) so the
+  // /dashboard/measurements page renders populated fit profiles. Values are
+  // realistic mid-range inches keyed by the machine keys in
+  // src/lib/products/measurement-schemas.ts (LEHENGA_FIELDS / SHERWANI_FIELDS).
+  await sb.from('user_measurement_profiles').insert([
+    {
+      user_id: coupleUserId,
+      label: 'Ayesha — Bride (Lehenga)',
+      garment: 'lehenga',
+      unit: 'in',
+      measurements: {
+        around_bust: 36,
+        around_above_waist: 31,
+        shoulder_width: 15,
+        around_armhole: 16,
+        around_arm: 11.5,
+        sleeve_length: 16,
+        choli_length: 15,
+        front_neck_depth: 7,
+        back_neck_depth: 9,
+        lehenga_waist: 30,
+        hips: 40,
+        lehenga_length: 42,
+        height: 65,
+      },
+    },
+    {
+      user_id: coupleUserId,
+      label: 'Omar — Groom (Sherwani)',
+      garment: 'sherwani',
+      unit: 'in',
+      measurements: {
+        neck: 16,
+        full_shoulder: 18.5,
+        chest: 42,
+        stomach: 38,
+        waist: 36,
+        seat: 42,
+        sleeve_length: 25,
+        bicep: 14,
+        wrist: 7.5,
+        sherwani_length: 44,
+        trouser_waist: 36,
+        inseam: 32,
+        trouser_length: 41,
+        height: 71,
+      },
+    },
+  ] as never);
+  console.log('  couple measurement profiles: 2 (Bride lehenga, Groom sherwani)');
 
   // Celebration event graph (3 functions, needs, budget, tasks)
   const eventInput: CreateEventInput = {
@@ -885,10 +966,10 @@ async function main() {
   console.log(`  VENDOR  →  demo.vendor${DEMO_DOMAIN}`);
   console.log('\nScreens to capture:');
   console.log(
-    '  Couple:  /dashboard  /dashboard/events  /dashboard/events/<id>  /dashboard/bookings  /dashboard/saved  /dashboard/notifications'
+    '  Couple:  /dashboard  /dashboard/events  /dashboard/events/<id>  /dashboard/bookings  /dashboard/saved  /dashboard/notifications  /dashboard/measurements'
   );
   console.log(
-    '  Vendor:  /dashboard  /dashboard/bookings  /dashboard/profile/packages  /dashboard/profile/calendar  /dashboard/money  /dashboard/profile  /dashboard/notifications'
+    '  Vendor:  /dashboard  /dashboard/bookings  /dashboard/profile/packages  /dashboard/profile/packages/<id> (editor — use the featured “Bridal Mehndi”)  /dashboard/profile/calendar  /dashboard/money  /dashboard/profile  /dashboard/notifications'
   );
 }
 
