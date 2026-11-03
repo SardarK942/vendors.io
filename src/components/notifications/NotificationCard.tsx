@@ -30,6 +30,7 @@ const TYPE_ICON: Record<NotificationType, string> = {
   shop_order_confirmed: '✅',
   shop_order_cancelled: '🚫',
   shop_order_reminder: '⏳',
+  shop_funds_transferred: '💸',
 };
 
 function timeAgo(iso: string): string {
