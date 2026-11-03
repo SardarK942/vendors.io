@@ -30,6 +30,7 @@ const payloadSchema = z.object({
 interface ParsedWebhook {
   event: DocusealEvent;
   timestamp?: string;
+  raw: Record<string, unknown>;
 }
 
 function parseWebhook(rawBody: string): ParsedWebhook | null {
@@ -48,7 +49,7 @@ function parseWebhook(rawBody: string): ParsedWebhook | null {
   const event: DocusealEvent = { type: event_type, submissionId };
   if (data.role === 'Vendor' || data.role === 'Couple') event.role = data.role;
   if (data.external_id) event.externalId = data.external_id;
-  return { event, timestamp };
+  return { event, timestamp, raw: json as Record<string, unknown> };
 }
 
 /**
@@ -93,7 +94,7 @@ export const POST = withErrorBoundary(async (request: NextRequest) => {
     await supabase.from('docuseal_events').insert({
       event_id: eventId,
       event_type: parsed.event.type,
-      payload: JSON.parse(body) as Record<string, unknown>,
+      payload: parsed.raw,
     });
   }
 

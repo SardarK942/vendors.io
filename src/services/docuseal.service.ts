@@ -224,6 +224,17 @@ export async function createForBooking(
       logger.error('docuseal.createForBooking: persist failed after submission created', uErr, {
         bookingId,
       });
+      // The DocuSeal draft now exists but we hold no reference to it. Route the row through
+      // markFailed (retryable) so runSweep's retry branch recovers it instead of leaving it
+      // stuck in 'pending'. Tradeoff: the retry may create a second draft, orphaning this one
+      // (the already-accepted orphan window).
+      await markFailed(
+        supabase,
+        contract.id,
+        contract.attempt_count,
+        'Failed to persist contract after submission created',
+        false
+      );
       return { error: 'Failed to persist contract', status: 500 };
     }
 

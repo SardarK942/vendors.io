@@ -2,11 +2,12 @@ import { describe, expect, test } from 'vitest';
 import { formatAgreedPrice, formatEventSchedule, prefillSchema } from '@/lib/docuseal/prefill';
 
 describe('formatEventSchedule', () => {
-  test('renders multi-function events ordered by date', () => {
+  // Production input is booking_events.event_type_label: a human label or free text, not an id.
+  test('renders multi-function events ordered by date, labels passed through', () => {
     const out = formatEventSchedule([
-      { eventType: 'walima', eventDate: '2026-05-03' },
-      { eventType: 'mehndi', eventDate: '2026-05-01' },
-      { eventType: 'wedding', eventDate: '2026-05-02' },
+      { eventType: 'Walima / Wedding Feast', eventDate: '2026-05-03' },
+      { eventType: 'Mehndi / Henna', eventDate: '2026-05-01' },
+      { eventType: 'Wedding / Shaadi', eventDate: '2026-05-02' },
     ]);
     const lines = out.split('\n');
     expect(lines).toHaveLength(3);
@@ -16,15 +17,17 @@ describe('formatEventSchedule', () => {
   });
 
   test('renders a single-function booking as one line', () => {
-    expect(formatEventSchedule([{ eventType: 'reception', eventDate: '2026-12-31' }])).toBe(
-      'Reception — Dec 31, 2026'
+    expect(formatEventSchedule([{ eventType: 'Haldi', eventDate: '2026-12-31' }])).toBe(
+      'Haldi — Dec 31, 2026'
     );
   });
 
-  test('falls back to title-case for unknown event types', () => {
-    expect(formatEventSchedule([{ eventType: 'garden_party', eventDate: '2026-01-05' }])).toBe(
-      'Garden Party — Jan 5, 2026'
-    );
+  test('passes free-text labels through unchanged', () => {
+    expect(
+      formatEventSchedule([
+        { eventType: "Sangeet & Dinner (Priya's side)", eventDate: '2026-01-05' },
+      ])
+    ).toBe("Sangeet & Dinner (Priya's side) — Jan 5, 2026");
   });
 });
 

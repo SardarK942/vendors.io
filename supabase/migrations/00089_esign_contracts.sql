@@ -40,14 +40,8 @@ CREATE INDEX IF NOT EXISTS booking_contracts_submission_idx ON booking_contracts
 
 ALTER TABLE booking_contracts ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Vendors view own booking contracts" ON booking_contracts
-  FOR SELECT TO authenticated
-  USING (vendor_profile_id IN (SELECT id FROM vendor_profiles WHERE user_id = auth.uid()));
-
-CREATE POLICY "Couples view own booking contracts" ON booking_contracts
-  FOR SELECT TO authenticated
-  USING (booking_id IN (SELECT id FROM bookings WHERE couple_user_id = auth.uid()));
-
+-- Service-role-only for now: rows carry sensitive signing slugs (capability URLs). A future read UI
+-- should expose a slug-free view/columns rather than reopening owner SELECT on this table.
 CREATE POLICY "Service role manages booking contracts" ON booking_contracts
   FOR ALL TO service_role USING (true) WITH CHECK (true);
 

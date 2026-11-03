@@ -14,7 +14,12 @@ import type { Database } from '@/types/database.types';
 
 type Row = Record<string, unknown>;
 
-function makeDb(opts: { booking?: Row | null; events?: Row[]; contracts?: Row[] }) {
+function makeDb(opts: {
+  booking?: Row | null;
+  events?: Row[];
+  contracts?: Row[];
+  failSentUpdate?: boolean;
+}) {
   const contracts: Row[] = opts.contracts ?? [];
   const updates: Row[] = [];
   let inserts = 0;
@@ -41,6 +46,8 @@ function makeDb(opts: { booking?: Row | null; events?: Row[]; contracts?: Row[] 
         return { data: row, error: null };
       }
       if (mode === 'update') {
+        if (opts.failSentUpdate && payload.status === 'sent_vendor')
+          return { data: null, error: { message: 'db down' } };
         updates.push(payload);
         const row = contracts.find((c) => c[filterCol as string] === filterVal);
         if (row) Object.assign(row, payload);
@@ -125,6 +132,19 @@ describe('createForBooking', () => {
       couple_slug: 'cslug',
       template_id_used: 'tpl-1',
     });
+  });
+
+  test('createSubmission ok but persist fails -> row ends failed (retryable), not pending', async () => {
+    const db = makeDb({ booking: booking(), events, failSentUpdate: true });
+    const r = await createForBooking(db.client, 'b1');
+    expect(r.error).toBeTruthy();
+    expect(db.contracts[0]).toMatchObject({
+      status: 'failed',
+      error_permanent: false,
+      attempt_count: 1,
+    });
+    expect(db.contracts[0].next_retry_at).toBeTruthy();
+    expect(sendEmail).not.toHaveBeenCalled();
   });
 
   test('duplicate call does not create a second row or call DocuSeal again', async () => {
