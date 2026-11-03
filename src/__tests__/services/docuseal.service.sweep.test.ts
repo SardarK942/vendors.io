@@ -53,7 +53,8 @@ function makeDb(contracts: Row[]) {
           },
           error: null,
         };
-      if (table === 'booking_events') return { data: [], error: null };
+      if (table === 'booking_events')
+        return { data: [{ event_type_label: 'Wedding', event_date: '2027-06-01' }], error: null };
       if (patch) {
         const rows = matches();
         rows.forEach((r) => Object.assign(r, patch));
