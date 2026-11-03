@@ -9,7 +9,12 @@ import {
 } from '@/lib/docuseal/client';
 import { storeContractArtifact } from '@/lib/storage/contracts-store';
 import { formatAgreedPrice, formatEventSchedule, prefillSchema } from '@/lib/docuseal/prefill';
-import { sendContractSignedCopyEmail, sendContractSigningRequestEmail } from '@/lib/email/resend';
+import {
+  sendContractReminderEmail,
+  sendContractSignedCopyEmail,
+  sendContractSigningRequestEmail,
+} from '@/lib/email/resend';
+import { selectSweepActions, type ContractSweepRow } from '@/lib/contracts/sweep';
 import { logger } from '@/lib/logger';
 
 type Client = SupabaseClient<Database>;
@@ -471,6 +476,102 @@ export async function voidForBooking(
     return { data: undefined, status: 200 };
   } catch (e) {
     logger.error('docuseal.voidForBooking: failed', e, { bookingId });
+    return { error: e instanceof Error ? e.message : 'Unexpected error', status: 500 };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Daily sweep: reminders, expiry, transient-failure retries
+// ---------------------------------------------------------------------------
+
+export type SweepCounts = { reminded: number; expired: number; retried: number };
+
+type SweepCandidate = ContractSweepRow & {
+  booking_id: string;
+  docuseal_submission_id: string | null;
+  vendor_slug: string | null;
+  couple_slug: string | null;
+};
+
+/**
+ * Run the contract sweep. Never throws. Each side-effect is isolated so one
+ * failure never aborts the batch; counts reflect successes only. Reminder
+ * stamps and expiry use guarded updates so a row that completed/voided
+ * meanwhile is not clobbered.
+ */
+export async function runSweep(supabase: Client): Promise<ServiceResult<SweepCounts>> {
+  try {
+    const { data, error } = await supabase
+      .from('booking_contracts')
+      .select(
+        'id, status, created_at, last_reminder_at, expires_at, error_permanent, attempt_count, next_retry_at, booking_id, docuseal_submission_id, vendor_slug, couple_slug'
+      )
+      .in('status', ['sent_vendor', 'sent_couple', 'failed']);
+    if (error) return { error: error.message, status: 500 };
+
+    const rows = (data ?? []) as unknown as SweepCandidate[];
+    const byId = new Map(rows.map((r) => [r.id, r]));
+    const now = new Date();
+    const actions = selectSweepActions(rows, now);
+    const counts: SweepCounts = { reminded: 0, expired: 0, retried: 0 };
+    const base = (process.env.DOCUSEAL_API_URL ?? '').replace(/\/+$/, '');
+
+    for (const { id, party } of actions.reminders) {
+      const row = byId.get(id);
+      try {
+        if (!row) continue;
+        const slug = party === 'vendor' ? row.vendor_slug : row.couple_slug;
+        const parties = await loadParties(supabase, row.booking_id);
+        const to = party === 'vendor' ? parties?.vendorEmail : parties?.coupleEmail;
+        if (!parties || !to || !slug) continue;
+        const sent = await sendContractReminderEmail(to, party, `${base}/s/${slug}`, {
+          vendorName: parties.vendorName,
+        });
+        if (!sent) continue;
+        const stamped = await guardedUpdate(supabase, id, [row.status as ContractStatus], {
+          last_reminder_at: now.toISOString(),
+        });
+        if (stamped) counts.reminded++;
+      } catch (e) {
+        logger.error('docuseal.runSweep: reminder failed', e, { contractId: id });
+      }
+    }
+
+    for (const id of actions.expiries) {
+      const row = byId.get(id);
+      try {
+        if (!row) continue;
+        if (row.docuseal_submission_id) await archiveSubmission(row.docuseal_submission_id);
+        const applied = await guardedUpdate(supabase, id, ['sent_vendor', 'sent_couple'], {
+          status: 'expired',
+        });
+        if (applied) counts.expired++;
+      } catch (e) {
+        logger.error('docuseal.runSweep: expiry failed', e, { contractId: id });
+      }
+    }
+
+    for (const id of actions.retries) {
+      const row = byId.get(id);
+      try {
+        if (!row) continue;
+        const res = await createForBooking(supabase, row.booking_id);
+        if (res.error) {
+          logger.warn('docuseal.runSweep: retry did not succeed', {
+            contractId: id,
+            error: res.error,
+          });
+        } else {
+          counts.retried++;
+        }
+      } catch (e) {
+        logger.error('docuseal.runSweep: retry failed', e, { contractId: id });
+      }
+    }
+
+    return { data: counts, status: 200 };
+  } catch (e) {
+    logger.error('docuseal.runSweep: unexpected error', e);
     return { error: e instanceof Error ? e.message : 'Unexpected error', status: 500 };
   }
 }
