@@ -1,9 +1,15 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
 import type { Database } from '@/types/database.types';
 import type { ServiceResult } from '@/types';
-import { createSubmission } from '@/lib/docuseal/client';
+import {
+  archiveSubmission,
+  createSubmission,
+  downloadArtifact,
+  getSubmission,
+} from '@/lib/docuseal/client';
+import { storeContractArtifact } from '@/lib/storage/contracts-store';
 import { formatAgreedPrice, formatEventSchedule, prefillSchema } from '@/lib/docuseal/prefill';
-import { sendContractSigningRequestEmail } from '@/lib/email/resend';
+import { sendContractSignedCopyEmail, sendContractSigningRequestEmail } from '@/lib/email/resend';
 import { logger } from '@/lib/logger';
 
 type Client = SupabaseClient<Database>;
@@ -228,6 +234,243 @@ export async function createForBooking(
     return { data: { contractId: contract.id, status: 'sent_vendor' }, status: 201 };
   } catch (e) {
     logger.error('docuseal.createForBooking: unexpected error', e, { bookingId });
+    return { error: e instanceof Error ? e.message : 'Unexpected error', status: 500 };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Webhook event application, artifact storage, void
+// ---------------------------------------------------------------------------
+
+/** DocuSeal event-type strings. Reconfirm against the live instance at integration. */
+export const DOCUSEAL_EVENT_FORM_COMPLETED = 'form.completed';
+export const DOCUSEAL_EVENT_SUBMISSION_COMPLETED = 'submission.completed';
+export const DOCUSEAL_EVENT_FORM_DECLINED = 'form.declined';
+
+export type DocusealEvent = {
+  type: string;
+  submissionId: string;
+  externalId?: string;
+  role?: 'Vendor' | 'Couple';
+};
+
+type ContractStatus = ContractRow['status'];
+
+const RANK: Partial<Record<ContractStatus, number>> = {
+  pending: 0,
+  sent_vendor: 1,
+  sent_couple: 2,
+  completed: 3,
+};
+
+const TERMINAL: ContractStatus[] = ['declined', 'expired', 'voided', 'failed'];
+
+/** Forward-only rank. Terminals (declined/expired/voided/failed) are absorbing: -1. */
+export function statusRank(status: string): number {
+  return RANK[status as ContractStatus] ?? -1;
+}
+
+function isTerminal(status: string): boolean {
+  return (TERMINAL as string[]).includes(status);
+}
+
+type Parties = {
+  vendorName: string;
+  vendorEmail: string | null;
+  coupleEmail: string | null;
+  eventSchedule: string;
+};
+
+async function loadParties(supabase: Client, bookingId: string): Promise<Parties | null> {
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select(
+      'id, couple_email, users!couple_user_id(email), vendor_profiles!inner(business_name, users!user_id(email))'
+    )
+    .eq('id', bookingId)
+    .single();
+  if (!booking) return null;
+  const vendor = one(booking.vendor_profiles) as unknown as {
+    business_name: string;
+    users: { email: string } | { email: string }[] | null;
+  } | null;
+  const coupleUser = one(
+    booking.users as unknown as { email: string | null } | { email: string | null }[] | null
+  );
+  const { data: events } = await supabase
+    .from('booking_events')
+    .select('event_type_label, event_date')
+    .eq('booking_id', bookingId);
+  return {
+    vendorName: vendor?.business_name ?? '',
+    vendorEmail: one(vendor?.users)?.email ?? null,
+    coupleEmail: booking.couple_email ?? coupleUser?.email ?? null,
+    eventSchedule: formatEventSchedule(
+      (events ?? []).map((e) => ({ eventType: e.event_type_label, eventDate: e.event_date }))
+    ),
+  };
+}
+
+/** Guarded forward update: only applies if the row is still in one of `from`. */
+async function guardedUpdate(
+  supabase: Client,
+  id: string,
+  from: ContractStatus[],
+  patch: Database['public']['Tables']['booking_contracts']['Update']
+): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('booking_contracts')
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .in('status', from)
+    .select('id');
+  if (error) throw new Error(error.message);
+  return Array.isArray(data) ? data.length > 0 : true;
+}
+
+/**
+ * Apply a normalized DocuSeal webhook event. Never throws. Forward-only and
+ * idempotent: duplicate / out-of-order events return success with the current
+ * status; terminal rows are never advanced. Storage/fetch failures on
+ * submission.completed return an error (5xx) so DocuSeal retries.
+ */
+export async function applyWebhookEvent(
+  supabase: Client,
+  event: DocusealEvent
+): Promise<ServiceResult<{ status: string }>> {
+  try {
+    const { data: contract } = await supabase
+      .from('booking_contracts')
+      .select('*')
+      .eq('docuseal_submission_id', event.submissionId)
+      .maybeSingle();
+    if (!contract) return { error: 'Contract not found', status: 404 };
+    const current = contract.status;
+    const noop = (): ServiceResult<{ status: string }> => ({
+      data: { status: current },
+      status: 200,
+    });
+    if (isTerminal(current)) return noop();
+
+    if (event.type === DOCUSEAL_EVENT_FORM_DECLINED) {
+      if (current === 'completed') return noop();
+      const applied = await guardedUpdate(
+        supabase,
+        contract.id,
+        ['pending', 'sent_vendor', 'sent_couple'],
+        {
+          status: 'declined',
+          declined_at: new Date().toISOString(),
+        }
+      );
+      return { data: { status: applied ? 'declined' : current }, status: 200 };
+    }
+
+    if (event.type === DOCUSEAL_EVENT_FORM_COMPLETED) {
+      if (event.role !== 'Vendor') return noop(); // couple completion is handled by submission.completed
+      if (statusRank(current) >= statusRank('sent_couple')) return noop();
+      const applied = await guardedUpdate(supabase, contract.id, ['pending', 'sent_vendor'], {
+        status: 'sent_couple',
+        vendor_signed_at: new Date().toISOString(),
+      });
+      if (!applied) return noop();
+      const parties = await loadParties(supabase, contract.booking_id);
+      if (parties?.coupleEmail && contract.couple_slug) {
+        const base = (process.env.DOCUSEAL_API_URL ?? '').replace(/\/+$/, '');
+        await sendContractSigningRequestEmail(
+          parties.coupleEmail,
+          'couple',
+          `${base}/s/${contract.couple_slug}`,
+          { vendorName: parties.vendorName, eventSchedule: parties.eventSchedule }
+        ).catch(() => false);
+      }
+      return { data: { status: 'sent_couple' }, status: 200 };
+    }
+
+    if (event.type === DOCUSEAL_EVENT_SUBMISSION_COMPLETED) {
+      if (current === 'completed') return noop();
+      const detail = await getSubmission(event.submissionId);
+      const doc = detail.documents[0];
+      if (!doc || !detail.auditLogUrl) {
+        return { error: 'Signed artifacts not available yet', status: 502 };
+      }
+      const [pdf, cert] = await Promise.all([
+        downloadArtifact(doc.url),
+        downloadArtifact(detail.auditLogUrl),
+      ]);
+      const signedKey = await storeContractArtifact({
+        bookingId: contract.booking_id,
+        kind: 'signed',
+        body: pdf,
+        contentType: 'application/pdf',
+      });
+      const certKey = await storeContractArtifact({
+        bookingId: contract.booking_id,
+        kind: 'certificate',
+        body: cert,
+        contentType: 'application/pdf',
+      });
+      const now = new Date().toISOString();
+      const applied = await guardedUpdate(
+        supabase,
+        contract.id,
+        ['pending', 'sent_vendor', 'sent_couple'],
+        {
+          status: 'completed',
+          signed_pdf_key: signedKey,
+          certificate_key: certKey,
+          couple_signed_at: now,
+          completed_at: now,
+        }
+      );
+      if (!applied) return noop(); // lost a race to a terminal state
+      const parties = await loadParties(supabase, contract.booking_id);
+      if (parties) {
+        const attachment = { filename: 'signed-contract.pdf', content: pdf };
+        for (const to of [parties.vendorEmail, parties.coupleEmail]) {
+          if (to) {
+            await sendContractSignedCopyEmail(
+              to,
+              { vendorName: parties.vendorName },
+              attachment
+            ).catch(() => false);
+          }
+        }
+      }
+      return { data: { status: 'completed' }, status: 200 };
+    }
+
+    return noop(); // unknown event types are ignored
+  } catch (e) {
+    logger.error('docuseal.applyWebhookEvent: failed', e, { submissionId: event.submissionId });
+    return { error: e instanceof Error ? e.message : 'Unexpected error', status: 500 };
+  }
+}
+
+/** Void a non-terminal contract (archive in DocuSeal + mark voided). No-op if terminal/absent. */
+export async function voidForBooking(
+  supabase: Client,
+  bookingId: string
+): Promise<ServiceResult<void>> {
+  try {
+    const { data: contract } = await supabase
+      .from('booking_contracts')
+      .select('*')
+      .eq('booking_id', bookingId)
+      .maybeSingle();
+    if (!contract || isTerminal(contract.status) || contract.status === 'completed') {
+      return { data: undefined, status: 200 };
+    }
+    if (contract.docuseal_submission_id) {
+      await archiveSubmission(contract.docuseal_submission_id);
+    }
+    await guardedUpdate(supabase, contract.id, ['pending', 'sent_vendor', 'sent_couple'], {
+      status: 'voided',
+      voided_at: new Date().toISOString(),
+    });
+    return { data: undefined, status: 200 };
+  } catch (e) {
+    logger.error('docuseal.voidForBooking: failed', e, { bookingId });
     return { error: e instanceof Error ? e.message : 'Unexpected error', status: 500 };
   }
 }

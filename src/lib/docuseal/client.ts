@@ -136,3 +136,11 @@ export async function getSubmission(submissionId: string): Promise<SubmissionDet
 export async function archiveSubmission(submissionId: string): Promise<void> {
   await request('DELETE', `/submissions/${encodeURIComponent(submissionId)}`);
 }
+
+/** Download a DocuSeal-hosted artifact (signed PDF / audit log) with the API token. */
+export async function downloadArtifact(url: string): Promise<Buffer> {
+  const { token } = docusealConfig();
+  const res = await fetch(url, { headers: { 'X-Auth-Token': token } });
+  if (!res.ok) throw new Error(`DocuSeal artifact download failed: ${res.status}`);
+  return Buffer.from(await res.arrayBuffer());
+}
