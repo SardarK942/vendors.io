@@ -14,6 +14,7 @@ import {
 import { sendEventCompletedEmail } from '@/lib/email/event-completed';
 import { logger } from '@/lib/logger';
 import { deliver } from '@/lib/notifications/deliver';
+import { createForBooking, voidForBooking } from '@/services/docuseal.service';
 import {
   notifyDepositPaid,
   notifyBookingConfirmed,
@@ -198,6 +199,12 @@ export async function handlePaymentSuccess(
       }
     })();
   }
+
+  // E-sign: generate the contract once the deposit is secured. deliver() swallows
+  // and logs failures so a DocuSeal/Resend error can never fail the Stripe webhook.
+  await deliver('esign-create', () => createForBooking(supabase, bookingId), {
+    booking_id: bookingId,
+  });
 }
 
 export async function handlePaymentFailure(
@@ -229,7 +236,9 @@ export async function handleChargeRefunded(
   // Without this, the platform is short by the vendor share.
   const { data: tx } = await supabase
     .from('transactions')
-    .select('id, stripe_transfer_id, transferred_at, refunded_at, vendor_payout')
+    .select(
+      'id, booking_request_id, stripe_transfer_id, transferred_at, refunded_at, vendor_payout'
+    )
     .eq('stripe_payment_intent_id', paymentIntentId)
     .is('refunded_at', null)
     .maybeSingle();
@@ -261,6 +270,14 @@ export async function handleChargeRefunded(
     })
     .eq('stripe_payment_intent_id', paymentIntentId)
     .is('refunded_at', null);
+
+  // E-sign: void any open contract for the refunded booking (failure-isolated).
+  if (tx?.booking_request_id) {
+    const refundedBookingId = tx.booking_request_id;
+    await deliver('esign-void', () => voidForBooking(supabase, refundedBookingId), {
+      booking_id: refundedBookingId,
+    });
+  }
 }
 
 // ─── Refund Policy ────────────────────────────────────────────────────────────
@@ -390,6 +407,11 @@ export async function cancelBooking(
       status: 409,
     };
   }
+
+  // E-sign: void any open contract now that the cancel is committed (failure-isolated).
+  await deliver('esign-void', () => voidForBooking(supabase, bookingId), {
+    booking_id: bookingId,
+  });
 
   // Pre-deposit: no money to move.
   const preDepositStatuses = [
