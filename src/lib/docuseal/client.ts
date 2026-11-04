@@ -1,7 +1,14 @@
 // DocuSeal API client (self-hosted). Server-only: reads secrets from env.
 //
+// DOCUSEAL_API_URL is the instance HOST ROOT (e.g. http://localhost:3030).
+// Self-hosted DocuSeal serves its REST API under `/api`, so this client
+// prepends `/api` to every endpoint. The public signing page lives at the
+// host root (`${DOCUSEAL_API_URL}/s/{slug}`), which is why the base stays the
+// host root rather than the `/api` path — the service layer builds signer
+// links off the same env var.
+//
 // NOTE: wire shapes below follow DocuSeal's documented public API
-// (POST /submissions, GET /submissions/{id}, DELETE /submissions/{id} = archive,
+// (POST /api/submissions, GET /api/submissions/{id}, DELETE /api/submissions/{id} = archive,
 // auth via `X-Auth-Token`). They were NOT verified against a live instance;
 // reconfirm paths and field names against the running instance before enabling.
 // The rest of the codebase must depend only on the exported types below.
@@ -72,7 +79,7 @@ export async function createSubmission(
   input: CreateSubmissionInput
 ): Promise<CreateSubmissionResult> {
   const templateId = Number(input.templateId);
-  const json = await request('POST', '/submissions', {
+  const json = await request('POST', '/api/submissions', {
     template_id: Number.isNaN(templateId) ? input.templateId : templateId,
     send_email: input.sendEmail,
     order: input.order,
@@ -112,7 +119,7 @@ export async function createSubmission(
 }
 
 export async function getSubmission(submissionId: string): Promise<SubmissionDetail> {
-  const json = await request('GET', `/submissions/${encodeURIComponent(submissionId)}`);
+  const json = await request('GET', `/api/submissions/${encodeURIComponent(submissionId)}`);
   if (!isRecord(json) || typeof json.status !== 'string') {
     throw new Error('DocuSeal get submission: unexpected response shape');
   }
@@ -132,9 +139,37 @@ export async function getSubmission(submissionId: string): Promise<SubmissionDet
   };
 }
 
-// DocuSeal "archive" = DELETE /submissions/{id} (soft-archives the submission).
+/**
+ * Map each template field NAME to the role (submitter name) that owns it.
+ * DocuSeal validates submission fields per-submitter, so the caller must send a
+ * field only to the submitter whose role owns it. Fields with no name or whose
+ * submitter can't be resolved are skipped.
+ */
+export async function getTemplateFieldRoles(templateId: string): Promise<Map<string, string>> {
+  const json = await request('GET', `/api/templates/${encodeURIComponent(templateId)}`);
+  if (!isRecord(json)) throw new Error('DocuSeal get template: unexpected response shape');
+  const roleByUuid = new Map<string, string>();
+  if (Array.isArray(json.submitters)) {
+    for (const s of json.submitters) {
+      if (isRecord(s) && typeof s.uuid === 'string' && typeof s.name === 'string') {
+        roleByUuid.set(s.uuid, s.name);
+      }
+    }
+  }
+  const roleByField = new Map<string, string>();
+  if (Array.isArray(json.fields)) {
+    for (const f of json.fields) {
+      if (!isRecord(f) || typeof f.name !== 'string' || !f.name) continue;
+      const role = typeof f.submitter_uuid === 'string' ? roleByUuid.get(f.submitter_uuid) : null;
+      if (role) roleByField.set(f.name, role);
+    }
+  }
+  return roleByField;
+}
+
+// DocuSeal "archive" = DELETE /api/submissions/{id} (soft-archives the submission).
 export async function archiveSubmission(submissionId: string): Promise<void> {
-  await request('DELETE', `/submissions/${encodeURIComponent(submissionId)}`);
+  await request('DELETE', `/api/submissions/${encodeURIComponent(submissionId)}`);
 }
 
 /** Download a DocuSeal-hosted artifact (signed PDF / audit log) with the API token. */

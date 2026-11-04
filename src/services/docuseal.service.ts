@@ -6,6 +6,7 @@ import {
   createSubmission,
   downloadArtifact,
   getSubmission,
+  getTemplateFieldRoles,
 } from '@/lib/docuseal/client';
 import { storeContractArtifact } from '@/lib/storage/contracts-store';
 import { formatAgreedPrice, formatEventSchedule, prefillSchema } from '@/lib/docuseal/prefill';
@@ -163,7 +164,7 @@ export async function createForBooking(
     if (!prefill.success) return fail('Contract prefill invalid', true, 422);
     if (!vendorEmail || !coupleEmail) return fail('Missing signer email', true, 422);
 
-    const fields = [
+    const allFields = [
       { name: 'agreed_price', defaultValue: prefill.data.agreedPrice, readonly: true },
       { name: 'event_schedule', defaultValue: prefill.data.eventSchedule, readonly: true },
       { name: 'couple_name', defaultValue: prefill.data.coupleName },
@@ -173,6 +174,13 @@ export async function createForBooking(
 
     let result;
     try {
+      // DocuSeal validates fields per-submitter (sending a field to a submitter
+      // whose role doesn't own it is a 422). Route each prefill value to the
+      // role that owns that field in the template; values whose field the
+      // template lacks (e.g. a vendor's own template) are simply dropped.
+      const fieldRoles = await getTemplateFieldRoles(templateId);
+      const fieldsFor = (role: 'Vendor' | 'Couple') =>
+        allFields.filter((f) => fieldRoles.get(f.name) === role);
       result = await createSubmission({
         templateId,
         order: 'preserved',
@@ -186,7 +194,7 @@ export async function createForBooking(
             email: vendorEmail,
             externalId: `${bookingId}:vendor`,
             order: 1,
-            fields,
+            fields: fieldsFor('Vendor'),
           },
           {
             role: 'Couple',
@@ -194,7 +202,7 @@ export async function createForBooking(
             email: coupleEmail,
             externalId: `${bookingId}:couple`,
             order: 2,
-            fields,
+            fields: fieldsFor('Couple'),
           },
         ],
       });

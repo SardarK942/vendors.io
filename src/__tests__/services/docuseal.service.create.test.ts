@@ -1,8 +1,12 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 const createSubmission = vi.fn();
+const getTemplateFieldRoles = vi.fn();
 const sendEmail = vi.fn();
-vi.mock('@/lib/docuseal/client', () => ({ createSubmission: (i: unknown) => createSubmission(i) }));
+vi.mock('@/lib/docuseal/client', () => ({
+  createSubmission: (i: unknown) => createSubmission(i),
+  getTemplateFieldRoles: (id: unknown) => getTemplateFieldRoles(id),
+}));
 vi.mock('@/lib/email/resend', () => ({
   sendContractSigningRequestEmail: (...a: unknown[]) => sendEmail(...a),
 }));
@@ -106,6 +110,15 @@ beforeEach(() => {
       { role: 'Couple', slug: 'cslug' },
     ],
   });
+  // Boilerplate template field→role map: 3 fields on Vendor, couple_name on Couple.
+  getTemplateFieldRoles.mockResolvedValue(
+    new Map([
+      ['agreed_price', 'Vendor'],
+      ['event_schedule', 'Vendor'],
+      ['vendor_name', 'Vendor'],
+      ['couple_name', 'Couple'],
+    ])
+  );
   sendEmail.mockResolvedValue(true);
 });
 
@@ -209,5 +222,15 @@ describe('createForBooking', () => {
     expect(price).toMatchObject({ defaultValue: '$2,500.00', readonly: true });
     expect(sched?.readonly).toBe(true);
     expect(sched?.defaultValue.split('\n')).toHaveLength(2);
+  });
+
+  test('scopes fields per submitter: Couple gets only couple_name, Vendor never gets it', async () => {
+    const db = makeDb({ booking: booking(), events });
+    await createForBooking(db.client, 'b1');
+    const input = createSubmission.mock.calls[0][0];
+    const names = (i: number) =>
+      (input.submitters[i].fields as Array<{ name: string }>).map((f) => f.name);
+    expect(names(0)).toEqual(['agreed_price', 'event_schedule', 'vendor_name']); // Vendor
+    expect(names(1)).toEqual(['couple_name']); // Couple
   });
 });

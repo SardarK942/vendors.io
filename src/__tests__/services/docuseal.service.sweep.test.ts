@@ -1,10 +1,12 @@
 import { describe, test, expect, vi, beforeEach } from 'vitest';
 
 const createSubmission = vi.fn();
+const getTemplateFieldRoles = vi.fn();
 const archiveSubmission = vi.fn();
 const sendReminder = vi.fn();
 vi.mock('@/lib/docuseal/client', () => ({
   createSubmission: (...a: unknown[]) => createSubmission(...a),
+  getTemplateFieldRoles: (...a: unknown[]) => getTemplateFieldRoles(...a),
   getSubmission: vi.fn(),
   archiveSubmission: (...a: unknown[]) => archiveSubmission(...a),
   downloadArtifact: vi.fn(),
@@ -118,6 +120,14 @@ beforeEach(() => {
       { role: 'Couple', slug: 'nc' },
     ],
   });
+  getTemplateFieldRoles.mockResolvedValue(
+    new Map([
+      ['agreed_price', 'Vendor'],
+      ['event_schedule', 'Vendor'],
+      ['vendor_name', 'Vendor'],
+      ['couple_name', 'Couple'],
+    ])
+  );
 });
 
 describe('runSweep', () => {

@@ -4,6 +4,7 @@ import {
   createSubmission,
   docusealConfig,
   getSubmission,
+  getTemplateFieldRoles,
 } from '@/lib/docuseal/client';
 
 const input = {
@@ -38,7 +39,8 @@ function jsonRes(body: unknown, status = 200): Response {
 describe('docuseal client', () => {
   const fetchMock = vi.fn();
   beforeEach(() => {
-    process.env.DOCUSEAL_API_URL = 'https://sign.example.com/api/';
+    // DOCUSEAL_API_URL is the host root; the client prepends `/api`.
+    process.env.DOCUSEAL_API_URL = 'https://sign.example.com';
     process.env.DOCUSEAL_API_TOKEN = 'tok';
     fetchMock.mockReset();
     vi.stubGlobal('fetch', fetchMock);
@@ -117,5 +119,31 @@ describe('docuseal client', () => {
     const [url, init] = fetchMock.mock.calls[0];
     expect(url).toBe('https://sign.example.com/api/submissions/7');
     expect(init.method).toBe('DELETE');
+  });
+
+  it('getTemplateFieldRoles maps each field name to its submitter role', async () => {
+    fetchMock.mockResolvedValue(
+      jsonRes({
+        id: 2,
+        submitters: [
+          { uuid: 'u-vendor', name: 'Vendor' },
+          { uuid: 'u-couple', name: 'Couple' },
+        ],
+        fields: [
+          { name: 'vendor_name', submitter_uuid: 'u-vendor' },
+          { name: 'agreed_price', submitter_uuid: 'u-vendor' },
+          { name: 'couple_name', submitter_uuid: 'u-couple' },
+          { name: '', submitter_uuid: 'u-vendor' }, // signature field, no name -> skipped
+          { name: 'orphan', submitter_uuid: 'u-missing' }, // unknown submitter -> skipped
+        ],
+      })
+    );
+    const map = await getTemplateFieldRoles('2');
+    expect(fetchMock.mock.calls[0][0]).toBe('https://sign.example.com/api/templates/2');
+    expect(Object.fromEntries(map)).toEqual({
+      vendor_name: 'Vendor',
+      agreed_price: 'Vendor',
+      couple_name: 'Couple',
+    });
   });
 });
