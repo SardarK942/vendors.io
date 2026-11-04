@@ -1,6 +1,6 @@
 import { logger } from '@/lib/logger';
 
-export type DeliverKind = 'notify' | 'email';
+export type DeliverKind = 'notify' | 'email' | 'esign-create' | 'esign-void';
 
 export async function deliver<T>(
   kind: DeliverKind,

@@ -41,6 +41,7 @@
  *   - 00083 user_measurement_profiles table (made-to-measure reusable body-measurement profiles)
  *   - 00084 products.customization_types (text[]) + products.mtm_surcharge_cents (stitching-level discriminator)
  *   - 00085 vendor_profiles.vendor_origin + vendor_country + vendor_currency (local vs international fork)
+ *   - 00089 booking_contracts + docuseal_events + vendor_profiles.docuseal_template_id (e-sign contracts)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts
@@ -343,6 +344,7 @@ export interface Database {
           vendor_origin: VendorOrigin;
           vendor_country: string | null;
           vendor_currency: string;
+          docuseal_template_id: string | null;
         };
         Insert: {
           id?: string;
@@ -411,6 +413,7 @@ export interface Database {
           vendor_origin?: VendorOrigin;
           vendor_country?: string | null;
           vendor_currency?: string;
+          docuseal_template_id?: string | null;
         };
         Update: {
           user_id?: string;
@@ -477,6 +480,7 @@ export interface Database {
           vendor_origin?: VendorOrigin;
           vendor_country?: string | null;
           vendor_currency?: string;
+          docuseal_template_id?: string | null;
         };
         Relationships: [
           {
@@ -1414,6 +1418,148 @@ export interface Database {
           duration_ms?: number | null;
           result?: unknown | null;
           error?: string | null;
+        };
+        Relationships: [];
+      };
+      booking_contracts: {
+        Row: {
+          id: string;
+          booking_id: string;
+          vendor_profile_id: string | null;
+          docuseal_submission_id: string | null;
+          template_id_used: string | null;
+          status:
+            | 'pending'
+            | 'sent_vendor'
+            | 'sent_couple'
+            | 'completed'
+            | 'declined'
+            | 'expired'
+            | 'voided'
+            | 'failed';
+          vendor_slug: string | null;
+          couple_slug: string | null;
+          signed_pdf_key: string | null;
+          certificate_key: string | null;
+          vendor_signed_at: string | null;
+          couple_signed_at: string | null;
+          completed_at: string | null;
+          expires_at: string | null;
+          declined_at: string | null;
+          voided_at: string | null;
+          last_reminder_at: string | null;
+          attempt_count: number;
+          next_retry_at: string | null;
+          error: string | null;
+          error_permanent: boolean;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          booking_id: string;
+          vendor_profile_id?: string | null;
+          docuseal_submission_id?: string | null;
+          template_id_used?: string | null;
+          status?:
+            | 'pending'
+            | 'sent_vendor'
+            | 'sent_couple'
+            | 'completed'
+            | 'declined'
+            | 'expired'
+            | 'voided'
+            | 'failed';
+          vendor_slug?: string | null;
+          couple_slug?: string | null;
+          signed_pdf_key?: string | null;
+          certificate_key?: string | null;
+          vendor_signed_at?: string | null;
+          couple_signed_at?: string | null;
+          completed_at?: string | null;
+          expires_at?: string | null;
+          declined_at?: string | null;
+          voided_at?: string | null;
+          last_reminder_at?: string | null;
+          attempt_count?: number;
+          next_retry_at?: string | null;
+          error?: string | null;
+          error_permanent?: boolean;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          booking_id?: string;
+          vendor_profile_id?: string | null;
+          docuseal_submission_id?: string | null;
+          template_id_used?: string | null;
+          status?:
+            | 'pending'
+            | 'sent_vendor'
+            | 'sent_couple'
+            | 'completed'
+            | 'declined'
+            | 'expired'
+            | 'voided'
+            | 'failed';
+          vendor_slug?: string | null;
+          couple_slug?: string | null;
+          signed_pdf_key?: string | null;
+          certificate_key?: string | null;
+          vendor_signed_at?: string | null;
+          couple_signed_at?: string | null;
+          completed_at?: string | null;
+          expires_at?: string | null;
+          declined_at?: string | null;
+          voided_at?: string | null;
+          last_reminder_at?: string | null;
+          attempt_count?: number;
+          next_retry_at?: string | null;
+          error?: string | null;
+          error_permanent?: boolean;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'booking_contracts_booking_id_fkey';
+            columns: ['booking_id'];
+            isOneToOne: true;
+            referencedRelation: 'bookings';
+            referencedColumns: ['id'];
+          },
+          {
+            foreignKeyName: 'booking_contracts_vendor_profile_id_fkey';
+            columns: ['vendor_profile_id'];
+            isOneToOne: false;
+            referencedRelation: 'vendor_profiles';
+            referencedColumns: ['id'];
+          },
+        ];
+      };
+      docuseal_events: {
+        Row: {
+          event_id: string;
+          event_type: string;
+          received_at: string;
+          handled_at: string | null;
+          error: string | null;
+          payload: unknown | null;
+        };
+        Insert: {
+          event_id: string;
+          event_type: string;
+          received_at?: string;
+          handled_at?: string | null;
+          error?: string | null;
+          payload?: unknown | null;
+        };
+        Update: {
+          event_type?: string;
+          handled_at?: string | null;
+          error?: string | null;
+          payload?: unknown | null;
         };
         Relationships: [];
       };
