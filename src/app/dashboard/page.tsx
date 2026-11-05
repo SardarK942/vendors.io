@@ -4,21 +4,38 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageTitle } from '@/components/dashboard/PageTitle';
-import { PauseProfileToggle } from '@/components/dashboard/PauseProfileToggle';
 import { EventCardGrid } from '@/components/dashboard/EventCardGrid';
 import { type EventCardData } from '@/components/dashboard/EventCard';
-import { InboxBlock } from '@/components/dashboard/InboxBlock';
-import { OperationsBlock } from '@/components/dashboard/OperationsBlock';
-import { AnalyticsTeaser } from '@/components/dashboard/AnalyticsTeaser';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
-import { BackfillBanner } from '@/components/dashboard/BackfillBanner';
 import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBanner';
-import { DashboardCalendarNudge } from '@/components/dashboard/calendar/DashboardCalendarNudge';
-import { getFeedStatus } from '@/services/calendar-feed.service';
 import { fmtDate } from '@/lib/intl';
+import { formatPrice } from '@/lib/utils';
 import { listEvents, getEventGraph } from '@/services/events.service';
 import { computeRollups } from '@/lib/events/derive';
 import { EventSummaryCard } from '@/components/events/EventSummaryCard';
+import {
+  StatCard,
+  QuickActionList,
+  QuickActionItem,
+  SectionHeading,
+  EmptyState,
+} from '@/components/dashboard/kit';
+import { WelcomeBanner } from '@/components/dashboard/home/WelcomeBanner';
+import { PromoCard } from '@/components/dashboard/home/PromoCard';
+import { UpcomingEventCard } from '@/components/dashboard/home/UpcomingEventCard';
+import { SupportCard } from '@/components/dashboard/home/SupportCard';
+import { getUnreadNotificationsCount } from '@/lib/dashboard/sidebar-counts';
+import { getOperationsBuckets } from '@/services/booking.service';
+import { getVendorAttribution } from '@/services/payment.attribution';
+import {
+  CalendarDays,
+  BookOpenCheck,
+  Wallet,
+  Bell,
+  Package,
+  CalendarCheck,
+  Calendar,
+} from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -192,114 +209,137 @@ export default async function DashboardPage() {
     );
   }
 
-  const feedStatus = await getFeedStatus(
-    supabase,
-    vendorProfile.id,
-    process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-  );
-  const { data: vpFlags } = await supabase
-    .from('vendor_profiles')
-    .select('calendar_feed_nudge_dismissed_at')
-    .eq('id', vendorProfile.id)
-    .single();
-  const nudgeDismissed = !!vpFlags?.calendar_feed_nudge_dismissed_at;
-
-  const vendorIsActive = vendorProfile.is_active !== false;
-
-  // Backfill banner: show when any of the 3 new filter fields is missing AND
-  // the vendor hasn't dismissed it yet. Both data sources are already fetched
-  // above (profile = users.*, vendorProfile = vendor_profiles.*).
-  const isMissingFields =
-    !vendorProfile.languages ||
-    vendorProfile.languages.length === 0 ||
-    vendorProfile.years_in_business === null ||
-    vendorProfile.years_in_business === undefined ||
-    vendorProfile.response_sla_hours === null ||
-    vendorProfile.response_sla_hours === undefined;
-  const showBackfill = isMissingFields && !profile?.profile_backfill_dismissed_at;
-
-  const { count: pkgCount } = await supabase
-    .from('packages')
-    .select('id', { count: 'exact', head: true })
-    .eq('vendor_profile_id', vendorProfile.id)
-    .eq('is_active', true);
-  const activePackageCount = pkgCount ?? 0;
-
-  // Bridal-wear vendors sell products through the Shop, not service packages.
-  const isBridalShopVendor = vendorProfile.category === 'bridal_wear';
-  let productCount = 0;
-  if (isBridalShopVendor) {
-    const { count: prodCount } = await supabase
-      .from('products')
+  // New vendor home (Figma redesign). All stats are real queries except where noted.
+  const [totalBookings, unreadNotificationsCount, buckets, attribution] = await Promise.all([
+    supabase
+      .from('bookings')
       .select('id', { count: 'exact', head: true })
-      .eq('vendor_profile_id', vendorProfile.id);
-    productCount = prodCount ?? 0;
-  }
+      .eq('vendor_profile_id', vendorProfile.id),
+    getUnreadNotificationsCount(supabase, user.id),
+    getOperationsBuckets(supabase, vendorProfile.id),
+    // Lifetime net earnings (95% of confirmed booking totals). getVendorAttribution
+    // throws on DB error — degrade to $0 rather than crashing the home page.
+    getVendorAttribution(supabase, vendorProfile.id, 'all').catch(() => null),
+  ]);
+
+  const totalBookingsCount = totalBookings.count ?? 0;
+  const upcomingEvents = [
+    ...buckets.today,
+    ...buckets.tomorrow,
+    ...buckets.thisWeek,
+    ...buckets.later,
+  ];
+  const upcomingEventsCount = upcomingEvents.length;
+  const totalEarnings = formatPrice(attribution?.netCents ?? 0);
+
+  // No per-event image exists on booking_events — fall back to the vendor's own
+  // first portfolio image (or null -> calendar placeholder).
+  const eventFallbackImage = (vendorProfile.portfolio_images ?? [])[0] ?? null;
 
   return (
-    <div className="space-y-6">
-      <DashboardCalendarNudge feedStatus={feedStatus} nudgeDismissed={nudgeDismissed} />
-      <BackfillBanner show={showBackfill} />
+    <div className="flex flex-col gap-6 lg:flex-row lg:gap-6">
+      {/* LEFT COLUMN */}
+      <div className="flex min-w-0 flex-1 flex-col gap-6">
+        <WelcomeBanner name={profile?.full_name || user.email || 'there'} />
 
-      <div>
-        <PageTitle>Home</PageTitle>
-        <p className="text-muted-foreground">Welcome back, {profile?.full_name || user.email}</p>
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <StatCard
+            icon={CalendarDays}
+            value={upcomingEventsCount}
+            label="Upcoming Events"
+            detail="Stay on track with your plans."
+            href="/dashboard/bookings"
+          />
+          <StatCard
+            icon={BookOpenCheck}
+            value={totalBookingsCount}
+            label="Total Bookings"
+            detail="View and manage your bookings."
+            href="/dashboard/bookings"
+          />
+          <StatCard
+            icon={Wallet}
+            value={totalEarnings}
+            label="Total Earnings"
+            detail="Track your revenue."
+            href="/dashboard/money"
+          />
+          <StatCard
+            icon={Bell}
+            value={unreadNotificationsCount}
+            label="New Notifications"
+            detail="Stay updated on your events."
+            href="/dashboard/notifications"
+          />
+        </div>
+
+        <div className="flex flex-col gap-4">
+          <SectionHeading
+            icon={CalendarDays}
+            title="Upcoming Events"
+            actionLabel="View all"
+            actionHref="/dashboard/bookings"
+          />
+          {upcomingEvents.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {upcomingEvents.slice(0, 4).map((ev) => (
+                <UpcomingEventCard
+                  key={ev.id}
+                  href={`/dashboard/bookings/${ev.booking_id}`}
+                  imageUrl={eventFallbackImage}
+                  title={ev.event_type_label || ev.couple_full_name || 'Booking'}
+                  subtitle={ev.couple_full_name || ev.city || ''}
+                  dateLabel={fmtDate(`${ev.event_date}T12:00:00`, {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  })}
+                />
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              icon={CalendarDays}
+              title="No events yet"
+              description="Once you have confirmed bookings, your upcoming events will show up here."
+            />
+          )}
+        </div>
       </div>
 
-      {/* Bridal-wear vendors sell products via the Shop — nudge them to list an
-          outfit instead of service packages. */}
-      {isBridalShopVendor && productCount === 0 && (
-        <Card className="border-yellow-200 bg-yellow-50 p-6">
-          <h2 className="font-semibold text-yellow-900">Start your catalog</h2>
-          <p className="mt-1 text-sm text-yellow-800">
-            You&rsquo;re live. Add your bridal and groom wear to your catalog so couples can browse
-            your pieces, sizes, and made-to-measure options.
-          </p>
-          <Button
-            asChild
-            size="lg"
-            className="mt-4 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
-          >
-            <Link href="/dashboard/profile/shop/new">+ Add to catalog</Link>
-          </Button>
-        </Card>
-      )}
+      {/* RIGHT COLUMN */}
+      <div className="flex w-full shrink-0 flex-col gap-6 lg:w-[320px]">
+        <PromoCard />
 
-      {/* Custom-request flow makes packages optional — this nudge only helps
-          service vendors who *do* sell fixed pricing tiers. Not for bridal-wear
-          vendors (they use the Shop). */}
-      {!isBridalShopVendor && activePackageCount === 0 && (
-        <Card className="border-yellow-200 bg-yellow-50 p-6">
-          <h2 className="font-semibold text-yellow-900">Sell fixed pricing tiers?</h2>
-          <p className="mt-1 text-sm text-yellow-800">
-            You&rsquo;re already live and can receive quote requests from couples. If you sell
-            packages (like a 3-hour photobooth or a bridal MUA tier), add them so couples can book
-            them in one click.
-          </p>
-          <Button
-            asChild
-            size="lg"
-            className="mt-4 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
-          >
-            <Link href="/dashboard/profile/packages/new">+ Add a package</Link>
-          </Button>
-        </Card>
-      )}
+        <QuickActionList title="Quick Actions">
+          <QuickActionItem
+            icon={Package}
+            title="Add Package"
+            description="Create a bookable package."
+            href="/dashboard/profile/packages/new"
+          />
+          <QuickActionItem
+            icon={CalendarCheck}
+            title="View Bookings"
+            description="Check your booking status."
+            href="/dashboard/bookings"
+          />
+          <QuickActionItem
+            icon={Calendar}
+            title="Calendar"
+            description="Manage your availability."
+            href="/dashboard/profile/calendar"
+          />
+          <QuickActionItem
+            icon={Bell}
+            title="View Notifications"
+            description="Stay updated."
+            href="/dashboard/notifications"
+          />
+        </QuickActionList>
 
-      {/* Paused profile banner (retained from A2) */}
-      {!vendorIsActive && activePackageCount > 0 && (
-        <Card className="border-yellow-200 bg-yellow-50 p-6">
-          <h2 className="font-semibold text-yellow-900">Your profile is paused</h2>
-          <p className="mt-1 text-sm text-yellow-800">
-            You won&rsquo;t appear in search until you resume your profile.
-          </p>
-          <PauseProfileToggle isActive={false} />
-        </Card>
-      )}
-
-      <InboxBlock vendorProfileId={vendorProfile.id} />
-      <OperationsBlock vendorProfileId={vendorProfile.id} />
-      <AnalyticsTeaser vendorProfileId={vendorProfile.id} />
+        <SupportCard />
+      </div>
     </div>
   );
 }

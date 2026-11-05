@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { GripVertical } from 'lucide-react';
+import { GripVertical, Package, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 import {
   DndContext,
@@ -24,13 +24,11 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import { PackageActiveToggle } from '@/components/dashboard/PackageActiveToggle';
 import { PackageFeaturedToggle } from '@/components/dashboard/PackageFeaturedToggle';
 import { PackagePreviewButton } from '@/components/dashboard/PackagePreviewButton';
-import { PackagePhotoFallback } from '@/components/marketplace/PackagePhotoFallback';
 import type { PackageWithAddons } from '@/components/marketplace/PackageGrid';
-import { fmtUSD } from '@/lib/intl';
+import { cn, formatPrice } from '@/lib/utils';
 import { formatPackageMeta } from '@/types';
 
 export type SortablePackage = PackageWithAddons & { is_active: boolean };
@@ -51,22 +49,25 @@ function SortableCard({ pkg, vendorSlug }: { pkg: SortablePackage; vendorSlug: s
     zIndex: isDragging ? 10 : undefined,
   };
 
+  const meta = formatPackageMeta({
+    durationHours: pkg.duration_hours,
+    maxGuests: pkg.max_guests,
+    capacityUnit: pkg.capacity_unit,
+  });
+  const metaLine = meta
+    ? `${formatPrice(pkg.base_price_cents)} · ${meta}`
+    : formatPrice(pkg.base_price_cents);
+
   return (
     <div ref={setNodeRef} style={style}>
-      <Card className={`relative overflow-hidden ${!pkg.is_active ? 'opacity-60' : ''}`}>
-        {/* Drag handle — isolated from the card's interactive controls so
-            clicking Edit/toggles never starts a drag. */}
-        <button
-          {...attributes}
-          {...listeners}
-          type="button"
-          aria-label={`Reorder ${pkg.name}`}
-          className="absolute right-2 top-2 z-10 cursor-grab touch-none rounded-full bg-cream/85 p-2 text-ink shadow-sm ring-1 ring-hairline transition-colors hover:bg-cream active:cursor-grabbing"
-        >
-          <GripVertical className="size-4" aria-hidden="true" />
-        </button>
-
-        <div className="relative h-40 w-full">
+      <div
+        className={cn(
+          'flex flex-col rounded-2xl border border-hairline bg-white p-2 transition-colors hover:border-indigo/30',
+          !pkg.is_active && 'opacity-60'
+        )}
+      >
+        {/* Image area */}
+        <div className="relative aspect-[16/10] overflow-hidden rounded-xl bg-cream-soft">
           {pkg.featured_image_url ? (
             <Image
               src={pkg.featured_image_url}
@@ -76,41 +77,56 @@ function SortableCard({ pkg, vendorSlug }: { pkg: SortablePackage; vendorSlug: s
               unoptimized
             />
           ) : (
-            <PackagePhotoFallback name={pkg.name} />
+            <div className="flex size-full items-center justify-center">
+              <Package className="size-8 text-ink-soft/60" aria-hidden="true" />
+            </div>
           )}
+
+          {pkg.is_featured && (
+            <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-haldi px-2.5 py-1 text-[11px] font-semibold text-ink">
+              <Sparkles className="size-3" aria-hidden="true" />
+              Most popular
+            </span>
+          )}
+
+          {/* Drag handle — isolated from the card's interactive controls so
+              clicking Edit/toggles never starts a drag. */}
+          <button
+            {...attributes}
+            {...listeners}
+            type="button"
+            aria-label={`Reorder ${pkg.name}`}
+            className="absolute right-2 top-2 z-10 cursor-grab touch-none rounded-full bg-cream/85 p-2 text-ink shadow-sm ring-1 ring-hairline transition-colors hover:bg-cream active:cursor-grabbing"
+          >
+            <GripVertical className="size-4" aria-hidden="true" />
+          </button>
         </div>
-        <CardContent className="space-y-2 p-4">
+
+        {/* Body */}
+        <div className="flex flex-1 flex-col gap-2 p-2">
           <div className="flex items-start justify-between gap-2">
-            <h3 className="font-semibold leading-tight" translate="no">
+            <h3 className="font-display text-lg leading-tight text-ink" translate="no">
               {pkg.name}
             </h3>
             {!pkg.is_active && (
-              <span className="shrink-0 text-xs uppercase text-muted-foreground">Inactive</span>
+              <span className="shrink-0 text-xs uppercase text-ink-soft">Inactive</span>
             )}
           </div>
-          <p className="text-sm tabular-nums text-muted-foreground">
-            {fmtUSD(pkg.base_price_cents)}
-          </p>
-          {(() => {
-            const metaLine = formatPackageMeta({
-              durationHours: pkg.duration_hours,
-              maxGuests: pkg.max_guests,
-              capacityUnit: pkg.capacity_unit,
-            });
-            return metaLine ? <p className="text-xs text-muted-foreground">{metaLine}</p> : null;
-          })()}
-          <div className="pt-2">
+          <p className="text-xs tabular-nums text-ink-soft">{metaLine}</p>
+
+          {/* Controls footer */}
+          <div className="mt-auto space-y-3 pt-2">
             <PackageFeaturedToggle packageId={pkg.id} isFeatured={pkg.is_featured} />
-          </div>
-          <div className="flex flex-wrap items-center gap-2 pt-2">
-            <PackagePreviewButton pkg={pkg} vendorSlug={vendorSlug} />
-            <Button size="sm" variant="outline" asChild>
-              <Link href={`/dashboard/profile/packages/${pkg.id}`}>Edit</Link>
-            </Button>
+            <div className="flex flex-wrap items-center gap-2">
+              <PackagePreviewButton pkg={pkg} vendorSlug={vendorSlug} />
+              <Button size="sm" variant="outline" asChild>
+                <Link href={`/dashboard/profile/packages/${pkg.id}`}>Edit</Link>
+              </Button>
+            </div>
             <PackageActiveToggle packageId={pkg.id} isActive={pkg.is_active} />
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }
@@ -163,7 +179,7 @@ export function PackageListSortable({ packages, vendorSlug }: Props) {
   // Single package — nothing to reorder; render a plain card grid.
   if (items.length < 2) {
     return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
         {items.map((pkg) => (
           <SortableCard key={pkg.id} pkg={pkg} vendorSlug={vendorSlug} />
         ))}
@@ -178,7 +194,7 @@ export function PackageListSortable({ packages, vendorSlug }: Props) {
       </p>
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
         <SortableContext items={items.map((p) => p.id)} strategy={rectSortingStrategy}>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
             {items.map((pkg) => (
               <SortableCard key={pkg.id} pkg={pkg} vendorSlug={vendorSlug} />
             ))}

@@ -1,18 +1,21 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useQueryState, parseAsStringEnum, parseAsArrayOf, parseAsString } from 'nuqs';
-import { motion, useReducedMotion } from 'framer-motion';
-import { ChevronDown } from 'lucide-react';
+import Link from 'next/link';
+import { useQueryState, parseAsStringEnum } from 'nuqs';
+import { Bell, CalendarCheck, MessageSquare, Wallet, type LucideIcon } from 'lucide-react';
 import type { Database, NotificationType } from '@/types/database.types';
 import { isHighPriority } from '@/lib/notifications/high-priority-types';
-import { NotificationCard } from './NotificationCard';
+import { getActionsFor } from './actions';
+import { fmtRelative } from '@/lib/intl';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 type NotificationRow = Database['public']['Tables']['notifications']['Row'];
 
 const ARCHIVE_AGE_DAYS = 30;
 
-type Tab = 'action' | 'updates' | 'archived';
+type Tab = 'all' | 'action' | 'updates' | 'archived';
 
 interface Props {
   userId: string;
@@ -41,38 +44,52 @@ function partition(notifications: NotificationRow[]) {
   return { action, updates, archived };
 }
 
-function groupByBooking(notifications: NotificationRow[]): Map<string, NotificationRow[]> {
-  const groups = new Map<string, NotificationRow[]>();
-  for (const n of notifications) {
-    const bookingId = (n.metadata as { booking_id?: string })?.booking_id ?? '__other__';
-    if (!groups.has(bookingId)) groups.set(bookingId, []);
-    groups.get(bookingId)!.push(n);
+/** Maps a notification type to a Figma type-chip icon. */
+function iconFor(type: string): LucideIcon {
+  if (type === 'deposit_paid') return Wallet;
+  if (
+    type === 'custom_request_received' ||
+    type === 'vendor_adjusted_quote' ||
+    type === 'review_received' ||
+    type === 'couple_countered'
+  ) {
+    return MessageSquare;
   }
-  // Sort each group's notifications newest first (already from query); preserve insertion order of groups
-  return groups;
+  if (
+    type.startsWith('booking') ||
+    type.startsWith('event') ||
+    type.startsWith('couple') ||
+    type === 'vendor_accepted'
+  ) {
+    return CalendarCheck;
+  }
+  return Bell;
+}
+
+function bookingIdOf(n: NotificationRow): string | undefined {
+  return (n.metadata as { booking_id?: string } | null)?.booking_id ?? undefined;
 }
 
 export function NotificationsPageClient({ initial }: Props) {
   const [notifications, setNotifications] = useState<NotificationRow[]>(initial);
   const [tab, setTab] = useQueryState<Tab>(
     'tab',
-    parseAsStringEnum<Tab>(['action', 'updates', 'archived'])
-      .withDefault('action')
+    parseAsStringEnum<Tab>(['all', 'action', 'updates', 'archived'])
+      .withDefault('all')
       .withOptions({ clearOnDefault: true })
   );
-  const [collapsedList, setCollapsedList] = useQueryState(
-    'collapsed',
-    parseAsArrayOf(parseAsString).withDefault([]).withOptions({ clearOnDefault: true })
-  );
-  const collapsedGroups = useMemo(() => new Set(collapsedList), [collapsedList]);
 
   const buckets = useMemo(() => partition(notifications), [notifications]);
-  const current = buckets[tab === 'action' ? 'action' : tab === 'updates' ? 'updates' : 'archived'];
-  const groups = useMemo(() => groupByBooking(current), [current]);
-  const reducedMotion = useReducedMotion();
-  const chevronTransition = reducedMotion
-    ? { duration: 0 }
-    : { type: 'spring' as const, duration: 0.22, bounce: 0 };
+  // "All" = everything that isn't archived (action + updates), newest first.
+  const nonArchived = useMemo(() => notifications.filter((n) => !isArchived(n)), [notifications]);
+  const current =
+    tab === 'all'
+      ? nonArchived
+      : tab === 'action'
+        ? buckets.action
+        : tab === 'updates'
+          ? buckets.updates
+          : buckets.archived;
 
   async function markRead(id: string) {
     setNotifications((prev) =>
@@ -88,108 +105,157 @@ export function NotificationsPageClient({ initial }: Props) {
     await fetch('/api/notifications/mark-all-read', { method: 'POST' });
   }
 
-  function toggleGroup(key: string) {
-    const next = new Set(collapsedGroups);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
-    void setCollapsedList(Array.from(next));
-  }
-
   const tabCounts = {
+    all: nonArchived.length,
     action: buckets.action.length,
     updates: buckets.updates.length,
     archived: buckets.archived.length,
   };
+
+  const tabs: { id: Tab; label: string }[] = [
+    { id: 'all', label: 'All' },
+    { id: 'action', label: 'Action needed' },
+    { id: 'updates', label: 'Updates' },
+    { id: 'archived', label: 'Archived' },
+  ];
+
+  const hasUnread = buckets.action.length + buckets.updates.length > 0;
 
   return (
     <div className="space-y-4">
       <p className="sr-only" aria-live="polite" aria-atomic="true">
         {tabCounts.action} action needed, {tabCounts.updates} updates, {tabCounts.archived} archived
       </p>
-      <div className="flex items-center justify-between">
-        <div className="flex gap-2">
-          {(['action', 'updates', 'archived'] as Tab[]).map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() => void setTab(t)}
-              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-[transform,background-color,color] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream active:scale-[0.96] motion-reduce:active:scale-100 ${
-                tab === t
-                  ? 'bg-primary text-primary-foreground'
-                  : 'bg-muted text-muted-foreground hover:bg-accent'
-              }`}
-            >
-              {t === 'action' ? 'Action needed' : t === 'updates' ? 'Updates' : 'Archived'}
-              {tabCounts[t] > 0 && (
-                <span className="ml-1.5 text-xs tabular-nums opacity-80">({tabCounts[t]})</span>
-              )}
-            </button>
-          ))}
+
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap gap-2">
+          {tabs.map((t) => {
+            const active = tab === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => void setTab(t.id)}
+                className={cn(
+                  'rounded-full px-4 py-1.5 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
+                  active ? 'bg-indigo text-cream' : 'text-ink-muted hover:bg-cream-soft'
+                )}
+              >
+                {t.label}
+                {t.id !== 'all' && tabCounts[t.id] > 0 && (
+                  <span className="ml-1.5 text-xs tabular-nums opacity-80">
+                    ({tabCounts[t.id]})
+                  </span>
+                )}
+              </button>
+            );
+          })}
         </div>
-        {buckets.action.length + buckets.updates.length > 0 && (
+        {hasUnread && (
           <button
             type="button"
             onClick={markAllRead}
-            className="inline-flex min-h-10 items-center px-2 text-sm text-muted-foreground hover:text-foreground hover:underline"
+            className="inline-flex min-h-10 items-center px-2 text-sm text-ink-muted hover:text-ink hover:underline"
           >
             Mark all read
           </button>
         )}
       </div>
 
-      <div className="space-y-3">
-        {current.length === 0 ? (
-          <p className="rounded-lg border bg-muted/30 p-8 text-center text-sm text-muted-foreground">
-            {tab === 'action'
-              ? 'Nothing needs your attention right now. 🎉'
-              : tab === 'updates'
-                ? "When bookings move through their lifecycle, you'll see updates here."
-                : 'Read notifications older than 30 days appear here.'}
-          </p>
-        ) : (
-          Array.from(groups.entries()).map(([bookingId, items]) => {
-            const collapsed = collapsedGroups.has(bookingId);
-            const headerLabel =
-              bookingId === '__other__' ? 'Other' : `Booking ${bookingId.slice(0, 8)}…`;
+      {current.length === 0 ? (
+        <p className="rounded-2xl border border-hairline bg-cream-soft/60 p-8 text-center text-sm text-ink-soft">
+          {tab === 'action'
+            ? 'Nothing needs your attention right now.'
+            : tab === 'archived'
+              ? 'Read notifications older than 30 days appear here.'
+              : "When bookings move through their lifecycle, you'll see updates here."}
+        </p>
+      ) : (
+        <ul className="m-0 list-none space-y-3 p-0">
+          {current.map((n) => {
+            const isUnread = !n.read_at;
+            const Icon = iconFor(n.type);
+            const bookingId = bookingIdOf(n);
+            const actions = getActionsFor(n);
+            const srLabel = `${n.title}${isUnread ? ' (unread)' : ''}`;
+            const stretchedClass =
+              'absolute inset-0 z-10 rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream';
+
             return (
-              <div key={bookingId} className="overflow-hidden rounded-lg border bg-card">
-                <button
-                  type="button"
-                  onClick={() => toggleGroup(bookingId)}
-                  className="flex w-full items-center justify-between border-b bg-muted/30 px-4 py-2 text-left text-sm font-medium hover:bg-muted/50"
-                >
-                  <span>
-                    {headerLabel}{' '}
-                    <span className="text-xs tabular-nums text-muted-foreground">
-                      ({items.length})
-                    </span>
-                  </span>
-                  <motion.span
-                    className="inline-flex"
-                    animate={{ rotate: collapsed ? -90 : 0 }}
-                    transition={chevronTransition}
-                    aria-hidden="true"
-                  >
-                    <ChevronDown className="h-4 w-4" />
-                  </motion.span>
-                </button>
-                {!collapsed && (
-                  <ul className="m-0 list-none divide-y p-0">
-                    {items.map((n) => (
-                      <NotificationCard
-                        key={n.id}
-                        notification={n}
-                        onClick={() => markRead(n.id)}
-                        showAllActions
-                      />
-                    ))}
-                  </ul>
+              <li
+                key={n.id}
+                className={cn(
+                  'relative flex gap-3 rounded-2xl border border-hairline bg-white p-4 transition-colors hover:border-indigo/30',
+                  isUnread && 'bg-indigo/5'
                 )}
-              </div>
+              >
+                {/* Stretched primary click target — marks read (+ navigates when
+                    the notification has a link). Sits above text at z-10; the
+                    action buttons sit above it at z-20. */}
+                {n.link ? (
+                  <Link
+                    href={n.link}
+                    onClick={() => markRead(n.id)}
+                    aria-label={srLabel}
+                    className={stretchedClass}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => markRead(n.id)}
+                    aria-label={srLabel}
+                    className={stretchedClass}
+                  />
+                )}
+
+                {isUnread && (
+                  <span
+                    className="pointer-events-none absolute left-2 top-5 size-2 rounded-full bg-indigo"
+                    aria-hidden="true"
+                  />
+                )}
+
+                <span className="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-indigo/10">
+                  <Icon className="size-5 text-indigo" aria-hidden="true" />
+                </span>
+
+                <div className="relative z-0 min-w-0 flex-1">
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-semibold text-ink">{n.title}</p>
+                    <span className="shrink-0 text-xs text-ink-soft">
+                      {fmtRelative(n.created_at)}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 text-xs text-ink-soft">{n.body}</p>
+
+                  {bookingId && (
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      <span className="rounded bg-cream-soft px-2 py-0.5 text-[11px] text-ink-muted">
+                        Booking #{bookingId.slice(0, 8)}
+                      </span>
+                    </div>
+                  )}
+
+                  {actions.length > 0 && (
+                    <div
+                      data-testid="notification-actions"
+                      className="relative z-20 mt-3 flex flex-wrap gap-2"
+                    >
+                      {actions.map((action) => (
+                        <Button key={action.label} asChild variant={action.variant} size="sm">
+                          <Link href={action.href(n)} onClick={() => markRead(n.id)}>
+                            {action.label}
+                          </Link>
+                        </Button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </li>
             );
-          })
-        )}
-      </div>
+          })}
+        </ul>
+      )}
     </div>
   );
 }
