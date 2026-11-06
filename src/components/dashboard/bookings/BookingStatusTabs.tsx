@@ -28,9 +28,10 @@ const TAB_STATUSES: Record<Exclude<TabKey, 'all'>, string[]> = {
   cancelled: ['couple_cancelled', 'vendor_cancelled', 'cancelled_mutual', 'expired'],
 };
 
-// The statuses that need the vendor to act — same set the page already used to
-// surface Quick Actions (pending accept, declined-adjustment re-quote).
-const NEEDS_ACTION: string[] = ['pending', 'adjusted_quote_declined'];
+// The statuses that need the vendor to act — matches the canonical needs-reply
+// set (booking.service): a new booking request to accept, a quote request to
+// price, or a re-quote after the couple declined an adjustment.
+const NEEDS_ACTION: string[] = ['pending', 'pending_quote', 'adjusted_quote_declined'];
 
 export function BookingStatusTabs({ rows }: { rows: BookingRowData[] }) {
   const [tab, setTab] = useState<TabKey>('all');
@@ -41,6 +42,13 @@ export function BookingStatusTabs({ rows }: { rows: BookingRowData[] }) {
     if (tab === 'all') return rows;
     return rows.filter((r) => TAB_STATUSES[tab].includes(r.status));
   }, [rows, tab, actionOnly]);
+
+  // How many bookings currently need the vendor to act (accept a request,
+  // re-quote a declined adjustment). Drives the Action Required pulse + count.
+  const actionableCount = useMemo(
+    () => rows.filter((r) => NEEDS_ACTION.includes(r.status)).length,
+    [rows]
+  );
 
   return (
     <div className="space-y-6">
@@ -66,8 +74,11 @@ export function BookingStatusTabs({ rows }: { rows: BookingRowData[] }) {
             variant="primary"
             aria-pressed={actionOnly}
             onClick={() => setActionOnly((v) => !v)}
+            // Pulse while there are pending tasks (and the filter isn't already on).
+            className={cn(actionableCount > 0 && !actionOnly && 'pulse-pink-loop')}
           >
             Action Required
+            {actionableCount > 0 ? ` (${actionableCount})` : ''}
           </Button>
         </div>
       </div>
