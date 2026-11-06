@@ -210,19 +210,26 @@ export default async function DashboardPage() {
   }
 
   // New vendor home (Figma redesign). All stats are real queries except where noted.
-  const [totalBookings, unreadNotificationsCount, buckets, attribution] = await Promise.all([
-    supabase
-      .from('bookings')
-      .select('id', { count: 'exact', head: true })
-      .eq('vendor_profile_id', vendorProfile.id),
-    getUnreadNotificationsCount(supabase, user.id),
-    getOperationsBuckets(supabase, vendorProfile.id),
-    // Lifetime net earnings (95% of confirmed booking totals). getVendorAttribution
-    // throws on DB error — degrade to $0 rather than crashing the home page.
-    getVendorAttribution(supabase, vendorProfile.id, 'all').catch(() => null),
-  ]);
+  const [totalBookings, unreadNotificationsCount, buckets, attribution, packagesRes] =
+    await Promise.all([
+      supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_profile_id', vendorProfile.id),
+      getUnreadNotificationsCount(supabase, user.id),
+      getOperationsBuckets(supabase, vendorProfile.id),
+      // Lifetime net earnings (95% of confirmed booking totals). getVendorAttribution
+      // throws on DB error — degrade to $0 rather than crashing the home page.
+      getVendorAttribution(supabase, vendorProfile.id, 'all').catch(() => null),
+      // Package count — drives the "Create New Package" promo pulse when zero.
+      supabase
+        .from('packages')
+        .select('id', { count: 'exact', head: true })
+        .eq('vendor_profile_id', vendorProfile.id),
+    ]);
 
   const totalBookingsCount = totalBookings.count ?? 0;
+  const packageCount = packagesRes.count ?? 0;
   const upcomingEvents = [
     ...buckets.today,
     ...buckets.tomorrow,
@@ -309,7 +316,7 @@ export default async function DashboardPage() {
 
       {/* RIGHT COLUMN */}
       <div className="flex w-full shrink-0 flex-col gap-6 lg:w-[320px]">
-        <PromoCard />
+        <PromoCard pulse={packageCount === 0} />
 
         <QuickActionList title="Quick Actions">
           <QuickActionItem

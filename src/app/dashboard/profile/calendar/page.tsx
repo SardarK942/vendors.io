@@ -143,6 +143,8 @@ export default async function CalendarPage() {
             variant="secondary"
             size="sm"
             iconLeading={<RefreshCw className="size-4" aria-hidden="true" />}
+            // Pulse until the vendor connects their external calendar feed.
+            className={feedStatus.state !== 'connected' ? 'pulse-pink-loop' : undefined}
           >
             <a href="#calendar-sync">Sync Calendar</a>
           </Button>

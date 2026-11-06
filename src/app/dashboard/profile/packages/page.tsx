@@ -59,12 +59,7 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
     <div className="space-y-6">
       <div className="flex items-start justify-between gap-4">
         <PageTitle subtitle="Create and manage the packages couples can book.">Packages</PageTitle>
-        <Button
-          asChild
-          iconLeading={<Plus className="size-4" aria-hidden="true" />}
-          // Pulse the CTA while the vendor has no packages yet.
-          className={packages.length === 0 ? 'pulse-pink-loop' : undefined}
-        >
+        <Button asChild iconLeading={<Plus className="size-4" aria-hidden="true" />}>
           <Link href="/dashboard/profile/packages/new">Add Package</Link>
         </Button>
       </div>
