@@ -57,6 +57,15 @@ interface LinkDef {
   showUnreadDot?: boolean;
 }
 
+// Figma nav item: Schibsted body label, ink text, pale-indigo hover; the active
+// item is a solid indigo pill with cream label + icon. (Figma's literal
+// dark-text-on-indigo is a contrast bug — cream reads far better.)
+const navButtonClass = cn(
+  'font-sans text-[13px] text-ink hover:bg-indigo/5 hover:text-ink',
+  'data-[active=true]:bg-indigo data-[active=true]:text-cream',
+  'data-[active=true]:hover:bg-indigo data-[active=true]:hover:text-cream'
+);
+
 function workspaceLinks(
   role: Role,
   isBridalWear: boolean,
@@ -133,13 +142,21 @@ export function SidebarNav({
   };
 
   return (
-    // pt-20 clears the BaazarChrome wordmark that floats at top:0 across the
-    // whole app (StaggeredMenu is position:fixed with padding 1.25em). Without
-    // this the sidebar header renders directly under the "baazar." logo.
-    <Sidebar collapsible="icon" className="pt-20">
-      {role === 'vendor' && hasBusiness ? (
-        <SidebarHeader className="border-b border-hairline-soft">{businessAnchor}</SidebarHeader>
-      ) : null}
+    <Sidebar collapsible="icon" className="border-r border-hairline">
+      {/* The sidebar now owns the brand wordmark (the floating BaazarChrome was
+          removed from the dashboard). */}
+      <SidebarHeader className="gap-0 p-0">
+        <Link
+          href="/"
+          aria-label="Baazar home"
+          className="flex items-center border-b border-hairline px-3 py-3.5"
+        >
+          <span className="font-display text-2xl font-medium lowercase tracking-tight text-ink">
+            baazar<span className="text-hot-pink">.</span>
+          </span>
+        </Link>
+        {role === 'vendor' && hasBusiness ? businessAnchor : null}
+      </SidebarHeader>
 
       <SidebarContent>
         <SidebarGroup>
@@ -152,7 +169,12 @@ export function SidebarNav({
               const active = isActive(link.href);
               return (
                 <SidebarMenuItem key={link.href}>
-                  <SidebarMenuButton asChild isActive={active} tooltip={link.label}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={active}
+                    tooltip={link.label}
+                    className={navButtonClass}
+                  >
                     <Link href={link.href}>
                       <Icon className="size-4" aria-hidden />
                       <span>{link.label}</span>
@@ -180,7 +202,7 @@ export function SidebarNav({
           </SidebarMenu>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-3 border-t border-indigo/[.14] pt-3">
+        <SidebarGroup className="mt-3 border-t border-hairline pt-3">
           <SidebarGroupLabel className="font-mono text-[10px] font-bold uppercase tracking-widest text-indigo">
             Account
           </SidebarGroupLabel>
@@ -190,6 +212,7 @@ export function SidebarNav({
                 asChild
                 isActive={isActive('/dashboard/settings')}
                 tooltip="Settings"
+                className={navButtonClass}
               >
                 <Link href="/dashboard/settings">
                   <SettingsIcon className="size-4" aria-hidden />
@@ -201,7 +224,7 @@ export function SidebarNav({
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter>{userMenu}</SidebarFooter>
+      <SidebarFooter className="border-t border-hairline">{userMenu}</SidebarFooter>
     </Sidebar>
   );
 }

@@ -33,8 +33,13 @@ export default async function DashboardLayout({
   // the App Router preserves across client navigation, so a pathname branch
   // here was sticky and stranded vendors on a sidebar-less dashboard after
   // "Save & exit". We always build the shell data and let the client decide.
-  const { data: profile } = await supabase.from('users').select('role').eq('id', user.id).single();
+  const { data: profile } = await supabase
+    .from('users')
+    .select('role, full_name')
+    .eq('id', user.id)
+    .single();
   const role = (profile?.role as 'couple' | 'vendor') || 'couple';
+  const fullName = (profile?.full_name as string | null) ?? null;
 
   const { profile: activeProfile } =
     role === 'vendor' ? await getActiveVendorProfile(supabase, user.id) : { profile: null };
@@ -63,13 +68,14 @@ export default async function DashboardLayout({
     <ActiveBusinessProvider activeBusinessId={activeBusinessId}>
       <DashboardShell
         defaultSidebarOpen={sidebarOpen}
+        hasUnreadNotifications={unreadCount > 0}
         panel={panel}
         sidebar={
           <SidebarNav
             role={role}
             hasBusiness={activeProfile != null}
             businessAnchor={<VendorBusinessAnchor business={activeBusiness} />}
-            userMenu={<SidebarUserMenu user={{ email, initial }} />}
+            userMenu={<SidebarUserMenu user={{ email, initial, name: fullName ?? undefined }} />}
             bookingsCount={bookingsCount}
             hasUnreadNotifications={unreadCount > 0}
             isBridalWear={activeProfile?.category === 'bridal_wear'}

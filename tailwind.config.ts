@@ -186,6 +186,16 @@ const config: Config = {
             'outline-offset': '4px',
           },
         },
+        // Looping variant — a persistent attention cue (e.g. a button with
+        // pending vendor tasks). Same pink ring, repeats until the condition clears.
+        '.pulse-pink-loop': {
+          animation: 'pulse-pink 1.5s ease-out infinite',
+          '@media (prefers-reduced-motion: reduce)': {
+            animation: 'none',
+            outline: '2px solid rgba(209, 0, 108, 0.5)',
+            'outline-offset': '4px',
+          },
+        },
       });
     }),
   ],
