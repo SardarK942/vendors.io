@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
@@ -42,6 +42,15 @@ export function CalendarHoldsList({ holds }: Props) {
   const [items, setItems] = useState(holds);
   const [pendingUnblockId, setPendingUnblockId] = useState<string | null>(null);
   const [unblockBusy, setUnblockBusy] = useState(false);
+
+  // Re-sync when the server sends fresh holds (e.g. after BlockDateForm calls
+  // router.refresh()). Without this the list seeds from the initial prop once
+  // and never reflects a newly blocked date until a full page reload. The
+  // effect only fires when the `holds` reference changes (new server render),
+  // so optimistic unblock state below is preserved between server fetches.
+  useEffect(() => {
+    setItems(holds);
+  }, [holds]);
 
   async function unblock(id: string) {
     setUnblockBusy(true);
