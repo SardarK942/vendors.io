@@ -121,10 +121,22 @@ test.describe('vendor onboarding wizard', () => {
       await expect(page).toHaveURL(/just_onboarded=1/, { timeout: 10_000 });
 
       // ── Marketplace visibility (anonymous context) ────────────────────────
-      // Clear cookies to simulate an anonymous visitor
+      // Assert the published profile is publicly reachable at its own URL rather
+      // than scanning the /vendors listing: that listing is paginated (20/page)
+      // and ordered verified-first, so a brand-new unverified vendor can land on
+      // page 2 and never appear on page 1. The public profile page 404s unless
+      // the vendor is live (onboarding_complete && is_active), so reaching it
+      // with the business name visible is a stronger, pagination-proof check.
+      // The wizard generates the slug, so look it up by user id.
+      const { data: published } = await getServiceClient()
+        .from('vendor_profiles')
+        .select('slug')
+        .eq('user_id', vendor.id)
+        .single();
+      expect(published?.slug).toBeTruthy();
       await page.context().clearCookies();
-      await page.goto('/vendors');
-      await expect(page.getByText('E2E Henna Co')).toBeVisible({ timeout: 10_000 });
+      await page.goto(`/vendors/${published!.slug}`);
+      await expect(page.getByText('E2E Henna Co').first()).toBeVisible({ timeout: 10_000 });
     } finally {
       await cleanup(vendor);
     }
@@ -178,10 +190,12 @@ test.describe('vendor onboarding wizard', () => {
       await page.getByRole('button', { name: /publish profile/i }).click();
       await expect(page).toHaveURL(/just_onboarded=1/, { timeout: 10_000 });
 
-      // Verify marketplace visibility (anonymous)
+      // Verify marketplace visibility (anonymous). Assert the public profile page
+      // directly — the /vendors listing is paginated + ordered verified-first, so
+      // a new unverified vendor can fall to page 2; the profile 404s unless live.
       await page.context().clearCookies();
-      await page.goto('/vendors');
-      await expect(page.getByText('E2E Scraper Henna')).toBeVisible({ timeout: 10_000 });
+      await page.goto(`/vendors/${vendor.vendorSlug}`);
+      await expect(page.getByText('E2E Scraper Henna').first()).toBeVisible({ timeout: 10_000 });
     } finally {
       await cleanup(vendor);
     }

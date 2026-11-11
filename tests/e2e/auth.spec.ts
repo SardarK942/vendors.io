@@ -23,9 +23,13 @@ test.describe('auth', () => {
   test('vendor login shows vendor-scoped dashboard', async ({ page }) => {
     vendor = await seedVendor({ chargesEnabled: true });
     await loginAs(page, vendor);
-    await expect(page.getByRole('heading', { name: /home/i })).toBeVisible();
-    // Operations section is vendor-only (couples have no Operations block)
-    await expect(page.getByRole('heading', { name: /operations/i })).toBeVisible();
+    // The redesigned vendor home shows a personalized WelcomeBanner
+    // ("Welcome back, {name}") instead of a "Home" title — the <h1> is the
+    // vendor's name, so assert the banner copy rather than a "Home" heading.
+    await expect(page.getByText(/welcome back/i)).toBeVisible();
+    // Business Analytics is a vendor-only sidebar destination (couples have no
+    // analytics nav), so its presence proves the dashboard is vendor-scoped.
+    await expect(page.getByRole('link', { name: 'Business Analytics' })).toBeVisible();
   });
 
   test('wrong password fails', async ({ page }) => {

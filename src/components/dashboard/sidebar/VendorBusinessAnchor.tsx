@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check } from 'lucide-react';
+import { BadgeCheck } from 'lucide-react';
 
 interface BusinessData {
   business_name: string | null;
@@ -15,18 +15,20 @@ export function VendorBusinessAnchor({ business }: Props) {
   if (!business || !business.business_name) return null;
 
   return (
-    <div className="flex flex-col gap-2 px-2 py-3">
-      <span className="text-balance font-serif text-[19px] font-medium leading-tight tracking-tight text-ink">
+    <div className="flex flex-col gap-2 border-b border-hairline px-3 py-3">
+      <span className="text-balance font-display text-[15.5px] font-medium leading-tight tracking-tight text-ink">
         {business.business_name}
       </span>
-      <div className="flex items-center gap-2 text-xs text-ink-muted">
+      <div className="flex items-center gap-2">
         {business.verified ? (
-          <span className="inline-flex items-center gap-1 rounded-full border border-indigo/20 bg-indigo/[.10] px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-indigo">
-            <Check className="size-3" aria-hidden="true" strokeWidth={2.4} />
-            Verified
+          <span className="inline-flex items-center gap-1 rounded-full border border-indigo/20 bg-indigo/10 px-1.5 py-0.5 text-indigo">
+            <BadgeCheck className="size-3" aria-hidden="true" strokeWidth={2.4} />
+            <span className="font-mono text-[8px] font-extrabold uppercase tracking-wider">
+              Verified
+            </span>
           </span>
         ) : null}
-        {business.city ? <span>{business.city}</span> : null}
+        {business.city ? <span className="text-[10px] text-ink-soft">{business.city}</span> : null}
       </div>
     </div>
   );

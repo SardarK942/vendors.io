@@ -1,9 +1,10 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Plus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { PageTitle } from '@/components/dashboard/PageTitle';
+import { EmptyState } from '@/components/dashboard/kit';
 import { listPackagesForVendor } from '@/services/packages.service';
 import {
   PackageListSortable,
@@ -56,37 +57,24 @@ export default async function PackagesPage({ searchParams }: PackagesPageProps) 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <PageTitle>Your Packages</PageTitle>
-          <p className="text-muted-foreground">
-            Packages let couples book fixed pricing tiers in one click. Vendors without packages
-            still receive quote requests directly.
-          </p>
-        </div>
-        <Button
-          asChild
-          className="bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
-        >
-          <Link href="/dashboard/profile/packages/new">+ Add Package</Link>
+      <div className="flex items-start justify-between gap-4">
+        <PageTitle subtitle="Create and manage the packages couples can book.">Packages</PageTitle>
+        <Button asChild iconLeading={<Plus className="size-4" aria-hidden="true" />}>
+          <Link href="/dashboard/profile/packages/new">Add Package</Link>
         </Button>
       </div>
 
       {packages.length === 0 ? (
-        <Card className="p-12 text-center">
-          <h2 className="text-lg font-semibold">No packages — that&rsquo;s OK</h2>
-          <p className="mx-auto mt-2 max-w-md text-muted-foreground">
-            Couples can already send quote requests from your live profile. Add a package here only
-            if you sell fixed pricing tiers (like a 3-hour photobooth or a bridal MUA package).
-          </p>
-          <Button
-            asChild
-            size="lg"
-            className="mt-6 bg-hot-pink text-cream hover:-translate-y-px hover:bg-hot-pink/90 hover:shadow-pink motion-reduce:hover:translate-y-0"
-          >
-            <Link href="/dashboard/profile/packages/new">+ Add a package</Link>
-          </Button>
-        </Card>
+        <EmptyState
+          icon={Package}
+          title="No packages yet"
+          description="Create a package couples can book in one click."
+          action={
+            <Button asChild iconLeading={<Plus className="size-4" aria-hidden="true" />}>
+              <Link href="/dashboard/profile/packages/new">Add Package</Link>
+            </Button>
+          }
+        />
       ) : (
         <PackageListSortable packages={packages} vendorSlug={vendorSlug} />
       )}

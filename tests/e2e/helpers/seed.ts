@@ -108,6 +108,17 @@ export async function seedVendor(
     publish?: boolean;
     category?: string;
     vendorOrigin?: VendorOrigin;
+    /**
+     * Mark the seeded vendor `verified`. Defaults to false so callers that
+     * depend on the un-verified initial state (e.g. mark-complete-flow, which
+     * asserts the booking-completion trigger flips verified→true) are unchanged.
+     * Set true when a test must find this specific vendor on the paginated
+     * /vendors listing: it is ordered `verified DESC, total_bookings DESC` with
+     * a 20/page cap, so a brand-new unverified vendor can sort onto page 2 as
+     * the shared DB grows. Verified vendors are a small group that stays on
+     * page 1.
+     */
+    verified?: boolean;
   } = {}
 ): Promise<TestVendor> {
   const supabase = getServiceClient();
@@ -138,6 +149,7 @@ export async function seedVendor(
       // route resolves for non-owners (the page returns 404 for unpublished profiles
       // unless the viewer is the owner).
       ...(options.publish ? { is_active: true, onboarding_complete: true } : {}),
+      ...(options.verified ? { verified: true } : {}),
     })
     .select('id')
     .single();

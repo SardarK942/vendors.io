@@ -1,8 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { BaazarChrome } from '@/components/ui/BaazarChrome';
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import { TopBar } from '@/components/dashboard/TopBar';
 
 interface DashboardShellProps {
   /** The dashboard sidebar nav, built on the server with role/counts/menus. */
@@ -11,6 +11,8 @@ interface DashboardShellProps {
   panel: React.ReactNode;
   /** Persisted sidebar open/closed state (from the sidebar_state cookie). */
   defaultSidebarOpen: boolean;
+  /** Current user id — drives the TopBar notification bell + dropdown. */
+  userId: string;
   children: React.ReactNode;
 }
 
@@ -32,26 +34,28 @@ export function DashboardShell({
   sidebar,
   panel,
   defaultSidebarOpen,
+  userId,
   children,
 }: DashboardShellProps) {
   const pathname = usePathname();
 
   if (pathname?.startsWith('/dashboard/profile/setup')) {
-    // No BaazarChrome (bell + dashboard menu) and no sidebar here — the wizard's
-    // own layout provides its logo + rail + Save & exit.
+    // No chrome and no sidebar here — the wizard's own layout provides its
+    // logo + rail + Save & exit.
     return <div className="min-h-screen bg-cream">{children}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-muted/40">
-      <BaazarChrome />
-      <SidebarProvider defaultOpen={defaultSidebarOpen}>
+    <div className="min-h-screen bg-cream">
+      {/* 14rem ≈ 224px to match the Figma sidebar width. */}
+      <SidebarProvider
+        defaultOpen={defaultSidebarOpen}
+        style={{ '--sidebar-width': '14rem' } as React.CSSProperties}
+      >
         {sidebar}
-        <SidebarInset>
-          <div className="mx-auto flex w-full max-w-7xl gap-4 px-4 pb-8 pt-24 sm:px-6 lg:px-8">
-            <SidebarTrigger className="absolute right-4 top-20 z-10" />
-            <div className="flex-1">{children}</div>
-          </div>
+        <SidebarInset className="bg-cream">
+          <TopBar userId={userId} />
+          <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</div>
         </SidebarInset>
       </SidebarProvider>
       {panel}

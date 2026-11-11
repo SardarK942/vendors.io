@@ -24,7 +24,9 @@ test.describe('Bucket J — first save confetti toast', () => {
 
   test('first heart → ❤️ confetti toast; second heart → silent', async ({ browser }) => {
     couple = await seedCouple({ markOnboardingComplete: true });
-    vendor = await seedVendor({ chargesEnabled: false, publish: true });
+    // verified:true keeps this vendor on page 1 of the paginated /vendors
+    // listing (ordered verified-first) so its card is reliably found below.
+    vendor = await seedVendor({ chargesEnabled: false, publish: true, verified: true });
     const ctx = await browser.newContext();
     const page = await ctx.newPage();
     await loginAs(page, couple);
