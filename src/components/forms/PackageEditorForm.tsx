@@ -3,7 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, CircleHelp } from 'lucide-react';
+import { SupportCard } from '@/components/dashboard/home/SupportCard';
+import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -78,17 +80,28 @@ interface Props {
 function Section({
   title,
   description,
+  lead = false,
   children,
 }: {
   title: string;
   description?: string;
+  /** The first section doubles as the page heading — bigger, display type, h1. */
+  lead?: boolean;
   children: React.ReactNode;
 }) {
   return (
     <section className="space-y-4 border-t border-hairline pt-6 first:border-t-0 first:pt-0">
       <div className="space-y-1">
-        <h2 className="text-sm font-semibold tracking-tight text-ink">{title}</h2>
-        {description && <p className="text-pretty text-xs text-ink-soft">{description}</p>}
+        {lead ? (
+          <h1 className="font-display text-2xl font-semibold tracking-tight text-ink">{title}</h1>
+        ) : (
+          <h2 className="text-sm font-semibold tracking-tight text-ink">{title}</h2>
+        )}
+        {description && (
+          <p className={cn('text-pretty text-ink-soft', lead ? 'text-sm' : 'text-xs')}>
+            {description}
+          </p>
+        )}
       </div>
       {children}
     </section>
@@ -265,8 +278,12 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
         {/* ── Form column ─────────────────────────────────────────────── */}
         <div className="min-w-0 space-y-8">
-          {/* Basics */}
-          <Section title="Basics" description="What couples see first.">
+          {/* Basic information — doubles as the page heading */}
+          <Section
+            lead
+            title="Basic information"
+            description="How your package is found in search results."
+          >
             <div className="space-y-2">
               <Label htmlFor="name">Package name *</Label>
               <Input
@@ -298,8 +315,8 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
             <fieldset className="space-y-2">
               <legend className="text-sm font-medium">Featured image</legend>
               <p className="text-xs text-ink-soft">
-                Optional — packages without a photo show a placeholder tile. Adding one boosts
-                bookings.
+                Recommended size: 1200×900px. Max 16MB. Optional — packages without a photo show a
+                placeholder, but adding one boosts bookings.
               </p>
               <PhotoUploaderDrawer
                 value={featuredImageUrl ? [featuredImageUrl] : []}
@@ -584,10 +601,15 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
           </Section>
 
           <div className="flex gap-3 border-t border-hairline pt-6">
-            <Button type="submit" disabled={loading}>
-              {loading ? 'Saving…' : mode === 'create' ? 'Create package' : 'Update package'}
+            <Button
+              type="submit"
+              isLoading={loading}
+              showTextWhileLoading
+              className="flex-1 sm:min-w-[240px] sm:flex-none"
+            >
+              {mode === 'create' ? 'Create package' : 'Save all changes'}
             </Button>
-            <Button type="button" variant="outline" onClick={() => router.back()}>
+            <Button type="button" variant="secondary" onClick={() => router.back()}>
               Cancel
             </Button>
           </div>
@@ -595,7 +617,7 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
 
         {/* ── Live preview rail ───────────────────────────────────────── */}
         <aside className="order-first lg:order-none">
-          <div className="lg:sticky lg:top-6">
+          <div className="space-y-4 lg:sticky lg:top-6">
             <PackageLivePreview
               data={{
                 name,
@@ -609,6 +631,11 @@ export function PackageEditorForm({ mode, initial, category }: Props) {
                 includedCount: cleanIncluded.length,
                 addonCount: addons.filter((a) => a.name.trim()).length,
               }}
+            />
+            <SupportCard
+              icon={CircleHelp}
+              description="Our team is here to help with custom packages and special requests."
+              actionLabel="Contact us"
             />
           </div>
         </aside>

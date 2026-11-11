@@ -28,7 +28,6 @@ export default async function NewPackagePage() {
         <ArrowLeft className="size-4" aria-hidden="true" />
         Back to packages
       </Link>
-      <h1 className="mb-6 text-pretty text-2xl font-bold">Add Package</h1>
       <PackageEditorForm mode="create" category={vendorProfile.category ?? ''} />
     </div>
   );
