@@ -68,7 +68,7 @@ export default async function DashboardLayout({
     <ActiveBusinessProvider activeBusinessId={activeBusinessId}>
       <DashboardShell
         defaultSidebarOpen={sidebarOpen}
-        hasUnreadNotifications={unreadCount > 0}
+        userId={user.id}
         panel={panel}
         sidebar={
           <SidebarNav

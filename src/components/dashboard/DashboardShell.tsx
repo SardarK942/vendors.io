@@ -11,8 +11,8 @@ interface DashboardShellProps {
   panel: React.ReactNode;
   /** Persisted sidebar open/closed state (from the sidebar_state cookie). */
   defaultSidebarOpen: boolean;
-  /** Drives the TopBar bell unread dot (computed server-side in layout). */
-  hasUnreadNotifications: boolean;
+  /** Current user id — drives the TopBar notification bell + dropdown. */
+  userId: string;
   children: React.ReactNode;
 }
 
@@ -34,7 +34,7 @@ export function DashboardShell({
   sidebar,
   panel,
   defaultSidebarOpen,
-  hasUnreadNotifications,
+  userId,
   children,
 }: DashboardShellProps) {
   const pathname = usePathname();
@@ -54,7 +54,7 @@ export function DashboardShell({
       >
         {sidebar}
         <SidebarInset className="bg-cream">
-          <TopBar hasUnreadNotifications={hasUnreadNotifications} />
+          <TopBar userId={userId} />
           <div className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</div>
         </SidebarInset>
       </SidebarProvider>

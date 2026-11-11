@@ -44,24 +44,21 @@ test.describe('Bucket F — Money attribution dashboard', () => {
     const page = await ctx.newPage();
     await loginAs(page, vendor);
 
-    // EarningsCard lives on /dashboard/money (not /dashboard)
+    // Analytics (the redesign replaced the old EarningsCard with the Business
+    // Analytics page) lives on /dashboard/money. Attribution range is fixed to
+    // 'all' server-side, so the 3 seeded bookings are always included.
     await page.goto('/dashboard/money');
 
-    // Click All time to ensure the 3 seeded bookings are included regardless of when "now" falls
-    await page.getByRole('button', { name: /All time/i }).click();
+    await expect(page.getByRole('heading', { name: 'Business Analytics' })).toBeVisible();
 
-    // KPIs
-    await expect(page.getByText('$8,000')).toBeVisible(); // total driven
-    // Scope the count "3" to the first element that matches to avoid collisions
-    await expect(page.locator('text=/^3$/').first()).toBeVisible(); // count
-    await expect(page.getByText('$400')).toBeVisible(); // fees
-    await expect(page.getByText('$7,600')).toBeVisible(); // net
+    // KPI stat cards — amounts render via formatPrice ($X,XXX.00). Use .first()
+    // because the Revenue Breakdown donut legend echoes the same figures.
+    await expect(page.getByText('$8,000.00').first()).toBeVisible(); // Booking Value (total)
+    await expect(page.getByText('$400.00').first()).toBeVisible(); // Platform Fees (5%)
+    await expect(page.getByText('$7,600.00').first()).toBeVisible(); // Net Earnings
 
-    // ROI
-    await expect(page.getByText(/\$20 in bookings/i)).toBeVisible();
-
-    // Honesty footnote
-    await expect(page.getByText(/doesn.t track balance collection/i)).toBeVisible();
+    // Total Bookings count card shows 3 (scope to first to avoid digit collisions).
+    await expect(page.locator('text=/^3$/').first()).toBeVisible();
 
     await ctx.close();
   });

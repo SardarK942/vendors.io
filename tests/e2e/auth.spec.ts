@@ -24,8 +24,9 @@ test.describe('auth', () => {
     vendor = await seedVendor({ chargesEnabled: true });
     await loginAs(page, vendor);
     await expect(page.getByRole('heading', { name: /home/i })).toBeVisible();
-    // Operations section is vendor-only (couples have no Operations block)
-    await expect(page.getByRole('heading', { name: /operations/i })).toBeVisible();
+    // Business Analytics is a vendor-only sidebar destination (couples have no
+    // analytics nav), so its presence proves the dashboard is vendor-scoped.
+    await expect(page.getByRole('link', { name: 'Business Analytics' })).toBeVisible();
   });
 
   test('wrong password fails', async ({ page }) => {

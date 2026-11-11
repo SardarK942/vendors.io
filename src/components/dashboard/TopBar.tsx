@@ -1,22 +1,61 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
-import { Bell, ListFilter, Search } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { ListFilter, Search } from 'lucide-react';
 import { SidebarTrigger } from '@/components/ui/sidebar';
+import { NotificationBell } from '@/components/notifications/NotificationBell';
+import { BusinessSwitcher, type SwitcherBusiness } from '@/components/dashboard/BusinessSwitcher';
 
 interface TopBarProps {
-  /** Drives the hot-pink unread dot on the bell. Computed server-side in layout. */
-  hasUnreadNotifications: boolean;
+  /** Current user id — drives the notification bell + its dropdown. */
+  userId: string;
+}
+
+interface BusinessesResponse {
+  role: 'couple' | 'vendor' | 'admin' | null;
+  activeBusinessId: string | null;
+  businesses: SwitcherBusiness[];
+  totalCount: number;
 }
 
 /**
- * Dashboard content-area top bar: mobile sidebar trigger + search + bell + filter.
+ * Dashboard content-area top bar: mobile sidebar trigger + search + (multi-
+ * business) switcher + notification bell + filter.
  *
- * The sidebar owns the brand wordmark; this bar owns search and the quick
- * notification/filter actions that the old floating BaazarChrome used to carry.
+ * The sidebar owns the brand wordmark; this bar carries the quick actions the
+ * old floating BaazarChrome used to: the notification bell (with its dropdown
+ * preview) and, for vendors who run more than one business, the business
+ * switcher pill (Sub-project I §3).
  */
-export function TopBar({ hasUnreadNotifications }: TopBarProps) {
+export function TopBar({ userId }: TopBarProps) {
+  const pathname = usePathname();
+  const [biz, setBiz] = useState<BusinessesResponse | null>(null);
+
+  // Business list drives switcher visibility. Fetched client-side and
+  // re-fetched on route change (a vendor may add/switch a business), mirroring
+  // the old BaazarChrome wiring against the same endpoint.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/users/me/businesses', { credentials: 'include' });
+        if (!res.ok || cancelled) return;
+        const data = (await res.json()) as BusinessesResponse;
+        if (!cancelled) setBiz(data);
+      } catch {
+        // Silent — the switcher simply won't show; retries on next route change.
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
+
+  const showSwitcher =
+    biz?.role === 'vendor' && biz.totalCount > 1 && biz.activeBusinessId !== null;
+
   return (
     <header className="flex h-[78px] items-center justify-between border-b border-hairline bg-cream px-4 sm:px-8">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -29,20 +68,14 @@ export function TopBar({ hasUnreadNotifications }: TopBarProps) {
           </span>
         </div>
       </div>
-      <div className="flex items-center gap-6 pl-6">
-        <Link
-          href="/dashboard/notifications"
-          aria-label="Notifications"
-          className="relative inline-flex"
-        >
-          <Bell className="size-5 text-ink" aria-hidden />
-          {hasUnreadNotifications ? (
-            <span
-              aria-hidden
-              className="absolute -right-0.5 -top-0.5 size-2 rounded-full bg-hot-pink shadow-[0_0_0_3px_rgba(209,0,108,0.18)]"
-            />
-          ) : null}
-        </Link>
+      <div className="flex items-center gap-2 pl-6 sm:gap-3">
+        {showSwitcher && (
+          <BusinessSwitcher
+            activeBusinessId={biz!.activeBusinessId!}
+            businesses={biz!.businesses}
+          />
+        )}
+        <NotificationBell userId={userId} />
         {/* TODO(backend): wire dashboard filter */}
         <button type="button" aria-label="Filters" className="inline-flex text-ink">
           <ListFilter className="size-5" aria-hidden />
