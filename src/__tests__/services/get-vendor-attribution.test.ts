@@ -39,8 +39,9 @@ vi.mock('@/lib/logger', () => ({
 import { getVendorAttribution } from '@/services/payment.service';
 
 // Minimal supabase mock that returns the test bookings.
-// The query chain is: from().select().eq().in() — terminal for 'all' range.
-// For date-filtered ranges: from().select().eq().in().gte() — terminal.
+// The query chain is: from().select().eq().neq().in() — terminal for 'all' range.
+// (.neq('source','manual') excludes off-platform bookings from attribution.)
+// For date-filtered ranges: from().select().eq().neq().in().gte() — terminal.
 // We make .in() return a thenable that also has .gte() → same terminal.
 function mockSupabase(
   bookings: Array<{ total_price_cents: number; status: string; created_at: string }>
@@ -56,7 +57,9 @@ function mockSupabase(
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
-          in: vi.fn(() => inResult),
+          neq: vi.fn(() => ({
+            in: vi.fn(() => inResult),
+          })),
         })),
       })),
     })),

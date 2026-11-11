@@ -7,7 +7,7 @@ import { BlockDateForm } from '@/components/dashboard/BlockDateForm';
 import { ExternalCalendarSyncCard } from '@/components/dashboard/calendar/ExternalCalendarSyncCard';
 import {
   CalendarMonthGrid,
-  type CalendarDayEvent,
+  type CalendarDay,
 } from '@/components/dashboard/calendar/CalendarMonthGrid';
 import { AvailabilityPanel } from '@/components/dashboard/calendar/AvailabilityPanel';
 import { UpcomingBookingsRail } from '@/components/dashboard/calendar/UpcomingBookingsRail';
@@ -117,12 +117,20 @@ export default async function CalendarPage() {
 
   // Aggregate holds into per-day grid markers (start date + type). Mirrors the
   // date slicing in CalendarHoldsList for consistency.
-  const calendarEvents: CalendarDayEvent[] = holds
+  const calendarEvents: CalendarDay[] = holds
     .map((h) => {
       const m = h.hold_range.match(/^\["([^"]+)",/);
-      return m ? { date: m[1].slice(0, 10), type: h.hold_type } : null;
+      if (!m) return null;
+      return {
+        date: m[1].slice(0, 10),
+        type: h.hold_type,
+        holdId: h.id,
+        bookingEventId: h.booking_event_id,
+        label: h.booking_events?.event_type_label ?? null,
+        couple: h.booking_events?.bookings.couple_full_name ?? null,
+      };
     })
-    .filter((e): e is CalendarDayEvent => e !== null);
+    .filter((e): e is CalendarDay => e !== null);
 
   const upcomingEvents = [
     ...buckets.today,

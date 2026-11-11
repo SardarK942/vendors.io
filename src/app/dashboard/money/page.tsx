@@ -36,7 +36,9 @@ export default async function MoneyPage() {
     supabase
       .from('bookings')
       .select('id', { count: 'exact', head: true })
-      .eq('vendor_profile_id', vendorProfile.id),
+      .eq('vendor_profile_id', vendorProfile.id)
+      // Manual off-platform bookings are excluded from analytics.
+      .neq('source', 'manual'),
     // getVendorAttribution throws on DB error — degrade to zeros rather than crash.
     getVendorAttribution(supabase, vendorProfile.id, 'all').catch(() => null),
     getBookingRequests(supabase, user.id, 'vendor', { limit: 100, sort: 'created_at' }),
@@ -53,7 +55,9 @@ export default async function MoneyPage() {
   const platformFeeCents =
     attribution.platformFeeCents ?? attribution.totalCents - attribution.netCents;
 
-  const bookings = bookingsResult.data ?? [];
+  // Manual off-platform bookings appear on the calendar + Bookings list, but are
+  // excluded from analytics (trends + recent table).
+  const bookings = (bookingsResult.data ?? []).filter((b) => b.source !== 'manual');
   const recentBookings = bookings.slice(0, 6);
 
   // Real daily trend: bucket this vendor's bookings by created_at over the last

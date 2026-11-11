@@ -1,11 +1,14 @@
 'use client';
 import { useState } from 'react';
 import { useQueryState, parseAsString } from 'nuqs';
-import { Input } from '@/components/ui/input';
+import { CalendarDays } from 'lucide-react';
 import { TimeInput } from '@/components/ui/TimeInput';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DatePicker } from '@/components/ui/date-picker';
+import { fmtDate } from '@/lib/intl';
 import { useRouter } from 'next/navigation';
 
 // Mirrors the shadcn <Input> default styling so the TimeInputs (a bare native
@@ -26,6 +29,7 @@ export function BlockDateForm() {
   const [endTime, setEndTime] = useState('17:00');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -54,13 +58,30 @@ export function BlockDateForm() {
       <h2 className="font-semibold">Block a Date</h2>
       <div>
         <Label htmlFor="block-date">Date</Label>
-        <Input
-          id="block-date"
-          type="date"
-          value={date}
-          onChange={(e) => void setDate(e.target.value)}
-          required
-        />
+        <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              id="block-date"
+              type="button"
+              variant="secondary"
+              iconLeading={<CalendarDays className="size-4" aria-hidden="true" />}
+              className="mt-1 w-full justify-start font-normal"
+            >
+              {date
+                ? fmtDate(`${date}T12:00:00`, { month: 'long', day: 'numeric', year: 'numeric' })
+                : 'Pick a date'}
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent align="start" className="w-auto p-0">
+            <DatePicker
+              selected={date}
+              onSelect={(iso) => {
+                void setDate(iso);
+                setPickerOpen(false);
+              }}
+            />
+          </PopoverContent>
+        </Popover>
       </div>
       <div className="flex items-center gap-3">
         <Switch checked={fullDay} onCheckedChange={setFullDay} id="full-day" />
