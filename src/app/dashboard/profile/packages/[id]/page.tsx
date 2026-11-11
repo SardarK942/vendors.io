@@ -41,7 +41,6 @@ export default async function EditPackagePage({ params }: { params: { id: string
         <ArrowLeft className="size-4" aria-hidden="true" />
         Back to packages
       </Link>
-      <h1 className="mb-6 text-pretty text-2xl font-bold">Edit Package</h1>
       <PackageEditorForm
         mode="edit"
         category={vp.category ?? ''}
