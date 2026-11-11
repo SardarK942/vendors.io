@@ -26,7 +26,9 @@ test.describe('Bucket J — shortlist persists across sessions', () => {
 
   test('heart vendor → log out → log in → still hearted → unheart removes', async ({ browser }) => {
     couple = await seedCouple({ markOnboardingComplete: true });
-    vendor = await seedVendor({ chargesEnabled: false, publish: true });
+    // verified:true keeps this vendor on page 1 of the paginated /vendors
+    // listing (ordered verified-first) so its card is reliably found below.
+    vendor = await seedVendor({ chargesEnabled: false, publish: true, verified: true });
 
     // Session 1 — log in and heart the vendor
     const ctx1 = await browser.newContext();
