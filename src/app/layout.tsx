@@ -9,6 +9,7 @@ import {
   Markazi_Text,
 } from 'next/font/google';
 import { NuqsAdapter } from 'nuqs/adapters/next/app';
+import NextTopLoader from 'nextjs-toploader';
 import { Toaster } from '@/components/ui/sonner';
 import { PostHogProvider } from '@/components/analytics/PostHogProvider';
 import { AnalyticsNotice } from '@/components/analytics/AnalyticsNotice';
@@ -97,6 +98,22 @@ export default function RootLayout({
       <body
         className={`${spectral.variable} ${schibstedGrotesk.variable} ${dmMono.variable} ${tiroDevanagari.variable} ${notoNastaliqUrdu.variable} ${amiri.variable} ${markaziText.variable} antialiased`}
       >
+        {/* Global navigation progress bar — a thin indigo bar that starts the
+            instant any in-app navigation begins and completes when the new route
+            is ready, so clicking a link/nav button gives immediate feedback even
+            while the App Router fetches the server-rendered page. Brand indigo
+            (#2E3DA3); NProgress spinner off (the bar alone suffices and keeps the
+            top-right clear for the Sonner toaster). */}
+        <NextTopLoader
+          color="#2E3DA3"
+          height={3}
+          shadow="0 0 8px #2E3DA3, 0 0 4px #2E3DA3"
+          showSpinner={false}
+          crawlSpeed={200}
+          speed={300}
+          easing="ease"
+          zIndex={1600}
+        />
         <PostHogProvider>
           <NuqsAdapter>
             {children}
