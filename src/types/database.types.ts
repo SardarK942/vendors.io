@@ -860,7 +860,8 @@ export interface Database {
       bookings: {
         Row: {
           id: string;
-          couple_user_id: string;
+          couple_user_id: string | null;
+          source: string;
           vendor_profile_id: string;
           guest_count: number | null;
           special_requests: string | null;
@@ -907,7 +908,8 @@ export interface Database {
         };
         Insert: {
           id?: string;
-          couple_user_id: string;
+          couple_user_id?: string | null;
+          source?: string;
           vendor_profile_id: string;
           guest_count?: number | null;
           special_requests?: string | null;
@@ -953,7 +955,8 @@ export interface Database {
           updated_at?: string;
         };
         Update: {
-          couple_user_id?: string;
+          couple_user_id?: string | null;
+          source?: string;
           vendor_profile_id?: string;
           guest_count?: number | null;
           special_requests?: string | null;

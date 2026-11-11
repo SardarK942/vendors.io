@@ -47,6 +47,9 @@ export async function getVendorAttribution(
     .from('bookings')
     .select('total_price_cents, status, created_at')
     .eq('vendor_profile_id', vendorProfileId)
+    // Manual (off-platform) bookings never had a Baazar deposit, so they are
+    // excluded from earnings/attribution (calendar + Bookings list only).
+    .neq('source', 'manual')
     .in('status', QUALIFYING_STATUSES as unknown as BookingStatus[]);
 
   const start = rangeStartDate(range);

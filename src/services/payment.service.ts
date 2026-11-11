@@ -186,15 +186,18 @@ export async function handlePaymentSuccess(
             }),
           { booking_id: bookingId }
         );
-        await deliver(
-          'notify',
-          () =>
-            notifyBookingConfirmed(supabase, notifyCtx.couple_user_id, {
-              bookingId,
-              vendorName: nvp.business_name,
-            }),
-          { booking_id: bookingId }
-        );
+        if (notifyCtx.couple_user_id) {
+          const coupleUserId = notifyCtx.couple_user_id;
+          await deliver(
+            'notify',
+            () =>
+              notifyBookingConfirmed(supabase, coupleUserId, {
+                bookingId,
+                vendorName: nvp.business_name,
+              }),
+            { booking_id: bookingId }
+          );
+        }
       }
     })();
   }
@@ -504,17 +507,19 @@ async function notifyCancellation(
     );
   } else if (cancellerRole === 'vendor' && ctx.couple_user_id) {
     // Couple is the other party.
+    const coupleUserId = ctx.couple_user_id;
     await deliver(
       'notify',
-      () => notifyBookingCancelled(supabase, ctx.couple_user_id, { bookingId, cancellerRole }),
+      () => notifyBookingCancelled(supabase, coupleUserId, { bookingId, cancellerRole }),
       { booking_id: bookingId }
     );
   } else if (cancellerRole === 'mutual') {
     // Notify both parties (each is the "other party").
     if (ctx.couple_user_id) {
+      const coupleUserId = ctx.couple_user_id;
       await deliver(
         'notify',
-        () => notifyBookingCancelled(supabase, ctx.couple_user_id, { bookingId, cancellerRole }),
+        () => notifyBookingCancelled(supabase, coupleUserId, { bookingId, cancellerRole }),
         { booking_id: bookingId }
       );
     }
@@ -807,9 +812,10 @@ export async function autoCompleteBookings(
         eventsCount: events.length,
       };
       if (b.couple_user_id) {
+        const coupleUserId = b.couple_user_id;
         const coupleNotify = await deliver(
           'notify',
-          () => notifyEventCompleted(supabase, b.couple_user_id, evPayload),
+          () => notifyEventCompleted(supabase, coupleUserId, evPayload),
           { booking_id: b.id }
         );
         if (coupleEmail && coupleNotify?.id) {
@@ -868,10 +874,11 @@ export async function autoCompleteBookings(
 
       // Notify both parties that the entire booking is now complete.
       if (b.couple_user_id) {
+        const coupleUserId = b.couple_user_id;
         await deliver(
           'notify',
           () =>
-            notifyBookingCompleted(supabase, b.couple_user_id, {
+            notifyBookingCompleted(supabase, coupleUserId, {
               bookingId: b.id,
               recipientRole: 'couple',
             }),

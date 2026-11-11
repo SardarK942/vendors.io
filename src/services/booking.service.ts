@@ -833,6 +833,131 @@ export async function createBooking(
 
 // ─── Phase A3: Couple Accept Adjusted Quote ──────────────────────────────────
 
+// ─── Manual (off-platform) bookings ─────────────────────────────
+// A vendor logs a gig they booked off Baazar. No couple account, no Baazar
+// deposit. We insert the booking (source='manual') + its single event, then
+// flip the status to a locking state so the sync_booking_calendar_holds trigger
+// creates the capacity-checked calendar hold. Excluded from earnings/analytics
+// (see getVendorAttribution's `source` filter).
+
+export interface CreateManualBookingInput {
+  vendorProfileId: string;
+  customerName: string;
+  customerPhone?: string | null;
+  eventType: string;
+  eventDate: string; // YYYY-MM-DD
+  startTime: string; // HH:mm
+  endTime: string; // HH:mm
+  valueCents: number;
+  location?: string | null;
+}
+
+export async function createManualBooking(
+  // Expects a service-role client: vendors have no RLS INSERT path on bookings.
+  supabase: SupabaseClient<Database>,
+  vendorUserId: string,
+  input: CreateManualBookingInput
+): Promise<ServiceResult<{ booking: Record<string, unknown> }>> {
+  // 1. Verify the caller owns this profile; pull base address to satisfy
+  //    booking_events' NOT NULL location columns.
+  const { data: vendor } = await supabase
+    .from('vendor_profiles')
+    .select('id, user_id, base_address_line_1, base_city, base_state, base_postal_code')
+    .eq('id', input.vendorProfileId)
+    .single();
+  if (!vendor) return { error: 'Vendor profile not found', status: 404 };
+  if (vendor.user_id !== vendorUserId) return { error: 'Not your vendor profile', status: 403 };
+
+  // Value is optional for a manual booking (a vendor may log a gig without a
+  // price); only a negative amount is rejected.
+  if (input.valueCents < 0) {
+    return { error: 'Booking value cannot be negative.', status: 400 };
+  }
+
+  // The entered wall-clock time is stored verbatim (suffixed +00:00) so the
+  // calendar date always matches the chosen day regardless of viewer timezone.
+  const startIso = `${input.eventDate}T${input.startTime}:00+00:00`;
+  const endIso = `${input.eventDate}T${input.endTime}:00+00:00`;
+  if (new Date(endIso).getTime() <= new Date(startIso).getTime()) {
+    return { error: 'End time must be after start time.', status: 400 };
+  }
+
+  // 2. Insert as pending. total_price_cents is trigger-computed from
+  //    package_base_price_cents_snapshot, so the value goes there.
+  const { data: booking, error: bookingError } = await supabase
+    .from('bookings')
+    .insert({
+      source: 'manual',
+      couple_user_id: null,
+      vendor_profile_id: input.vendorProfileId,
+      package_id: null,
+      package_name_snapshot: input.eventType,
+      package_base_price_cents_snapshot: input.valueCents,
+      selected_addons:
+        [] as unknown as Database['public']['Tables']['bookings']['Insert']['selected_addons'],
+      couple_full_name: input.customerName,
+      couple_contact_phone: input.customerPhone ?? null,
+      status: 'pending',
+      expires_at: null,
+      negotiation_round_count: 0,
+    })
+    .select('id')
+    .single();
+
+  if (bookingError || !booking) {
+    return { error: bookingError?.message ?? 'Failed to create booking', status: 500 };
+  }
+
+  // 3. Insert the single event (location defaults to the vendor's base address).
+  const { error: eventError } = await supabase.from('booking_events').insert({
+    booking_id: booking.id,
+    sequence: 1,
+    event_date: input.eventDate,
+    event_start_time: startIso,
+    event_end_time: endIso,
+    event_type_label: input.eventType,
+    location_name: input.location ?? null,
+    address_line_1: vendor.base_address_line_1 ?? input.location ?? 'Off-platform',
+    city: vendor.base_city ?? 'Chicago',
+    state: vendor.base_state ?? 'IL',
+    postal_code: vendor.base_postal_code ?? '00000',
+    location_is_private: false,
+    location_overridden: false,
+  });
+
+  if (eventError) {
+    await supabase.from('bookings').delete().eq('id', booking.id);
+    return { error: eventError.message, status: 500 };
+  }
+
+  // 4. Flip to a locking status → the sync_booking_calendar_holds trigger
+  //    creates the capacity-checked hold (raises calendar_capacity_exceeded on
+  //    an over-capacity conflict).
+  const { data: confirmed, error: statusError } = await supabase
+    .from('bookings')
+    .update({ status: 'deposit_paid' })
+    .eq('id', booking.id)
+    .select('*')
+    .single();
+
+  if (statusError) {
+    // The capacity RAISE rolls back the UPDATE (no hold created), so the row is
+    // still a bare pending booking + event — remove both.
+    await supabase.from('booking_events').delete().eq('booking_id', booking.id);
+    await supabase.from('bookings').delete().eq('id', booking.id);
+    if (statusError.message?.includes('calendar_capacity_exceeded')) {
+      return {
+        error:
+          'This time conflicts with another booking and exceeds your concurrent capacity. Pick another time, or raise capacity in the calendar.',
+        status: 409,
+      };
+    }
+    return { error: statusError.message, status: 500 };
+  }
+
+  return { data: { booking: confirmed as Record<string, unknown> }, status: 201 };
+}
+
 export async function coupleAcceptAdjusted(
   supabase: SupabaseClient<Database>,
   bookingId: string,
