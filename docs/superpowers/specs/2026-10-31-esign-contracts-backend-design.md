@@ -131,7 +131,7 @@ All new emails added to `src/lib/email/resend.tsx` in the existing inline-HTML s
 
 The send wrapper (`sendEmail` / `sendWithRecord`) is extended to optionally forward Resend's `attachments: [{ filename, content }]`; existing callers unaffected (new optional param).
 
-## 6. Data model (migration `00089`)
+## 6. Data model (migration `00090`)
 
 Following the `vendor_stripe_accounts` (00086) 1:1 side-table + RLS template.
 
@@ -163,7 +163,7 @@ Following the `vendor_stripe_accounts` (00086) 1:1 side-table + RLS template.
 - `src/services/docuseal.service.ts` — `createForBooking()`, `applyWebhookEvent()`, `storeSignedArtifacts()`, `voidForBooking()`, `runSweep()`. Returns `ServiceResult<T>`.
 - `src/app/api/webhooks/docuseal/route.ts` — thin: raw body → verify → dedup → delegate → 200/500.
 - `src/app/api/cron/contract-sweep/route.ts` — cron guard → `runSweep()`.
-- Edits: `src/services/payment.service.ts` (hook create into `handlePaymentSuccess`, void into `cancelBooking` + `handleChargeRefunded`), `src/lib/email/resend.tsx` (3 new senders + attachments param), `vercel.json` (cron schedule), `supabase/migrations/00089_*.sql`, `src/types/` (Database patch).
+- Edits: `src/services/payment.service.ts` (hook create into `handlePaymentSuccess`, void into `cancelBooking` + `handleChargeRefunded`), `src/lib/email/resend.tsx` (3 new senders + attachments param), `vercel.json` (cron schedule), `supabase/migrations/00090_*.sql`, `src/types/` (Database patch).
 
 ## 8. Env contract (new)
 

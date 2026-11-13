@@ -41,7 +41,7 @@
  *   - 00083 user_measurement_profiles table (made-to-measure reusable body-measurement profiles)
  *   - 00084 products.customization_types (text[]) + products.mtm_surcharge_cents (stitching-level discriminator)
  *   - 00085 vendor_profiles.vendor_origin + vendor_country + vendor_currency (local vs international fork)
- *   - 00089 booking_contracts + docuseal_events + vendor_profiles.docuseal_template_id (e-sign contracts)
+ *   - 00090 booking_contracts + docuseal_events + vendor_profiles.docuseal_template_id (e-sign contracts)
  *
  * Replace with auto-generated types once we decide to switch:
  *   npx supabase gen types typescript --project-id <ref> > src/types/database.types.ts

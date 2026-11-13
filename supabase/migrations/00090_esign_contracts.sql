@@ -1,4 +1,4 @@
--- supabase/migrations/00089_esign_contracts.sql
+-- supabase/migrations/00090_esign_contracts.sql
 -- E-signature contracts (backend): auto-send a DocuSeal contract on deposit.
 -- Plan: docs/superpowers/plans/2026-11-01-esign-contracts-backend.md
 -- Spec: see the esign contracts design doc committed in e789348
