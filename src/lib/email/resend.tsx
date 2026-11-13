@@ -54,6 +54,7 @@ interface EmailOptions {
   to: string;
   subject: string;
   html: string;
+  attachments?: Array<{ filename: string; content: Buffer | string }>;
 }
 
 async function sendEmail(options: EmailOptions): Promise<boolean> {
@@ -64,6 +65,7 @@ async function sendEmail(options: EmailOptions): Promise<boolean> {
       replyTo: CONTACT_EMAIL,
       subject: options.subject,
       html: options.html,
+      ...(options.attachments?.length ? { attachments: options.attachments } : {}),
     });
 
     if (error) {
@@ -664,6 +666,74 @@ export async function sendRemovalConfirmationVendorEmail(
       <p>If anything else is needed, reply to this email.</p>
       ${FOOTER}
     `,
+  });
+}
+
+// ─── E-sign contracts ─────────────────────────────────────────────────────────
+
+/** Fired when a contract is ready to sign. Recipient: vendor or couple. */
+export async function sendContractSigningRequestEmail(
+  to: string,
+  party: 'vendor' | 'couple',
+  signingUrl: string,
+  ctx: { vendorName: string; eventSchedule: string }
+): Promise<boolean> {
+  const safeName = escapeHtml(ctx.vendorName);
+  const schedule = escapeHtml(ctx.eventSchedule).replace(/\r?\n/g, '<br>');
+  const intro =
+    party === 'vendor'
+      ? `<p>Your contract with a Baazar.io couple is ready for your signature.</p>`
+      : `<p>Your contract with <strong>${safeName}</strong> is ready for your signature.</p>`;
+  return sendEmail({
+    to,
+    subject: `Please sign your contract — ${safeName}`,
+    html: `
+      <h2>Your contract is ready to sign</h2>
+      ${intro}
+      <p><strong>Events</strong><br>${schedule}</p>
+      <p><a href="${escapeHtml(signingUrl)}">Review and sign</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/** Reminder that a contract is still awaiting signature. */
+export async function sendContractReminderEmail(
+  to: string,
+  party: 'vendor' | 'couple',
+  signingUrl: string,
+  ctx: { vendorName: string }
+): Promise<boolean> {
+  const safeName = escapeHtml(ctx.vendorName);
+  const who = party === 'vendor' ? 'a couple' : safeName;
+  return sendEmail({
+    to,
+    subject: `Reminder: your contract with ${safeName} is awaiting your signature`,
+    html: `
+      <h2>Reminder: contract awaiting your signature</h2>
+      <p>Your contract with ${who} is still waiting for your signature.</p>
+      <p><a href="${escapeHtml(signingUrl)}">Review and sign</a></p>
+      ${FOOTER}
+    `,
+  });
+}
+
+/** Fully-signed contract copy, PDF attached. */
+export async function sendContractSignedCopyEmail(
+  to: string,
+  ctx: { vendorName: string },
+  attachment: { filename: string; content: Buffer }
+): Promise<boolean> {
+  const safeName = escapeHtml(ctx.vendorName);
+  return sendEmail({
+    to,
+    subject: `Your signed contract — ${safeName}`,
+    html: `
+      <h2>Your contract is fully signed</h2>
+      <p>Both parties have signed the contract with <strong>${safeName}</strong>. A copy is attached for your records.</p>
+      ${FOOTER}
+    `,
+    attachments: [attachment],
   });
 }
 
