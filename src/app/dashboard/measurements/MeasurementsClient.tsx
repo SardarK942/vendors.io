@@ -64,15 +64,34 @@ export function MeasurementsClient({ profiles }: { profiles: MeasurementProfileV
               const total = schema.length;
               const filled = total - missingCount(profile.garment, profile.measurements);
               const meta = GARMENT_META[profile.garment];
+              const percent = total > 0 ? Math.round((filled / total) * 100) : 0;
+              const complete = filled >= total;
               return (
                 <div key={profile.id} className="rounded-lg border border-hairline bg-cream p-6">
                   <p className="font-display text-xl text-ink">{profile.label}</p>
                   <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.12em] text-indigo">
                     {meta.noun}
                   </p>
-                  <p className="mt-3 text-sm text-ink-soft">
-                    {filled} of {total} measurements · updated{' '}
-                    {dateFmt.format(new Date(profile.updatedAt))}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-ink">
+                        {complete ? 'Measured' : `${filled} of ${total} measurements`}
+                      </span>
+                      <span className="font-mono tabular-nums text-ink-soft">{percent}%</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink/10">
+                      <div
+                        className={
+                          complete
+                            ? 'h-full rounded-full bg-indigo'
+                            : 'h-full rounded-full bg-haldi'
+                        }
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-ink-soft">
+                    Updated {dateFmt.format(new Date(profile.updatedAt))}
                   </p>
                   <Button
                     variant="secondary"
