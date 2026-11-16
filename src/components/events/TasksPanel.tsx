@@ -117,11 +117,17 @@ export function TasksPanel({ eventId, tasks, functions, todayIso }: TasksPanelPr
   }
 
   const ordered = sortTasks(tasks, todayIso);
+  const pendingCount = tasks.filter((t) => !t.completed_at).length;
 
   return (
     <Card className="border-hairline shadow-none">
-      <CardHeader className="pb-2">
-        <p className="font-display text-lg text-ink">Tasks</p>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+        <p className="font-display text-lg text-ink">Upcoming tasks</p>
+        {pendingCount > 0 && (
+          <span className="rounded-full border border-haldi/45 bg-haldi/25 px-2.5 py-0.5 font-mono text-[11px] font-bold text-ink">
+            {pendingCount} Pending
+          </span>
+        )}
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
         {ordered.length === 0 ? (
