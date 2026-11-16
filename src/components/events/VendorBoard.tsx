@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -25,7 +26,7 @@ import {
 } from '@/components/ui/select';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { CATEGORIES_FEATURED } from '@/lib/vendor-categories/featured';
-import { formatPrice } from '@/lib/utils';
+import { cn, formatPrice } from '@/lib/utils';
 import { dollarsToCents } from '@/lib/events/money';
 import type { NeedWithBooking, NeedStatus } from '@/lib/events/derive';
 import type { EventFunctionRow } from '@/types/database.types';
@@ -84,6 +85,9 @@ export function VendorBoard({ eventId, functions, needs, unlinkedBookings }: Ven
   const [addSlotFor, setAddSlotFor] = useState<EventFunctionRow | null>(null);
   const [editNeed, setEditNeed] = useState<NeedRow | null>(null);
   const [deleteNeed, setDeleteNeed] = useState<NeedRow | null>(null);
+  // Per-function collapse (expanded by default; keyed by function id).
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+  const toggleCollapsed = (id: string) => setCollapsed((prev) => ({ ...prev, [id]: !prev[id] }));
 
   async function runMutation(fn: () => Promise<void>, successMsg: string): Promise<boolean> {
     setBusy(true);
@@ -116,10 +120,31 @@ export function VendorBoard({ eventId, functions, needs, unlinkedBookings }: Ven
         const fnNeeds = needs
           .filter((n) => n.event_function_id === fn.id)
           .sort((a, b) => a.sort - b.sort);
+        const isCollapsed = Boolean(collapsed[fn.id]);
+        const bookedCount = fnNeeds.filter((n) => n.status !== 'needed').length;
+        const panelId = `vendor-board-fn-${fn.id}`;
         return (
           <div key={fn.id} className="rounded-xl border border-hairline bg-cream p-4">
             <div className="flex items-center justify-between gap-3">
-              <p className="font-display text-lg text-ink">{fn.label}</p>
+              <button
+                type="button"
+                onClick={() => toggleCollapsed(fn.id)}
+                aria-expanded={!isCollapsed}
+                aria-controls={panelId}
+                className="group flex min-w-0 items-center gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+              >
+                <ChevronDown
+                  aria-hidden
+                  className={cn(
+                    'size-4 shrink-0 text-ink-soft transition-transform',
+                    isCollapsed && '-rotate-90'
+                  )}
+                />
+                <span className="truncate font-display text-lg text-ink">{fn.label}</span>
+                <span className="shrink-0 font-mono text-[11px] text-ink-muted">
+                  {bookedCount}/{fnNeeds.length}
+                </span>
+              </button>
               <div className="flex shrink-0 items-center gap-2">
                 <Button
                   type="button"
@@ -140,20 +165,23 @@ export function VendorBoard({ eventId, functions, needs, unlinkedBookings }: Ven
               </div>
             </div>
 
-            {fnNeeds.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-soft">No vendors needed yet for this function.</p>
-            ) : (
-              <div className="mt-3 space-y-2">
-                {fnNeeds.map((need) => (
-                  <NeedRowView
-                    key={need.id}
-                    need={need}
-                    onEdit={() => setEditNeed(need)}
-                    onDelete={() => setDeleteNeed(need)}
-                  />
-                ))}
-              </div>
-            )}
+            {!isCollapsed &&
+              (fnNeeds.length === 0 ? (
+                <p id={panelId} className="mt-3 text-sm text-ink-soft">
+                  No vendors needed yet for this function.
+                </p>
+              ) : (
+                <div id={panelId} className="mt-3 space-y-2">
+                  {fnNeeds.map((need) => (
+                    <NeedRowView
+                      key={need.id}
+                      need={need}
+                      onEdit={() => setEditNeed(need)}
+                      onDelete={() => setDeleteNeed(need)}
+                    />
+                  ))}
+                </div>
+              ))}
           </div>
         );
       })}
