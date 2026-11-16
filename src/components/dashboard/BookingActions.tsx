@@ -8,8 +8,6 @@ import type { Database } from '@/types/database.types';
 import { ReviewForm } from '@/components/dashboard/ReviewForm';
 import { DisputeDialog } from '@/components/dashboard/DisputeDialog';
 import { CancelDialog } from '@/components/dashboard/CancelDialog';
-import { DepositDialog } from '@/components/dashboard/DepositDialog';
-import { CounterModal } from '@/components/bookings/CounterModal';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 
 type BookingRow = Database['public']['Tables']['bookings']['Row'];
@@ -36,13 +34,7 @@ export function BookingActions({
   const [reviewOpen, setReviewOpen] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [cancelOpen, setCancelOpen] = useState(false);
-  const [depositOpen, setDepositOpen] = useState(false);
-  const [counterOpen, setCounterOpen] = useState(false);
   const [completeConfirmOpen, setCompleteConfirmOpen] = useState(false);
-
-  // Hoist counter computation to avoid duplicate type casts
-  const coupleCounterCount = booking.couple_counter_count ?? 0;
-  const countersLeft = Math.max(0, 2 - coupleCounterCount);
 
   // ── ?action= deep-link handler ──────────────────────────────────────────────
   // Opens the matching modal when the user arrives via a notification action link.
@@ -52,11 +44,6 @@ export function BookingActions({
     if (!initialAction) return;
     let opened = false;
     switch (initialAction) {
-      // Couple: pay deposit after vendor accepted
-      case 'pay-deposit':
-        setDepositOpen(true);
-        opened = true;
-        break;
       // Couple: leave a review after booking completed
       case 'leave-review':
         setReviewOpen(true);
@@ -67,16 +54,9 @@ export function BookingActions({
         setCancelOpen(true);
         opened = true;
         break;
-      // Couple: counter-offer on an `accepted` booking (adjusted_quote_sent is
-      // handled by AdjustmentReview which owns its own ?action=counter handler).
-      case 'counter': {
-        const isCounterable = ['accepted'].includes(booking.status);
-        if (isCounterable && countersLeft > 0) {
-          setCounterOpen(true);
-        }
-        opened = true; // Mark as handled regardless of whether modal opened
-        break;
-      }
+      // 'pay-deposit' / 'counter' (couple, accepted) are owned by AcceptedQuoteReview;
+      // 'adjusted_quote_sent' counter is owned by AdjustmentReview. Both strip the
+      // query themselves, so BookingActions ignores those actions here.
       // 'accept'     → vendor accept is a direct button (no modal); couple accept
       //                shows AdjustmentReview inline — both are already visible on
       //                page load, no modal to open. No-op here.
@@ -119,37 +99,10 @@ export function BookingActions({
     router.refresh();
   };
 
-  const totalPriceCents = (booking as unknown as Record<string, unknown>).total_price_cents as
-    | number
-    | undefined;
-
   return (
     <div className="flex flex-wrap gap-2 pt-2">
-      {/* Pay deposit when vendor has accepted */}
-      {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
-        <Button onClick={() => setDepositOpen(true)} disabled={loading}>
-          Pay Deposit
-        </Button>
-      )}
-
-      {/* Counter-offer when vendor has accepted — couple may propose a different total */}
-      {role === 'couple' && booking.status === 'accepted' && (
-        <>
-          {countersLeft > 0 && (
-            <div className="flex flex-col gap-1">
-              <Button variant="secondary" onClick={() => setCounterOpen(true)} disabled={loading}>
-                Counter
-              </Button>
-              <span className="text-xs tabular-nums text-ink/60">
-                {countersLeft} counter-offer{countersLeft === 1 ? '' : 's'} remaining
-              </span>
-            </div>
-          )}
-          {countersLeft === 0 && (
-            <span className="self-center text-xs text-ink/60">No counter-offers remaining</span>
-          )}
-        </>
-      )}
+      {/* Accepted-status Pay Deposit + Counter live in AcceptedQuoteReview (the
+          prominent top CTA), not here. */}
 
       {role === 'couple' && booking.status === 'deposit_paid' && (
         <>
@@ -201,28 +154,6 @@ export function BookingActions({
         onSuccess={() => router.refresh()}
         bookingContext={vendorName || undefined}
       />
-
-      {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
-        <DepositDialog
-          bookingId={booking.id}
-          quoteAmountCents={totalPriceCents}
-          vendorName={vendorName}
-          open={depositOpen}
-          onOpenChange={setDepositOpen}
-        />
-      )}
-
-      {/* CounterModal — used for `accepted` status. `adjusted_quote_sent` status
-          counter is owned by AdjustmentReview which renders its own CounterModal. */}
-      {role === 'couple' && booking.status === 'accepted' && totalPriceCents != null && (
-        <CounterModal
-          open={counterOpen}
-          onClose={() => setCounterOpen(false)}
-          bookingId={booking.id}
-          currentTotalCents={totalPriceCents}
-          onSuccess={() => router.refresh()}
-        />
-      )}
 
       {/* High-stakes confirmation: closes the booking, finalizes the
           transaction record, and (since PR #77) auto-verifies the vendor on

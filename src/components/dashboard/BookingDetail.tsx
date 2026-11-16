@@ -10,6 +10,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { BookingActions } from '@/components/dashboard/BookingActions';
 import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
 import { AdjustmentReview } from '@/components/booking/AdjustmentReview';
+import { AcceptedQuoteReview } from '@/components/booking/AcceptedQuoteReview';
 import { ConflictWarning } from '@/components/dashboard/ConflictWarning';
 import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
@@ -328,15 +329,16 @@ export async function BookingDetail({
         </div>
       )}
 
-      {/* Accepted status — pay deposit */}
+      {/* Accepted status — prominent pay-deposit CTA (owns Pay Deposit + Counter). */}
       {role === 'couple' && booking.status === 'accepted' && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="mb-2 font-medium text-emerald-800">Quote accepted!</p>
-          <p className="mb-3 text-sm text-emerald-700">
-            Pay your deposit to confirm the booking. The vendor’s full address and instructions will
-            appear after payment.
-          </p>
-        </div>
+        <AcceptedQuoteReview
+          bookingId={booking.id}
+          totalPriceCents={totalCents}
+          depositCents={depositCents}
+          vendorName={vendorProfile?.business_name ?? ''}
+          coupleCounterCount={(bookingAsAny.couple_counter_count as number) ?? 0}
+          initialAction={initialAction}
+        />
       )}
 
       {/* Vendor-side status banners */}
