@@ -106,7 +106,7 @@ export function CoupleUpcomingSchedule({ events }: Props) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           {shown.map((e, i) => (
-            <ScheduleCard key={e.eventId} data={e} highlighted={tab === 'upcoming' && i === 0} />
+            <ScheduleCard key={e.eventId} data={e} isNext={tab === 'upcoming' && i === 0} />
           ))}
         </div>
       )}
@@ -114,61 +114,47 @@ export function CoupleUpcomingSchedule({ events }: Props) {
   );
 }
 
-function ScheduleCard({ data, highlighted }: { data: EventCardData; highlighted: boolean }) {
+function ScheduleCard({ data, isNext }: { data: EventCardData; isNext: boolean }) {
   const sb = statusBadge(data.status);
   const reveal = REVEAL_STATUSES.has(data.status);
   const location = reveal ? `${data.addressLine1}, ${data.city}` : `${data.city}, ${data.state}`;
-  const Icon = highlighted ? Sparkles : CalendarDays;
+  // The soonest upcoming function keeps a sparkle marker; the indigo treatment is
+  // now hover-only (every card is plain until hovered).
+  const Icon = isNext ? Sparkles : CalendarDays;
 
+  // Status dot keeps its tone; the indigo/muted dots switch to cream on hover so
+  // they stay visible against the indigo card.
   const dotTone =
     sb.tone === 'confirmed'
       ? 'bg-emerald-400'
       : sb.tone === 'warn'
         ? 'bg-haldi'
         : sb.tone === 'info'
-          ? 'bg-indigo'
-          : 'bg-ink-muted';
+          ? 'bg-indigo group-hover:bg-cream'
+          : 'bg-ink-muted group-hover:bg-cream/70';
 
   return (
     <Link
       href={`/dashboard/bookings/${data.bookingId}`}
-      className={cn(
-        'group relative flex flex-col justify-between rounded-2xl p-5 transition-shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream',
-        highlighted
-          ? 'bg-indigo text-cream shadow-[0_12px_30px_-18px_rgba(46,61,163,0.9)]'
-          : 'border border-hairline bg-cream hover:shadow-[0_8px_24px_-16px_rgba(27,20,20,0.4)]'
-      )}
+      className="group relative flex flex-col justify-between rounded-2xl border border-hairline bg-cream p-5 text-ink transition-colors hover:border-indigo hover:bg-indigo hover:text-cream hover:shadow-[0_12px_30px_-18px_rgba(46,61,163,0.9)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
     >
       <div className="flex items-start justify-between">
-        <span
-          className={cn(
-            'inline-flex size-9 items-center justify-center rounded-xl',
-            highlighted ? 'bg-cream/15 text-cream' : 'bg-haldi/20'
-          )}
-        >
-          <Icon aria-hidden className={cn('size-4', highlighted ? 'text-cream' : 'text-ink')} />
+        <span className="inline-flex size-9 items-center justify-center rounded-xl bg-haldi/20 transition-colors group-hover:bg-cream/15">
+          <Icon aria-hidden className="size-4 text-ink transition-colors group-hover:text-cream" />
         </span>
         <ArrowUpRight
           aria-hidden
-          className={cn(
-            'size-4 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5',
-            highlighted ? 'text-cream/80' : 'text-ink-muted'
-          )}
+          className="size-4 text-ink-muted transition-[color,transform] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-cream/80"
         />
       </div>
 
       <div className="mt-6">
-        <p className={cn('font-display text-xl', highlighted ? 'text-cream' : 'text-ink')}>
-          {data.eventTypeLabel}
-        </p>
-        <p className={cn('mt-1 text-sm', highlighted ? 'text-cream/80' : 'text-ink-soft')}>
+        <p className="font-display text-xl">{data.eventTypeLabel}</p>
+        <p className="mt-1 text-sm text-ink-soft transition-colors group-hover:text-cream/80">
           {fmtTime(data.eventStartTime)} – {fmtTime(data.eventEndTime)}
         </p>
         <p
-          className={cn(
-            'mt-1 flex items-center gap-1 text-xs',
-            highlighted ? 'text-cream/70' : 'text-ink-muted'
-          )}
+          className="mt-1 flex items-center gap-1 text-xs text-ink-muted transition-colors group-hover:text-cream/70"
           data-ph-mask=""
         >
           <MapPin aria-hidden className="size-3" />
@@ -176,15 +162,10 @@ function ScheduleCard({ data, highlighted }: { data: EventCardData; highlighted:
         </p>
       </div>
 
-      <div
-        className={cn(
-          'mt-5 flex items-center gap-2 border-t pt-3 text-xs font-medium',
-          highlighted ? 'border-cream/15 text-cream/90' : 'border-hairline text-ink-soft'
-        )}
-      >
-        <span className={cn('size-1.5 rounded-full', dotTone)} />
+      <div className="mt-5 flex items-center gap-2 border-t border-hairline pt-3 text-xs font-medium text-ink-soft transition-colors group-hover:border-cream/15 group-hover:text-cream/90">
+        <span className={cn('size-1.5 rounded-full transition-colors', dotTone)} />
         {sb.label}
-        <span className={cn('ml-auto', highlighted ? 'text-cream/60' : 'text-ink-muted')}>
+        <span className="ml-auto text-ink-muted transition-colors group-hover:text-cream/60">
           {fmtDate(data.eventDate)}
         </span>
       </div>
