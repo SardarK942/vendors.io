@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
 import { PageTitle } from '@/components/dashboard/PageTitle';
 import { getSavedVendorsForUser } from '@/services/vendor.service';
-import { VendorGrid } from '@/components/marketplace/VendorGrid';
+import { SavedVendorsBrowser } from '@/components/marketplace/SavedVendorsBrowser';
 import { SavedVendorsProvider } from '@/components/marketplace/SavedVendorsProvider';
 
 export const dynamic = 'force-dynamic';
@@ -61,7 +61,7 @@ export default async function SavedPage() {
             </Link>
           </Button>
         </div>
-        <VendorGrid vendors={vendors} />
+        <SavedVendorsBrowser vendors={vendors} />
       </div>
     </SavedVendorsProvider>
   );
