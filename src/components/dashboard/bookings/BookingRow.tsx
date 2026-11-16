@@ -61,6 +61,7 @@ function StatusBadge({ status }: { status: string }) {
 export function BookingRow({
   booking,
   perspective = 'vendor',
+  needsAction = false,
 }: {
   booking: BookingRowData;
   /**
@@ -69,6 +70,8 @@ export function BookingRow({
    * the existing vendor BookingStatusTabs usage is unchanged.
    */
   perspective?: 'couple' | 'vendor';
+  /** When true, the row pulses (hot-pink ring) to flag that it needs the viewer's input. */
+  needsAction?: boolean;
 }) {
   const primaryName =
     perspective === 'couple'
@@ -80,7 +83,12 @@ export function BookingRow({
   return (
     <Link
       href={`/dashboard/bookings/${booking.id}`}
-      className="flex flex-wrap items-center gap-4 rounded-2xl border border-hairline bg-white p-4 transition-colors hover:border-indigo/40"
+      className={cn(
+        'flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4 transition-colors',
+        needsAction
+          ? 'border-hot-pink/50 pulse-pink-loop hover:border-hot-pink'
+          : 'border-hairline hover:border-indigo/40'
+      )}
     >
       {/* Thumbnail — no portfolio image is loaded for the list, so fall back to
           a muted calendar glyph (see STUB LEDGER in the PR notes). */}
@@ -96,6 +104,12 @@ export function BookingRow({
           <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-muted">
             <MapPin className="size-3 shrink-0" aria-hidden="true" />
             <span className="truncate">{city}</span>
+          </p>
+        ) : null}
+        {needsAction ? (
+          <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-hot-pink">
+            <span className="size-1.5 rounded-full bg-hot-pink" aria-hidden="true" />
+            Action needed
           </p>
         ) : null}
       </div>

@@ -169,7 +169,7 @@ export function BudgetPanel({ event, rollups, allocations, functions }: BudgetPa
             <Tabs defaultValue="category">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="category">By category</TabsTrigger>
-                <TabsTrigger value="function">By function</TabsTrigger>
+                <TabsTrigger value="function">By event</TabsTrigger>
               </TabsList>
               <TabsContent value="category" className="space-y-3 pt-3">
                 {categorySlugs.length === 0 ? (

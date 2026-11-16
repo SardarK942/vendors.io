@@ -32,6 +32,9 @@ export default async function BookingsPage() {
       'disputed',
       'adjusted_quote_declined',
     ]);
+    // Statuses where the ball is in the couple's court: pay the deposit on an
+    // accepted quote, or review a vendor's adjusted quote.
+    const COUPLE_ACTION_STATUSES = new Set(['accepted', 'adjusted_quote_sent']);
     const active = bookings.filter((b) => !PAST_STATUSES.has(b.status));
     const past = bookings.filter((b) => PAST_STATUSES.has(b.status));
 
@@ -58,7 +61,12 @@ export default async function BookingsPage() {
                 </h2>
                 <div className="space-y-3">
                   {active.map((booking) => (
-                    <BookingRow key={booking.id} booking={booking} perspective="couple" />
+                    <BookingRow
+                      key={booking.id}
+                      booking={booking}
+                      perspective="couple"
+                      needsAction={COUPLE_ACTION_STATUSES.has(booking.status)}
+                    />
                   ))}
                 </div>
               </section>
