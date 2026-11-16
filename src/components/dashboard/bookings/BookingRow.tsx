@@ -58,8 +58,22 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function BookingRow({ booking }: { booking: BookingRowData }) {
-  const customerName = booking.couple_full_name?.trim() || 'Unnamed couple';
+export function BookingRow({
+  booking,
+  perspective = 'vendor',
+}: {
+  booking: BookingRowData;
+  /**
+   * Whose list this row appears in. Vendor lists lead with the couple's name;
+   * couple lists lead with the vendor's business name. Defaults to 'vendor' so
+   * the existing vendor BookingStatusTabs usage is unchanged.
+   */
+  perspective?: 'couple' | 'vendor';
+}) {
+  const primaryName =
+    perspective === 'couple'
+      ? booking.vendor_profiles?.business_name?.trim() || 'Vendor'
+      : booking.couple_full_name?.trim() || 'Unnamed couple';
   const eventType = booking.event_type?.trim() || 'Booking request';
   const city = booking.event_city?.trim() || booking.venue_name?.trim() || null;
 
@@ -74,9 +88,9 @@ export function BookingRow({ booking }: { booking: BookingRowData }) {
         <CalendarDays className="size-6 text-ink-soft/60" aria-hidden="true" />
       </div>
 
-      {/* Main: customer name + event type + location */}
+      {/* Main: primary name (vendor or couple) + event type + location */}
       <div className="min-w-0 flex-1 basis-48">
-        <p className="truncate text-sm font-semibold text-ink">{customerName}</p>
+        <p className="truncate text-sm font-semibold text-ink">{primaryName}</p>
         <p className="truncate text-xs text-ink-soft">{eventType}</p>
         {city ? (
           <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-muted">
