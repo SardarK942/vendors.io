@@ -107,8 +107,11 @@ export function BookingRow({
           </p>
         ) : null}
         {needsAction ? (
-          <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-hot-pink">
-            <span className="size-1.5 rounded-full bg-hot-pink" aria-hidden="true" />
+          <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-hot-pink">
+            <span className="relative flex size-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-hot-pink opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-hot-pink" />
+            </span>
             Action needed
           </p>
         ) : null}
