@@ -4,15 +4,17 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { PageTitle } from '@/components/dashboard/PageTitle';
-import { EventCardGrid } from '@/components/dashboard/EventCardGrid';
-import { type EventCardData } from '@/components/dashboard/EventCard';
+import { CoupleCelebrationHero } from '@/components/dashboard/couple/CoupleCelebrationHero';
+import {
+  CoupleUpcomingSchedule,
+  type EventCardData,
+} from '@/components/dashboard/couple/CoupleUpcomingSchedule';
 import { getActiveVendorProfile } from '@/lib/vendor/active';
 import { CustomerWelcomeBanner } from '@/components/dashboard/CustomerWelcomeBanner';
 import { fmtDate } from '@/lib/intl';
 import { formatPrice } from '@/lib/utils';
 import { listEvents, getEventGraph } from '@/services/events.service';
 import { computeRollups } from '@/lib/events/derive';
-import { EventSummaryCard } from '@/components/events/EventSummaryCard';
 import {
   StatCard,
   QuickActionList,
@@ -35,6 +37,7 @@ import {
   Package,
   CalendarCheck,
   Calendar,
+  Search,
 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
@@ -152,20 +155,20 @@ export default async function DashboardPage() {
           />
         )}
 
-        <div className="flex items-center justify-between">
-          <div>
-            <PageTitle>Home</PageTitle>
-            <p className="text-muted-foreground">
-              Welcome back, {profile?.full_name || user.email}
-            </p>
-          </div>
-          <Button asChild variant="outline">
-            <Link href="/vendors">Browse Vendors →</Link>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <h1 className="text-balance font-display text-2xl text-ink sm:text-3xl">
+            Welcome back, {(profile?.full_name || user.email || 'there').split(' ')[0]}
+          </h1>
+          <Button asChild variant="primary">
+            <Link href="/vendors">
+              <Search aria-hidden className="mr-1.5 size-4" />
+              Find Vendors
+            </Link>
           </Button>
         </div>
 
         {latestEventGraph && eventRollups ? (
-          <EventSummaryCard
+          <CoupleCelebrationHero
             event={latestEventGraph.event}
             functions={latestEventGraph.functions}
             needs={latestEventGraph.needs}
@@ -184,7 +187,7 @@ export default async function DashboardPage() {
           </div>
         )}
 
-        <EventCardGrid events={events} />
+        {events.length > 0 && <CoupleUpcomingSchedule events={events} />}
       </div>
     );
   }
