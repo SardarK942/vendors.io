@@ -1,6 +1,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Plus } from 'lucide-react';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { Button } from '@/components/ui/button';
 import { PageTitle } from '@/components/dashboard/PageTitle';
 import { getSavedVendorsForUser } from '@/services/vendor.service';
 import { VendorGrid } from '@/components/marketplace/VendorGrid';
@@ -19,25 +21,48 @@ export default async function SavedPage() {
 
   if (vendors.length === 0) {
     return (
-      <div className="rounded-lg border border-ink/10 bg-cream p-12 text-center">
-        <h2 className="text-xl font-semibold text-ink">No saved vendors yet</h2>
-        <p className="mt-2 text-sm text-ink/70">
-          Heart vendors to remember them. Your shortlist lives here.
-        </p>
-        <Link
-          href="/vendors"
-          className="mt-4 inline-block rounded-md bg-ink px-4 py-2 text-sm font-medium text-cream transition-colors hover:bg-hot-pink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
-        >
-          Browse Vendors
-        </Link>
+      <div className="space-y-6">
+        <div>
+          <PageTitle>Saved Vendors</PageTitle>
+          <p className="mt-1 text-sm text-ink-soft">
+            Keep track of your favorite vendors for the big day.
+          </p>
+        </div>
+        <div className="rounded-2xl border border-dashed border-hairline bg-cream-soft/40 p-12 text-center">
+          <h2 className="font-display text-xl text-ink">No saved vendors yet</h2>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
+            Heart vendors to remember them. Your shortlist lives here.
+          </p>
+          <Button asChild variant="primary" className="mt-5">
+            <Link href="/vendors">
+              <Plus aria-hidden className="mr-1.5 size-4" />
+              Find vendors
+            </Link>
+          </Button>
+        </div>
       </div>
     );
   }
 
   return (
     <SavedVendorsProvider>
-      <PageTitle className="mb-6">Your Saved Vendors</PageTitle>
-      <VendorGrid vendors={vendors} />
+      <div className="space-y-6">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <PageTitle>Saved Vendors</PageTitle>
+            <p className="mt-1 text-sm text-ink-soft">
+              Keep track of your favorite vendors for the big day.
+            </p>
+          </div>
+          <Button asChild variant="primary">
+            <Link href="/vendors">
+              <Plus aria-hidden className="mr-1.5 size-4" />
+              Find More
+            </Link>
+          </Button>
+        </div>
+        <VendorGrid vendors={vendors} />
+      </div>
     </SavedVendorsProvider>
   );
 }
