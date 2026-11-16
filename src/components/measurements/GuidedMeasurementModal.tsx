@@ -29,9 +29,12 @@ import { MeasurementFigure } from './MeasurementFigure';
 // Review step with cross-field warnings. Persistence is the API (POST/PATCH),
 // values are canonical INCHES. All copy is pulled from the shared libs.
 
+// Default profile label = the garment name. A fit profile can be for anyone
+// (the couple, a parent, the wedding party), so it isn't framed as bride/groom;
+// the label is freely editable at the Review step.
 const DEFAULT_LABEL: Record<MeasurementGarment, string> = {
-  lehenga: 'Bride',
-  sherwani: 'Groom',
+  lehenga: 'Lehenga',
+  sherwani: 'Sherwani',
 };
 
 const GARMENT_ORDER: MeasurementGarment[] = ['lehenga', 'sherwani'];

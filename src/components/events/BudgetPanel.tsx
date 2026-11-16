@@ -40,16 +40,24 @@ function BudgetRow({
   label,
   committedCents,
   plannedCents,
+  /**
+   * Optional 0–100 bar width for rows with no planned allocation (e.g. the
+   * By-function tab, where the bar shows each function's share of the total
+   * budget). Ignored when plannedCents is set — that bar is committed/planned.
+   */
+  barPercent,
 }: {
   label: string;
   committedCents: number;
   plannedCents: number | null;
+  barPercent?: number;
 }) {
   const overPlanned = plannedCents != null && committedCents > plannedCents;
   const percent =
     plannedCents != null && plannedCents > 0
       ? Math.min(100, (committedCents / plannedCents) * 100)
-      : 0;
+      : (barPercent ?? 0);
+  const showBar = plannedCents != null || barPercent != null;
 
   return (
     <div className="space-y-1">
@@ -65,7 +73,7 @@ function BudgetRow({
           )}
         </span>
       </div>
-      {plannedCents != null && (
+      {showBar && (
         <div className="h-1.5 w-full overflow-hidden rounded-full bg-ink-muted/10">
           <div
             className={
@@ -161,7 +169,7 @@ export function BudgetPanel({ event, rollups, allocations, functions }: BudgetPa
             <Tabs defaultValue="category">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="category">By category</TabsTrigger>
-                <TabsTrigger value="function">By function</TabsTrigger>
+                <TabsTrigger value="function">By event</TabsTrigger>
               </TabsList>
               <TabsContent value="category" className="space-y-3 pt-3">
                 {categorySlugs.length === 0 ? (
@@ -184,14 +192,25 @@ export function BudgetPanel({ event, rollups, allocations, functions }: BudgetPa
                 {sortedFunctions.length === 0 ? (
                   <p className="text-sm text-ink-soft">No functions yet.</p>
                 ) : (
-                  sortedFunctions.map((fn) => (
-                    <BudgetRow
-                      key={fn.id}
-                      label={fn.label}
-                      committedCents={rollups.byFunction[fn.id] ?? 0}
-                      plannedCents={null}
-                    />
-                  ))
+                  (() => {
+                    // No per-function planned budget exists, so the bar shows each
+                    // function's committed as a share of the total budget (or, with
+                    // no budget set, of the total committed so bars stay comparable).
+                    const denom =
+                      total != null && total > 0 ? total : rollups.totalCommittedCents || 1;
+                    return sortedFunctions.map((fn) => {
+                      const committed = rollups.byFunction[fn.id] ?? 0;
+                      return (
+                        <BudgetRow
+                          key={fn.id}
+                          label={fn.label}
+                          committedCents={committed}
+                          plannedCents={null}
+                          barPercent={Math.min(100, (committed / denom) * 100)}
+                        />
+                      );
+                    });
+                  })()
                 )}
               </TabsContent>
             </Tabs>

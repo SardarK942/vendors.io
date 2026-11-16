@@ -15,8 +15,11 @@ test.describe('auth', () => {
   test('couple login lands on dashboard', async ({ page }) => {
     couple = await seedCouple();
     await loginAs(page, couple);
-    await expect(page.getByRole('heading', { name: /home/i })).toBeVisible();
-    // Couple dashboard shows "Account Type: couple"
+    // The redesigned couple home greets with a personalized "Welcome back, {name}"
+    // <h1> (the old "Home" PageTitle was removed in the couple-dashboard redesign).
+    await expect(page.getByRole('heading', { name: /welcome back/i })).toBeVisible();
+    // The couple's email (contains "couple") renders in the sidebar account menu,
+    // proving the couple-scoped dashboard loaded.
     await expect(page.getByText(/couple/i).first()).toBeVisible();
   });
 

@@ -45,7 +45,8 @@ export function MeasurementsClient({ profiles }: { profiles: MeasurementProfileV
         <div className="rounded-lg border border-hairline bg-cream-soft/40 px-8 py-14 text-center">
           <p className="font-display text-2xl text-ink">No measurement profiles yet</p>
           <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
-            Add the bride&apos;s or groom&apos;s measurements to reuse at checkout.
+            Save a fit profile for anyone in the wedding — you, your partner, or family — to reuse
+            at checkout for made-to-measure outfits.
           </p>
           <Button
             variant="primary"
@@ -64,15 +65,34 @@ export function MeasurementsClient({ profiles }: { profiles: MeasurementProfileV
               const total = schema.length;
               const filled = total - missingCount(profile.garment, profile.measurements);
               const meta = GARMENT_META[profile.garment];
+              const percent = total > 0 ? Math.round((filled / total) * 100) : 0;
+              const complete = filled >= total;
               return (
                 <div key={profile.id} className="rounded-lg border border-hairline bg-cream p-6">
                   <p className="font-display text-xl text-ink">{profile.label}</p>
                   <p className="mt-1 font-mono text-[11px] uppercase tracking-[0.12em] text-indigo">
                     {meta.noun}
                   </p>
-                  <p className="mt-3 text-sm text-ink-soft">
-                    {filled} of {total} measurements · updated{' '}
-                    {dateFmt.format(new Date(profile.updatedAt))}
+                  <div className="mt-4">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="font-medium text-ink">
+                        {complete ? 'Measured' : `${filled} of ${total} measurements`}
+                      </span>
+                      <span className="font-mono tabular-nums text-ink-soft">{percent}%</span>
+                    </div>
+                    <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink/10">
+                      <div
+                        className={
+                          complete
+                            ? 'h-full rounded-full bg-indigo'
+                            : 'h-full rounded-full bg-haldi'
+                        }
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                  </div>
+                  <p className="mt-3 text-xs text-ink-soft">
+                    Updated {dateFmt.format(new Date(profile.updatedAt))}
                   </p>
                   <Button
                     variant="secondary"

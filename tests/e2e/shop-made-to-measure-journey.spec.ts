@@ -78,10 +78,11 @@ test.describe('made-to-measure journey (logged-in couple)', () => {
     // Save from the Review step.
     await page.getByRole('button', { name: 'Save fit profile' }).click();
 
-    // ── 5. The default "Bride" card appears and survives a reload ──────────────
-    await expect(page.getByText('Bride', { exact: true })).toBeVisible({ timeout: 10_000 });
+    // ── 5. The default "Lehenga" card appears and survives a reload ────────────
+    // (Profiles default to the garment name, not a bride/groom role.)
+    await expect(page.getByText('Lehenga', { exact: true })).toBeVisible({ timeout: 10_000 });
 
     await page.reload();
-    await expect(page.getByText('Bride', { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Lehenga', { exact: true })).toBeVisible({ timeout: 10_000 });
   });
 });

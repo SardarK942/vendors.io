@@ -10,6 +10,7 @@ import { CheckCircle2 } from 'lucide-react';
 import { BookingActions } from '@/components/dashboard/BookingActions';
 import { VendorBookingActions } from '@/components/booking/VendorBookingActions';
 import { AdjustmentReview } from '@/components/booking/AdjustmentReview';
+import { AcceptedQuoteReview } from '@/components/booking/AcceptedQuoteReview';
 import { ConflictWarning } from '@/components/dashboard/ConflictWarning';
 import { VendorNotesEditor } from '@/components/dashboard/VendorNotesEditor';
 import { getActiveVendorProfileId } from '@/lib/vendor/active';
@@ -99,7 +100,9 @@ export async function BookingDetail({
 
   const { data: vendorProfile } = await supabase
     .from('vendor_profiles')
-    .select('business_name, slug, category, user_id')
+    .select(
+      'business_name, slug, category, user_id, base_city, service_area, response_sla_hours, verified'
+    )
     .eq('id', booking.vendor_profile_id)
     .single();
 
@@ -226,7 +229,15 @@ export async function BookingDetail({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">
-              {role === 'couple' ? vendorProfile?.business_name : 'Booking Request'}
+              {role === 'couple' && vendorProfile?.slug ? (
+                <Link href={`/vendors/${vendorProfile.slug}`} className="hover:underline">
+                  {vendorProfile.business_name}
+                </Link>
+              ) : role === 'couple' ? (
+                vendorProfile?.business_name
+              ) : (
+                'Booking Request'
+              )}
             </h1>
             <p className="text-muted-foreground">
               {(bookingAsAny.package_name_snapshot as string) ?? 'Package Booking'}
@@ -247,7 +258,7 @@ export async function BookingDetail({
       )}
 
       {mode === 'panel' && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <Badge className={`text-sm ${statusBadgeStyle(booking.status)}`}>
             {booking.status.replace(/_/g, ' ')}
           </Badge>
@@ -258,10 +269,27 @@ export async function BookingDetail({
             </Badge>
           )}
           <span className="text-sm text-muted-foreground">
-            {role === 'couple' ? vendorProfile?.business_name : 'Booking Request'}
+            {role === 'couple' && vendorProfile?.slug ? (
+              <Link
+                href={`/vendors/${vendorProfile.slug}`}
+                className="font-medium text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink"
+              >
+                {vendorProfile.business_name}
+              </Link>
+            ) : role === 'couple' ? (
+              vendorProfile?.business_name
+            ) : (
+              'Booking Request'
+            )}
             {' · '}
             {(bookingAsAny.package_name_snapshot as string) ?? 'Package'}
           </span>
+          <Link
+            href={`/dashboard/bookings/${booking.id}`}
+            className="ml-auto text-sm font-semibold text-indigo hover:underline"
+          >
+            View full booking →
+          </Link>
         </div>
       )}
 
@@ -301,15 +329,16 @@ export async function BookingDetail({
         </div>
       )}
 
-      {/* Accepted status — pay deposit */}
+      {/* Accepted status — prominent pay-deposit CTA (owns Pay Deposit + Counter). */}
       {role === 'couple' && booking.status === 'accepted' && (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4">
-          <p className="mb-2 font-medium text-emerald-800">Quote accepted!</p>
-          <p className="mb-3 text-sm text-emerald-700">
-            Pay your deposit to confirm the booking. The vendor’s full address and instructions will
-            appear after payment.
-          </p>
-        </div>
+        <AcceptedQuoteReview
+          bookingId={booking.id}
+          totalPriceCents={totalCents}
+          depositCents={depositCents}
+          vendorName={vendorProfile?.business_name ?? ''}
+          coupleCounterCount={(bookingAsAny.couple_counter_count as number) ?? 0}
+          initialAction={initialAction}
+        />
       )}
 
       {/* Vendor-side status banners */}
@@ -362,9 +391,28 @@ export async function BookingDetail({
             <CardTitle>Package Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Package</span>
-              <span className="font-medium">
+            {role === 'couple' &&
+              (vendorProfile?.verified ||
+                vendorProfile?.base_city ||
+                vendorProfile?.service_area?.[0] ||
+                vendorProfile?.response_sla_hours) && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-hairline pb-3 text-xs text-ink-soft">
+                  {vendorProfile?.verified && (
+                    <span className="inline-flex items-center gap-1 font-medium text-indigo">
+                      <CheckCircle2 className="size-3.5" aria-hidden="true" /> Verified
+                    </span>
+                  )}
+                  {(vendorProfile?.base_city || vendorProfile?.service_area?.[0]) && (
+                    <span>{vendorProfile?.base_city || vendorProfile?.service_area?.[0]}</span>
+                  )}
+                  {vendorProfile?.response_sla_hours ? (
+                    <span>Responds in {vendorProfile.response_sla_hours}h</span>
+                  ) : null}
+                </div>
+              )}
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="shrink-0 text-muted-foreground">Package</span>
+              <span className="text-right font-medium">
                 {(bookingAsAny.package_name_snapshot as string) ?? 'N/A'}
               </span>
             </div>

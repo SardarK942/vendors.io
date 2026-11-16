@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
-import { X } from 'lucide-react';
+import { CalendarDays, X } from 'lucide-react';
 
 interface Props {
   eventDate: string | null;
@@ -40,17 +40,23 @@ export function CustomerWelcomeBanner({
     <AnimatePresence initial={false} onExitComplete={() => setRemoved(true)}>
       {show && (
         <motion.div
-          className="mb-6 rounded-lg bg-cream p-6 shadow-[0_1px_0_rgba(0,0,0,0.04),0_4px_12px_-4px_rgba(0,0,0,0.06)]"
+          className="mb-6 rounded-xl bg-indigo px-5 py-4 text-cream shadow-[0_14px_34px_-22px_rgba(46,61,163,0.9)]"
           role="region"
           aria-label="Welcome"
           aria-live="polite"
           exit={{ opacity: 0, y: -8, transition: exitTransition }}
         >
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
+          <div className="flex items-center gap-4">
+            <span
+              aria-hidden
+              className="hidden size-10 shrink-0 items-center justify-center rounded-lg bg-cream/15 sm:inline-flex"
+            >
+              <CalendarDays className="size-5 text-cream" />
+            </span>
+            <div className="flex min-w-0 flex-1 flex-wrap items-center gap-x-4 gap-y-2">
               {eventDate && formattedEventDate && daysUntilEvent !== null && (
                 <motion.p
-                  className="text-balance text-lg font-semibold text-ink"
+                  className="text-balance text-sm font-medium text-cream"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={spring}
@@ -61,7 +67,7 @@ export function CustomerWelcomeBanner({
 
               {categories.length > 0 && (
                 <motion.div
-                  className="mt-3 flex flex-wrap gap-2"
+                  className="flex flex-wrap gap-2 sm:ml-auto"
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ ...spring, delay: reducedMotion ? 0 : 0.1 }}
@@ -71,7 +77,7 @@ export function CustomerWelcomeBanner({
                       key={c}
                       href={`/vendors?category=${c}`}
                       aria-label={`Browse ${c} vendors`}
-                      className="rounded-full border border-ink/20 px-3 py-1 text-xs text-ink transition-colors hover-pink-border focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+                      className="rounded-md bg-cream/10 px-3 py-1.5 text-xs font-medium capitalize text-cream transition-colors hover:bg-cream/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream focus-visible:ring-offset-2 focus-visible:ring-offset-indigo"
                     >
                       Browse {c}
                     </Link>
@@ -82,7 +88,7 @@ export function CustomerWelcomeBanner({
             <button
               type="button"
               onClick={handleDismiss}
-              className="ml-4 inline-flex size-10 items-center justify-center rounded text-ink/40 transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo focus-visible:ring-offset-2 focus-visible:ring-offset-cream"
+              className="inline-flex size-8 shrink-0 items-center justify-center rounded text-cream/60 transition-colors hover:text-cream focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cream focus-visible:ring-offset-2 focus-visible:ring-offset-indigo"
               aria-label="Dismiss welcome banner"
             >
               <X size={18} aria-hidden="true" />

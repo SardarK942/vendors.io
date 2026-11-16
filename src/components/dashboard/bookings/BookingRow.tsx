@@ -58,15 +58,37 @@ function StatusBadge({ status }: { status: string }) {
   );
 }
 
-export function BookingRow({ booking }: { booking: BookingRowData }) {
-  const customerName = booking.couple_full_name?.trim() || 'Unnamed couple';
+export function BookingRow({
+  booking,
+  perspective = 'vendor',
+  needsAction = false,
+}: {
+  booking: BookingRowData;
+  /**
+   * Whose list this row appears in. Vendor lists lead with the couple's name;
+   * couple lists lead with the vendor's business name. Defaults to 'vendor' so
+   * the existing vendor BookingStatusTabs usage is unchanged.
+   */
+  perspective?: 'couple' | 'vendor';
+  /** When true, the row pulses (hot-pink ring) to flag that it needs the viewer's input. */
+  needsAction?: boolean;
+}) {
+  const primaryName =
+    perspective === 'couple'
+      ? booking.vendor_profiles?.business_name?.trim() || 'Vendor'
+      : booking.couple_full_name?.trim() || 'Unnamed couple';
   const eventType = booking.event_type?.trim() || 'Booking request';
   const city = booking.event_city?.trim() || booking.venue_name?.trim() || null;
 
   return (
     <Link
       href={`/dashboard/bookings/${booking.id}`}
-      className="flex flex-wrap items-center gap-4 rounded-2xl border border-hairline bg-white p-4 transition-colors hover:border-indigo/40"
+      className={cn(
+        'flex flex-wrap items-center gap-4 rounded-2xl border bg-white p-4 transition-colors',
+        needsAction
+          ? 'border-hot-pink/50 pulse-pink-loop hover:border-hot-pink'
+          : 'border-hairline hover:border-indigo/40'
+      )}
     >
       {/* Thumbnail — no portfolio image is loaded for the list, so fall back to
           a muted calendar glyph (see STUB LEDGER in the PR notes). */}
@@ -74,14 +96,23 @@ export function BookingRow({ booking }: { booking: BookingRowData }) {
         <CalendarDays className="size-6 text-ink-soft/60" aria-hidden="true" />
       </div>
 
-      {/* Main: customer name + event type + location */}
+      {/* Main: primary name (vendor or couple) + event type + location */}
       <div className="min-w-0 flex-1 basis-48">
-        <p className="truncate text-sm font-semibold text-ink">{customerName}</p>
+        <p className="truncate text-sm font-semibold text-ink">{primaryName}</p>
         <p className="truncate text-xs text-ink-soft">{eventType}</p>
         {city ? (
           <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-muted">
             <MapPin className="size-3 shrink-0" aria-hidden="true" />
             <span className="truncate">{city}</span>
+          </p>
+        ) : null}
+        {needsAction ? (
+          <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-hot-pink">
+            <span className="relative flex size-2" aria-hidden="true">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-hot-pink opacity-75" />
+              <span className="relative inline-flex size-2 rounded-full bg-hot-pink" />
+            </span>
+            Action needed
           </p>
         ) : null}
       </div>
