@@ -387,9 +387,9 @@ export async function BookingDetail({
             <CardTitle>Package Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Package</span>
-              <span className="font-medium">
+            <div className="flex items-baseline justify-between gap-4">
+              <span className="shrink-0 text-muted-foreground">Package</span>
+              <span className="text-right font-medium">
                 {(bookingAsAny.package_name_snapshot as string) ?? 'N/A'}
               </span>
             </div>
