@@ -99,7 +99,9 @@ export async function BookingDetail({
 
   const { data: vendorProfile } = await supabase
     .from('vendor_profiles')
-    .select('business_name, slug, category, user_id')
+    .select(
+      'business_name, slug, category, user_id, base_city, service_area, response_sla_hours, verified'
+    )
     .eq('id', booking.vendor_profile_id)
     .single();
 
@@ -387,6 +389,25 @@ export async function BookingDetail({
             <CardTitle>Package Details</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
+            {role === 'couple' &&
+              (vendorProfile?.verified ||
+                vendorProfile?.base_city ||
+                vendorProfile?.service_area?.[0] ||
+                vendorProfile?.response_sla_hours) && (
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-hairline pb-3 text-xs text-ink-soft">
+                  {vendorProfile?.verified && (
+                    <span className="inline-flex items-center gap-1 font-medium text-indigo">
+                      <CheckCircle2 className="size-3.5" aria-hidden="true" /> Verified
+                    </span>
+                  )}
+                  {(vendorProfile?.base_city || vendorProfile?.service_area?.[0]) && (
+                    <span>{vendorProfile?.base_city || vendorProfile?.service_area?.[0]}</span>
+                  )}
+                  {vendorProfile?.response_sla_hours ? (
+                    <span>Responds in {vendorProfile.response_sla_hours}h</span>
+                  ) : null}
+                </div>
+              )}
             <div className="flex items-baseline justify-between gap-4">
               <span className="shrink-0 text-muted-foreground">Package</span>
               <span className="text-right font-medium">

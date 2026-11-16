@@ -103,8 +103,13 @@ export function AdjustmentReview({
   const isDiscount = adjustmentCents < 0;
 
   return (
-    <div className="space-y-5 rounded-lg border p-6">
-      <h3 className="text-base font-semibold">Vendor Sent an Adjusted Quote</h3>
+    <div className="space-y-5 rounded-2xl border-2 border-indigo/30 bg-white p-6 shadow-[0_16px_40px_-24px_rgba(46,61,163,0.55)]">
+      <div>
+        <p className="font-mono text-[10px] font-bold uppercase tracking-widest text-hot-pink">
+          Action needed
+        </p>
+        <h3 className="mt-1 font-display text-xl text-ink">Vendor sent an adjusted quote</h3>
+      </div>
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-1">
