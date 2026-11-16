@@ -46,12 +46,13 @@ test.describe('couple measurement profiles', () => {
     // Save from the Review step.
     await page.getByRole('button', { name: 'Save fit profile' }).click();
 
-    // Default lehenga label is "Bride"; card should appear in the list.
-    const brideCard = page.getByText('Bride', { exact: true });
-    await expect(brideCard).toBeVisible({ timeout: 10_000 });
+    // Default lehenga label is "Lehenga" (garment name, not a bride/groom role);
+    // card should appear in the list.
+    const profileCard = page.getByText('Lehenga', { exact: true });
+    await expect(profileCard).toBeVisible({ timeout: 10_000 });
 
     // Reload — the profile must still be there (real persistence, not optimistic).
     await page.reload();
-    await expect(page.getByText('Bride', { exact: true })).toBeVisible({ timeout: 10_000 });
+    await expect(page.getByText('Lehenga', { exact: true })).toBeVisible({ timeout: 10_000 });
   });
 });

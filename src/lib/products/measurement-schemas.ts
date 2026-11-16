@@ -58,7 +58,7 @@ export interface GarmentMeta {
   figure: 'female' | 'male';
 }
 
-// ─── Lehenga (bride) — 13 fields ────────────────────────────────────────────
+// ─── Lehenga — 13 fields ────────────────────────────────────────────────────
 
 export const LEHENGA_FIELDS: MeasurementField[] = [
   {
@@ -177,7 +177,7 @@ export const LEHENGA_FIELDS: MeasurementField[] = [
     group: 'Skirt (lehenga)',
     name: 'Skirt length',
     tricky: true,
-    how: 'From the waist down to the floor, wearing the heels for the day. This is the one brides get wrong most.',
+    how: 'From the waist down to the floor, wearing the heels for the day. This is the one most people get wrong.',
     range: [40, 46],
     unit: 'in',
     hi: { t: 'line', x1: 150, y1: 172, x2: 150, y2: 366 },
@@ -193,7 +193,7 @@ export const LEHENGA_FIELDS: MeasurementField[] = [
   },
 ];
 
-// ─── Sherwani (groom) — 14 fields ───────────────────────────────────────────
+// ─── Sherwani — 14 fields ───────────────────────────────────────────────────
 
 export const SHERWANI_FIELDS: MeasurementField[] = [
   {
@@ -335,8 +335,8 @@ export const MEASUREMENT_SCHEMAS: Record<MeasurementGarment, MeasurementField[]>
 };
 
 export const GARMENT_META: Record<MeasurementGarment, GarmentMeta> = {
-  lehenga: { label: 'Bride · Lehenga', noun: 'lehenga', figure: 'female' },
-  sherwani: { label: 'Groom · Sherwani', noun: 'sherwani', figure: 'male' },
+  lehenga: { label: 'Lehenga', noun: 'lehenga', figure: 'female' },
+  sherwani: { label: 'Sherwani', noun: 'sherwani', figure: 'male' },
 };
 
 export function getMeasurementSchema(garment: MeasurementGarment): MeasurementField[] {

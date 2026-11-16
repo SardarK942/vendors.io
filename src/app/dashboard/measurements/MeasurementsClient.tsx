@@ -45,7 +45,8 @@ export function MeasurementsClient({ profiles }: { profiles: MeasurementProfileV
         <div className="rounded-lg border border-hairline bg-cream-soft/40 px-8 py-14 text-center">
           <p className="font-display text-2xl text-ink">No measurement profiles yet</p>
           <p className="mx-auto mt-2 max-w-sm text-sm text-ink-soft">
-            Add the bride&apos;s or groom&apos;s measurements to reuse at checkout.
+            Save a fit profile for anyone in the wedding — you, your partner, or family — to reuse
+            at checkout for made-to-measure outfits.
           </p>
           <Button
             variant="primary"
