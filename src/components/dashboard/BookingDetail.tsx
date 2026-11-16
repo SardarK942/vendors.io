@@ -226,7 +226,15 @@ export async function BookingDetail({
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold">
-              {role === 'couple' ? vendorProfile?.business_name : 'Booking Request'}
+              {role === 'couple' && vendorProfile?.slug ? (
+                <Link href={`/vendors/${vendorProfile.slug}`} className="hover:underline">
+                  {vendorProfile.business_name}
+                </Link>
+              ) : role === 'couple' ? (
+                vendorProfile?.business_name
+              ) : (
+                'Booking Request'
+              )}
             </h1>
             <p className="text-muted-foreground">
               {(bookingAsAny.package_name_snapshot as string) ?? 'Package Booking'}
@@ -247,7 +255,7 @@ export async function BookingDetail({
       )}
 
       {mode === 'panel' && (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <Badge className={`text-sm ${statusBadgeStyle(booking.status)}`}>
             {booking.status.replace(/_/g, ' ')}
           </Badge>
@@ -258,10 +266,27 @@ export async function BookingDetail({
             </Badge>
           )}
           <span className="text-sm text-muted-foreground">
-            {role === 'couple' ? vendorProfile?.business_name : 'Booking Request'}
+            {role === 'couple' && vendorProfile?.slug ? (
+              <Link
+                href={`/vendors/${vendorProfile.slug}`}
+                className="font-medium text-ink underline decoration-ink/30 underline-offset-2 hover:decoration-ink"
+              >
+                {vendorProfile.business_name}
+              </Link>
+            ) : role === 'couple' ? (
+              vendorProfile?.business_name
+            ) : (
+              'Booking Request'
+            )}
             {' · '}
             {(bookingAsAny.package_name_snapshot as string) ?? 'Package'}
           </span>
+          <Link
+            href={`/dashboard/bookings/${booking.id}`}
+            className="ml-auto text-sm font-semibold text-indigo hover:underline"
+          >
+            View full booking →
+          </Link>
         </div>
       )}
 
